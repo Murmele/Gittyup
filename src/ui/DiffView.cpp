@@ -67,18 +67,18 @@ const QString kHunkFmt = "<h4>%1</h4>";
 
 const QString kStyleSheet =
   "DiffView {"
-  "  border-image: url(:/sunken.png) 4 4 4 4;"
+  "  border-image: url(:/sunken.png) 0 0 0 0;"
   "  border-left-width: 4;"
-  "  border-top-width: 4;"
+  "  border-top-width: 0;"
   "  padding-left: -4;"
-  "  padding-top: -4"
+  "  padding-top: 0"
   "}"
   "DiffView HunkWidget, DiffView .QFrame {"
   "  background-clip: content;"
-  "  border-image: url(:/shadow.png) 8 8 8 8;"
-  "  border-width: 8;"
-  "  padding-left: -2;"
-  "  padding-top: -2"
+  "  border-image: url(:/shadow.png) 0 0 0 0;"
+  "  border-width: 0;"
+  "  padding-left: 10;"
+  "  padding-top: 0"
   "}";
 
 const QString kButtonStyleFmt =
