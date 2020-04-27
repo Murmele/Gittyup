@@ -27,6 +27,7 @@ add_library(ui
   FindWidget.cpp
   Footer.cpp
   History.cpp
+  IgnoreDialog.cpp
   IndexCompleter.cpp
   Location.cpp
   MainWindow.cpp
