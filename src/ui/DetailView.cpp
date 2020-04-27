@@ -11,7 +11,9 @@
 #include "Badge.h"
 #include "DiffWidget.h"
 #include "MenuBar.h"
+#include "ContextMenuButton.h"
 #include "TreeWidget.h"
+#include "TemplateButton.h"
 #include "git/Branch.h"
 #include "git/Commit.h"
 #include "git/Diff.h"
@@ -462,10 +464,17 @@ public:
   CommitEditor(const git::Repository &repo, QWidget *parent = nullptr)
     : QFrame(parent)
   {
+    git::Config config = repo.appConfig();
+
+    TemplateButton *templateButton = new TemplateButton(config, this);
+    templateButton->setText(tr("T"));
+    connect(templateButton, &TemplateButton::templateChanged, this, &CommitEditor::applyTemplate);
+
     QLabel *label = new QLabel(tr("<b>Commit Message:</b>"), this);
     mStatus = new QLabel(QString(), this);
 
     QHBoxLayout *labelLayout = new QHBoxLayout;
+    labelLayout->addWidget(templateButton);
     labelLayout->addWidget(label);
     labelLayout->addStretch();
     labelLayout->addWidget(mStatus);
@@ -581,6 +590,12 @@ public:
     QString msg = RepoView::parentView(this)->repo().message();
     if (!msg.isEmpty())
       mMessage->setPlainText(msg);
+  }
+
+public slots:
+  void applyTemplate(const QString templ)
+  {
+    mMessage->setText(templ);
   }
 
 private:

@@ -42,6 +42,8 @@ add_library(ui
   SideBar.cpp
   TabBar.cpp
   TabWidget.cpp
+  TemplateButton.cpp
+  TemplateDialog.cpp
   ToolBar.cpp
   TreeModel.cpp
   TreeWidget.cpp
