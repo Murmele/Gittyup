@@ -8,8 +8,9 @@
 //
 
 #include "ColumnView.h"
-#include "Badge.h"
 #include "TreeModel.h"
+#include "ViewDelegate.h"
+
 #include <QFormLayout>
 #include <QItemDelegate>
 #include <QLabel>
@@ -30,6 +31,10 @@ namespace {
 const QString kNameFmt = "<p style='font-size: large'>%1</p>";
 const QString kLabelFmt = "<p style='color: gray; font-weight: bold'>%1</p>";
 
+/*!
+ * \brief The PreviewWidget class
+ * Widget shown in the next column when file selected instead of a folder
+ */
 class PreviewWidget : public QFrame
 {
   Q_OBJECT
@@ -119,90 +124,10 @@ private:
   QModelIndex mIndex;
 };
 
-class ColumnViewDelegate : public QItemDelegate
-{
-public:
-  ColumnViewDelegate(QObject *parent = nullptr)
-    : QItemDelegate(parent)
-  {}
-
-  void paint(
-    QPainter *painter,
-    const QStyleOptionViewItem &option,
-    const QModelIndex &index) const override
-  {
-    QStyleOptionViewItem opt = option;
-    drawBackground(painter, opt, index);
-
-    // Draw >.
-    if (index.model()->hasChildren(index)) {
-      painter->save();
-      painter->setRenderHint(QPainter::Antialiasing, true);
-
-      QColor color = opt.palette.color(QPalette::Active, QPalette::BrightText);
-      if (opt.state & QStyle::State_Selected)
-        color = !opt.showDecorationSelected ?
-          opt.palette.color(QPalette::Active, QPalette::WindowText) :
-          opt.palette.color(QPalette::Active, QPalette::HighlightedText);
-
-      painter->setPen(color);
-      painter->setBrush(color);
-
-      int x = opt.rect.x() + opt.rect.width() - 3;
-      int y = opt.rect.y() + (opt.rect.height() / 2);
-
-      QPainterPath path;
-      path.moveTo(x, y);
-      path.lineTo(x - 5, y - 3);
-      path.lineTo(x - 5, y + 3);
-      path.closeSubpath();
-      painter->drawPath(path);
-
-      painter->restore();
-
-      // Adjust rect to exclude the arrow.
-      opt.rect.adjust(0, 0, -11, 0);
-    }
-
-    // Draw badges.
-    QString status = index.data(TreeModel::StatusRole).toString();
-    if (!status.isEmpty()) {
-      QSize size = Badge::size(painter->font());
-      int width = size.width();
-      int height = size.height();
-
-      // Add extra space.
-      opt.rect.adjust(0, 0, -3, 0);
-
-      for (int i = 0; i < status.count(); ++i) {
-        int x = opt.rect.x() + opt.rect.width();
-        int y = opt.rect.y() + (opt.rect.height() / 2);
-        QRect rect(x - width, y - (height / 2), width, height);
-        Badge::paint(painter, {Badge::Label(status.at(i))}, rect, &opt);
-
-        // Adjust rect.
-        opt.rect.adjust(0, 0, -width - 3, 0);
-      }
-    }
-
-    QItemDelegate::paint(painter, opt, index);
-  }
-
-  QSize sizeHint(
-    const QStyleOptionViewItem &option,
-    const QModelIndex &index) const override
-  {
-    // Increase spacing.
-    QSize size = QItemDelegate::sizeHint(option, index);
-    size.setHeight(Badge::size(option.font).height() + 4);
-    return size;
-  }
-};
-
 } // anon. namespace
 
 ColumnView::ColumnView(QWidget *parent)
-  : QColumnView(parent), mSharedDelegate(new ColumnViewDelegate(this))
+  : QColumnView(parent), mSharedDelegate(new ViewDelegate(this))
 {
   PreviewWidget *preview = new PreviewWidget(this);
   connect(preview, &PreviewWidget::iconDoubleClicked,

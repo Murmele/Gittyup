@@ -293,11 +293,7 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
   });
 
   // Respond to commit list selection change.
-  connect(mCommits, &CommitList::diffSelected,
-  [this](const git::Diff &diff, const QString &file, bool spontaneous) {
-    mHistory->update(diff.isValid() ? location() : Location(), spontaneous);
-    mDetails->setDiff(diff, file, mPathspec->pathspec());
-  });
+  connect(mCommits, &CommitList::diffSelected, this, &RepoView::diffSelected, Qt::ConnectionType::DirectConnection);
 
   // Refresh the diff when a whole directory is added to the index.
   // FIXME: This is a workaround.
@@ -440,6 +436,13 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
   connect(&mFetchTimer, &QTimer::timeout, [this] {
     fetch(git::Remote(), false, false);
   });
+}
+
+void RepoView::diffSelected(const git::Diff diff, const QString &file, bool spontaneous)
+{
+    git::Diff diff2 = diff;
+    mHistory->update(diff.isValid() ? location() : Location(), spontaneous); // why this changes diff?
+    mDetails->setDiff(diff2, file, mPathspec->pathspec());
 }
 
 RepoView::~RepoView()

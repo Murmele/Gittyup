@@ -59,6 +59,10 @@ namespace _HunkWidget {
     };
 }
 
+/*!
+ * Represents one hunk of a patch of a file.
+ * \brief The HunkWidget class
+ */
 class HunkWidget : public QFrame
 {
   Q_OBJECT

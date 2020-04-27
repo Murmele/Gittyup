@@ -14,6 +14,7 @@
 #include "ContextMenuButton.h"
 #include "TreeWidget.h"
 #include "TemplateButton.h"
+#include "DoubleTreeWidget.h"
 #include "git/Branch.h"
 #include "git/Commit.h"
 #include "git/Diff.h"
@@ -749,6 +750,7 @@ DetailView::DetailView(const git::Repository &repo, QWidget *parent)
 
   mContent->addWidget(new DiffWidget(repo, this));
   mContent->addWidget(new TreeWidget(repo, this));
+  mContent->addWidget(new DoubleTreeWidget(repo, this));
 }
 
 DetailView::~DetailView() {}

@@ -20,6 +20,7 @@ add_library(ui
   DiffView/Comment.cpp
   DiffView/EditButton.cpp
   DiffWidget.cpp
+  DoubleTreeWidget.cpp
   EditorWindow.cpp
   ExpandButton.cpp
   FileContextMenu.cpp
@@ -42,13 +43,17 @@ add_library(ui
   SearchField.cpp
   SideBar.cpp
   StateAction.cpp
+  StatePushButton.cpp
   TabBar.cpp
   TabWidget.cpp
   TemplateButton.cpp
   TemplateDialog.cpp
   ToolBar.cpp
   TreeModel.cpp
+  TreeProxy.cpp
+  TreeView.cpp
   TreeWidget.cpp
+  ViewDelegate.cpp
   ${IMPL_FILES}
 )
 

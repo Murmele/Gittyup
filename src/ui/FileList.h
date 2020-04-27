@@ -19,6 +19,10 @@ namespace git {
 class Repository;
 }
 
+/*!
+ * List view which shows the modified files
+ * \brief The FileList class
+ */
 class FileList : public QListView
 {
   Q_OBJECT

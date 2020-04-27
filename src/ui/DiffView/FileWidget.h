@@ -69,6 +69,10 @@ private:
 
 }
 
+/*!
+ * Represents the diff of a single file
+ * \brief The FileWidget class
+ */
 class FileWidget : public QWidget
 {
   Q_OBJECT

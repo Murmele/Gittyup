@@ -964,7 +964,6 @@ void HunkWidget::findStagedLines(QList<Line>& lines, int &additions, int lidx, i
       case GIT_DIFF_LINE_ADDITION: {
         // check if line is already staged
           QByteArray newLine = lines[lidx].newLine();
-          // TODO: find less computational way
           // check if line is in staged lines
           Line lineStaged = linesStaged[lidx - offset - (additions - stagedAdditions)];
           if (lineStaged.origin() == '+') {

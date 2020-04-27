@@ -108,6 +108,8 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
 
       QStringList paths;
       QString prefix = node->path(true);
+	  // from these files the checkstate for the folders is created,
+	  // because the folder it self cannot be staged
       for (int i = 0; i < mDiff.count(); ++i) {
         QString path = mDiff.name(i);
         if (path.startsWith(prefix))
@@ -120,6 +122,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
       int count = 0;
       git::Index index = mDiff.index();
       foreach (const QString &path, paths) {
+		// isStaged on folders does not work, because folder cannot be staged
         switch (index.isStaged(path)) {
           case git::Index::Disabled:
           case git::Index::Unstaged:
@@ -127,6 +130,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
             break;
 
           case git::Index::PartiallyStaged:
+            return Qt::PartiallyChecked;
           case git::Index::Staged:
             ++count;
             break;
@@ -188,10 +192,17 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
   return QVariant();
 }
 
-bool TreeModel::setData(
-  const QModelIndex &index,
-  const QVariant &value,
-  int role)
+bool TreeModel::setData(const QModelIndex &index,
+                        const QVariant &value,
+                        int role)
+{
+    setData(index, value, role, false);
+}
+
+bool TreeModel::setData(const QModelIndex &index,
+                        const QVariant &value,
+                        int role,
+                        bool ignoreIndexChanges)
 {
   switch (role) {
     case Qt::CheckStateRole: {
@@ -204,8 +215,33 @@ bool TreeModel::setData(
           files.append(file);
       }
 
-      mDiff.index().setStaged(files, value.toBool());
-      emit dataChanged(index, index, {role});
+      if (!ignoreIndexChanges)
+        mDiff.index().setStaged(files, value.toBool());
+
+	  // childs
+	  if (hasChildren(index)) {
+		  // emit dataChanged() for all files in the folder
+		  // all children changed too. TODO: only the tracked files should emit a signal
+		  int count = rowCount(index);
+		  for (int row = 0; row < count; row++) {
+			  QModelIndex child = this->index(row, 0, index);
+			  emit dataChanged(child, child, {role});
+		  }
+	  }
+	  // parents
+	  // recursive approach to emit signal dataChanged also for the parents.
+	  // Because when a file in a folder is staged, the state of the folder changes too
+	  QModelIndex parent = this->parent(index);
+	  while (parent.isValid()) {
+		  emit dataChanged(parent, parent, {role});
+		  parent = this->parent(parent);
+	  }
+
+	  // file/folder it self
+	  // emit dataChanged() for folder or file it self
+	  emit dataChanged(index, index, {role});
+      emit checkStateChanged(index, value.toInt());
+
       return true;
     }
   }
@@ -222,6 +258,10 @@ TreeModel::Node *TreeModel::node(const QModelIndex &index) const
 {
   return index.isValid() ? static_cast<Node *>(index.internalPointer()) : mRoot;
 }
+
+//#############################################################################
+//######     Treemodel::Node     ##############################################
+//#############################################################################
 
 TreeModel::Node::Node(const QString &name, const git::Object &obj, Node *parent)
   : mName(name), mObject(obj), mParent(parent)

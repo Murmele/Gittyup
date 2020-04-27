@@ -14,6 +14,10 @@
 
 class QStyleOption;
 
+/*!
+ * \brief The Badge class
+ * Blue widget (M -> Modified, ? -> New added)
+ */
 class Badge : public QWidget
 {
 public:

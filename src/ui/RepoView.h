@@ -53,7 +53,8 @@ public:
   enum ViewMode
   {
     Diff,
-    Tree
+	Tree,
+	DoubleTree
   };
 
   enum MergeFlag
@@ -309,6 +310,8 @@ public:
   void selectCommit(const git::Commit &commit, const QString &file);
 
   static RepoView *parentView(const QWidget *widget);
+public slots:
+  void diffSelected(const git::Diff diff, const QString &file, bool spontaneous);
 
   enum class DetailSplitterWidgets {
      NotDefined,

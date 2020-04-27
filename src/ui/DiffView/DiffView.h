@@ -87,6 +87,11 @@ public:
   void setDiff(const git::Diff &diff);
 
   bool scrollToFile(int index);
+  /*!
+   * Filters for specific paths and shows only them
+   * \brief setFilter
+   * \param paths List of paths to be filtered
+   */
   void setFilter(const QStringList &paths);
 
   const QList<PluginRef> &plugins() const { return mPlugins; }
@@ -94,9 +99,21 @@ public:
 
   QList<TextEditor *> editors() override;
   void ensureVisible(TextEditor *editor, int pos) override;
+  /*!
+   * Enables/disables showing diffs
+   * \brief enable
+   * \param enable
+   */
+  void enable(bool enable);
 
 signals:
   void diagnosticAdded(TextEditor::DiagnosticKind kind);
+  /*!
+   * Emitted when in one of the FileWidgets the stageState was changed
+   * \brief fileStageStateChanged
+   * \param state
+   */
+  void fileStageStateChanged(git::Index::StagedState state);
 
 protected:
   void dropEvent(QDropEvent *event) override;
@@ -116,6 +133,8 @@ private:
 
   QList<PluginRef> mPlugins;
   Account::CommitComments mComments;
+
+  bool mEnabled{true};
 };
 
 #endif

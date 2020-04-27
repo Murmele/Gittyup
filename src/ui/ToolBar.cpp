@@ -899,6 +899,9 @@ ToolBar::ToolBar(MainWindow *parent)
   ModeButton *tree = new ModeButton(RepoView::Tree, mode);
   mode->addButton(tree, tr("Tree View"), true);
 
+  ModeButton *alternativeTree = new ModeButton(RepoView::Tree, mode);
+  mode->addButton(alternativeTree, tr("Double Tree View"), true);
+
   addWidget(mode);
 
   using Signal = void (QButtonGroup::*)(int);
@@ -1002,6 +1005,7 @@ void ToolBar::updateView()
   mLogButton->setEnabled(view);
   mModeGroup->button(RepoView::Diff)->setEnabled(view);
   mModeGroup->button(RepoView::Tree)->setEnabled(view);
+  mModeGroup->button(RepoView::DoubleTree)->setEnabled(view);
 
   if (view) {
     bool visible = view->isLogVisible();
