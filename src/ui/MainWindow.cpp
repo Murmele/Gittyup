@@ -82,7 +82,7 @@ MainWindow::MainWindow(
   setAcceptDrops(true);
 
   // Create new menu bar for this window if there isn't a shared one.
-  MenuBar *menuBar = MenuBar::instance(this);
+  mMenuBar = MenuBar::instance(this);
 
   // Create tool bar.
   mToolBar = new ToolBar(this);
@@ -91,9 +91,9 @@ MainWindow::MainWindow(
   // Initialize search.
   SearchField *searchField = mToolBar->searchField();
   connect(searchField, &QLineEdit::textEdited,
-          menuBar, &MenuBar::updateUndoRedo);
+          mMenuBar, &MenuBar::updateUndoRedo);
   connect(searchField, &QLineEdit::selectionChanged,
-          menuBar, &MenuBar::updateCutCopyPaste);
+          mMenuBar, &MenuBar::updateCutCopyPaste);
 
   // Hook up advanced search.
   AdvancedSearchWidget *advancedSearch = new AdvancedSearchWidget(this);
@@ -254,6 +254,7 @@ RepoView *MainWindow::addTab(const git::Repository &repo)
   }
 
   RepoView *view = new RepoView(repo, this);
+  view->detailSplitterMaximize(mMenuBar->isMaximized());
   git::RepositoryNotifier *notifier = repo.notifier();
   connect(notifier, &git::RepositoryNotifier::referenceUpdated,
           this, &MainWindow::updateInterface);

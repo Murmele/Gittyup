@@ -41,6 +41,7 @@ add_library(ui
   RemoteCallbacks.cpp
   SearchField.cpp
   SideBar.cpp
+  StateAction.cpp
   TabBar.cpp
   TabWidget.cpp
   TemplateButton.cpp

@@ -14,6 +14,7 @@
 
 class History;
 class RepoView;
+class StateAction;
 
 class MenuBar : public QMenuBar
 {
@@ -40,10 +41,27 @@ public:
 
   static void setDebugMenuVisible(bool show);
   static MenuBar *instance(QWidget *widget);
+  /*!
+   * \brief isMaximized
+   * Returns the checkstate of the mToggleMaximize Action
+   * \return
+   */
+  bool isMaximized();
 
 private:
   QWidget *window() const;
+  /*!
+   * \brief view
+   * Returns the current view
+   * \return
+   */
   RepoView *view() const;
+  /*!
+   * \brief views
+   * Return all open views. Needed in the maximize feature
+   * \return
+   */
+  QList<RepoView *> views() const;
 
   // File
   QAction *mClose;
@@ -66,6 +84,7 @@ private:
   QAction *mRefresh;
   QAction *mToggleLog;
   QAction *mToggleView;
+  StateAction *mToggleMaximize;
 
   // Repository
   QAction *mConfigureRepository;

@@ -310,6 +310,33 @@ public:
 
   static RepoView *parentView(const QWidget *widget);
 
+  enum class DetailSplitterWidgets {
+     NotDefined,
+     SideBar, // commit list, header, ...
+     DetailView, // DiffView, TreeView
+  };
+  /*!
+   * \brief match
+   * Check recursively if the searched object \p search is one of the childs of \p parent
+   * The \p parent is not checked. This must be done manually
+   * \param search Object which should match
+   * \param parent Parent of the childs which should be checked
+   * \return true if one of the childs is the searched one, else false
+   */
+  static bool match(QObject* search, QObject* parent);
+  /*!
+   * \brief detailsMaximized
+   * Returns if the details are maximized or not
+   * \return
+   */
+  bool detailsMaximized();
+  /*!
+   * \brief detailSplitterMaximize
+   *
+   * \param maximized
+   */
+  DetailSplitterWidgets detailSplitterMaximize(bool maximized, DetailSplitterWidgets maximizeWidget = DetailSplitterWidgets::NotDefined);
+
 signals:
   void statusChanged(bool dirty);
 
@@ -361,6 +388,7 @@ private:
   PathspecWidget *mPathspec;
   CommitList *mCommits;
   DetailView *mDetails;
+  QWidget* mSideBar;
 
   LogEntry *mLogRoot;
   LogView *mLogView;
@@ -376,6 +404,19 @@ private:
   bool mShown = false;
 
   friend class MenuBar;
+
+  /*!
+   * \brief mDetailSplitter
+   * Splits the history list and the detailview (diffView, TreeView)
+   */
+  QSplitter* mDetailSplitter;
+  /*!
+   * \brief mMaximized
+   * Maximizes the widgets in the mDetailSplitter
+   * true: single widget is visible and the others are invisible
+   * false: all widgets are sized normaly and visible
+   */
+  bool mMaximized{false};
 };
 
 #endif

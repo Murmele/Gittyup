@@ -16,6 +16,7 @@
 class RepoView;
 class TabWidget;
 class ToolBar;
+class MenuBar;
 
 namespace git {
 class Submodule;
@@ -79,6 +80,8 @@ private:
   void updateTouchBar(int ahead = -1, int behind = -1);
 
   ToolBar *mToolBar;
+  MenuBar* mMenuBar;
+
   bool mFullPath = false;
   bool mIsSideBarVisible = true;
 

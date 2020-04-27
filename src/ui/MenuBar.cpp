@@ -16,6 +16,7 @@
 #include "MainWindow.h"
 #include "RepoView.h"
 #include "TabWidget.h"
+#include "StateAction.h"
 #include "app/Application.h"
 #include "conf/RecentRepositories.h"
 #include "conf/RecentRepository.h"
@@ -317,6 +318,21 @@ MenuBar::MenuBar(QWidget *parent)
   connect(mToggleLog, &QAction::triggered, [this] {
     RepoView *view = this->view();
     view->setLogVisible(!view->isLogVisible());
+  });
+
+  mToggleMaximize = new StateAction(tr("Normal"), tr("Maximize"), viewMenu);
+  viewMenu->addAction(mToggleMaximize);
+  mToggleMaximize->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_M));
+  connect(mToggleMaximize, &QAction::triggered, [this] {
+    bool maximize = mToggleMaximize->isActive();
+    RepoView* view = this->view();
+    RepoView::DetailSplitterWidgets widget = view->detailSplitterMaximize(maximize);
+    assert(!maximize || (maximize == true && widget != RepoView::DetailSplitterWidgets::NotDefined));
+
+    QList<RepoView*> repos = this->views();
+    for (auto repo : repos) {
+        repo->detailSplitterMaximize(maximize, widget);
+    }
   });
 
   mToggleView = viewMenu->addAction(tr("Show Tree View"));
@@ -835,6 +851,7 @@ void MenuBar::updateView()
   mRefresh->setEnabled(view);
   mToggleLog->setEnabled(view);
   mToggleView->setEnabled(view);
+  mToggleMaximize->setEnabled(view);
 
   if (!view)
     return;
@@ -975,6 +992,17 @@ RepoView *MenuBar::view() const
   return static_cast<MainWindow *>(window())->currentView();
 }
 
+QList<RepoView*> MenuBar::views() const
+{
+   MainWindow* win = static_cast<MainWindow *>(window());
+
+   QList<RepoView*> repos;
+   for (int i=0; i< win->count(); i++) {
+       repos.append(win->view(i));
+   }
+   return repos;
+}
+
 void MenuBar::setDebugMenuVisible(bool visible)
 {
   sDebugMenuVisible = visible;
@@ -999,4 +1027,9 @@ MenuBar *MenuBar::instance(QWidget *widget)
 
   return static_cast<MenuBar *>(window->menuBar());
 #endif
+}
+
+bool MenuBar::isMaximized()
+{
+    return mToggleMaximize->isActive();
 }
