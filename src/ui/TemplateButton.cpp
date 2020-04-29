@@ -102,6 +102,8 @@ QList<TemplateButton::Template> TemplateButton::loadTemplates()
         QString value;
         for (int i = 1; i < name_val.length(); i++) {
             value.append(name_val[i]);
+            if (i < name_val.length() - 1)
+                value.append(separator);
         }
 
         value = value.replace("\\n", "\n");
