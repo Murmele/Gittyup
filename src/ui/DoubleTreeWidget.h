@@ -54,6 +54,11 @@ private:
   void selectFile(const QString& file);
   void treeModelStateChanged(const QModelIndex& index, int checkState);
   void fileSelected(const QModelIndex &index);
+  /*!
+   * \brief loadEditorContent
+   * Updates the content of the blame editor and the diffView
+   * \param index Index of the current selected file
+   */
   void loadEditorContent(const QModelIndex &index);
   void toggleCollapseStagedFiles();
   void toggleCollapseUnstagedFiles();
