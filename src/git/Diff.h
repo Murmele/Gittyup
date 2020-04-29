@@ -16,6 +16,21 @@
 #include <QFlags>
 #include <QSharedPointer>
 
+/*!
+ * \brief containsPath
+ * Checks if \p str contains \p occurence from start (if it is a subfile/subfolder of \p occurence)
+ * Testcases:
+ * /src/testfile.txt, /src/testfile.txt1 - path: /src/testfile.txt --> only /src/testfile.txt1 is shown
+ * /src/testfile.txt, /src/testfile.txt1 - path: /src --> testfile.txt and testfile.txt is shown
+ * /src/test/test.txt11, /src/testfile.txt, /src/testfile.txt1 - path: /src/test --> only /src/test/testtest.txt11 is shown
+ * \param str String in which should be searched
+ * \param occurence Search this string in \p str
+ * \param cs Case sensitive or not
+ * \return True when contains, otherwise false
+ */
+bool containsPath(QString &str, QString &occurence, Qt::CaseSensitivity cs = Qt::CaseSensitive);
+
+
 namespace git {
 
 class Patch;

@@ -227,10 +227,17 @@ void DiffView::enable(bool enable)
 void DiffView::setFilter(const QStringList &paths)
 {
   fetchAll();
-  QSet<QString> set = QSet<QString>::fromList(paths);
   foreach (QWidget *widget, mFiles) {
     FileWidget *file = static_cast<FileWidget *>(widget);
-    file->setVisible(mEnabled && (set.isEmpty() || set.contains(file->name())));
+    QString name = file->name();
+    bool contains = false;
+    for (auto path : paths) {
+        if (containsPath(name, path)) {
+            contains = true;
+            break;
+        }
+    }
+    file->setVisible(mEnabled && (paths.isEmpty() || contains));
   }
 }
 

@@ -178,7 +178,8 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
       QString status;
       QString prefix = node->path(true);
       for (int i = 0; i < mDiff.count(); ++i) {
-        if (mDiff.name(i).startsWith(prefix)) {
+        QString name = mDiff.name(i);
+        if (containsPath(name, prefix)) {
           QChar ch = git::Diff::statusChar(mDiff.status(i));
           if (!status.contains(ch))
             status.append(ch);
@@ -298,8 +299,10 @@ QList<TreeModel::Node *> TreeModel::Node::children()
 {
   if (mChildren.isEmpty() && hasChildren()) {
     git::Tree tree = object();
-    for (int i = 0; i < tree.count(); ++i)
+    for (int i = 0; i < tree.count(); ++i) {
+        QString name = tree.name(i);
       mChildren.append(new Node(tree.name(i), tree.object(i), this));
+    }
   }
 
   return mChildren;
