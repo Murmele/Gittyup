@@ -699,7 +699,9 @@ void HunkWidget::load(git::Patch &staged, bool force)
   // number of total hunks.
   int stagedIndex = -1;
   QByteArray header = mPatch.header(mIndex);
-  if (mStaged.isValid()) {
+  // TODO: handle conflicted patch.
+  // There must exist a staged patch for it
+  if (mStaged.isValid() && !mPatch.isConflicted()) {
       for (int i = 0; i < mStaged.count(); i++) {
           if (mStaged.header(i) == header) {
               stagedIndex = i;
