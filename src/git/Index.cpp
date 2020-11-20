@@ -20,6 +20,7 @@
 #include "git2/repository.h"
 #include "git2/status.h"
 #include "git2/tree.h"
+#include "git2/odb.h"
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
@@ -425,8 +426,7 @@ Id Index::workdirId(const QString &path, uint32_t *mode) const
   Repository repo(git_index_owner(d->index));
 
   git_oid id;
-  if (int error = git_repository_hashfile(
-        &id, repo, path.toUtf8(), GIT_OBJECT_BLOB, nullptr))
+  if (int error = git_odb_hashfile(&id, path.toUtf8(), GIT_OBJECT_BLOB))
     return (error == GIT_EUSER) ? Id::invalidId() : Id();
 
   if (mode) {
