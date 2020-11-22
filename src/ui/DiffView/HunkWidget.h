@@ -171,6 +171,7 @@ private slots:
    */
   void setStaged(int lidx, bool staged);
   void marginClicked(int pos, int modifier, int margin);
+  void editorSetttingsChanged();
 
 private:
   void createMarkersAndLineNumbers(const Line& line, int lidx, Account::FileComments& comments, int width) const;

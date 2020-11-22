@@ -226,12 +226,7 @@ HunkWidget::HunkWidget(
   connect(mEditor, &TextEditor::unstageSelectedSignal, this, &HunkWidget::unstageSelected);
   connect(mEditor, &TextEditor::discardSelectedSignal, this, &HunkWidget::discardDialog);
   connect(mEditor, &TextEditor::marginClicked, this, &HunkWidget::marginClicked);
-
-  // Ensure that text margin reacts to settings changes.
-  connect(mEditor, &TextEditor::settingsChanged, [this] {
-    int width = mEditor->textWidth(STYLE_LINENUMBER, mEditor->marginText(0));
-    mEditor->setMarginWidthN(TextEditor::LineNumbers, width);
-  });
+  connect(mEditor, &TextEditor::settingsChanged, this, &HunkWidget::editorSetttingsChanged);
 
   // Darken background when find highlight is active.
   connect(mEditor, &TextEditor::highlightActivated,
@@ -453,6 +448,8 @@ HunkWidget::HunkWidget(
 
 HunkWidget::~HunkWidget() {
     EditorHandler::instance()->releaseEditor(mEditor);
+    disconnect(this, nullptr, mEditor, nullptr);
+    mEditor = nullptr;
 }
 _HunkWidget::Header* HunkWidget::header() const
 {
@@ -609,6 +606,15 @@ void HunkWidget::stageSelected(int startLine, int end) {
        setStaged(lidx, false);
      else
        setStaged(lidx, true);
+ }
+
+ void HunkWidget::editorSetttingsChanged() {
+     // Ensure that text margin reacts to settings changes.
+   if (!mEditor)
+       return;
+   qDebug() << "SettingsChanged called from editor " << mEditor << " and handled by " << this;
+   int width = mEditor->textWidth(STYLE_LINENUMBER, mEditor->marginText(0));
+   mEditor->setMarginWidthN(TextEditor::LineNumbers, width);
  }
 
 int HunkWidget::tokenEndPosition(int pos) const
