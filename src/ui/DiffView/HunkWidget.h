@@ -79,6 +79,7 @@ public:
     QWidget *parent = nullptr);
   _HunkWidget::Header *header() const;
   TextEditor *editor(bool ensureLoaded = true);
+  ~HunkWidget();
   void invalidate();
   /*!
    * Return hunk retrieved from the editor with removed discard lines

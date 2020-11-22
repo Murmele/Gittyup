@@ -19,6 +19,7 @@ add_library(ui
   DiffView/Images.cpp
   DiffView/Comment.cpp
   DiffView/EditButton.cpp
+  DiffView/EditorHandler.cpp
   DiffWidget.cpp
   DoubleTreeWidget.cpp
   EditorWindow.cpp

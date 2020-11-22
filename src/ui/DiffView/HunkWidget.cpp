@@ -7,6 +7,7 @@
 #include "app/Application.h"
 
 #include "Editor.h"
+#include "EditorHandler.h"
 
 #include "ui/RepoView.h"
 #include "ui/MenuBar.h"
@@ -211,7 +212,7 @@ HunkWidget::HunkWidget(
   connect(this, &HunkWidget::stageStageChanged, mHeader, &_HunkWidget::Header::stageStateChanged);
   connect(mHeader, &_HunkWidget::Header::discard, this, &HunkWidget::discard);
 
-  mEditor = new Editor(this);
+  mEditor = EditorHandler::instance()->getEditor(this);//new Editor(this);
   mEditor->setLexer(patch.name());
   mEditor->setCaretStyle(CARETSTYLE_INVISIBLE);
   mEditor->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -449,6 +450,10 @@ HunkWidget::HunkWidget(
   });
 }
 
+
+HunkWidget::~HunkWidget() {
+    EditorHandler::instance()->releaseEditor(mEditor);
+}
 _HunkWidget::Header* HunkWidget::header() const
 {
   return mHeader;
