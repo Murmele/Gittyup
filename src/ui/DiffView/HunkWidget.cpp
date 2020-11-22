@@ -448,8 +448,6 @@ HunkWidget::HunkWidget(
 
 HunkWidget::~HunkWidget() {
     EditorHandler::instance()->releaseEditor(mEditor);
-    disconnect(this, nullptr, mEditor, nullptr);
-    mEditor = nullptr;
 }
 _HunkWidget::Header* HunkWidget::header() const
 {
@@ -610,9 +608,6 @@ void HunkWidget::stageSelected(int startLine, int end) {
 
  void HunkWidget::editorSetttingsChanged() {
      // Ensure that text margin reacts to settings changes.
-   if (!mEditor)
-       return;
-   qDebug() << "SettingsChanged called from editor " << mEditor << " and handled by " << this;
    int width = mEditor->textWidth(STYLE_LINENUMBER, mEditor->marginText(0));
    mEditor->setMarginWidthN(TextEditor::LineNumbers, width);
  }
