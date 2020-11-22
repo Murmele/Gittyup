@@ -2,10 +2,12 @@
 #define EDITORHANDLER_H
 
 #include <QSharedPointer>
+#include <QObject>
 
 class QWidget;
 class Editor;
 class TextEditor;
+class QTimer;
 /*!
  * \brief The EditorHandler class
  * Singletone to handle all editors used in the hunkwidgets.
@@ -22,8 +24,9 @@ class TextEditor;
  *
  * Class editor has a size about 3000 bytes. So it is not that important to delete all of them
  */
-class EditorHandler
+class EditorHandler: public QObject
 {
+    Q_OBJECT
 public:
 	static EditorHandler* instance() {
 		static CGuard g;   // Speicherbereinigung
@@ -56,7 +59,11 @@ private:
 			}
 		}
 	};
+private slots:
+    void deleteEditors();
+    void editorDestroyed(QObject* e);
 private:
+    QTimer* mTimer;
     QVector<EditorFree> mEditors; // stores pointers to the editors
 };
 #endif // EDITORHANDLER_H
