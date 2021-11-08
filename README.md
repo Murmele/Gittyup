@@ -107,10 +107,12 @@ How to Install
 The easies way to install Gittyup is by using [Flatpak](https://www.flatpak.org/)
 Ubuntu: apt-get install flatpak flatpak-builder
 
-1) Download flatpak manifest located in the repository at `gittyup/pack/flatpak/io.github.gittyup.gittyup.json`
-2) Build and install flatpak package (must be executed as root):
+`flatpak remote-add flathub https://flathub.org/repo/flathub.flatpakrepo`
 
-    flatpak-builder --force-clean --install ./build io.github.gittyup.gittyup.json
+`flatpak install io.github.gitahead.gitahead` (uses the https://github.com/Murmele/Gittyup fork)
+
+then run with `flatpak run io.github.gitahead.GitAhead`
+
 
 How to Contribute
 -----------------
