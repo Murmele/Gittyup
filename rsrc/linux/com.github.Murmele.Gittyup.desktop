@@ -2,11 +2,11 @@
 Encoding=UTF-8
 Name=Gittyup
 Comment=Graphical Git client for Windows, Linux and macOS
-Exec=Gittyup
+Exec=/usr/bin/gittyup
 StartupWMClass=gittyup
 Icon=gittyup
 Terminal=false
 Type=Application
 Categories=Development;
 X-Desktop-File-Install-Version=0.1
-Name[de_DE]=com.github.Murmele.Gittyup.desktop
+Name[de_DE]=Gittyup
