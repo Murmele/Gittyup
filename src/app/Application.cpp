@@ -372,11 +372,11 @@ void Application::track(const QUrlQuery &query)
   tmp.addQueryItem("tid", GITTYUP_TRACKING_ID);
   tmp.addQueryItem("cid", mClientId);
 
-  QString header = "application/x-www-form-urlencoded";
-  QNetworkRequest request(QUrl("http://google-analytics.com/collect"));
-  request.setHeader(QNetworkRequest::ContentTypeHeader, header);
+//  QString header = "application/x-www-form-urlencoded";
+//  QNetworkRequest request(QUrl("http://google-analytics.com/collect"));
+//  request.setHeader(QNetworkRequest::ContentTypeHeader, header);
 
-  mTrackingMgr->post(request, tmp.query().toUtf8());
+//  mTrackingMgr->post(request, tmp.query().toUtf8());
 }
 
 void Application::handleSslErrors(

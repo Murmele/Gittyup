@@ -126,6 +126,7 @@ public:
     connect(privacy, &QLabel::linkActivated, [] {
       AboutDialog::openSharedInstance(AboutDialog::Privacy);
     });
+	mUsageReporting->setEnabled(false);
 
     QFormLayout *form = new QFormLayout;
     form->addRow(tr("User name:"), mName);
