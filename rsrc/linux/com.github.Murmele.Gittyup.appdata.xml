@@ -46,7 +46,7 @@
           <li>Maximize History or Diff view by pressing Ctrl+M</li>
           <li>Ignore Pattern: Ability to ignore all files defined by a pattern instead of only one file</li>
           <li>Tag Viewer: When creating a new tag all available tags are visible. Makes it easier to create consistent tags.</li>
-          <li>Commit Message template: Making it easier to write template based commit messages
+          <li>Commit Message template: Making it easier to write template based commit messages.</li>
         </ul>
       </description>
     </release>
