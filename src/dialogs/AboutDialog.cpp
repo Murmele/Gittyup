@@ -39,7 +39,8 @@ const QString kSubtitleFmt =
 
 const QString kTextFmt =
   "<p style='white-space: nowrap'><b style='font-size: large'>%1 v%2</b> "
-  "- %3 - %4<br>Copyright © 2016-2020 Scientific Toolworks, Inc. and "
+  "- %3 - %4<br>Copyright © 2021 Gittyup contributors"
+  "<br>Copyright © 2016-2020 Scientific Toolworks, Inc. and "
   "contributors</p><p> If you have a question that might benefit the "
   "community, consider asking it on <a href='%5'>Stack Overflow</a> by "
   "including 'gittyup' in the tags. Otherwise, contact us at "
