@@ -18,7 +18,15 @@
   <screenshots>
     <screenshot type="default">
       <caption>The main view</caption>
-        <image>https://gitahead.github.io/gitahead.com/images/dark.png</image>
+        <image>https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/dark.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Commit Message Template Editor</caption>
+        <image>https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/CommitMessageTemplateEditor.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Tag Creation</caption>
+        <image>https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/TagCreation.png</image>
     </screenshot>
   </screenshots>
 
@@ -30,6 +38,18 @@
   </provides>
 
   <releases>
+    <release version="V1.0.0" date="2021-11-18">
+        <description>
+        <ul>
+          <li>Staging of single lines</li>
+          <li>Double tree view: Seeing staged and unstaged changes in different trees.</li>
+          <li>Maximize History or Diff view by pressing Ctrl+M</li>
+          <li>Ignore Pattern: Ability to ignore all files defined by a pattern instead of only one file</li>
+          <li>Tag Viewer: When creating a new tag all available tags are visible. Makes it easier to create consistent tags.</li>
+          <li>Commit Message template: Making it easier to write template based commit messages
+        </ul>
+      </description>
+    </release>
     <release version="2018.03.23" date="2018-03-23">
       <description>
         <p>Initial Flathub release</p>
