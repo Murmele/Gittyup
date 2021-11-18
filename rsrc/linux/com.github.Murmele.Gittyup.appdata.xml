@@ -10,6 +10,12 @@
     <p>Features:</p>
     <ul>
 		<li>Fast native interface designed to help you understand and manage your source code history</li>
+        <li>Staging of single lines</li>
+        <li>Double tree view: Seeing staged and unstaged changes in different trees.</li>
+        <li>Maximize History or Diff view by pressing Ctrl+M</li>
+        <li>Ignore Pattern: Ability to ignore all files defined by a pattern instead of only one file</li>
+        <li>Tag Viewer: When creating a new tag all available tags are visible. Makes it easier to create consistent tags.</li>
+        <li>Commit Message template: Making it easier to write template based commit messages.</li>
     </ul>
   </description>
 
@@ -48,11 +54,6 @@
           <li>Tag Viewer: When creating a new tag all available tags are visible. Makes it easier to create consistent tags.</li>
           <li>Commit Message template: Making it easier to write template based commit messages.</li>
         </ul>
-      </description>
-    </release>
-    <release version="2018.03.23" date="2018-03-23">
-      <description>
-        <p>Initial Flathub release</p>
       </description>
     </release>
   </releases>
