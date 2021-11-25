@@ -16,6 +16,7 @@
 #include "git/Patch.h"
 #include <QStringBuilder>
 #include <QUrl>
+//#include "RepoView.h"
 
 namespace {
 
@@ -279,6 +280,9 @@ bool DiffTreeModel::discard(const QModelIndex &index)
 		for (auto submodule: s) {
 			if (submodule.path() == trackedPatch) {
 				is_submodule = true;
+				// TODO: bad nullptr. Must be valid! Otherwise in the case of an error
+				// a nullptr exception occurs
+				//auto repoView = RepoView::parentView(this->);
 				submodule.update(nullptr, false, true); // In Repo view it is done asynchron. Maybe changing here too!
 				break;
 			}
