@@ -53,9 +53,9 @@ if(APPLE)
   set(QT_MODULES ${QT_MODULES} DBus)
 endif()
 
-find_package(Qt5 5.15 COMPONENTS ${QT_MODULES} LinguistTools REQUIRED)
+find_package(Qt5 5.12 COMPONENTS ${QT_MODULES} LinguistTools REQUIRED)
 if (FLATPAK)
-    find_package(Qt5 5.15 COMPONENTS XcbQpa REQUIRED)
+    find_package(Qt5 5.12 COMPONENTS XcbQpa REQUIRED)
 endif()
 
 set(QT_TRANSLATIONS_DIR "${Qt5_DIR}/../../../translations")
