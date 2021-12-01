@@ -29,7 +29,6 @@ endif()
 set(BUILD_SHARED_LIBS OFF)
 
 option(FLATPAK "Building for flatpak" OFF)
-set(QtVersion "5.15" CACHE STRING "Qt Version used for building")
 
 # Require C++17.
 set(CMAKE_CXX_STANDARD 17)
