@@ -360,7 +360,9 @@ QModelIndex FileWidget::modelIndex()
 }
 
 void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged) {
-  mHeader->updatePatch(patch);
+    mPatch = patch;
+    mHeader->updatePatch(patch);
+    mStaged = staged;
 
   git::Repository repo = RepoView::parentView(this)->repo();
 
@@ -377,25 +379,52 @@ void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged) 
   // Add untracked file content.
   if (patch.isUntracked()) {
     if (!QFileInfo(path).isDir())
-      mHunkLayout->addWidget(addHunk(mDiff, patch, staged, -1, lfs, submodule));
+      mHunkLayout->addWidget(addHunk(mDiff, mPatch, mStaged, -1, lfs, submodule));
     return;
   }
+  fetchMore();
+}
 
-  // Generate a diff between the head tree and index.
-  QSet<int> stagedHunks;
-  if (staged.isValid()) {
-    for (int i = 0; i < staged.count(); ++i)
-      stagedHunks.insert(staged.lineNumber(i, 0, git::Diff::OldFile));
+bool FileWidget::canFetchMore()
+{
+  return  mHunkLayout->children().count() < mPatch.count();
+}
+
+/*!
+ * \brief DiffView::fetchMore
+ * Fetch maxNewFiles more patches
+ * use a while loop with canFetchMore() to get all
+ */
+int FileWidget::fetchMore()
+{
+  const int maxNewFiles = 8;
+  QVBoxLayout *layout = mHunkLayout;
+
+  git::Repository repo = RepoView::parentView(this)->repo();
+
+  // Add widgets.
+  int addedFiles = 0;
+  int count = mPatch.count();
+  auto hunkCount = mHunkLayout->children().count();
+  bool lfs = mPatch.isLfsPointer();
+  QString name = mPatch.name();
+  bool submodule = repo.lookupSubmodule(name).isValid();
+
+  int i;
+  for (i = hunkCount; i < count && addedFiles < maxNewFiles; ++i) {
+      HunkWidget *hunk = addHunk(mDiff, mPatch, mStaged, i, lfs, submodule);
+      mHunkLayout->addWidget(hunk);
   }
 
-  // Add diff hunks.
-  int hunkCount = patch.count();
-  for (int hidx = 0; hidx < hunkCount; ++hidx) {
-    HunkWidget *hunk = addHunk(mDiff, patch, staged, hidx, lfs, submodule);
-    int startLine = patch.lineNumber(hidx, 0, git::Diff::OldFile);
-    //hunk->header()->check()->setChecked(stagedHunks.contains(startLine)); // not correct, because it could also only a part of the hunk staged (single lines)
-    mHunkLayout->addWidget(hunk);
-  }
+  return (i - hunkCount);
+}
+
+void FileWidget::fetchAll(int index)
+{
+  // Load all patches up to and including index.
+  auto hunksCount = mHunkLayout->children().count();
+  while ((index < 0 || hunksCount <= index) && canFetchMore())
+    fetchMore();
 }
 
 _FileWidget::Header *FileWidget::header() const

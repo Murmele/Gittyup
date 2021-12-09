@@ -111,6 +111,16 @@ public:
     bool submodule);
     void setStageState(git::Index::StagedState state);
     QModelIndex modelIndex();
+
+    // Fetching new hunks
+    bool canFetchMore();
+    /*!
+     * \brief DiffView::fetchMore
+     * Fetch maxNewFiles more patches
+     * use a while loop with canFetchMore() to get all
+     */
+    int fetchMore();
+    void fetchAll(int index);
 public slots:
   void headerCheckStateChanged(int state);
   /*!
@@ -140,6 +150,7 @@ private:
 
   git::Diff mDiff;
   git::Patch mPatch;
+  git::Patch mStaged;
   QModelIndex mModelIndex;
 
   _FileWidget::Header *mHeader{nullptr};

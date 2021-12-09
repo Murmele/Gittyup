@@ -369,7 +369,7 @@ bool DiffView::canFetchMore()
  */
 void DiffView::fetchMore()
 {
-  const int maxNewFiles = 8;
+  int maxNewFiles = 8;
   QVBoxLayout *layout = static_cast<QVBoxLayout *>(widget()->layout());
 
   // Add widgets.
@@ -380,6 +380,15 @@ void DiffView::fetchMore()
   //QList<int> patchIndices = mDiffTreeModel->patchIndices(dtw->selectedIndex());
   QList<QModelIndex> indices = mDiffTreeModel->modelIndices(dtw->selectedIndex());
   int count = indices.count();
+
+  // First load all hunks of last file and then go on with loading new files
+  if (mFiles.count() > 0) {
+      auto lastFile = mFiles[mFiles.count() -1];
+      if (lastFile->canFetchMore()) {
+        maxNewFiles -= lastFile->fetchMore();
+      }
+  }
+
 
   for (int i = mFiles.count(); i < count && addedFiles < maxNewFiles; ++i) {
 
@@ -396,6 +405,7 @@ void DiffView::fetchMore()
 
     git::Patch staged = mStagedPatches.value(patch.name());
     FileWidget *file = new FileWidget(this, mDiff, patch, staged, indices[i], widget());
+    addedFiles += file->hunks().count();
     file->setStageState(state);
     mFileWidgetLayout->addWidget(file);
 
