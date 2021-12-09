@@ -414,6 +414,7 @@ int FileWidget::fetchMore()
   for (i = hunkCount; i < count && addedFiles < maxNewFiles; ++i) {
       HunkWidget *hunk = addHunk(mDiff, mPatch, mStaged, i, lfs, submodule);
       mHunkLayout->addWidget(hunk);
+      addedFiles ++;
   }
 
   return (i - hunkCount);
