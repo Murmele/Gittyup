@@ -376,6 +376,8 @@ void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged) 
   while ((child = mHunkLayout->takeAt(0)) != 0) {
         delete child;
   }
+  mHunks.clear();
+
   // Add untracked file content.
   if (patch.isUntracked()) {
     if (!QFileInfo(path).isDir())
@@ -387,7 +389,7 @@ void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged) 
 
 bool FileWidget::canFetchMore()
 {
-  return  mHunkLayout->children().count() < mPatch.count();
+  return  mHunks.count() < mPatch.count();
 }
 
 /*!
@@ -398,14 +400,12 @@ bool FileWidget::canFetchMore()
 int FileWidget::fetchMore()
 {
   const int maxNewFiles = 8;
-  QVBoxLayout *layout = mHunkLayout;
-
   git::Repository repo = RepoView::parentView(this)->repo();
 
   // Add widgets.
   int addedFiles = 0;
   int count = mPatch.count();
-  auto hunkCount = mHunkLayout->children().count();
+  auto hunkCount = mHunks.count();
   bool lfs = mPatch.isLfsPointer();
   QString name = mPatch.name();
   bool submodule = repo.lookupSubmodule(name).isValid();
@@ -423,7 +423,7 @@ int FileWidget::fetchMore()
 void FileWidget::fetchAll(int index)
 {
   // Load all patches up to and including index.
-  auto hunksCount = mHunkLayout->children().count();
+  auto hunksCount = mHunks.count();
   while ((index < 0 || hunksCount <= index) && canFetchMore())
     fetchMore();
 }
