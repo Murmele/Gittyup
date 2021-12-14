@@ -483,6 +483,7 @@ HunkWidget *FileWidget::addHunk(
 
 void FileWidget::stageHunks(const HunkWidget* hunk, git::Index::StagedState stageState, bool completeFile, bool completeFileStaged)
 {
+	// Might be a problem if not all hunks are loaded
   if (mSupressStaging)
       return;
 
@@ -558,6 +559,8 @@ void FileWidget::stageHunks(const HunkWidget* hunk, git::Index::StagedState stag
 }
 
 void FileWidget::discardHunk() {
+	// It is not problem, if not all hunks are loaded, because it is not possible
+	// to discard a hunk which is not visible
     HunkWidget* hunk = static_cast<HunkWidget*>(QObject::sender());
     git::Repository repo = mPatch.repo();
     if (mPatch.isUntracked()) {
