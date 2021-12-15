@@ -504,6 +504,7 @@ void FileWidget::stageHunks(const HunkWidget* hunk, git::Index::StagedState stag
     else if (state == git::Index::Unstaged)
         unstaged ++;
   }
+  // TODO: check all not loaded hunks!
 
   mSuppressUpdate = true;
 
@@ -548,6 +549,8 @@ void FileWidget::stageHunks(const HunkWidget* hunk, git::Index::StagedState stag
       hunk_content = mHunks[i]->apply();
       mPatch.apply(image, i, hunk_content);
   }
+  // TODO: apply all not loaded hunks
+  // Maybe by applying the mStaged?? Otherwise everything gets staged
   buffer = mPatch.generateResult(image);
 
   // Add the buffer to the index.
