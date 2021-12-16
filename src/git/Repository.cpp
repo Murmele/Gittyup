@@ -906,7 +906,7 @@ bool Repository::checkout(
   const Commit &commit,
   CheckoutCallbacks *callbacks,
   const QStringList &paths,
-  int strategy)
+  int strategy, const QString& targetDirectory)
 {
   git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
   opts.checkout_strategy = strategy;
@@ -934,6 +934,9 @@ bool Repository::checkout(
     opts.paths.count = rawPaths.size();
     opts.paths.strings = rawPaths.data();
   }
+
+  if (!targetDirectory.isEmpty())
+    opts.target_directory = targetDirectory.toUtf8();
 
   git_commit *tmp = commit;
   git_object *obj = reinterpret_cast<git_object *>(tmp);

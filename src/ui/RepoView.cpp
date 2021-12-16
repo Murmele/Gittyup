@@ -1977,7 +1977,7 @@ void RepoView::promptToCheckout()
   dialog->open();
 }
 
-void RepoView::checkout(const git::Commit &commit, const QStringList &paths)
+void RepoView::checkout(const git::Commit &commit, const QStringList &paths, const QString &targetDirectory)
 {
   QString count = QString::number(paths.size());
   QString name = (paths.size() == 1) ? tr("file") : tr("files");
@@ -1986,7 +1986,9 @@ void RepoView::checkout(const git::Commit &commit, const QStringList &paths)
 
   CheckoutCallbacks callbacks(entry, GIT_CHECKOUT_NOTIFY_ALL);
   int strategy = GIT_CHECKOUT_SAFE | GIT_CHECKOUT_DONT_UPDATE_INDEX;
-  mRepo.checkout(commit, &callbacks, paths, strategy);
+  if (mRepo.checkout(commit, &callbacks, paths, strategy, targetDirectory) == 0) {
+    error(entry, "Checkout", "");
+  }
   mRefs->select(mRepo.head());
 }
 
@@ -2048,8 +2050,7 @@ void RepoView::checkout(
   dialog->open();
 }
 
-void RepoView::checkout(
-  const git::Commit &commit,
+void RepoView::checkout(const git::Commit &commit,
   const git::Reference &ref,
   bool detach)
 {

@@ -21,6 +21,8 @@
 #include <QDir>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QFileDialog>
+#include <QDesktopServices>
 
 namespace {
 
@@ -234,16 +236,44 @@ FileContextMenu::FileContextMenu(
       view->setViewMode(RepoView::DoubleTree);
     });
 
-    checkout->setEnabled(!view->repo().isBare());
+    // Checkout to ...
+    QAction *checkoutTo = addAction(tr("Checkout to ..."), [this, view, files] {
+      QFileDialog d(this);
+      d.setFileMode(QFileDialog::FileMode::Directory);
+      d.setOption(QFileDialog::ShowDirsOnly);
+      d.setWindowTitle(tr("Select checkout directory"));
+      if (d.exec()) {
+          auto folder = d.selectedFiles().first();
+          view->checkout(view->commits().first(), files, folder);
+          view->setViewMode(RepoView::DoubleTree);
+      }
+      });
+
+
+    QAction *openWith = addAction(tr("Open with ..."), [this, view, files] {
+      QString folder = ".";
+      view->checkout(view->commits().first(), QStringList(files.first()), folder);
+      view->setViewMode(RepoView::DoubleTree);
+      QDesktopServices::openUrl(QUrl::fromLocalFile(QDir(folder).filePath(files.first())));
+    });
+
+    auto isBare = view->repo().isBare();
+    checkout->setEnabled(!isBare);
+    checkoutTo->setEnabled(!isBare);
+    openWith->setEnabled(!isBare);
 
     git::Commit commit = commits.first();
     foreach (const QString &file, files) {
       if (commit.tree().id(file) == repo.workdirId(file)) {
         checkout->setEnabled(false);
+        checkoutTo->setEnabled(false);
+        openWith->setEnabled(false);
         break;
       }
     }
   }
+
+
 
   // LFS
   if (repo.lfsIsInitialized()) {
