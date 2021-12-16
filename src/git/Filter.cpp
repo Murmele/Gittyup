@@ -14,6 +14,7 @@
 #include "git2/filter.h"
 #include "git2/repository.h"
 #include "git2/sys/filter.h"
+#include "git2/deprecated.h"
 #include <QMap>
 #include <QProcess>
 

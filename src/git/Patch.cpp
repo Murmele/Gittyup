@@ -12,6 +12,7 @@
 #include "Id.h"
 #include "Repository.h"
 #include "git2/filter.h"
+#include "git2/deprecated.h"
 #include <QDataStream>
 #include <QFile>
 #include <QMap>

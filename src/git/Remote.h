@@ -17,7 +17,7 @@
 #include <QSet>
 #include <QSharedPointer>
 
-struct git_cred;
+struct git_credential;
 struct git_oid;
 struct git_remote;
 struct git_indexer_progress;

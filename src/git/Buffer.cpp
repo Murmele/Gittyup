@@ -8,6 +8,7 @@
 //
 
 #include "Buffer.h"
+#include "git2/deprecated.h"
 
 namespace git {
 

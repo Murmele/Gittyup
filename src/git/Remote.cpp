@@ -16,6 +16,7 @@
 #include "git2/clone.h"
 #include "git2/remote.h"
 #include "git2/signature.h"
+#include "git2/deprecated.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>

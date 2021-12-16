@@ -115,8 +115,8 @@ Id Submodule::workdirId() const
 int Submodule::status() const
 {
   unsigned int status = 0;
-  if (git_submodule_status(&status, d.data(), GIT_SUBMODULE_IGNORE_UNSPECIFIED))
-    return -1;
+//  if (git_submodule_status(&status, d.data(), GIT_SUBMODULE_IGNORE_UNSPECIFIED))
+//    return -1;
 
   return status;
 }

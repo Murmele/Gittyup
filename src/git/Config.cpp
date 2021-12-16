@@ -109,8 +109,9 @@ QString Config::value<QString>(
   const QString &key,
   const QString &defaultValue) const
 {
-  git_buf buf = GIT_BUF_INIT_CONST(nullptr, 0);
-  git_config_get_string_buf(&buf, d.data(), key.toUtf8());
+  git_buf buf;
+  if (git_config_get_string_buf(&buf, d.data(), key.toUtf8()))
+      return defaultValue;
   QString value = QString::fromUtf8(buf.ptr, buf.size);
   git_buf_dispose(&buf);
   return !value.isEmpty() ? value : defaultValue;
@@ -183,8 +184,10 @@ QString Config::globalPath()
   config.setValue("global.force", true);
   config.remove("global.force");
 
-  git_buf buf = GIT_BUF_INIT_CONST(nullptr, 0);
-  git_config_find_global(&buf);
+  git_buf buf;
+  if (git_config_find_global(&buf))
+      return "";
+
   QString path = QString::fromUtf8(buf.ptr, buf.size);
   git_buf_dispose(&buf);
 
