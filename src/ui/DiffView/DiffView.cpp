@@ -382,8 +382,8 @@ void DiffView::fetchMore()
   int count = indices.count();
 
   // First load all hunks of last file and then go on with loading new files
-  if (mFiles.count() > 0) {
-      auto lastFile = mFiles[mFiles.count() -1];
+  if (!mFiles.isEmpty()) {
+      auto lastFile = mFiles.last();
       while (lastFile->canFetchMore() && maxNewFiles > 0) {
         maxNewFiles -= lastFile->fetchMore();
       }
