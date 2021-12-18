@@ -11,6 +11,7 @@
 #define DOUBLETREEWIDGET_H
 
 #include "DetailView.h" // ContentWidget
+#include <QButtonGroup>
 
 class QTreeView;
 class DiffTreeModel;
@@ -60,9 +61,11 @@ private:
   DiffTreeModel* mDiffTreeModel{nullptr};
   TreeView* stagedFiles{nullptr};
   TreeView* unstagedFiles{nullptr};
-  StatePushButton* collapseButtonStagedFiles{nullptr};
-  StatePushButton* collapseButtonUnstagedFiles{nullptr};
-  QLabel* mUnstagedCommitedFiles{nullptr};
+  StatePushButton *mCollapseButtonStagedFiles{nullptr};
+  StatePushButton *mCollapseButtonUnstagedFiles{nullptr};
+  QLabel *mUnstagedCommitedFiles{nullptr};
+
+  const QButtonGroup *mViewButtonGroup;
 
   struct SelectedFile {
     QString filename;
@@ -92,4 +95,5 @@ private:
   QStackedWidget* mFileView{nullptr};
   bool mIgnoreSelectionChange{false};
 };
+
 #endif // DOUBLETREEWIDGET_H
