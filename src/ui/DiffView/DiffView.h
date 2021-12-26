@@ -125,7 +125,7 @@ protected:
 
 private:
   bool canFetchMore();
-  void fetchMore();
+  void fetchMore(int count = 4);
   void fetchAll(int index = -1);
   void indexChanged(const QStringList& paths);
 

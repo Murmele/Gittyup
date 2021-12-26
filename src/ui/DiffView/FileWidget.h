@@ -116,11 +116,12 @@ public:
     bool canFetchMore();
     /*!
      * \brief DiffView::fetchMore
-     * Fetch maxNewFiles more patches
+     * Fetch count more patches
      * use a while loop with canFetchMore() to get all
      */
-    int fetchMore();
-    void fetchAll(int index);
+    void fetchMore(int count = 4);
+    void fetchAll(int index = -1);
+
 public slots:
   void headerCheckStateChanged(int state);
   /*!

@@ -84,7 +84,7 @@ _FileWidget::Header::Header(
 
     git::RepositoryNotifier *notifier = patch.repo().notifier();
     connect(notifier, &git::RepositoryNotifier::lfsLocksChanged, this,
-    [this, patch, lfsLockButton] {
+    [patch, lfsLockButton] {
       bool locked = patch.repo().lfsIsLocked(patch.name());
       lfsLockButton->setText(locked ? FileWidget::tr("Unlock") : FileWidget::tr("Lock"));
     });
@@ -179,6 +179,8 @@ void _FileWidget::Header::setStageState(git::Index::StagedState state) {
 
 void _FileWidget::Header::mouseDoubleClickEvent(QMouseEvent *event)
 {
+  Q_UNUSED(event)
+
   if (mDisclosureButton->isEnabled())
     mDisclosureButton->toggle();
 }
@@ -384,46 +386,44 @@ void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged) 
       mHunkLayout->addWidget(addHunk(mDiff, mPatch, mStaged, -1, lfs, submodule));
     return;
   }
-  fetchMore();
 }
 
 bool FileWidget::canFetchMore()
 {
-  return  mHunks.count() < mPatch.count();
+  return mHunks.count() < mPatch.count();
 }
 
 /*!
  * \brief DiffView::fetchMore
- * Fetch maxNewFiles more patches
+ * Fetch count more patches
  * use a while loop with canFetchMore() to get all
  */
-int FileWidget::fetchMore()
+void FileWidget::fetchMore(int count)
 {
-  const int maxNewFiles = 8;
   git::Repository repo = RepoView::parentView(this)->repo();
 
   // Add widgets.
-  int addedFiles = 0;
-  int count = mPatch.count();
-  auto hunkCount = mHunks.count();
+  int patchCount = mPatch.count();
+  int hunksCount = mHunks.count();
+
+  // Fetch all hunks
+  if (count < 0)
+    count = patchCount;
+
   bool lfs = mPatch.isLfsPointer();
   QString name = mPatch.name();
   bool submodule = repo.lookupSubmodule(name).isValid();
 
-  int i;
-  for (i = hunkCount; i < count && addedFiles < maxNewFiles; ++i) {
-      HunkWidget *hunk = addHunk(mDiff, mPatch, mStaged, i, lfs, submodule);
-      mHunkLayout->addWidget(hunk);
-      addedFiles ++;
+  for (int i = hunksCount; i < patchCount && i < (hunksCount + count); ++i) {
+    HunkWidget *hunk = addHunk(mDiff, mPatch, mStaged, i, lfs, submodule);
+    mHunkLayout->addWidget(hunk);
   }
-
-  return (i - hunkCount);
 }
 
 void FileWidget::fetchAll(int index)
 {
   // Load all patches up to and including index.
-  auto hunksCount = mHunks.count();
+  int hunksCount = mHunks.count();
   while ((index < 0 || hunksCount <= index) && canFetchMore())
     fetchMore();
 }
@@ -472,6 +472,8 @@ HunkWidget *FileWidget::addHunk(
   // Respond to editor diagnostic signal.
   connect(editor, &TextEditor::diagnosticAdded,
   [this](int line, const TextEditor::Diagnostic &diag) {
+    Q_UNUSED(line)
+
     emit diagnosticAdded(diag.kind);
   });
 
@@ -621,7 +623,7 @@ void FileWidget::discard() {
       untracked ? FileWidget::tr("Remove %1").arg(arg) : FileWidget::tr("Discard Changes");
     QPushButton *discard =
       dialog->addButton(button, QMessageBox::AcceptRole);
-    connect(discard, &QPushButton::clicked, [this, untracked] {
+    connect(discard, &QPushButton::clicked, [this] {
       emit discarded(mModelIndex);
     });
 

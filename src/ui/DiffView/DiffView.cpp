@@ -179,21 +179,12 @@ void DiffView::setDiff(const git::Diff &diff)
     }
   }
 
-  if (canFetchMore())
-    fetchMore();
-
   // Load patches on demand.
   QScrollBar *scrollBar = verticalScrollBar();
   mConnections.append(
     connect(scrollBar, &QScrollBar::valueChanged, [this](int value) {
-      if (value > verticalScrollBar()->maximum() / 2 && canFetchMore())
-        fetchMore();
-    })
-  );
-
-  mConnections.append(
-    connect(scrollBar, &QScrollBar::rangeChanged, [this](int min, int max) {
-      if (max - min < this->widget()->height() / 2 && canFetchMore())
+      // Start loading (more) files when scrollbar hits the maximum
+      if (value >= verticalScrollBar()->maximum() && canFetchMore())
         fetchMore();
     })
   );
@@ -286,15 +277,19 @@ void DiffView::diffTreeModelDataChanged(const QModelIndex &topLeft, const QModel
 
 void DiffView::updateFiles()
 {
-    while (mFiles.count()) {
-        auto file = mFiles.takeFirst();
-        mFileWidgetLayout->removeWidget(file);
-        delete file;
-    }
-    mFiles.clear();
+  while (mFiles.count()) {
+    auto file = mFiles.takeFirst();
+    mFileWidgetLayout->removeWidget(file);
+    delete file;
+  }
+  mFiles.clear();
 
-    if (canFetchMore())
-      fetchMore();
+  // Reset vertical scrollbar prior to (re)loading files
+  verticalScrollBar()->setRange(0,0);
+  verticalScrollBar()->setValue(0);
+
+  if (canFetchMore())
+    fetchMore();
 }
 
 QList<TextEditor *> DiffView::editors()
@@ -357,9 +352,15 @@ void DiffView::dragEnterEvent(QDragEnterEvent *event)
 
 bool DiffView::canFetchMore()
 {
+  if (!mFiles.isEmpty()) {
+    FileWidget *lastFile = mFiles.last();
+    if (lastFile->canFetchMore())
+      return true;
+  }
+
   auto dtw = dynamic_cast<DoubleTreeWidget*>(mParent); // for an unknown reason parent() and p are not the same
   assert(dtw);
-  return  mDiff.isValid() && mFiles.size() < mDiffTreeModel->fileCount(dtw->selectedIndex());
+  return mDiff.isValid() && mFiles.size() < mDiffTreeModel->fileCount(dtw->selectedIndex());
 }
 
 /*!
@@ -367,33 +368,43 @@ bool DiffView::canFetchMore()
  * Fetch maxNewFiles more patches
  * use a while loop with canFetchMore() to get all
  */
-void DiffView::fetchMore()
+void DiffView::fetchMore(int count)
 {
-  int maxNewFiles = 8;
-  QVBoxLayout *layout = static_cast<QVBoxLayout *>(widget()->layout());
-
   // Add widgets.
   RepoView *view = RepoView::parentView(this);
-  int addedFiles = 0;
 
   auto dtw = dynamic_cast<DoubleTreeWidget*>(mParent);
   //QList<int> patchIndices = mDiffTreeModel->patchIndices(dtw->selectedIndex());
   QList<QModelIndex> indices = mDiffTreeModel->modelIndices(dtw->selectedIndex());
-  int count = indices.count();
+  int filesCount = indices.count();
 
-  // First load all hunks of last file and then go on with loading new files
+  // Fetch all files
+  bool fetchAll = count < 0 ? true : false;
+  if (count < 0)
+    count = 4;
+
+  // Busy cursor indication
+  QApplication::setOverrideCursor(Qt::BusyCursor);
+
+  // First load all hunks of last file before loading new files
   if (!mFiles.isEmpty()) {
-      auto lastFile = mFiles.last();
-      while (lastFile->canFetchMore() && maxNewFiles > 0) {
-        maxNewFiles -= lastFile->fetchMore();
-      }
+    FileWidget *lastFile = mFiles.last();
+    while (lastFile->canFetchMore() &&
+           ((verticalScrollBar()->maximum() - verticalScrollBar()->value() < height() / 2) ||
+            fetchAll)) {
+      lastFile->fetchMore(fetchAll ? -1 : 1);
+
+      // Load hunk(s) and update scrollbar
+      QApplication::processEvents();
+    }
+
+    // Stop loading files
+    if (verticalScrollBar()->maximum() - verticalScrollBar()->value() > height() / 2)
+      count = fetchAll ? 4 : 0;
   }
 
-
-  for (int i = mFiles.count(); i < count && addedFiles < maxNewFiles; ++i) {
-
+  for (int i = mFiles.count(); i < filesCount && i < (mFiles.count() + count); ++i) {
     int pidx = indices[i].data(DiffTreeModel::PatchIndexRole).toInt();
-    addedFiles ++;
     git::Patch patch = mDiff.patch(pidx);
     if (!patch.isValid()) {
       // This diff is stale. Refresh the view.
@@ -402,13 +413,11 @@ void DiffView::fetchMore()
     }
 
     auto state = static_cast<git::Index::StagedState>(indices[i].data(Qt::CheckStateRole).toInt());
-
     git::Patch staged = mStagedPatches.value(patch.name());
     FileWidget *file = new FileWidget(this, mDiff, patch, staged, indices[i], widget());
-    addedFiles += file->hunks().count();
+
     file->setStageState(state);
     mFileWidgetLayout->addWidget(file);
-
     mFiles.append(file);
 
     if (file->isEmpty()) {
@@ -421,23 +430,41 @@ void DiffView::fetchMore()
     connect(file, &FileWidget::diagnosticAdded,
             this, &DiffView::diagnosticAdded);
     connect(file, &FileWidget::stageStateChanged,
-            [this] (const QModelIndex index, int state) {
-        /*emit fileStageStateChanged(state);*/
-        mDiffTreeModel->setData(index, state, Qt::CheckStateRole);
-        });
-    connect(file, &FileWidget::discarded, [this](const QModelIndex& index) {
-        RepoView *view = RepoView::parentView(this);
-        if (!mDiffTreeModel->discard(index)) {
-            QString name = index.data(Qt::DisplayRole).toString();
-            LogEntry *parent = view->addLogEntry(name, FileWidget::tr("Discard"));
-            view->error(parent, FileWidget::tr("discard"), name);
-        }
-        view->refresh();
+            [this] (const QModelIndex &index, int state) {
+      /*emit fileStageStateChanged(state);*/
+      mDiffTreeModel->setData(index, state, Qt::CheckStateRole);
     });
+    connect(file, &FileWidget::discarded, [this](const QModelIndex &index) {
+      RepoView *view = RepoView::parentView(this);
+      if (!mDiffTreeModel->discard(index)) {
+        QString name = index.data(Qt::DisplayRole).toString();
+        LogEntry *parent = view->addLogEntry(name, FileWidget::tr("Discard"));
+        view->error(parent, FileWidget::tr("discard"), name);
+      }
+      view->refresh();
+    });
+
+    // Load hunk(s) of file
+    while (file->canFetchMore() &&
+           ((verticalScrollBar()->maximum() - verticalScrollBar()->value() < height() / 2) ||
+            fetchAll)) {
+      file->fetchMore(fetchAll ? -1 : 1);
+
+      // Load hunk(s) and update scrollbar
+      QApplication::processEvents();
+    }
+
+    // Stop loading files
+    if (verticalScrollBar()->maximum() - verticalScrollBar()->value() > height() / 2)
+      count = fetchAll ? 4 : 0;
   }
+
+  // Restore cursor
+  QApplication::restoreOverrideCursor();
 
   // Finish layout.
   if (mFiles.size() == mDiff.count()) {
+    QVBoxLayout *layout = static_cast<QVBoxLayout *>(widget()->layout());
     // Add comments widget.
     if (!mComments.comments.isEmpty())
       layout->addWidget(new CommentWidget(mComments.comments, widget()));
@@ -453,7 +480,9 @@ void DiffView::fetchAll(int index)
     fetchMore();
 }
 
-void DiffView::indexChanged(const QStringList &paths) {
+void DiffView::indexChanged(const QStringList &paths)
+{
+  Q_UNUSED(paths)
 //    // Respond to index changes.
 //    RepoView *view = RepoView::parentView(this);
 //    git::Repository repo = view->repo();
