@@ -73,6 +73,23 @@ private:
   QButtonGroup mButtons;
 };
 
+QList<int> indexes(git::Diff &diff, QModelIndex index)
+{
+  QList<int> list;
+
+  for (int row = 0; row < index.model()->rowCount(index); row++)
+    list.append(indexes(diff, index.child(row, 0)));
+
+  if (index.model()->rowCount(index) == 0) {
+    QString name = index.data(Qt::EditRole).toString();
+    int idx = diff.indexOf(name);
+    if (idx >= 0)
+      list.append(idx);
+  }
+
+  return list;
+}
+
 } // anon. namespace
 
 DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
@@ -118,7 +135,6 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
   stagedFiles = new TreeView(this, "Staged");
   stagedFiles->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
   mDiffTreeModel = new DiffTreeModel(repo, this);
-  mDiffView->setModel(mDiffTreeModel);
   TreeProxy* treewrapperStaged = new TreeProxy(true, this);
   treewrapperStaged->setSourceModel(mDiffTreeModel);
   stagedFiles->setModel(treewrapperStaged);
@@ -244,6 +260,9 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff,
                                const QString &pathspec)
 {
   Q_UNUSED(pathspec);
+
+  mDiff = diff;
+
   // Remember selection.
   storeSelection();
 
@@ -352,7 +371,6 @@ void DoubleTreeWidget::treeModelStateChanged(const QModelIndex& index, int check
   if (unstagedSelections.count())
     return;
 
-  mDiffView->enable(false);
   mEditor->clear();
 }
 
@@ -417,8 +435,9 @@ void DoubleTreeWidget::loadEditorContent(const QModelIndex &index)
   if (found)
     mEditor->load(name, blob, commit);
 
-  mDiffView->enable(true);
-  mDiffView->updateFiles();
+  // Load selected file(s).
+  if (mDiff.isValid())
+    mDiffView->setFilter(indexes(mDiff, index));
 }
 
 void DoubleTreeWidget::toggleCollapseStagedFiles()

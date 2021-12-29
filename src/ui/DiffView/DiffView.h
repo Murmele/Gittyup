@@ -88,27 +88,13 @@ public:
   void setDiff(const git::Diff &diff);
 
   bool scrollToFile(int index);
-
-  /*!
-   * \brief updateFiles
-   * Call this function to update the visible diff files.
-   * It fetches the files then from the diffTreeModel and the selection model
-   */
-  void updateFiles();
+  void setFilter(const QList<int> &indexes);
 
   const QList<PluginRef> &plugins() const { return mPlugins; }
   const Account::CommitComments &comments() const { return mComments; }
 
   QList<TextEditor *> editors() override;
   void ensureVisible(TextEditor *editor, int pos) override;
-  /*!
-   * Enables/disables showing diffs
-   * \brief enable
-   * \param enable
-   */
-  void enable(bool enable);
-  void setModel(DiffTreeModel *model);
-  void diffTreeModelDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles);
 
 signals:
   void diagnosticAdded(TextEditor::DiagnosticKind kind);
@@ -138,10 +124,9 @@ private:
   QList<PluginRef> mPlugins;
   Account::CommitComments mComments;
 
-  bool mEnabled{true};
-  DiffTreeModel* mDiffTreeModel{nullptr};
-  QWidget* mParent{nullptr};
   QVBoxLayout* mFileWidgetLayout{nullptr};
+
+  QList<int> mIndexes;
 };
 
 #endif

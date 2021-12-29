@@ -228,11 +228,10 @@ void _FileWidget::Header::updateCheckState()
 FileWidget::FileWidget(DiffView *view,
   const git::Diff &diff,
   const git::Patch &patch,
-  const git::Patch &staged, const QModelIndex modelIndex,
+  const git::Patch &staged,
   QWidget *parent)
-  : QWidget(parent), mView(view), mDiff(diff), mPatch(patch), mModelIndex(modelIndex)
+  : QWidget(parent), mView(view), mDiff(diff), mPatch(patch)
 {
-  auto stageState = static_cast<git::Index::StagedState>(mModelIndex.data(Qt::CheckStateRole).toInt());
   setObjectName("FileWidget");
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setContentsMargins(0,0,0,0);
@@ -256,7 +255,11 @@ FileWidget::FileWidget(DiffView *view,
 
   bool lfs = patch.isLfsPointer();
   mHeader = new _FileWidget::Header(diff, patch, binary, lfs, submodule, parent);
-  mHeader->setStageState(stageState);
+
+  //SK TODO: get the CheckStateRole. emit dataChange could do the job
+  //auto stageState = static_cast<git::Index::StagedState>(mModelIndex.data(Qt::CheckStateRole).toInt());
+  //mHeader->setStageState(stageState);
+
   connect(mHeader, &_FileWidget::Header::stageStateChanged, this, &FileWidget::headerCheckStateChanged);
   connect(mHeader, &_FileWidget::Header::discard, this, &FileWidget::discard);
   layout->addWidget(mHeader);
@@ -354,11 +357,6 @@ void FileWidget::setStageState(git::Index::StagedState state)
 
     for (auto hunk: mHunks)
         hunk->setStageState(state);
-}
-
-QModelIndex FileWidget::modelIndex()
-{
-    return mModelIndex;
 }
 
 void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged) {
@@ -485,7 +483,9 @@ HunkWidget *FileWidget::addHunk(
 
 void FileWidget::stageHunks(const HunkWidget* hunk, git::Index::StagedState stageState, bool completeFile, bool completeFileStaged)
 {
-	// Might be a problem if not all hunks are loaded
+  // Might be a problem if not all hunks are loaded
+  fetchAll(-1);
+
   if (mSupressStaging)
       return;
 
@@ -508,25 +508,25 @@ void FileWidget::stageHunks(const HunkWidget* hunk, git::Index::StagedState stag
   }
   // TODO: check all not loaded hunks!
 
-  mSuppressUpdate = true;
+//SK TODO: no more mModelIndex
+//  mSuppressUpdate = true;
 
-  if ((staged == mHunks.size() && mHunks.size() > 0) || (completeFile && completeFileStaged)) {
-    // if the file does not contain hunks, it should be always staged!
-    emit stageStateChanged(mModelIndex, git::Index::Staged);
-    mSuppressUpdate = false;
-    return;
-  } else if (completeFile && !completeFileStaged) {
-      emit stageStateChanged(mModelIndex, git::Index::Unstaged);
-      mSuppressUpdate = false;
-      return;
-  }
+//  if ((staged == mHunks.size() && mHunks.size() > 0) || (completeFile && completeFileStaged)) {
+//    // if the file does not contain hunks, it should be always staged!
+//    emit stageStateChanged(mModelIndex, git::Index::Staged);
+//    mSuppressUpdate = false;
+//    return;
+//  } else if (completeFile && !completeFileStaged) {
+//      emit stageStateChanged(mModelIndex, git::Index::Unstaged);
+//      mSuppressUpdate = false;
+//      return;
+//  }
 
-  if (unstaged == mHunks.size()) {
-    emit stageStateChanged(mModelIndex, git::Index::Unstaged);
-    mSuppressUpdate = false;
-    return;
-  }
-
+//  if (unstaged == mHunks.size()) {
+//    emit stageStateChanged(mModelIndex, git::Index::Unstaged);
+//    mSuppressUpdate = false;
+//    return;
+//  }
 
   // when changing a line in a file,
   // two lines are visible, the old one and the new one.
@@ -560,7 +560,9 @@ void FileWidget::stageHunks(const HunkWidget* hunk, git::Index::StagedState stag
   mSuppressUpdate = false;
 
   // TODO: index.add should notify the model directly!
-  emit stageStateChanged(mModelIndex, git::Index::PartiallyStaged);
+
+  //SK TODO: no more mModelIndex
+  //emit stageStateChanged(mModelIndex, git::Index::PartiallyStaged);
 }
 
 void FileWidget::discardHunk() {
@@ -623,9 +625,11 @@ void FileWidget::discard() {
       untracked ? FileWidget::tr("Remove %1").arg(arg) : FileWidget::tr("Discard Changes");
     QPushButton *discard =
       dialog->addButton(button, QMessageBox::AcceptRole);
-    connect(discard, &QPushButton::clicked, [this] {
-      emit discarded(mModelIndex);
-    });
+
+//SK TODO: no more mModelIndex
+//    connect(discard, &QPushButton::clicked, [this] {
+//      emit discarded(mModelIndex);
+//    });
 
     dialog->exec();
 }
@@ -634,8 +638,9 @@ void FileWidget::headerCheckStateChanged(int state)
 {
     assert(state != Qt::PartiallyChecked); // makes no sense, that the user can select partially selected
 
-    if (state == Qt::Checked)
-        emit stageStateChanged(mModelIndex, git::Index::Staged);
-    else
-        emit stageStateChanged(mModelIndex, git::Index::Unstaged);
+//SK TODO: no more mModelIndex
+//    if (state == Qt::Checked)
+//        emit stageStateChanged(mModelIndex, git::Index::Staged);
+//    else
+//        emit stageStateChanged(mModelIndex, git::Index::Unstaged);
 }

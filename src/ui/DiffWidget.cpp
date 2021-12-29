@@ -67,7 +67,7 @@ DiffWidget::DiffWidget(const git::Repository &repo, QWidget *parent)
     QModelIndexList indexes = mFiles->selectionModel()->selectedIndexes();
     foreach (const QModelIndex &index, indexes)
       paths.append(index.data().toString());
-    mDiffView->updateFiles();
+    //TODO: mDiffView->updateFiles(); is OBSOLETE, use mDiffView->setFilter();
   });
 
   connect(mDiffView->verticalScrollBar(), &QScrollBar::valueChanged,

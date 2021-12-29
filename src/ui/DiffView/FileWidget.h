@@ -5,7 +5,6 @@
 
 #include <QWidget>
 #include <QFrame>
-#include <QModelIndex>
 
 #include "git/Diff.h"
 #include "git/Patch.h"
@@ -84,7 +83,6 @@ public:
     const git::Diff &diff,
     const git::Patch &patch,
     const git::Patch &staged,
-    const QModelIndex modelIndex,
     QWidget *parent = nullptr);
   bool isEmpty();
   void updatePatch(const git::Patch &patch, const git::Patch &staged);
@@ -110,7 +108,6 @@ public:
     bool lfs,
     bool submodule);
     void setStageState(git::Index::StagedState state);
-    QModelIndex modelIndex();
 
     // Fetching new hunks
     bool canFetchMore();
@@ -140,19 +137,15 @@ public slots:
 
 signals:
   void diagnosticAdded(TextEditor::DiagnosticKind kind);
-  void stageStateChanged(const QModelIndex& idx, git::Index::StagedState state);
-  void discarded(const QModelIndex& idx);
 
 private:
   void discard();
-
 
   DiffView *mView{nullptr};
 
   git::Diff mDiff;
   git::Patch mPatch;
   git::Patch mStaged;
-  QModelIndex mModelIndex;
 
   _FileWidget::Header *mHeader{nullptr};
   QList<QWidget *> mImages;
@@ -163,4 +156,3 @@ private:
 };
 
 #endif // FILEWIDGET_H
-

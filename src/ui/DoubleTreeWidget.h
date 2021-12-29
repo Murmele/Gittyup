@@ -94,5 +94,7 @@ private:
    */
   QStackedWidget* mFileView{nullptr};
   bool mIgnoreSelectionChange{false};
+
+  git::Diff mDiff;
 };
 #endif // DOUBLETREEWIDGET_H
