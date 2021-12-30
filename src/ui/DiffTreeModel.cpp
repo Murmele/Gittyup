@@ -248,53 +248,52 @@ bool DiffTreeModel::setData(const QModelIndex &index,
 
 bool DiffTreeModel::discard(const QModelIndex &index)
 {
-    assert(index.isValid());
+  assert(index.isValid());
 
-    Node *node = this->node(index);
-    QList<int> list;
-    node->patchIndices(list);
+  Node *node = this->node(index);
+  QList<int> list;
+  node->patchIndices(list);
 
-    QStringList trackedPatches;
-    for (auto i: list) {
-       auto patch = mDiff.patch(i);
-       if (patch.isUntracked()) {
-           QString name = patch.name();
-           git::Repository repo = patch.repo();
-           QDir dir = repo.workdir();
-           if (QFileInfo(dir.filePath(name)).isDir()) {
-             if (dir.cd(name))
-               dir.removeRecursively();
-           } else {
-             dir.remove(name);
-           }
-       } else {
-          trackedPatches.append(patch.name());
-       }
+  QStringList trackedPatches;
+  for (auto i: list) {
+    auto patch = mDiff.patch(i);
+    if (patch.isUntracked()) {
+      QString name = patch.name();
+      git::Repository repo = patch.repo();
+      QDir dir = repo.workdir();
+      if (QFileInfo(dir.filePath(name)).isDir()) {
+        if (dir.cd(name))
+          dir.removeRecursively();
+        } else {
+          dir.remove(name);
+      }
+    } else {
+      trackedPatches.append(patch.name());
     }
+  }
 
-	auto s = mRepo.submodules();
-	QStringList filePatches;
-	for (auto trackedPatch: trackedPatches) {
-		bool is_submodule = false;
-		for (auto submodule: s) {
-			if (submodule.path() == trackedPatch) {
-				is_submodule = true;
-				submodule.update(nullptr, false, true); // In Repo view it is done asynchron. Maybe changing here too!
-				break;
-			}
-			if (!is_submodule)
-				filePatches.append(trackedPatch);
+  auto s = mRepo.submodules();
+  QStringList filePatches;
+  for (auto trackedPatch: trackedPatches) {
+    bool is_submodule = false;
+    for (auto submodule: s) {
+      if (submodule.path() == trackedPatch) {
+        is_submodule = true;
+        submodule.update(nullptr, false, true); // In Repo view it is done asynchron. Maybe changing here too!
+        break;
+      }
+    }
+    if (!is_submodule)
+      filePatches.append(trackedPatch);
+  }
 
-		}
-	}
-
-	if (filePatches.length() > 0) {
-		int strategy = GIT_CHECKOUT_FORCE;
-		auto repo = mDiff.patch(list[0]).repo(); // does not matter which index is used all are in the same repo
-		if (!repo.checkout(git::Commit(), nullptr, trackedPatches, strategy))
-			return false;
-	}
-    return true;
+  if (filePatches.count()) {
+    int strategy = GIT_CHECKOUT_FORCE;
+    auto repo = mDiff.patch(list[0]).repo(); // does not matter which index is used all are in the same repo
+    if (!repo.checkout(git::Commit(), nullptr, trackedPatches, strategy))
+      return false;
+  }
+  return true;
 }
 
 bool DiffTreeModel::setData(const QModelIndex &index,

@@ -431,10 +431,6 @@ _FileWidget::Header *FileWidget::header() const
     return mHeader;
 }
 
-QString FileWidget::name() const { return mPatch.name(); }
-
-QList<HunkWidget *> FileWidget::hunks() const { return mHunks; }
-
 QWidget *FileWidget::addImage(
   DisclosureButton *button,
   const git::Patch patch,
@@ -463,7 +459,9 @@ HunkWidget *FileWidget::addHunk(
   HunkWidget *hunk =
     new HunkWidget(mView, diff, patch, staged, index, lfs, submodule, this);
 
-  connect(hunk, &HunkWidget::stageStateChanged, [this, hunk](git::Index::StagedState state) {this->stageHunks(hunk, state, false);});
+  connect(hunk, &HunkWidget::stageStateChanged, [this, hunk](git::Index::StagedState state) {
+    stageHunks(hunk, state, false);
+  });
   connect(hunk, &HunkWidget::discardSignal, this, &FileWidget::discardHunk);
   TextEditor* editor = hunk->editor(false);
 
@@ -507,26 +505,24 @@ void FileWidget::stageHunks(const HunkWidget* hunk, git::Index::StagedState stag
         unstaged ++;
   }
   // TODO: check all not loaded hunks!
+  mSuppressUpdate = true;
 
-//SK TODO: no more mModelIndex
-//  mSuppressUpdate = true;
+  if ((staged == mHunks.size() && mHunks.size() > 0) || (completeFile && completeFileStaged)) {
+    // if the file does not contain hunks, it should be always staged!
+    emit stageStateChanged(mPatch.name(), git::Index::Staged);
+    mSuppressUpdate = false;
+    return;
+  } else if (completeFile && !completeFileStaged) {
+      emit stageStateChanged(mPatch.name(), git::Index::Unstaged);
+      mSuppressUpdate = false;
+      return;
+  }
 
-//  if ((staged == mHunks.size() && mHunks.size() > 0) || (completeFile && completeFileStaged)) {
-//    // if the file does not contain hunks, it should be always staged!
-//    emit stageStateChanged(mModelIndex, git::Index::Staged);
-//    mSuppressUpdate = false;
-//    return;
-//  } else if (completeFile && !completeFileStaged) {
-//      emit stageStateChanged(mModelIndex, git::Index::Unstaged);
-//      mSuppressUpdate = false;
-//      return;
-//  }
-
-//  if (unstaged == mHunks.size()) {
-//    emit stageStateChanged(mModelIndex, git::Index::Unstaged);
-//    mSuppressUpdate = false;
-//    return;
-//  }
+  if (unstaged == mHunks.size()) {
+    emit stageStateChanged(mPatch.name(), git::Index::Unstaged);
+    mSuppressUpdate = false;
+    return;
+  }
 
   // when changing a line in a file,
   // two lines are visible, the old one and the new one.
@@ -560,9 +556,7 @@ void FileWidget::stageHunks(const HunkWidget* hunk, git::Index::StagedState stag
   mSuppressUpdate = false;
 
   // TODO: index.add should notify the model directly!
-
-  //SK TODO: no more mModelIndex
-  //emit stageStateChanged(mModelIndex, git::Index::PartiallyStaged);
+  emit stageStateChanged(mPatch.name(), git::Index::PartiallyStaged);
 }
 
 void FileWidget::discardHunk() {
@@ -607,40 +601,37 @@ void FileWidget::discardHunk() {
 }
 
 void FileWidget::discard() {
-    QString name = mPatch.name();
-    bool untracked = mPatch.isUntracked();
-    QString path = mPatch.repo().workdir().filePath(name);
-    QString arg = QFileInfo(path).isDir() ? FileWidget::tr("Directory") : FileWidget::tr("File");
-    QString title = untracked ? FileWidget::tr("Remove %1?").arg(arg) : FileWidget::tr("Discard Changes?");
-    QString text = untracked ?
-      FileWidget::tr("Are you sure you want to remove '%1'?") :
-      FileWidget::tr("Are you sure you want to discard all changes in '%1'?");
-    QMessageBox *dialog = new QMessageBox(
-      QMessageBox::Warning, title, text.arg(name),
-      QMessageBox::Cancel, this);
-    dialog->setAttribute(Qt::WA_DeleteOnClose);
-    dialog->setInformativeText(FileWidget::tr("This action cannot be undone."));
+  QString name = mPatch.name();
+  bool untracked = mPatch.isUntracked();
+  QString path = mPatch.repo().workdir().filePath(name);
+  QString type = QFileInfo(path).isDir() ? FileWidget::tr("Directory") : FileWidget::tr("File");
 
-    QString button =
-      untracked ? FileWidget::tr("Remove %1").arg(arg) : FileWidget::tr("Discard Changes");
-    QPushButton *discard =
-      dialog->addButton(button, QMessageBox::AcceptRole);
+  QString title = untracked ? FileWidget::tr("Remove %1?").arg(type) :
+                              FileWidget::tr("Discard Changes?");
+  QString text = untracked ?  FileWidget::tr("Are you sure you want to remove '%1'?") :
+                              FileWidget::tr("Are you sure you want to discard all changes in '%1'?");
+  QMessageBox *dialog = new QMessageBox(QMessageBox::Warning,
+                                        title, text.arg(name),
+                                        QMessageBox::Cancel, this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setInformativeText(FileWidget::tr("This action cannot be undone."));
 
-//SK TODO: no more mModelIndex
-//    connect(discard, &QPushButton::clicked, [this] {
-//      emit discarded(mModelIndex);
-//    });
+  QPushButton *discard = dialog->addButton(untracked ? FileWidget::tr("Remove %1").arg(type) :
+                                                       FileWidget::tr("Discard Changes"),
+                                           QMessageBox::AcceptRole);
+  connect(discard, &QPushButton::clicked, [this] {
+    emit discarded(mPatch.name());
+  });
 
-    dialog->exec();
+  dialog->exec();
 }
 
 void FileWidget::headerCheckStateChanged(int state)
 {
-    assert(state != Qt::PartiallyChecked); // makes no sense, that the user can select partially selected
+  assert(state != Qt::PartiallyChecked); // makes no sense, that the user can select partially selected
 
-//SK TODO: no more mModelIndex
-//    if (state == Qt::Checked)
-//        emit stageStateChanged(mModelIndex, git::Index::Staged);
-//    else
-//        emit stageStateChanged(mModelIndex, git::Index::Unstaged);
+  if (state == Qt::Checked)
+    emit stageStateChanged(mPatch.name(), git::Index::Staged);
+  else
+    emit stageStateChanged(mPatch.name(), git::Index::Unstaged);
 }

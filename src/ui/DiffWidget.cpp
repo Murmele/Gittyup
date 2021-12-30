@@ -149,7 +149,7 @@ void DiffWidget::selectFile(const QString &file)
   // FIXME: Look up the old name from the blame?
   if (!indexes.isEmpty()) {
     QModelIndex index = indexes.first();
-    if (mDiffView->scrollToFile(index.row()))
+    //OBSOLETE if (mDiffView->scrollToFile(index.row()))
       mFiles->selectionModel()->select(index, kSelectionFlags);
   }
 }

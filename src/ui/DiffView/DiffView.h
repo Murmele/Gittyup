@@ -86,8 +86,6 @@ public:
   QWidget *file(int index);
 
   void setDiff(const git::Diff &diff);
-
-  bool scrollToFile(int index);
   void setFilter(const QList<int> &indexes);
 
   const QList<PluginRef> &plugins() const { return mPlugins; }
@@ -98,12 +96,8 @@ public:
 
 signals:
   void diagnosticAdded(TextEditor::DiagnosticKind kind);
-  /*!
-   * Emitted when in one of the FileWidgets the stageState was changed
-   * \brief fileStageStateChanged
-   * \param state
-   */
-  void fileStageStateChanged(git::Index::StagedState state);
+  void stageStateChanged(const QString &name, git::Index::StagedState state);
+  void discarded(const QString &name);
 
 protected:
   void dropEvent(QDropEvent *event) override;
@@ -113,7 +107,6 @@ private:
   bool canFetchMore();
   void fetchMore(int count = 4);
   void fetchAll(int index = -1);
-  void indexChanged(const QStringList& paths);
 
   git::Diff mDiff;
   QMap<QString,git::Patch> mStagedPatches;

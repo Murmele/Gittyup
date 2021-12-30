@@ -207,7 +207,6 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
 #endif
 
   connect(mDiffTreeModel, &DiffTreeModel::checkStateChanged, this, &DoubleTreeWidget::treeModelStateChanged);
-  connect(mDiffView, &DiffView::fileStageStateChanged, this, &DoubleTreeWidget::updateTreeModel);
 
   connect(stagedFiles, &TreeView::fileSelected, this, &DoubleTreeWidget::fileSelected);
   connect(stagedFiles, &TreeView::collapseCountChanged, this, &DoubleTreeWidget::collapseCountChanged);
@@ -217,6 +216,21 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
 
   connect(collapseButtonStagedFiles, &StatePushButton::clicked, this, &DoubleTreeWidget::toggleCollapseStagedFiles);
   connect(collapseButtonUnstagedFiles, &StatePushButton::clicked, this, &DoubleTreeWidget::toggleCollapseUnstagedFiles);
+
+  // Respond to DiffView signals.
+  connect(mDiffView, &DiffView::stageStateChanged, [this](const QString &name, int state) {
+    QModelIndex index = mDiffTreeModel->index(name);
+    mDiffTreeModel->setData(index, state, Qt::CheckStateRole);
+  });
+  connect(mDiffView, &DiffView::discarded, [this](const QString &name) {
+    RepoView *view = RepoView::parentView(this);
+    QModelIndex index = mDiffTreeModel->index(name);
+    if (!mDiffTreeModel->discard(index)) {
+       LogEntry *parent = view->addLogEntry(name, DoubleTreeWidget::tr("Discard"));
+       view->error(parent, DoubleTreeWidget::tr("discard"), name);
+    }
+    view->refresh();
+  });
 }
 
 QModelIndex DoubleTreeWidget::selectedIndex() const
@@ -300,22 +314,6 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff,
 
   // Restore selection.
   loadSelection();
-}
-
-void DoubleTreeWidget::updateTreeModel(git::Index::StagedState state)
-{
-//  // the selected index must be the file which is visible in the diffView!
-//  QModelIndexList indexes = stagedFiles->selectionModel()->selectedIndexes();
-//  if (!indexes.isEmpty()) {
-//    static_cast<TreeProxy*>(stagedFiles->model())->setData(indexes.first(), state, Qt::CheckStateRole, true);
-//    return;
-//  }
-
-//  indexes = unstagedFiles->selectionModel()->selectedIndexes();
-//  if (!indexes.isEmpty()) {
-//    static_cast<TreeProxy*>(unstagedFiles->model())->setData(indexes.first(), state, Qt::CheckStateRole, true);
-//    return;
-//  }
 }
 
 void DoubleTreeWidget::storeSelection()

@@ -92,9 +92,9 @@ public:
    */
   void updateHunks(git::Patch stagedPatch);
   _FileWidget::Header *header() const;
-  QString name() const;
 
-  QList<HunkWidget *> hunks() const;
+  QString name() const { return mPatch.name(); }
+  QList<HunkWidget *> hunks() const { return mHunks; }
 
   QWidget *addImage(
     DisclosureButton *button,
@@ -137,6 +137,8 @@ public slots:
 
 signals:
   void diagnosticAdded(TextEditor::DiagnosticKind kind);
+  void stageStateChanged(const QString &name, git::Index::StagedState state);
+  void discarded(const QString &name);
 
 private:
   void discard();

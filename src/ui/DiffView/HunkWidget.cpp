@@ -510,37 +510,71 @@ void HunkWidget::stageSelected(int startLine, int end, bool emitSignal) {
         emit stageStateChanged(stageState());
  }
 
- void HunkWidget::discardDialog(int startLine, int end) {
-     QString name = mPatch.name();
-     int line = mPatch.lineNumber(mIndex, 0, git::Diff::NewFile);
+void HunkWidget::discardDialog(int startLine, int end) {
+  QString name = mPatch.name();
+  int firstLine = mPatch.lineNumber(mIndex, startLine, git::Diff::NewFile);
+  int lastLine = firstLine + mPatch.lineCount(mIndex) -1;
 
-     QString title = HunkWidget::tr("Discard selected lines?");
-     QString text = mPatch.isUntracked() ?
-       HunkWidget::tr("Are you sure you want to remove '%1'?").arg(name) :
-       HunkWidget::tr("Are you sure you want to discard the "
-          "changes in hunk from line %1 to %2 in '%3'?").arg(startLine).arg(end - 1).arg(name);
+  // Find additions, deletions and context lines
+  int additions = 0;
+  int deletions = 0;
+  int context = 0;
+  for (int i = startLine; i < end; i++) {
+    int mask = mEditor->markers(i);
+    if (mask & (1 << TextEditor::Marker::Addition))
+      additions++;
+    if (mask & (1 << TextEditor::Marker::Deletion))
+      deletions++;
+    if (mask & (1 << TextEditor::Context))
+      context++;
+  }
 
-     QMessageBox *dialog = new QMessageBox(
-       QMessageBox::Warning, title, text, QMessageBox::Cancel, this);     dialog->setAttribute(Qt::WA_DeleteOnClose);
-     dialog->setInformativeText(HunkWidget::tr("This action cannot be undone."));
+  // Calculate first and last linenumber
+  firstLine += context / 2;
+  lastLine -= deletions;
+  lastLine -= context / 2;
 
-     QPushButton *discard =       dialog->addButton(HunkWidget::tr("Discard selected lines"), QMessageBox::AcceptRole);
-     connect(discard, &QPushButton::clicked, [this, startLine, end] {
-         discardSelected(startLine, end);
-     });
+  QString title = HunkWidget::tr("Discard selected lines?");
+  QString additionText = additions ? additions > 1 ? HunkWidget::tr("%1 lines").arg(additions) :
+                                                     HunkWidget::tr("one line") :
+                                     HunkWidget::tr("no line");
+  QString deletionText = deletions ? deletions > 1 ? HunkWidget::tr("%1 lines").arg(deletions) :
+                                                     HunkWidget::tr("one line") :
+                                     HunkWidget::tr("no line");
+  QString text = mPatch.isUntracked() ?
+                 HunkWidget::tr("Are you sure you want to remove '%1'?").arg(name) :
+                 HunkWidget::tr("Are you sure you want to discard the changes\n"
+                                "from line %1 to line %2 "
+                                "(%3 added, %4 removed)\n"
+                                "in '%5'?")
+                                  .arg(firstLine).arg(lastLine)
+                                  .arg(additionText).arg(deletionText)
+                                  .arg(name);
 
-     dialog->open();
- }
+  QMessageBox *dialog = new QMessageBox(QMessageBox::Warning,
+                                        title, text,
+                                        QMessageBox::Cancel, this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setInformativeText(HunkWidget::tr("This action cannot be undone."));
 
- void HunkWidget::discardSelected(int startLine, int end)
- {
-    for (int i = startLine; i < end; i++) {
-        int mask = mEditor->markers(i);
-        if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion))
-            mEditor->markerAdd(i, TextEditor::DiscardMarker);
-    }
-    emit discardSignal();
- }
+  QPushButton *discard = dialog->addButton(HunkWidget::tr("Discard selected lines"),
+                                           QMessageBox::AcceptRole);
+  connect(discard, &QPushButton::clicked, [this, startLine, end] {
+    discardSelected(startLine, end);
+  });
+
+  dialog->open();
+}
+
+void HunkWidget::discardSelected(int startLine, int end)
+{
+  for (int i = startLine; i < end; i++) {
+    int mask = mEditor->markers(i);
+    if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion))
+      mEditor->markerAdd(i, TextEditor::DiscardMarker);
+  }
+  emit discardSignal();
+}
 
  void HunkWidget::headerCheckStateChanged(int state) {
 

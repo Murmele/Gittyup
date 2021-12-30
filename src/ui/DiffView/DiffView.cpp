@@ -93,7 +93,7 @@ DiffView::~DiffView() {}
 QWidget *DiffView::file(int index)
 {
   fetchAll(index);
-  return mFiles.at(index);
+  return mFiles.at(mIndexes.indexOf(index));
 }
 
 void DiffView::setDiff(const git::Diff &diff)
@@ -108,6 +108,7 @@ void DiffView::setDiff(const git::Diff &diff)
 
   // Clear state.
   mFiles.clear();
+  mIndexes.clear();
   mStagedPatches.clear();
   mComments = Account::CommitComments();
 
@@ -197,25 +198,6 @@ void DiffView::setDiff(const git::Diff &diff)
       remoteRepo->account()->requestComments(remoteRepo, oid);
     }
   }
-
-  //connect(repo.notifier(), &git::RepositoryNotifier::indexChanged, this, &DiffView::indexChanged);
-}
-
-bool DiffView::scrollToFile(int index)
-{
-  // Ensure that the given index is loaded.
-  fetchAll(index);
-
-  // Finish layout by processing events. May cause a new diff to
-  // be loaded. In that case the scroll widget will be different.
-  QWidget *ptr = widget();
-  QCoreApplication::processEvents();
-  if (widget() != ptr)
-    return false;
-
-  // Scroll to the widget.
-  verticalScrollBar()->setValue(mFiles.at(index)->y());
-  return true;
 }
 
 void DiffView::setFilter(const QList<int> &indexes)
@@ -323,9 +305,6 @@ void DiffView::fetchMore(int count)
   if (count < 0)
     count = 4;
 
-  // Busy cursor indication
-  QApplication::setOverrideCursor(Qt::BusyCursor);
-
   // First load all hunks of last file before loading new files
   if (!mFiles.isEmpty()) {
     FileWidget *lastFile = mFiles.last();
@@ -371,23 +350,12 @@ void DiffView::fetchMore(int count)
     // Respond to diagnostic signal.
     connect(file, &FileWidget::diagnosticAdded,
             this, &DiffView::diagnosticAdded);
-
-//SK TODO: no more MDiffTreeModel
-//    connect(file, &FileWidget::stageStateChanged,
-//            [this] (const QModelIndex &index, int state) {
-      /*emit fileStageStateChanged(state);*/
-//      mDiffTreeModel->setData(index, state, Qt::CheckStateRole);
-//    });
-//    connect(file, &FileWidget::discarded, [this](const QModelIndex &index) {
-//      RepoView *view = RepoView::parentView(this);
-//SK TODO: no more MDiffTreeModel
-//      if (!mDiffTreeModel->discard(index)) {
-//        QString name = index.data(Qt::DisplayRole).toString();
-//        LogEntry *parent = view->addLogEntry(name, FileWidget::tr("Discard"));
-//        view->error(parent, FileWidget::tr("discard"), name);
-//      }
-//      view->refresh();
-//    });
+    // Respond to stage changes.
+    connect(file, &FileWidget::stageStateChanged,
+            this, &DiffView::stageStateChanged);
+    // Respond to discard signal.
+    connect(file, &FileWidget::discarded,
+            this, &DiffView::discarded);
 
     // Load hunk(s) of file
     while (file->canFetchMore() &&
@@ -404,9 +372,6 @@ void DiffView::fetchMore(int count)
       count = fetchAll ? 4 : 0;
   }
 
-  // Restore cursor
-  QApplication::restoreOverrideCursor();
-
   // Finish layout.
   if (mFiles.size() == mDiff.count()) {
     QVBoxLayout *layout = static_cast<QVBoxLayout *>(widget()->layout());
@@ -421,34 +386,6 @@ void DiffView::fetchMore(int count)
 void DiffView::fetchAll(int index)
 {
   // Load all patches up to and including index.
-  while ((index < 0 || mFiles.size() <= index) && canFetchMore())
+  while ((index < 0 || mFiles.size() <= mIndexes.indexOf(index)) && canFetchMore())
     fetchMore(-1);
-}
-
-void DiffView::indexChanged(const QStringList &paths)
-{
-  Q_UNUSED(paths)
-//    // Respond to index changes.
-//    RepoView *view = RepoView::parentView(this);
-//    git::Repository repo = view->repo();
-
-//    mStagedPatches.clear();
-//    // Generate a diff between the head tree and index.
-//    if (mDiff.isStatusDiff()) {
-//      if (git::Reference head = repo.head()) {
-//        if (git::Commit commit = head.target()) {
-//          git::Diff stagedDiff = repo.diffTreeToIndex(commit.tree());
-//          for (int i = 0; i < stagedDiff.count(); ++i)
-//            mStagedPatches[stagedDiff.name(i)] = stagedDiff.patch(i);
-//        }
-//      }
-//    }
-
-//    for (auto* file : mFiles) {
-//        for (auto path : paths) {
-//            git::Patch stagedPatch = mStagedPatches[path];
-//            if (file->name() == path)
-//                file->updateHunks(stagedPatch);
-//        }
-//    }
 }
