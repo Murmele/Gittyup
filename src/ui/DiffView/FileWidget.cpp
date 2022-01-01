@@ -256,10 +256,6 @@ FileWidget::FileWidget(DiffView *view,
   bool lfs = patch.isLfsPointer();
   mHeader = new _FileWidget::Header(diff, patch, binary, lfs, submodule, parent);
 
-  //SK TODO: get the CheckStateRole. emit dataChange could do the job
-  //auto stageState = static_cast<git::Index::StagedState>(mModelIndex.data(Qt::CheckStateRole).toInt());
-  //mHeader->setStageState(stageState);
-
   connect(mHeader, &_FileWidget::Header::stageStateChanged, this, &FileWidget::headerCheckStateChanged);
   connect(mHeader, &_FileWidget::Header::discard, this, &FileWidget::discard);
   layout->addWidget(mHeader);
@@ -301,12 +297,12 @@ FileWidget::FileWidget(DiffView *view,
     return;
   }
 
-
   mHunkLayout = new QVBoxLayout();
   layout->addLayout(mHunkLayout);
   layout->addSpacerItem(new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Expanding)); // so the hunkwidget is always starting from top and is not distributed over the hole filewidget
 
   updatePatch(patch, staged);
+  updateStageState();
 
   // LFS
   if (QToolButton *lfsButton = mHeader->lfsButton()) {
@@ -351,12 +347,15 @@ bool FileWidget::isEmpty()
   return (mHunks.isEmpty() && mImages.isEmpty());
 }
 
-void FileWidget::setStageState(git::Index::StagedState state)
+void FileWidget::updateStageState()
 {
+  if (mDiff.isValid()) {
+    git::Index::StagedState state = mDiff.index().isStaged(name());
     mHeader->setStageState(state);
 
-    for (auto hunk: mHunks)
-        hunk->setStageState(state);
+    for (auto hunk : mHunks)
+      hunk->setStageState(state);
+  }
 }
 
 void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged) {
@@ -414,6 +413,12 @@ void FileWidget::fetchMore(int count)
 
   for (int i = hunksCount; i < patchCount && i < (hunksCount + count); ++i) {
     HunkWidget *hunk = addHunk(mDiff, mPatch, mStaged, i, lfs, submodule);
+
+    // Hunk stage state setup
+    //SK TODO: faulty but on the right track?
+    //hunk->editor(true);
+    //hunk->setStageState(hunk->stageState());
+
     mHunkLayout->addWidget(hunk);
   }
 }

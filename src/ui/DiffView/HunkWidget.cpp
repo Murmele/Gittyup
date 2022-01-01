@@ -512,27 +512,35 @@ void HunkWidget::stageSelected(int startLine, int end, bool emitSignal) {
 
 void HunkWidget::discardDialog(int startLine, int end) {
   QString name = mPatch.name();
-  int firstLine = mPatch.lineNumber(mIndex, startLine, git::Diff::NewFile);
-  int lastLine = firstLine + mPatch.lineCount(mIndex) -1;
 
-  // Find additions, deletions and context lines
+  // Find additions, deletions and line numbers
   int additions = 0;
   int deletions = 0;
-  int context = 0;
+  int firstLine = 0;
+  int lastLine = 0;
   for (int i = startLine; i < end; i++) {
     int mask = mEditor->markers(i);
-    if (mask & (1 << TextEditor::Marker::Addition))
+    if (mask & (1 << TextEditor::Marker::Addition)) {
       additions++;
-    if (mask & (1 << TextEditor::Marker::Deletion))
-      deletions++;
-    if (mask & (1 << TextEditor::Context))
-      context++;
-  }
 
-  // Calculate first and last linenumber
-  firstLine += context / 2;
-  lastLine -= deletions;
-  lastLine -= context / 2;
+      int newNumber = mPatch.lineNumber(mIndex, i, git::Diff::NewFile);
+      int oldNumber = mPatch.lineNumber(mIndex, i, git::Diff::OldFile);
+      if (firstLine == 0)
+        firstLine = oldNumber > newNumber ? oldNumber : newNumber;
+
+      lastLine = oldNumber > newNumber ? oldNumber : newNumber;
+    }
+    if (mask & (1 << TextEditor::Marker::Deletion)) {
+      deletions++;
+
+      int newNumber = mPatch.lineNumber(mIndex, i, git::Diff::NewFile);
+      int oldNumber = mPatch.lineNumber(mIndex, i, git::Diff::OldFile);
+      if (firstLine == 0)
+        firstLine = oldNumber > newNumber ? oldNumber : newNumber;
+
+      lastLine = oldNumber > newNumber ? oldNumber : newNumber;
+    }
+  }
 
   QString title = HunkWidget::tr("Discard selected lines?");
   QString additionText = additions ? additions > 1 ? HunkWidget::tr("%1 lines").arg(additions) :

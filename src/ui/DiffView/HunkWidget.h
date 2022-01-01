@@ -3,8 +3,9 @@
 
 #include <QFrame>
 #include <QCheckBox>
-#include <QWidget>
 #include <QLabel>
+#include <QToolButton>
+#include <QWidget>
 
 #include "../../editor/TextEditor.h"
 #include "../../git/Patch.h"
@@ -13,8 +14,6 @@
 #include "git/Diff.h"
 
 class DiffView;
-class Header;
-class QToolButton;
 class DisclosureButton;
 class Line;
 

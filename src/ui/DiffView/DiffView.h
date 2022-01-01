@@ -21,11 +21,9 @@
 #include "app/Theme.h"
 #include <QMap>
 #include <QScrollArea>
+#include <QVBoxLayout>
 
-class QCheckBox;
-class QVBoxLayout;
 class FileWidget;
-class DiffTreeModel;
 
 namespace DiffViewStyle {
     const int kIndent = 2;
@@ -86,7 +84,7 @@ public:
   QWidget *file(int index);
 
   void setDiff(const git::Diff &diff);
-  void setFilter(const QList<int> &indexes);
+  void setFilter(const QStringList &paths);
 
   const QList<PluginRef> &plugins() const { return mPlugins; }
   const Account::CommitComments &comments() const { return mComments; }

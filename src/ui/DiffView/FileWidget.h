@@ -107,7 +107,7 @@ public:
     int index,
     bool lfs,
     bool submodule);
-    void setStageState(git::Index::StagedState state);
+    void updateStageState();
 
     // Fetching new hunks
     bool canFetchMore();

@@ -13,7 +13,6 @@
 #include "ui/RepoView.h"
 #include "DisclosureButton.h"
 #include "CommentWidget.h"
-#include "ui/DiffTreeModel.h"
 #include "ui/DoubleTreeWidget.h"
 #include "git/Tree.h"
 #include <QScrollBar>
@@ -198,11 +197,36 @@ void DiffView::setDiff(const git::Diff &diff)
       remoteRepo->account()->requestComments(remoteRepo, oid);
     }
   }
+
+  // Respond to index changes
+  connect(repo.notifier(), &git::RepositoryNotifier::indexChanged, this,
+          [this](const QStringList &paths) {
+    if (mDiff.isValid()) {
+      for (auto file : mFiles) {
+        if (paths.contains(file->name()))
+          file->updateStageState();
+      }
+    }
+  });
 }
 
-void DiffView::setFilter(const QList<int> &indexes)
+void DiffView::setFilter(const QStringList &paths)
 {
-  mIndexes = indexes;
+  if (!mDiff.isValid())
+    return;
+
+  // Setup patch index list from paths
+  QList<int> list;
+  for (auto path : paths) {
+    int idx = mDiff.indexOf(path);
+    if (idx >= 0)
+      list.append(idx);
+  }
+
+  if (list == mIndexes)
+    return;
+
+  mIndexes = list;
 
   // Remove files
   while (mFiles.count()) {
@@ -333,10 +357,6 @@ void DiffView::fetchMore(int count)
 
     git::Patch staged = mStagedPatches.value(patch.name());
     FileWidget *file = new FileWidget(this, mDiff, patch, staged, widget());
-
-    //SK TODO: get the CheckStateRole. emit dataChange could do the job
-    //auto state = static_cast<git::Index::StagedState>(indices[i].data(Qt::CheckStateRole).toInt());
-    //file->setStageState(state);
 
     mFileWidgetLayout->addWidget(file);
     mFiles.append(file);

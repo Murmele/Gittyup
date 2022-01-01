@@ -73,19 +73,15 @@ private:
   QButtonGroup mButtons;
 };
 
-QList<int> indexes(git::Diff &diff, QModelIndex index)
+QStringList selectedPaths(QModelIndex index)
 {
-  QList<int> list;
+  QStringList list;
 
   for (int row = 0; row < index.model()->rowCount(index); row++)
-    list.append(indexes(diff, index.child(row, 0)));
+    list.append(selectedPaths(index.child(row, 0)));
 
-  if (index.model()->rowCount(index) == 0) {
-    QString name = index.data(Qt::EditRole).toString();
-    int idx = diff.indexOf(name);
-    if (idx >= 0)
-      list.append(idx);
-  }
+  if (index.model()->rowCount(index) == 0)
+    list.append(index.data(Qt::EditRole).toString());
 
   return list;
 }
@@ -275,8 +271,6 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff,
 {
   Q_UNUSED(pathspec);
 
-  mDiff = diff;
-
   // Remember selection.
   storeSelection();
 
@@ -360,6 +354,7 @@ void DoubleTreeWidget::treeModelStateChanged(const QModelIndex& index, int check
 {
   Q_UNUSED(index);
   Q_UNUSED(checkState);
+
   // clear editor and disable diffView when no item is selected
   QModelIndexList stagedSelections = stagedFiles->selectionModel()->selectedIndexes();
   if (stagedSelections.count())
@@ -370,6 +365,7 @@ void DoubleTreeWidget::treeModelStateChanged(const QModelIndex& index, int check
     return;
 
   mEditor->clear();
+  mDiffView->setFilter(QStringList());
 }
 
 void DoubleTreeWidget::collapseCountChanged(int count)
@@ -434,8 +430,7 @@ void DoubleTreeWidget::loadEditorContent(const QModelIndex &index)
     mEditor->load(name, blob, commit);
 
   // Load selected file(s).
-  if (mDiff.isValid())
-    mDiffView->setFilter(indexes(mDiff, index));
+  mDiffView->setFilter(selectedPaths(index));
 }
 
 void DoubleTreeWidget::toggleCollapseStagedFiles()

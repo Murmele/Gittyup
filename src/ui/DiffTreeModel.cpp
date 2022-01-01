@@ -264,8 +264,8 @@ bool DiffTreeModel::discard(const QModelIndex &index)
       if (QFileInfo(dir.filePath(name)).isDir()) {
         if (dir.cd(name))
           dir.removeRecursively();
-        } else {
-          dir.remove(name);
+      } else {
+        dir.remove(name);
       }
     } else {
       trackedPatches.append(patch.name());
@@ -287,7 +287,7 @@ bool DiffTreeModel::discard(const QModelIndex &index)
       filePatches.append(trackedPatch);
   }
 
-  if (filePatches.count()) {
+  if (!filePatches.isEmpty()) {
     int strategy = GIT_CHECKOUT_FORCE;
     auto repo = mDiff.patch(list[0]).repo(); // does not matter which index is used all are in the same repo
     if (!repo.checkout(git::Commit(), nullptr, trackedPatches, strategy))
