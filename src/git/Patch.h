@@ -166,7 +166,6 @@ public:
 
   static void clearConflictResolutions(const Repository &repo);
 
-private:
   /*!
    * Applies changes to hunk and store result in image
    * \brief Patch::apply
@@ -177,6 +176,7 @@ private:
    */
   void apply(QList<QList<QByteArray> > &image, int hidx, int start_line, int end_line) const;
 
+private:
   struct ConflictHunk
   {
     int line; // start line

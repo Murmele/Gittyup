@@ -124,14 +124,6 @@ _FileWidget::Header::Header(
   if (!diff.isStatusDiff())
     return;
 
-  // Respond to check changes.
-  connect(mCheck, &QCheckBox::clicked, [this](bool staged) {
-      if (staged)
-          emit stageStateChanged(Qt::Checked);
-      else
-          emit stageStateChanged(Qt::Unchecked);
-  });
-
   // Set initial check state.
   updateCheckState();
 }
@@ -256,7 +248,14 @@ FileWidget::FileWidget(DiffView *view,
   bool lfs = patch.isLfsPointer();
   mHeader = new _FileWidget::Header(diff, patch, binary, lfs, submodule, parent);
 
-  connect(mHeader, &_FileWidget::Header::stageStateChanged, this, &FileWidget::headerCheckStateChanged);
+  // Respond to check changes
+  connect(mHeader->check(), &QCheckBox::clicked, this,
+          [this](bool checked) {
+    if (mDiff.isValid()) {
+      git::Index index = mDiff.index();
+      mDiff.index().setStaged({mPatch.name()}, checked);
+    }
+  });
   connect(mHeader, &_FileWidget::Header::discard, this, &FileWidget::discard);
   layout->addWidget(mHeader);
 
@@ -336,12 +335,6 @@ FileWidget::FileWidget(DiffView *view,
   disclosureButton->setChecked(expand);
 }
 
-void FileWidget::updateHunks(git::Patch stagedPatch)
-{
-    for (auto hunk: mHunks)
-		hunk->load(stagedPatch, true);
-}
-
 bool FileWidget::isEmpty()
 {
   return (mHunks.isEmpty() && mImages.isEmpty());
@@ -349,39 +342,40 @@ bool FileWidget::isEmpty()
 
 void FileWidget::updateStageState()
 {
-  if (mDiff.isValid()) {
-    git::Index::StagedState state = mDiff.index().isStaged(name());
-    mHeader->setStageState(state);
+  if (mDiff.isValid() && mDiff.isStatusDiff()) {
+    git::Index::StagedState stagedState = mDiff.index().isStaged(name());
+    mHeader->setStageState(stagedState);
 
     for (auto hunk : mHunks)
-      hunk->setStageState(state);
+      hunk->setStageState(stagedState);
   }
 }
 
-void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged) {
-    mPatch = patch;
-    mHeader->updatePatch(patch);
-    mStaged = staged;
-
-  git::Repository repo = RepoView::parentView(this)->repo();
-
-  QString name = patch.name();
-  QString path = repo.workdir().filePath(name);
-  bool submodule = repo.lookupSubmodule(name).isValid();
-  bool lfs = patch.isLfsPointer();
-
-  // remove all hunks
-  QLayoutItem *child;
-  while ((child = mHunkLayout->takeAt(0)) != 0) {
-        delete child;
-  }
-  mHunks.clear();
+void FileWidget::updatePatch(const git::Patch &patch,
+                             const git::Patch &staged)
+{
+  mPatch = patch;
+  mHeader->updatePatch(patch);
+  mStaged = staged;
 
   // Add untracked file content.
   if (patch.isUntracked()) {
+    git::Repository repo = RepoView::parentView(this)->repo();
+
+    QString name = patch.name();
+    QString path = repo.workdir().filePath(name);
+    bool submodule = repo.lookupSubmodule(name).isValid();
+    bool lfs = patch.isLfsPointer();
+
+    // Remove all hunks
+    QLayoutItem *child;
+    while ((child = mHunkLayout->takeAt(0)) != 0)
+      delete child;
+
+    mHunks.clear();
+
     if (!QFileInfo(path).isDir())
       mHunkLayout->addWidget(addHunk(mDiff, mPatch, mStaged, -1, lfs, submodule));
-    return;
   }
 }
 
@@ -397,7 +391,8 @@ bool FileWidget::canFetchMore()
  */
 void FileWidget::fetchMore(int count)
 {
-  git::Repository repo = RepoView::parentView(this)->repo();
+  RepoView *view = RepoView::parentView(this);
+  git::Repository repo = view->repo();
 
   // Add widgets.
   int patchCount = mPatch.count();
@@ -413,12 +408,6 @@ void FileWidget::fetchMore(int count)
 
   for (int i = hunksCount; i < patchCount && i < (hunksCount + count); ++i) {
     HunkWidget *hunk = addHunk(mDiff, mPatch, mStaged, i, lfs, submodule);
-
-    // Hunk stage state setup
-    //SK TODO: faulty but on the right track?
-    //hunk->editor(true);
-    //hunk->setStageState(hunk->stageState());
-
     mHunkLayout->addWidget(hunk);
   }
 }
@@ -464,10 +453,12 @@ HunkWidget *FileWidget::addHunk(
   HunkWidget *hunk =
     new HunkWidget(mView, diff, patch, staged, index, lfs, submodule, this);
 
-  connect(hunk, &HunkWidget::stageStateChanged, [this, hunk](git::Index::StagedState state) {
-    stageHunks(hunk, state, false);
+  connect(hunk, &HunkWidget::stageStateChanged,
+          [this, hunk](git::Index::StagedState stageState,
+                       bool completeHunk) {
+    stageHunks(hunk, stageState, completeHunk);
   });
-  connect(hunk, &HunkWidget::discardSignal, this, &FileWidget::discardHunk);
+  connect(hunk, &HunkWidget::discard, this, &FileWidget::discardHunk);
   TextEditor* editor = hunk->editor(false);
 
   // Respond to editor diagnostic signal.
@@ -484,84 +475,100 @@ HunkWidget *FileWidget::addHunk(
   return hunk;
 }
 
-void FileWidget::stageHunks(const HunkWidget* hunk, git::Index::StagedState stageState, bool completeFile, bool completeFileStaged)
+void FileWidget::stageHunks(HunkWidget *hunk,
+                            git::Index::StagedState stageState,
+                            bool completeHunk)
 {
-  // Might be a problem if not all hunks are loaded
-  fetchAll(-1);
-
-  if (mSupressStaging)
-      return;
-
   git::Index index = mDiff.index();
-  if (!index.isValid()) // why the index can be invalid?
-      return;
-
-  int staged = 0;
-  int unstaged = 0;
-  for (int i = 0; i < mHunks.size(); ++i) {
-    git::Index::StagedState state;
-    if (mHunks[i] == hunk)
-        state = stageState; // because the current hunk did not change the state yet.
-    else
-        state = mHunks[i]->stageState();
-    if (state == git::Index::Staged)
-        staged++;
-    else if (state == git::Index::Unstaged)
-        unstaged ++;
-  }
-  // TODO: check all not loaded hunks!
-  mSuppressUpdate = true;
-
-  if ((staged == mHunks.size() && mHunks.size() > 0) || (completeFile && completeFileStaged)) {
-    // if the file does not contain hunks, it should be always staged!
-    emit stageStateChanged(mPatch.name(), git::Index::Staged);
-    mSuppressUpdate = false;
+  if (!index.isValid())
     return;
-  } else if (completeFile && !completeFileStaged) {
-      emit stageStateChanged(mPatch.name(), git::Index::Unstaged);
-      mSuppressUpdate = false;
-      return;
+
+  if (completeHunk) {
+    if (stageState == git::Index::StagedState::Unstaged) {
+
+      // Index of removed hunk
+      int hidx = mHunks.indexOf(hunk);
+      const git_diff_hunk *unstageHeader = mPatch.header_struct(hidx);
+
+      // Remove staged patch
+      QBitArray stageHunks(mStaged.count(), true);
+      for (int i = 0; i < mStaged.count(); i++) {
+        const git_diff_hunk *stageHeader = mStaged.header_struct(i);
+        int old_start = unstageHeader->old_start - stageHeader->old_start;
+        if ((old_start >= 0 && old_start <= unstageHeader->old_lines) &&
+            (unstageHeader->old_lines <= stageHeader->old_lines))
+          stageHunks[i] = false;
+      }
+
+      QByteArray stageBuffer = mStaged.apply(stageHunks);
+
+      // Add the buffer to the index.
+      index.add(mPatch.name(), stageBuffer);
+    } else {
+      QByteArray stageBuffer;
+      if (mStaged.count() <= 0) {
+
+        // Add first hunk
+        int hidx = mHunks.indexOf(hunk);
+        QBitArray stageHunks(mPatch.count(), false);
+        stageHunks[hidx] = true;
+        stageBuffer = mPatch.apply(stageHunks);
+      } else {
+
+        // Create image
+        QList<QList<QByteArray>> image;
+        QByteArray buffer = mPatch.apply(QBitArray(mPatch.count(), false));
+        mPatch.populatePreimage(image, buffer);
+
+        // Index new hunk
+        int hidx = mHunks.indexOf(hunk);
+        const git_diff_hunk *unstageHeader = mPatch.header_struct(hidx);
+
+        // Add staged hunks to image, skip already staged patch
+        for (int i = 0; i < mStaged.count(); i++) {
+          const git_diff_hunk *stageHeader = mStaged.header_struct(i);
+          int old_start = unstageHeader->old_start - stageHeader->old_start;
+          if ((old_start >= 0 && old_start <= unstageHeader->old_lines) &&
+              (unstageHeader->old_lines <= stageHeader->old_lines))
+            continue;
+
+          mStaged.apply(image, i, -1, -1);
+        }
+
+        // Add new hunk
+        mPatch.apply(image, hidx, -1, -1);
+
+        stageBuffer = mPatch.generateResult(image);
+      }
+      // Add the buffer to the index.
+      index.add(mPatch.name(), stageBuffer);
+    }
+  } else {
+
+    // Create image
+    QList<QList<QByteArray>> image;
+    QByteArray buffer = mPatch.apply(QBitArray(mPatch.count(), false));
+    mPatch.populatePreimage(image, buffer);
+
+    // Add staged hunks to image
+    for (int i = 0; i < mStaged.count(); i++)
+      mStaged.apply(image, i, -1, -1);
+
+    // Apply changed hunk data
+    int hidx = mHunks.indexOf(hunk);
+    mPatch.apply(image, hidx, -1, -1);
+
+    //SK TODO: linestaging DOES NOT WORK yet
+    //QByteArray hunkData = hunk->apply();
+    //mPatch.apply(image, hidx, hunkData);
+
+    // Add the buffer to the index.
+    buffer = mPatch.generateResult(image);
+    index.add(mPatch.name(), buffer);
+
+    // Update hunk stage state
+    hunk->header()->setStageState(stageState);
   }
-
-  if (unstaged == mHunks.size()) {
-    emit stageStateChanged(mPatch.name(), git::Index::Unstaged);
-    mSuppressUpdate = false;
-    return;
-  }
-
-  // when changing a line in a file,
-  // two lines are visible, the old one and the new one.
-  // When staging only one line, for example the added line,
-  // then the unstaged (removed line) and the added line shall be
-  // available in the file.
-  QString name = mPatch.name();
-  git::Repository repo = mPatch.repo();
-  QFile dev(repo.workdir().filePath(name));
-  if (!dev.open(QFile::ReadOnly))
-      return;
-
-  QByteArray fileContent = dev.readAll();
-  dev.close();
-
-  QByteArray buffer;
-  QList<QList<QByteArray>> image;
-  mPatch.populatePreimage(image, fileContent);
-  for (int i = 0; i < mHunks.size(); ++i) {
-
-    QByteArray hunk_content;
-      hunk_content = mHunks[i]->apply();
-      mPatch.apply(image, i, hunk_content);
-  }
-  // TODO: apply all not loaded hunks
-  // Maybe by applying the mStaged?? Otherwise everything gets staged
-  buffer = mPatch.generateResult(image);
-
-  // Add the buffer to the index.
-  index.add(mPatch.name(), buffer);
-  mSuppressUpdate = false;
-
-  // TODO: index.add should notify the model directly!
-  emit stageStateChanged(mPatch.name(), git::Index::PartiallyStaged);
 }
 
 void FileWidget::discardHunk() {
@@ -629,14 +636,4 @@ void FileWidget::discard() {
   });
 
   dialog->exec();
-}
-
-void FileWidget::headerCheckStateChanged(int state)
-{
-  assert(state != Qt::PartiallyChecked); // makes no sense, that the user can select partially selected
-
-  if (state == Qt::Checked)
-    emit stageStateChanged(mPatch.name(), git::Index::Staged);
-  else
-    emit stageStateChanged(mPatch.name(), git::Index::Unstaged);
 }

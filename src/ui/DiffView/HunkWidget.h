@@ -39,13 +39,12 @@ namespace _HunkWidget {
       QToolButton *theirsButton() const;
 
     public slots:
-      void setCheckState(git::Index::StagedState state);
+      void setStageState(git::Index::StagedState state);
 
     protected:
       void mouseDoubleClickEvent(QMouseEvent *event) override;
 
     signals:
-      void stageStateChanged(int stageState);
       void discard();
 
     private:
@@ -109,13 +108,7 @@ public:
    * \param staged
    */
   void setStaged(bool staged);
-  void setStageState(git::Index::StagedState state);
-  /*!
-   * Called by the hunk header
-   * \brief discard
-   */
-  void discard();
-  void load();
+  void setStageState(git::Index::StagedState stageState);
   /*!
    * update hunk content
    * \brief load
@@ -131,8 +124,9 @@ signals:
    * \brief stageStateChanged
    * \param stageState
    */
-  void stageStateChanged(git::Index::StagedState state);
-  void discardSignal();
+  void stageStateChanged(git::Index::StagedState stageState,
+                         bool completeHunk);
+  void discard();
 
 protected:
   void paintEvent(QPaintEvent *event);
@@ -148,7 +142,6 @@ private slots:
    * \param end
    */
   void discardDialog(int startLine, int end);
-  void headerCheckStateChanged(int state);
   /*!
    * Stage/Unstage line with index lidx
    * \brief setStaged

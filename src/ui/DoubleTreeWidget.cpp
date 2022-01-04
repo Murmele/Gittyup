@@ -214,10 +214,6 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
   connect(collapseButtonUnstagedFiles, &StatePushButton::clicked, this, &DoubleTreeWidget::toggleCollapseUnstagedFiles);
 
   // Respond to DiffView signals.
-  connect(mDiffView, &DiffView::stageStateChanged, [this](const QString &name, int state) {
-    QModelIndex index = mDiffTreeModel->index(name);
-    mDiffTreeModel->setData(index, state, Qt::CheckStateRole);
-  });
   connect(mDiffView, &DiffView::discarded, [this](const QString &name) {
     RepoView *view = RepoView::parentView(this);
     QModelIndex index = mDiffTreeModel->index(name);
@@ -226,6 +222,18 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
        view->error(parent, DoubleTreeWidget::tr("discard"), name);
     }
     view->refresh();
+  });
+
+  // Respond to index changes
+  connect(repo.notifier(), &git::RepositoryNotifier::indexChanged, this,
+          [this](const QStringList &paths) {
+    for (auto path : paths) {
+      QModelIndex index = mDiffTreeModel->index(path);
+
+      // PartiallyStaged is a dummy signal for update only
+      git::Index::StagedState state = git::Index::StagedState::PartiallyStaged;
+      mDiffTreeModel->setData(index, state, Qt::CheckStateRole);
+    }
   });
 }
 

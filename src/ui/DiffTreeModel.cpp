@@ -240,10 +240,52 @@ QVariant DiffTreeModel::data(const QModelIndex &index, int role) const
 }
 
 bool DiffTreeModel::setData(const QModelIndex &index,
-                        const QVariant &value,
-                        int role)
+                            const QVariant &value,
+                            int role)
 {
-    return setData(index, value, role, false);
+  switch (role) {
+    case Qt::CheckStateRole: {
+      QStringList files;
+      Node *node = this->node(index);
+      git::Index::StagedState state = static_cast<git::Index::StagedState>(value.toInt());
+
+      if (state != git::Index::StagedState::PartiallyStaged) {
+        node->childFiles(files);
+
+        if (state == git::Index::StagedState::Staged)
+          mDiff.index().setStaged(files, true);
+        else if (state == git::Index::StagedState::Unstaged)
+          mDiff.index().setStaged(files, false);
+      }
+
+      // Handle childs
+      if (hasChildren(index)) {
+        // emit dataChanged() for all files in the folder
+        // all children changed too. TODO: only the tracked files should emit a signal
+        for (int row = 0; row < rowCount(index); row++) {
+          QModelIndex child = this->index(row, 0, index);
+          emit dataChanged(child, child, {role});
+        }
+      }
+
+      // Handle parents
+      // recursive approach to emit signal dataChanged also for the parents.
+      // Because when a file in a folder is staged, the state of the folder changes too
+      QModelIndex parent = this->parent(index);
+      while (parent.isValid()) {
+        emit dataChanged(parent, parent, {role});
+        parent = this->parent(parent);
+      }
+
+      // file/folder it self
+      // emit dataChanged() for folder or file it self
+      emit dataChanged(index, index, {role});
+      emit checkStateChanged(index, value.toInt());
+
+      return true;
+    }
+  }
+  return false;
 }
 
 bool DiffTreeModel::discard(const QModelIndex &index)
@@ -294,61 +336,6 @@ bool DiffTreeModel::discard(const QModelIndex &index)
       return false;
   }
   return true;
-}
-
-bool DiffTreeModel::setData(const QModelIndex &index,
-                        const QVariant &value,
-                        int role,
-                        bool ignoreIndexChanges)
-{
-  switch (role) {
-    case Qt::CheckStateRole: {
-      QStringList files;
-      Node *node = this->node(index);
-
-      if (!ignoreIndexChanges) {
-          QStringList files;
-          node->childFiles(files);
-          git::Index::StagedState state = static_cast<git::Index::StagedState>(value.toInt());
-          if (state == git::Index::StagedState::Staged)
-            mDiff.index().setStaged(files, true);
-          else if (state == git::Index::StagedState::Unstaged)
-              mDiff.index().setStaged(files, false);
-          else if (state == git::Index::StagedState::PartiallyStaged)
-              // is done directly in the hunkwidget, because it gets to complicated to
-              // do line staging here.
-              (void)state;
-      }
-
-	  // childs
-	  if (hasChildren(index)) {
-		  // emit dataChanged() for all files in the folder
-		  // all children changed too. TODO: only the tracked files should emit a signal
-		  int count = rowCount(index);
-		  for (int row = 0; row < count; row++) {
-			  QModelIndex child = this->index(row, 0, index);
-			  emit dataChanged(child, child, {role});
-		  }
-	  }
-	  // parents
-	  // recursive approach to emit signal dataChanged also for the parents.
-	  // Because when a file in a folder is staged, the state of the folder changes too
-	  QModelIndex parent = this->parent(index);
-	  while (parent.isValid()) {
-		  emit dataChanged(parent, parent, {role});
-		  parent = this->parent(parent);
-	  }
-
-	  // file/folder it self
-	  // emit dataChanged() for folder or file it self
-	  emit dataChanged(index, index, {role});
-      emit checkStateChanged(index, value.toInt());
-
-      return true;
-    }
-  }
-
-  return false;
 }
 
 Qt::ItemFlags DiffTreeModel::flags(const QModelIndex &index) const

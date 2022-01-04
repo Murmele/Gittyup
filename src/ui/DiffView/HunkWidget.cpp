@@ -139,25 +139,16 @@ _HunkWidget::Header::Header(
   layout->addWidget(label);
   layout->addStretch();
   layout->addLayout(buttons);
-
-  // Collapse on check.
-  connect(mCheck, &QCheckBox::clicked, [this](bool staged) {
-    mButton->setChecked(!staged);
-    if (staged) {
-        emit stageStateChanged(Qt::Checked);
-    } else {
-        emit stageStateChanged(Qt::Unchecked);
-    }
-  });
 }
 
-void _HunkWidget::Header::setCheckState(git::Index::StagedState state) { // on the checkstate signal will not be reacted
-    if (state == git::Index::Staged)
-        mCheck->setCheckState(Qt::Checked);
-    else if (state == git::Index::Unstaged)
-        mCheck->setCheckState(Qt::Unchecked);
-    else
-        mCheck->setCheckState(Qt::PartiallyChecked);
+void _HunkWidget::Header::setStageState(git::Index::StagedState stageState)
+{
+  if (stageState == git::Index::Staged)
+    mCheck->setCheckState(Qt::Checked);
+  else if (stageState == git::Index::Unstaged)
+    mCheck->setCheckState(Qt::Unchecked);
+  else
+    mCheck->setCheckState(Qt::PartiallyChecked);
 }
 
 QCheckBox *_HunkWidget::Header::check() const
@@ -218,7 +209,6 @@ HunkWidget::HunkWidget(
 
   mHeader = new _HunkWidget::Header(diff, patch, index, lfs, submodule, this);
   layout->addWidget(mHeader);
-  connect(mHeader, &_HunkWidget::Header::discard, this, &HunkWidget::discard);
 
   mEditor = new Editor(this);
   mEditor->setLexer(patch.name());
@@ -251,7 +241,19 @@ HunkWidget::HunkWidget(
   layout->addWidget(mEditor);
   if (disclosure)
     connect(mHeader->button(), &DisclosureButton::toggled, mEditor, &TextEditor::setVisible);
-  connect(mHeader, &_HunkWidget::Header::stageStateChanged, this , &HunkWidget::headerCheckStateChanged);
+
+  // Respond to check changes
+  connect(mHeader->check(), &QCheckBox::clicked, this, [this](bool checked) {
+    git::Index::StagedState stageState = checked ? git::Index::StagedState::Staged :
+                                                   git::Index::StagedState::Unstaged;
+    setStageState(stageState);
+    emit stageStateChanged(stageState, true);
+  });
+
+  // Respond to discard signal
+  connect(mHeader, &_HunkWidget::Header::discard, this, [this] {
+    discardDialog(0, mEditor->lineCount());
+  });
 
   // Handle conflict resolution.
   if (QToolButton *save = mHeader->saveButton()) {
@@ -466,7 +468,8 @@ _HunkWidget::Header* HunkWidget::header() const
 TextEditor* HunkWidget::editor(bool ensureLoaded)
 {
   if (ensureLoaded)
-    load(mPatch);
+    load(mStaged, true);
+
   return mEditor;
 }
 
@@ -489,15 +492,16 @@ void HunkWidget::stageSelected(int startLine, int end, bool emitSignal) {
          int mask = mEditor->markers(i);
          if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
             // stage only when not already staged
-            if ((mask & 1 << TextEditor::Marker::StagedMarker) == 0)
+            if ((mask & (1 << TextEditor::Marker::StagedMarker)) == 0)
                 mEditor->markerAdd(i, TextEditor::StagedMarker);
          }
      }
 
      mStagedStateLoaded = false;
      if (!mLoading && emitSignal)
-        emit stageStateChanged(stageState());
+        emit stageStateChanged(stageState(), false);
  }
+
  void HunkWidget::unstageSelected(int startLine, int end, bool emitSignal) {
     for (int i=startLine; i < end; i++) {
         int mask = mEditor->markers(i);
@@ -507,7 +511,7 @@ void HunkWidget::stageSelected(int startLine, int end, bool emitSignal) {
 
     mStagedStateLoaded = false;
     if (!mLoading && emitSignal)
-        emit stageStateChanged(stageState());
+        emit stageStateChanged(stageState(), false);
  }
 
 void HunkWidget::discardDialog(int startLine, int end) {
@@ -581,47 +585,28 @@ void HunkWidget::discardSelected(int startLine, int end)
     if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion))
       mEditor->markerAdd(i, TextEditor::DiscardMarker);
   }
-  emit discardSignal();
+  emit discard();
 }
 
- void HunkWidget::headerCheckStateChanged(int state) {
+void HunkWidget::setStageState(git::Index::StagedState stageState)
+{
+  if (stageState == git::Index::StagedState::Staged ||
+      stageState == git::Index::StagedState::Unstaged)
+  {
+    mHeader->setStageState(stageState);
 
-     assert(state != Qt::PartiallyChecked); // makes no sense, that the user can select partially selected
-     git::Index::StagedState stageState;
-     if (state == Qt::Checked)
-         stageState = git::Index::StagedState::Staged;
-     else
-         stageState = git::Index::StagedState::Unstaged;
+    // Update the line markers
+    bool staged = stageState == git::Index::StagedState::Staged ? true : false;
+    for (int i = 0; i < mEditor->lineCount(); i++) {
+      int mask = mEditor->markers(i);
 
-     // must be done, because the stage state of the hole file is calculated
-     // from the staged lines in the editor
-    setStageState(stageState);
-
-
-    stageStateChanged(stageState);
- }
-
- void HunkWidget::setStageState(git::Index::StagedState state) {
-
-      if (state == git::Index::StagedState::Staged ||
-          state == git::Index::StagedState::Unstaged)
-      {
-          mHeader->setCheckState(state);
-          // update the line markers
-          bool staged = state == git::Index::StagedState::Staged ? true : false;
-          int lineCount = mEditor->lineCount();
-          int count = 0;
-          for (int i = 0; i < lineCount; i++) {
-              int mask = mEditor->markers(i);
-              // if a line was not added or deleted, it cannot be staged so ignore all of them
-              if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
-                setStaged(i, staged, false);
-                count++;
-              }
-          }
-      }
-      mStagedStage = state;
- }
+      // If a line was not added or deleted, it cannot be staged so ignore all of them
+      if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion))
+        setStaged(i, staged, false);
+    }
+    mStagedStage = stageState;
+  }
+}
 
 
  void HunkWidget::setStaged(bool staged)
@@ -632,12 +617,6 @@ void HunkWidget::discardSelected(int startLine, int end)
         setStageState(git::Index::StagedState::Unstaged);
 
 
- }
-
- void HunkWidget::discard()
- {
-     int count = mEditor->lineCount();
-     discardDialog(0, count);
  }
 
  void HunkWidget::setStaged(int lidx, bool staged, bool emitSignal) {
@@ -720,11 +699,6 @@ QByteArray HunkWidget::tokenBuffer(const QList<HunkWidget::Token> &tokens)
   foreach (const Token &token, tokens)
     list.append(token.text);
   return list.join('\n');
-}
-
-void HunkWidget::load()
-{
-    load(mStaged, true);
 }
 
 void HunkWidget::load(git::Patch &staged, bool force)
@@ -865,9 +839,9 @@ void HunkWidget::load(git::Patch &staged, bool force)
   mEditor->updateGeometry();
 
   mLoading = false;
-  // update stageState after everything is loaded
-  //stageStateChanged(stageState());
-    mHeader->setCheckState(stageState());
+
+  // Update stage state after everything is loaded
+  mHeader->setStageState(stageState());
 }
 
 void HunkWidget::setEditorLineInfos(QList<Line>& lines, Account::FileComments& comments, int width)
@@ -1198,11 +1172,11 @@ QByteArray HunkWidget::apply() const {
     int lineCount = mEditor->lineCount();
     for (int i = 0; i < lineCount; i++) {
         int mask = mEditor->markers(i);
-        if (mask & 1 << TextEditor::Marker::Addition) {
-            if (mask & 1 << TextEditor::Marker::StagedMarker)
+        if (mask & (1 << TextEditor::Marker::Addition)) {
+            if ((mask & (1 << TextEditor::Marker::StagedMarker)))
                 ar.append(mEditor->line(i));
-        } else if (mask & 1 << TextEditor::Marker::Deletion) {
-            if (!(mask & 1 << TextEditor::Marker::StagedMarker))
+        } else if (mask & (1 << TextEditor::Marker::Deletion)) {
+            if (!(mask & (1 << TextEditor::Marker::StagedMarker)))
                 ar.append(mEditor->line(i));
         } else
           ar.append(mEditor->line(i));
@@ -1258,4 +1232,3 @@ void HunkWidget::chooseLines(TextEditor::Marker kind)
 
   mEditor->setReadOnly(true);
 }
-

@@ -44,8 +44,8 @@ public:
   void setStageState(git::Index::StagedState state);
 
 signals:
-  void stageStateChanged(int stageState);
   void discard();
+
 protected:
   void mouseDoubleClickEvent(QMouseEvent *event) override;
   void contextMenuEvent(QContextMenuEvent *event) override;
@@ -86,11 +86,7 @@ public:
     QWidget *parent = nullptr);
   bool isEmpty();
   void updatePatch(const git::Patch &patch, const git::Patch &staged);
-  /*!
-   * Update hunks after index change and emits the current stage state of the hunks
-   * \brief updateHunks
-   */
-  void updateHunks(git::Patch stagedPatch);
+
   _FileWidget::Header *header() const;
 
   QString name() const { return mPatch.name(); }
@@ -120,14 +116,15 @@ public:
     void fetchAll(int index = -1);
 
 public slots:
-  void headerCheckStateChanged(int state);
   /*!
    * Stages the changes of the hunk
    * emits signal "stageStateChanged" with the
    * current state of the hunk as parameter
    * \brief stageHunks
    */
-  void stageHunks(const HunkWidget *hunk, git::Index::StagedState stageState, bool completeFile=false, bool completeFileStaged=false);
+  void stageHunks(HunkWidget *hunk,
+                  git::Index::StagedState stageState,
+                  bool completeHunk);
   /*!
    * Discard specific hunk
    * Emitted by the hunk it self
@@ -137,7 +134,6 @@ public slots:
 
 signals:
   void diagnosticAdded(TextEditor::DiagnosticKind kind);
-  void stageStateChanged(const QString &name, git::Index::StagedState state);
   void discarded(const QString &name);
 
 private:
@@ -153,8 +149,6 @@ private:
   QList<QWidget *> mImages;
   QList<HunkWidget *> mHunks;
   QVBoxLayout* mHunkLayout{nullptr};
-  bool mSuppressUpdate{false};
-  bool mSupressStaging{false};
 };
 
 #endif // FILEWIDGET_H

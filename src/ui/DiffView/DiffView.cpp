@@ -201,10 +201,31 @@ void DiffView::setDiff(const git::Diff &diff)
   // Respond to index changes
   connect(repo.notifier(), &git::RepositoryNotifier::indexChanged, this,
           [this](const QStringList &paths) {
-    if (mDiff.isValid()) {
-      for (auto file : mFiles) {
-        if (paths.contains(file->name()))
-          file->updateStageState();
+    if (!mDiff.isValid())
+      return;
+
+    // Reset staged patch
+    RepoView *view = RepoView::parentView(this);
+    git::Repository repo = view->repo();
+    mStagedPatches.clear();
+    if (mDiff.isStatusDiff()) {
+      if (git::Reference head = repo.head()) {
+        if (git::Commit commit = head.target()) {
+          git::Diff stagedDiff = repo.diffTreeToIndex(commit.tree());
+          for (int i = 0; i < stagedDiff.count(); ++i)
+            mStagedPatches[stagedDiff.name(i)] = stagedDiff.patch(i);
+        }
+      }
+    }
+
+    // Staged patch changes
+    for (int i = 0; i < mFiles.count(); i++) {
+      if (paths.contains(mFiles[i]->name())) {
+        int pidx = mIndexes.at(i);
+        git::Patch patch = mDiff.patch(pidx);
+        git::Patch staged = mStagedPatches.value(patch.name(), git::Patch());
+        mFiles[i]->updatePatch(patch, staged);
+        mFiles[i]->updateStageState();
       }
     }
   });
@@ -339,6 +360,10 @@ void DiffView::fetchMore(int count)
 
       // Load hunk(s) and update scrollbar
       QApplication::processEvents();
+
+      // Running the eventloop may trigger a view refresh
+      if (mFiles.isEmpty())
+        return;
     }
 
     // Stop loading files
@@ -355,7 +380,7 @@ void DiffView::fetchMore(int count)
       return;
     }
 
-    git::Patch staged = mStagedPatches.value(patch.name());
+    git::Patch staged = mStagedPatches.value(patch.name(), git::Patch());
     FileWidget *file = new FileWidget(this, mDiff, patch, staged, widget());
 
     mFileWidgetLayout->addWidget(file);
@@ -370,9 +395,7 @@ void DiffView::fetchMore(int count)
     // Respond to diagnostic signal.
     connect(file, &FileWidget::diagnosticAdded,
             this, &DiffView::diagnosticAdded);
-    // Respond to stage changes.
-    connect(file, &FileWidget::stageStateChanged,
-            this, &DiffView::stageStateChanged);
+
     // Respond to discard signal.
     connect(file, &FileWidget::discarded,
             this, &DiffView::discarded);
@@ -385,6 +408,10 @@ void DiffView::fetchMore(int count)
 
       // Load hunk(s) and update scrollbar
       QApplication::processEvents();
+
+      // Running the eventloop may trigger a view refresh
+      if (mFiles.isEmpty())
+        return;
     }
 
     // Stop loading files

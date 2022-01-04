@@ -94,7 +94,6 @@ public:
 
 signals:
   void diagnosticAdded(TextEditor::DiagnosticKind kind);
-  void stageStateChanged(const QString &name, git::Index::StagedState state);
   void discarded(const QString &name);
 
 protected:
