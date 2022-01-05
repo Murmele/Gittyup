@@ -78,22 +78,8 @@ public:
   _HunkWidget::Header *header() const;
   TextEditor *editor(bool ensureLoaded = true);
   void invalidate();
-  /*!
-   * Return hunk retrieved from the editor with removed discard lines
-   * Idea is to store the changes only in the texteditor
-   * and provide the data to the patch if needed
-   * \brief hunk
-   * \return
-   */
-  QByteArray hunk() const;
-  /*!
-   * Return hunk retrieved from the editor to apply patch
-   * Idea is to store the changes only in the texteditor
-   * and provide the data to the patch if needed
-   * \brief hunk
-   * \return
-   */
-  QByteArray apply() const;
+
+  QList<int> ignoreLines() const;
   /*!
    * \brief stageState
    * Calculate stage state of the hunk. Git does not provide
@@ -102,12 +88,7 @@ public:
    * \return
    */
   git::Index::StagedState stageState();
-  /*!
-   * Stage/Unstage all
-   * \brief setStaged
-   * \param staged
-   */
-  void setStaged(bool staged);
+
   void setStageState(git::Index::StagedState stageState);
   /*!
    * update hunk content
@@ -132,8 +113,8 @@ protected:
   void paintEvent(QPaintEvent *event);
 
 private slots:
-  void stageSelected(int startLine, int end, bool emitSignal=true);
-  void unstageSelected(int startLine, int end, bool emitSignal=true);
+  void stageSelected(int startLine, int end, bool emitSignal = true);
+  void unstageSelected(int startLine, int end, bool emitSignal = true);
   void discardSelected(int startLine, int end);
   /*!
    * Shows dialog if the changes should be discarded

@@ -487,32 +487,30 @@ void HunkWidget::paintEvent(QPaintEvent *event)
   QFrame::paintEvent(event);
 }
 
-void HunkWidget::stageSelected(int startLine, int end, bool emitSignal) {
-     for (int i=startLine; i < end; i++) {
-         int mask = mEditor->markers(i);
-         if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
-            // stage only when not already staged
-            if ((mask & (1 << TextEditor::Marker::StagedMarker)) == 0)
-                mEditor->markerAdd(i, TextEditor::StagedMarker);
-         }
-     }
+void HunkWidget::stageSelected(int startLine, int end, bool emitSignal)
+{
+  for (int i = startLine; i < end; i++) {
+    int mask = mEditor->markers(i);
+    if (mask & (1 << TextEditor::Marker::Addition | (1 << TextEditor::Marker::Deletion)))
+      mEditor->markerAdd(i, TextEditor::StagedMarker);
+  }
 
-     mStagedStateLoaded = false;
-     if (!mLoading && emitSignal)
-        emit stageStateChanged(stageState(), false);
- }
+  mStagedStateLoaded = false;
+  if (!mLoading && emitSignal)
+    emit stageStateChanged(stageState(), false);
+}
 
- void HunkWidget::unstageSelected(int startLine, int end, bool emitSignal) {
-    for (int i=startLine; i < end; i++) {
-        int mask = mEditor->markers(i);
-        if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion))
-            mEditor->markerDelete(i, TextEditor::StagedMarker);
-    }
+void HunkWidget::unstageSelected(int startLine, int end, bool emitSignal) {
+  for (int i = startLine; i < end; i++) {
+    int mask = mEditor->markers(i);
+    if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion))
+      mEditor->markerDelete(i, TextEditor::StagedMarker);
+  }
 
-    mStagedStateLoaded = false;
-    if (!mLoading && emitSignal)
-        emit stageStateChanged(stageState(), false);
- }
+  mStagedStateLoaded = false;
+  if (!mLoading && emitSignal)
+    emit stageStateChanged(stageState(), false);
+}
 
 void HunkWidget::discardDialog(int startLine, int end) {
   QString name = mPatch.name();
@@ -608,32 +606,22 @@ void HunkWidget::setStageState(git::Index::StagedState stageState)
   }
 }
 
+void HunkWidget::setStaged(int lidx, bool staged, bool emitSignal)
+{
+  int markers = mEditor->markers(lidx);
+  if (!(markers & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)))
+    return;
 
- void HunkWidget::setStaged(bool staged)
- {
-    if (staged)
-        setStageState(git::Index::StagedState::Staged);
-    else
-        setStageState(git::Index::StagedState::Unstaged);
+  if (staged == (markers & (1 << TextEditor::Marker::StagedMarker)) > 0)
+    return;
 
+  if (staged)
+    stageSelected(lidx, lidx + 1, emitSignal);
+  else
+    unstageSelected(lidx, lidx + 1, emitSignal);
 
- }
-
- void HunkWidget::setStaged(int lidx, bool staged, bool emitSignal) {
-     int markers = mEditor->markers(lidx);
-     if (!(markers & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)))
-         return;
-
-     if (staged == (markers & 1 << TextEditor::Marker::StagedMarker) > 0)
-         return;
-
-     if (staged) {
-         stageSelected(lidx, lidx + 1, emitSignal);
-     } else {
-        unstageSelected(lidx, lidx + 1, emitSignal);
-     }
-     mLoaded = true;
- }
+  mLoaded = true;
+}
 
  void HunkWidget::marginClicked(int pos, int modifier, int margin) {
      if (margin != TextEditor::Margin::Staged)
@@ -646,7 +634,7 @@ void HunkWidget::setStageState(git::Index::StagedState stageState)
      if (!(markers & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)))
          return;
 
-     if (markers & 1 << TextEditor::Marker::StagedMarker)
+     if (markers & (1 << TextEditor::Marker::StagedMarker))
        setStaged(lidx, false);
      else
        setStaged(lidx, true);
@@ -846,6 +834,9 @@ void HunkWidget::load(git::Patch &staged, bool force)
 
 void HunkWidget::setEditorLineInfos(QList<Line>& lines, Account::FileComments& comments, int width)
 {
+  //SK TODO: this is not working properly.
+  // if the first line is NOT staged, the linestaging is NOT evaluated PROPERLY
+  //SK TODO
     qDebug() << "Patch lines:" << lines.count();
 	for (int i=0; i < lines.count(); i++) {
 		qDebug() << i << ") " << lines[i].print();
@@ -1147,41 +1138,21 @@ void HunkWidget::createMarkersAndLineNumbers(const Line& line, int lidx, Account
     }
 }
 
-QByteArray HunkWidget::hunk() const {
-    QByteArray ar;
-    int lineCount = mEditor->lineCount();
-    for (int i = 0; i < lineCount; i++) {
-        int mask = mEditor->markers(i);
-        if (mask & 1 << TextEditor::Marker::Addition) {
-            if (!(mask & 1 << TextEditor::Marker::DiscardMarker))
-                ar.append(mEditor->line(i));
-        } else if (mask & 1 << TextEditor::Marker::Deletion) {
-            if (mask & 1 << TextEditor::Marker::DiscardMarker) {
-                // with a discard, a deletion becomes reverted
-                // and the line is still present
-                ar.append(mEditor->line(i));
-            }
-        } else
-          ar.append(mEditor->line(i));
+QList<int> HunkWidget::ignoreLines() const
+{
+  QList<int> list;
+  for (int i = 0; i < mEditor->lineCount(); i++) {
+    int mask = mEditor->markers(i);
+    if (mask & (1 << TextEditor::Marker::Addition)) {
+      if (!(mask & (1 << TextEditor::Marker::StagedMarker)))
+        list.append(i);
+    } else if (mask & (1 << TextEditor::Marker::Deletion)) {
+      if (!(mask & (1 << TextEditor::Marker::StagedMarker)))
+        list.append(i);
     }
-  return ar;
-}
+  }
 
-QByteArray HunkWidget::apply() const {
-    QByteArray ar;
-    int lineCount = mEditor->lineCount();
-    for (int i = 0; i < lineCount; i++) {
-        int mask = mEditor->markers(i);
-        if (mask & (1 << TextEditor::Marker::Addition)) {
-            if ((mask & (1 << TextEditor::Marker::StagedMarker)))
-                ar.append(mEditor->line(i));
-        } else if (mask & (1 << TextEditor::Marker::Deletion)) {
-            if (!(mask & (1 << TextEditor::Marker::StagedMarker)))
-                ar.append(mEditor->line(i));
-        } else
-          ar.append(mEditor->line(i));
-    }
-  return ar;
+  return list;
 }
 
 git::Index::StagedState HunkWidget::stageState()

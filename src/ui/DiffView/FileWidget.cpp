@@ -485,6 +485,8 @@ void FileWidget::stageHunks(HunkWidget *hunk,
 
   if (completeHunk) {
     if (stageState == git::Index::StagedState::Unstaged) {
+      if (mStaged.count() <= 0)
+        return;
 
       // Index of removed hunk
       int hidx = mHunks.indexOf(hunk);
@@ -494,9 +496,9 @@ void FileWidget::stageHunks(HunkWidget *hunk,
       QBitArray stageHunks(mStaged.count(), true);
       for (int i = 0; i < mStaged.count(); i++) {
         const git_diff_hunk *stageHeader = mStaged.header_struct(i);
-        int old_start = unstageHeader->old_start - stageHeader->old_start;
+        int old_start = stageHeader->old_start - unstageHeader->old_start;
         if ((old_start >= 0 && old_start <= unstageHeader->old_lines) &&
-            (unstageHeader->old_lines <= stageHeader->old_lines))
+            (stageHeader->old_lines <= unstageHeader->old_lines))
           stageHunks[i] = false;
       }
 
@@ -520,16 +522,16 @@ void FileWidget::stageHunks(HunkWidget *hunk,
         QByteArray buffer = mPatch.apply(QBitArray(mPatch.count(), false));
         mPatch.populatePreimage(image, buffer);
 
-        // Index new hunk
+        // Index of new hunk
         int hidx = mHunks.indexOf(hunk);
         const git_diff_hunk *unstageHeader = mPatch.header_struct(hidx);
 
         // Add staged hunks to image, skip already staged patch
         for (int i = 0; i < mStaged.count(); i++) {
           const git_diff_hunk *stageHeader = mStaged.header_struct(i);
-          int old_start = unstageHeader->old_start - stageHeader->old_start;
+          int old_start = stageHeader->old_start - unstageHeader->old_start;
           if ((old_start >= 0 && old_start <= unstageHeader->old_lines) &&
-              (unstageHeader->old_lines <= stageHeader->old_lines))
+              (stageHeader->old_lines <= unstageHeader->old_lines))
             continue;
 
           mStaged.apply(image, i, -1, -1);
@@ -550,17 +552,24 @@ void FileWidget::stageHunks(HunkWidget *hunk,
     QByteArray buffer = mPatch.apply(QBitArray(mPatch.count(), false));
     mPatch.populatePreimage(image, buffer);
 
-    // Add staged hunks to image
-    for (int i = 0; i < mStaged.count(); i++)
+    // Index of changed hunk
+    int hidx = mHunks.indexOf(hunk);
+    const git_diff_hunk *unstageHeader = mPatch.header_struct(hidx);
+
+    // Add staged hunks to image, skip already staged patch
+    for (int i = 0; i < mStaged.count(); i++) {
+      const git_diff_hunk *stageHeader = mStaged.header_struct(i);
+      int old_start = stageHeader->old_start - unstageHeader->old_start;
+      if ((old_start >= 0 && old_start <= unstageHeader->old_lines) &&
+          (stageHeader->old_lines <= unstageHeader->old_lines))
+        continue;
+
       mStaged.apply(image, i, -1, -1);
+    }
 
     // Apply changed hunk data
-    int hidx = mHunks.indexOf(hunk);
-    mPatch.apply(image, hidx, -1, -1);
-
-    //SK TODO: linestaging DOES NOT WORK yet
-    //QByteArray hunkData = hunk->apply();
-    //mPatch.apply(image, hidx, hunkData);
+    QList<int> ignore_lines = hunk->ignoreLines();
+    mPatch.apply(image, hidx, -1, -1, ignore_lines);
 
     // Add the buffer to the index.
     buffer = mPatch.generateResult(image);
@@ -571,45 +580,36 @@ void FileWidget::stageHunks(HunkWidget *hunk,
   }
 }
 
-void FileWidget::discardHunk() {
-	// It is not problem, if not all hunks are loaded, because it is not possible
-	// to discard a hunk which is not visible
-    HunkWidget* hunk = static_cast<HunkWidget*>(QObject::sender());
-    git::Repository repo = mPatch.repo();
-    if (mPatch.isUntracked()) {
-      repo.workdir().remove(mPatch.name());
+void FileWidget::discardHunk()
+{
+  HunkWidget* hunk = static_cast<HunkWidget*>(QObject::sender());
+  git::Repository repo = mPatch.repo();
+
+  if (mPatch.isUntracked()) {
+    repo.workdir().remove(mPatch.name());
       return;
-    }
+  }
 
-    QString name = mPatch.name();
-    QFile dev(repo.workdir().filePath(name));
-    if (!dev.open(QFile::ReadOnly))
-        return;
+  // Unstage (partially staged) hunk before deletion
+  stageHunks(hunk, git::Index::StagedState::Unstaged, true);
 
-    QByteArray fileContent = dev.readAll();
-    dev.close();
+  // Discard selected hunk
+  int hidx = mHunks.indexOf(hunk);
+  QBitArray stageHunks(mPatch.count(), true);
+  stageHunks[hidx] = false;
+  QByteArray buffer = mPatch.apply(stageHunks);
 
-    QSaveFile file(repo.workdir().filePath(name));
-    if (!file.open(QFile::WriteOnly))
-      return;
+  // Write buffer to disk
+  QSaveFile file(repo.workdir().filePath(mPatch.name()));
+  if (!file.open(QFile::WriteOnly))
+    return;
 
+  file.write(buffer);
+  if (!file.commit())
+    return;
 
-    QByteArray buffer;
-    for (int i = 0; i < mHunks.size(); ++i) {
-
-      QByteArray hunk_content;
-      if (mHunks[i] == hunk) {
-        hunk_content = mHunks[i]->hunk();
-        buffer = mPatch.apply(i, hunk_content, fileContent);
-      }
-    }
-
-    file.write(buffer);
-    if (!file.commit())
-      return;
-
-    // FIXME: Work dir changed?
-    RepoView::parentView(this)->refresh();
+  // Workdir changed
+  RepoView::parentView(this)->refresh();
 }
 
 void FileWidget::discard() {
