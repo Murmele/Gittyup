@@ -189,6 +189,40 @@ void DiffView::setDiff(const git::Diff &diff)
     })
   );
 
+  // Respond to index changes
+  mConnections.append(
+    connect(repo.notifier(), &git::RepositoryNotifier::indexChanged, this,
+            [this](const QStringList &paths) {
+      if (!mDiff.isValid())
+        return;
+
+      // Reset staged patch
+      RepoView *view = RepoView::parentView(this);
+      git::Repository repo = view->repo();
+      mStagedPatches.clear();
+      if (mDiff.isStatusDiff()) {
+        if (git::Reference head = repo.head()) {
+          if (git::Commit commit = head.target()) {
+            git::Diff stagedDiff = repo.diffTreeToIndex(commit.tree());
+            for (int i = 0; i < stagedDiff.count(); ++i)
+              mStagedPatches[stagedDiff.name(i)] = stagedDiff.patch(i);
+          }
+        }
+      }
+
+      // Staged patch changes
+      for (int i = 0; i < mFiles.count(); i++) {
+        if (paths.contains(mFiles[i]->name())) {
+          int pidx = mIndexes.at(i);
+          git::Patch patch = mDiff.patch(pidx);
+          git::Patch staged = mStagedPatches.value(patch.name(), git::Patch());
+          mFiles[i]->updatePatch(patch, staged);
+          mFiles[i]->updateStageState();
+        }
+      }
+    })
+  );
+
   // Request comments for this diff.
   if (Repository *remoteRepo = view->remoteRepo()) {
     QList<git::Commit> commits = view->commits();
@@ -197,38 +231,6 @@ void DiffView::setDiff(const git::Diff &diff)
       remoteRepo->account()->requestComments(remoteRepo, oid);
     }
   }
-
-  // Respond to index changes
-  connect(repo.notifier(), &git::RepositoryNotifier::indexChanged, this,
-          [this](const QStringList &paths) {
-    if (!mDiff.isValid())
-      return;
-
-    // Reset staged patch
-    RepoView *view = RepoView::parentView(this);
-    git::Repository repo = view->repo();
-    mStagedPatches.clear();
-    if (mDiff.isStatusDiff()) {
-      if (git::Reference head = repo.head()) {
-        if (git::Commit commit = head.target()) {
-          git::Diff stagedDiff = repo.diffTreeToIndex(commit.tree());
-          for (int i = 0; i < stagedDiff.count(); ++i)
-            mStagedPatches[stagedDiff.name(i)] = stagedDiff.patch(i);
-        }
-      }
-    }
-
-    // Staged patch changes
-    for (int i = 0; i < mFiles.count(); i++) {
-      if (paths.contains(mFiles[i]->name())) {
-        int pidx = mIndexes.at(i);
-        git::Patch patch = mDiff.patch(pidx);
-        git::Patch staged = mStagedPatches.value(patch.name(), git::Patch());
-        mFiles[i]->updatePatch(patch, staged);
-        mFiles[i]->updateStageState();
-      }
-    }
-  });
 }
 
 void DiffView::setFilter(const QStringList &paths)

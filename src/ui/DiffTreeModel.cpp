@@ -249,12 +249,12 @@ bool DiffTreeModel::setData(const QModelIndex &index,
       Node *node = this->node(index);
       git::Index::StagedState state = static_cast<git::Index::StagedState>(value.toInt());
 
-      if (state != git::Index::StagedState::PartiallyStaged) {
+      if (state != git::Index::PartiallyStaged) {
         node->childFiles(files);
 
-        if (state == git::Index::StagedState::Staged)
+        if (state == git::Index::Staged)
           mDiff.index().setStaged(files, true);
-        else if (state == git::Index::StagedState::Unstaged)
+        else if (state == git::Index::Unstaged)
           mDiff.index().setStaged(files, false);
       }
 
@@ -415,9 +415,9 @@ git::Index::StagedState Node::stageState(const git::Index& idx, ParentStageState
     for (auto child: mChildren) {
 
         childState = child->stageState(idx, searchingState);
-        if ((childState == git::Index::StagedState::Staged && searchingState == ParentStageState::Unstaged) ||
-            (childState == git::Index::StagedState::Unstaged && searchingState == ParentStageState::Staged) ||
-            childState == git::Index::PartiallyStaged)
+        if ((childState == git::Index::Staged && searchingState == ParentStageState::Unstaged) ||
+            (childState == git::Index::Unstaged && searchingState == ParentStageState::Staged) ||
+             childState == git::Index::PartiallyStaged)
             return git::Index::PartiallyStaged;
 
         if (searchingState == ParentStageState::Any) {

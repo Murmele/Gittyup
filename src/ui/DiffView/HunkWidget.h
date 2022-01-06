@@ -79,7 +79,8 @@ public:
   TextEditor *editor(bool ensureLoaded = true);
   void invalidate();
 
-  QList<int> ignoreLines() const;
+  QList<int> unstagedLines() const;
+  QList<int> discardedLines() const;
   /*!
    * \brief stageState
    * Calculate stage state of the hunk. Git does not provide
@@ -89,7 +90,9 @@ public:
    */
   git::Index::StagedState stageState();
 
-  void setStageState(git::Index::StagedState stageState);
+  void updatePatch(const git::Patch &patch,
+                   const git::Patch &staged);
+  void updateStageState(git::Index::StagedState stageState);
   /*!
    * update hunk content
    * \brief load
@@ -105,16 +108,15 @@ signals:
    * \brief stageStateChanged
    * \param stageState
    */
-  void stageStateChanged(git::Index::StagedState stageState,
-                         bool completeHunk);
+  void stageStateChanged(git::Index::StagedState stageState);
   void discard();
 
 protected:
   void paintEvent(QPaintEvent *event);
 
 private slots:
-  void stageSelected(int startLine, int end, bool emitSignal = true);
-  void unstageSelected(int startLine, int end, bool emitSignal = true);
+  void stageSelected(int startLine, int end);
+  void unstageSelected(int startLine, int end);
   void discardSelected(int startLine, int end);
   /*!
    * Shows dialog if the changes should be discarded
@@ -123,13 +125,7 @@ private slots:
    * \param end
    */
   void discardDialog(int startLine, int end);
-  /*!
-   * Stage/Unstage line with index lidx
-   * \brief setStaged
-   * \param lidx Line index
-   * \param staged Staged if true, else unstaged
-   */
-  void setStaged(int lidx, bool staged, bool emitSignal=true);
+
   void marginClicked(int pos, int modifier, int margin);
 
 private:
@@ -161,10 +157,12 @@ private:
 
   _HunkWidget::Header *mHeader;
   TextEditor *mEditor;
-  bool mLoaded{false};
-  bool mLoading{false}; // during execution of the load() method
-  bool mStagedStateLoaded{false};
-  git::Index::StagedState mStagedStage;
+
+  bool mLoaded = false;
+  int mAdditions = 0;
+  int mDeletions = 0;
+  int mStagedAdditions = 0;
+  int mStagedDeletions = 0;
 };
 
 #endif // HUNKWIDGET_H

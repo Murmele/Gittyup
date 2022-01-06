@@ -244,10 +244,10 @@ HunkWidget::HunkWidget(
 
   // Respond to check changes
   connect(mHeader->check(), &QCheckBox::clicked, this, [this](bool checked) {
-    git::Index::StagedState stageState = checked ? git::Index::StagedState::Staged :
-                                                   git::Index::StagedState::Unstaged;
-    setStageState(stageState);
-    emit stageStateChanged(stageState, true);
+    git::Index::StagedState stageState = checked ? git::Index::Staged :
+                                                   git::Index::Unstaged;
+    updateStageState(stageState);
+    emit stageStateChanged(stageState);
   });
 
   // Respond to discard signal
@@ -487,29 +487,42 @@ void HunkWidget::paintEvent(QPaintEvent *event)
   QFrame::paintEvent(event);
 }
 
-void HunkWidget::stageSelected(int startLine, int end, bool emitSignal)
+void HunkWidget::stageSelected(int startLine, int end)
 {
   for (int i = startLine; i < end; i++) {
     int mask = mEditor->markers(i);
-    if (mask & (1 << TextEditor::Marker::Addition | (1 << TextEditor::Marker::Deletion)))
-      mEditor->markerAdd(i, TextEditor::StagedMarker);
+    if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
+      if (!(mask & (1 << TextEditor::StagedMarker))) {
+        mEditor->markerAdd(i, TextEditor::StagedMarker);
+        if (mask & (1 << TextEditor::Marker::Addition))
+          mStagedAdditions++;
+        else
+          mStagedDeletions++;
+      }
+    }
   }
 
-  mStagedStateLoaded = false;
-  if (!mLoading && emitSignal)
-    emit stageStateChanged(stageState(), false);
+  // Change index
+  emit stageStateChanged(stageState());
 }
 
-void HunkWidget::unstageSelected(int startLine, int end, bool emitSignal) {
+void HunkWidget::unstageSelected(int startLine, int end)
+{
   for (int i = startLine; i < end; i++) {
     int mask = mEditor->markers(i);
-    if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion))
-      mEditor->markerDelete(i, TextEditor::StagedMarker);
+    if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
+      if (mask & (1 << TextEditor::StagedMarker)) {
+        mEditor->markerDelete(i, TextEditor::StagedMarker);
+        if (mask & (1 << TextEditor::Marker::Addition))
+          mStagedAdditions--;
+        else
+          mStagedDeletions--;
+      }
+    }
   }
 
-  mStagedStateLoaded = false;
-  if (!mLoading && emitSignal)
-    emit stageStateChanged(stageState(), false);
+  // Change index
+  emit stageStateChanged(stageState());
 }
 
 void HunkWidget::discardDialog(int startLine, int end) {
@@ -586,59 +599,72 @@ void HunkWidget::discardSelected(int startLine, int end)
   emit discard();
 }
 
-void HunkWidget::setStageState(git::Index::StagedState stageState)
+void HunkWidget::updatePatch(const git::Patch &patch,
+                             const git::Patch &staged)
 {
-  if (stageState == git::Index::StagedState::Staged ||
-      stageState == git::Index::StagedState::Unstaged)
-  {
-    mHeader->setStageState(stageState);
-
-    // Update the line markers
-    bool staged = stageState == git::Index::StagedState::Staged ? true : false;
-    for (int i = 0; i < mEditor->lineCount(); i++) {
-      int mask = mEditor->markers(i);
-
-      // If a line was not added or deleted, it cannot be staged so ignore all of them
-      if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion))
-        setStaged(i, staged, false);
-    }
-    mStagedStage = stageState;
+  // Update patch of unloaded hunk
+  if (!mLoaded) {
+    mPatch = patch;
+    mStaged = staged;
   }
 }
 
-void HunkWidget::setStaged(int lidx, bool staged, bool emitSignal)
+void HunkWidget::updateStageState(git::Index::StagedState stageState)
 {
+  if (!mLoaded)
+    return;
+
+  // Update stage state of loaded hunk
+  if (stageState == git::Index::Staged ||
+      stageState == git::Index::Unstaged)
+  {
+    mHeader->setStageState(stageState);
+
+    // Update line markers
+    bool staged = stageState == git::Index::Staged ? true : false;
+    for (int i = 0; i < mEditor->lineCount(); i++) {
+      int mask = mEditor->markers(i);
+      if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
+        if (staged) {
+          if (!(mask & (1 << TextEditor::StagedMarker))) {
+            mEditor->markerAdd(i, TextEditor::StagedMarker);
+            if (mask & (1 << TextEditor::Marker::Addition))
+              mStagedAdditions++;
+            else
+              mStagedDeletions++;
+          }
+        } else {
+          if (mask & (1 << TextEditor::StagedMarker)) {
+            mEditor->markerDelete(i, TextEditor::StagedMarker);
+            if (mask & (1 << TextEditor::Marker::Addition))
+              mStagedAdditions--;
+            else
+              mStagedDeletions--;
+          }
+        }
+      }
+    }
+  }
+}
+
+void HunkWidget::marginClicked(int pos, int modifier, int margin)
+{
+  Q_UNUSED(modifier)
+
+  if (margin != TextEditor::Margin::Staged)
+    return;
+
+  int lidx = mEditor->lineFromPosition(pos);
   int markers = mEditor->markers(lidx);
   if (!(markers & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)))
     return;
 
-  if (staged == (markers & (1 << TextEditor::Marker::StagedMarker)) > 0)
-    return;
-
-  if (staged)
-    stageSelected(lidx, lidx + 1, emitSignal);
+  // Toggle staged line
+  if (markers & (1 << TextEditor::Marker::StagedMarker))
+    unstageSelected(lidx, lidx + 1);
   else
-    unstageSelected(lidx, lidx + 1, emitSignal);
-
-  mLoaded = true;
+    stageSelected(lidx, lidx + 1);
 }
-
- void HunkWidget::marginClicked(int pos, int modifier, int margin) {
-     if (margin != TextEditor::Margin::Staged)
-         return;
-
-     int lidx = mEditor->lineFromPosition(pos);
-
-     int markers = mEditor->markers(lidx);
-
-     if (!(markers & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)))
-         return;
-
-     if (markers & (1 << TextEditor::Marker::StagedMarker))
-       setStaged(lidx, false);
-     else
-       setStaged(lidx, true);
- }
 
 int HunkWidget::tokenEndPosition(int pos) const
 {
@@ -695,9 +721,6 @@ void HunkWidget::load(git::Patch &staged, bool force)
     return;
 
   mLoaded = true;
-  mLoading = true;
-  mStagedStateLoaded = false;
-
   mStaged = staged;
 
   mEditor->markerDeleteAll(-1); // delete all markers on each line
@@ -724,18 +747,8 @@ void HunkWidget::load(git::Patch &staged, bool force)
   }
 
   if (mLfs) {
-      // TODO: show pdfs, if it is a pdf!
-      return;
-  }
-
-  qDebug() << "Diff Header:";
-  for (int i = 0; i < mPatch.count(); i++) {
-    qDebug() << mPatch.header(i);
-  }
-
-  qDebug() << "Staged Header:";
-  for (int i = 0; i < mStaged.count(); i++) {
-    qDebug() << mStaged.header(i);
+    // TODO: show pdfs, if it is a pdf!
+    return;
   }
 
   // Load hunk.
@@ -765,15 +778,10 @@ void HunkWidget::load(git::Patch &staged, bool force)
   }
 
   // Trim final line end.
-  // Don't do that because then the editor line
-  // does not match anymore the blob line.
-  // this is a problem when copying the hunk
-  // back into the blob as done in the discardHunk()
-  // method in FileWidget
-  //  if (content.endsWith('\n'))
-  //    content.chop(1);
-  //  if (content.endsWith('\r'))
-  //    content.chop(1);
+  if (content.endsWith('\n'))
+     content.chop(1);
+  if (content.endsWith('\r'))
+     content.chop(1);
 
   // Add text.
   mEditor->setText(repo.decode(content));
@@ -826,33 +834,12 @@ void HunkWidget::load(git::Patch &staged, bool force)
 
   mEditor->updateGeometry();
 
-  mLoading = false;
-
   // Update stage state after everything is loaded
   mHeader->setStageState(stageState());
 }
 
 void HunkWidget::setEditorLineInfos(QList<Line>& lines, Account::FileComments& comments, int width)
 {
-  //SK TODO: this is not working properly.
-  // if the first line is NOT staged, the linestaging is NOT evaluated PROPERLY
-  //SK TODO
-    qDebug() << "Patch lines:" << lines.count();
-	for (int i=0; i < lines.count(); i++) {
-		qDebug() << i << ") " << lines[i].print();
-    }
-
-	qDebug() << "Staged linesStaged:" << mStaged.count();
-	for (int i=0; i < mStaged.count(); i++) {qDebug() << "Staged patch No. " << i;
-		for (int lidx=0; lidx < mStaged.lineCount(i); lidx++) {
-			auto origin = mStaged.lineOrigin(i, lidx);
-			int oldLineStaged = mStaged.lineNumber(i, lidx, git::Diff::OldFile);
-			int newLineStaged = mStaged.lineNumber(i, lidx, git::Diff::NewFile);
-			auto line = Line(origin, oldLineStaged, newLineStaged);
-			qDebug() << lidx << ") " << line.print();
-		}
-	}
-
 //	New file line number change for different line origins
 //	| diff HEAD         | diff –cached |   |
 //	|-------------------|--------------|---|
@@ -871,187 +858,175 @@ void HunkWidget::setEditorLineInfos(QList<Line>& lines, Account::FileComments& c
 //	| unstaged deletion | +            | / |
 //	| staged deletion   | +            | + |
 
-    int count = lines.size();
-    int marker = -1;
+  // Staged line numbers
+  const git_diff_hunk *unstageHeader = mPatch.header_struct(mIndex);
+
+  QMap<int, QString> stagedAddLines;
+  QMap<int, QString> stagedDelLines;
+  if (!mPatch.isConflicted()) {
+    for (int i = 0; i < mStaged.count(); i++) {
+
+      // Find staged patch within patch
+      const git_diff_hunk *stageHeader = mStaged.header_struct(i);
+      int old_start = stageHeader->old_start - unstageHeader->old_start;
+      int stageDiff = stageHeader->old_start - stageHeader->new_start;
+      int unstageDiff = unstageHeader->old_start - unstageHeader->new_start;
+      if ((old_start >= 0 && old_start <= unstageHeader->old_lines) &&
+          (stageHeader->old_lines <= unstageHeader->old_lines)) {
+
+        for (int lidx = 0; lidx < mStaged.lineCount(i); lidx++) {
+          char origin = mStaged.lineOrigin(i, lidx);
+          if (origin == '-')
+            stagedDelLines.insert(mStaged.lineNumber(i, lidx, git::Diff::OldFile),
+                                  mStaged.lineContent(i, lidx));
+
+          if (origin == '+')
+            stagedAddLines.insert(mStaged.lineNumber(i, lidx, git::Diff::NewFile)
+                                  + stageDiff - unstageDiff,
+                                  mStaged.lineContent(i, lidx));
+        }
+      }
+    }
+  }
+
+  // Reset statistics
+  mAdditions = 0, mDeletions = 0;
+  mStagedAdditions = 0, mStagedDeletions = 0;
+
+  // Set all editor markers, like green background for adding, red background for deletion
+  // Blue background for OURS or magenta background for Theirs
+  // Setting also the staged symbol
+  int count = lines.size();
+  for (int lidx = 0; lidx < count; ++lidx) {
     int additions = 0, deletions = 0;
-	int additions_tot = 0, deletions_tot = 0;
-    int stagedAdditions = 0, stagedDeletions = 0;
+    int marker = -1;
     bool staged = false;
-	int current_staged_index = -1;
-	int current_staged_line_idx = 0;
-	int diff_patch_old_new_file = -1;
-	int diff_staged_patch_old_new_file = -1;
 
-	// Find the first staged hunk which is within this patch
-	if (!mPatch.isConflicted()) {
-		auto patch_header_struct = mPatch.header_struct(mIndex);
-		for (int i = 0; i < mStaged.count(); i++) {
-			if (patch_header_struct->old_start > mStaged.header_struct(i)->old_start + mStaged.header_struct(i)->old_lines)
-				continue;
-			else {
-				current_staged_index = i;
-				break;
-			}
-		}
-	}
+    const Line& line = lines.at(lidx);
+    createMarkersAndLineNumbers(line, lidx, comments, width);
 
-	// Set all editor markers, like green background for adding, red background for deletion
-	// Blue background for OURS or magenta background for Theirs
-	// Setting also the staged symbol
-	bool first_staged_patch_match = false;
-	 for (int lidx = 0; lidx < count; ++lidx) {
-		marker = -1;
-		staged = false;
+    switch (lines[lidx].origin()) {
+      case GIT_DIFF_LINE_CONTEXT:
+        marker = TextEditor::Context;
+        additions = 0;
+        deletions = 0;
+        break;
 
-		const Line& line = lines.at(lidx);
-		createMarkersAndLineNumbers(line, lidx, comments, width);
-
-		if (!mPatch.isConflicted() && current_staged_index >= 0) {
-			auto staged_header_struct_next = mStaged.header_struct(current_staged_index + 1);
-			if (!first_staged_patch_match) {
-				if (mPatch.lineNumber(mIndex, lidx, git::Diff::OldFile) == mStaged.header_struct(current_staged_index)->old_start) {
-					first_staged_patch_match = true;
-					diff_patch_old_new_file = mPatch.lineNumber(mIndex, lidx, git::Diff::NewFile) - mPatch.lineNumber(mIndex, lidx, git::Diff::OldFile);
-					diff_staged_patch_old_new_file = mStaged.lineNumber(current_staged_index, 0, git::Diff::NewFile) - mStaged.lineNumber(current_staged_index, 0, git::Diff::OldFile);
-				}
-				current_staged_line_idx = 0;
-			} else if(staged_header_struct_next && mPatch.lineNumber(mIndex, lidx, git::Diff::OldFile) == staged_header_struct_next->old_start) {
-				// Align staged patch with total patch
-				current_staged_index ++;
-				assert(mPatch.lineContent(mIndex, lidx) == mStaged.lineContent(current_staged_index, 0));
-				current_staged_line_idx = 0;
-			}
-		}
-
-        switch (lines[lidx].origin()) {
-          case GIT_DIFF_LINE_CONTEXT:
-            marker = TextEditor::Context;
-            additions = 0;
-            deletions = 0;
-			current_staged_line_idx++;
-            break;
-
-          case GIT_DIFF_LINE_ADDITION: {
-            marker = TextEditor::Addition;
-            additions++;
-            // Find matching lines
-            if (lidx + 1 >= count ||
-                mPatch.lineOrigin(mIndex, lidx + 1) != GIT_DIFF_LINE_ADDITION) { // end of file, or the last addition line
-              // The heuristic is that matching blocks have
-              // the same number of additions as deletions.
-              if (additions == deletions) {
-                for (int i = 0; i < additions; ++i) {
-                  int current = lidx - i;
-                  int match = current - additions;
-                  lines[current].setMatchingLine(match);
-                  lines[match].setMatchingLine(current);
-                }
-              }
-              // Only for performance reason, because the above loop
-              // iterates over all additions
-              additions = 0;
-              deletions = 0;
+      case GIT_DIFF_LINE_ADDITION: {
+        marker = TextEditor::Addition;
+        additions++;
+        // Find matching lines
+        if (lidx + 1 >= count ||
+            mPatch.lineOrigin(mIndex, lidx + 1) != GIT_DIFF_LINE_ADDITION) { // end of file, or the last addition line
+          // The heuristic is that matching blocks have
+          // the same number of additions as deletions.
+          if (additions == deletions) {
+            for (int i = 0; i < additions; ++i) {
+              int current = lidx - i;
+              int match = current - additions;
+              lines[current].setMatchingLine(match);
+              lines[match].setMatchingLine(current);
             }
-            // Check if staged
-
-			if (!mPatch.isConflicted() && mStaged.count() > 0 && current_staged_index >= 0 && current_staged_line_idx < mStaged.lineCount(current_staged_index)) {
-				auto line_origin = mStaged.lineOrigin(current_staged_index, current_staged_line_idx);
-				auto staged_file = mStaged.lineNumber(current_staged_index, current_staged_line_idx, git::Diff::NewFile) - diff_staged_patch_old_new_file;
-				auto patch_file = mPatch.lineNumber(mIndex, lidx, git::Diff::NewFile) - (additions_tot - stagedAdditions) + (deletions_tot - stagedDeletions) - diff_patch_old_new_file; // - offset_patch_old_new;
-				if (line_origin == '+' && staged_file == patch_file && mStaged.lineContent(current_staged_index, current_staged_line_idx) == mPatch.lineContent(mIndex, lidx)) {
-				  stagedAdditions++;
-				  current_staged_line_idx++;
-				  staged = true;
-				}
-			}
-			additions_tot++;
-            break;
-
-          } case GIT_DIFF_LINE_DELETION: {
-            marker = TextEditor::Deletion;
-            deletions++;
-			deletions_tot++;
-
-            // Check if staged
-			if (!mPatch.isConflicted() && mStaged.count() > 0 && current_staged_index >= 0 && current_staged_line_idx < mStaged.lineCount(current_staged_index)) {
-				auto line_origin = mStaged.lineOrigin(current_staged_index, current_staged_line_idx);
-				auto staged_old_file = mStaged.lineNumber(current_staged_index, current_staged_line_idx, git::Diff::OldFile);
-				auto patch_old_file = mPatch.lineNumber(mIndex, lidx, git::Diff::OldFile);
-				if (line_origin == '-' && staged_old_file == patch_old_file) {
-				  assert(mStaged.lineContent(current_staged_index, current_staged_line_idx) == mPatch.lineContent(mIndex, lidx));
-				  stagedDeletions++;
-				  staged = true;
-				}
-			}
-			current_staged_line_idx++; // must be in staged and in the unstaged case
-            break;
-
-          } case 'O':
-            marker = TextEditor::Ours;
-            break;
-
-          case 'T':
-            marker = TextEditor::Theirs;
-            break;
+          }
+          // Only for performance reason, because the above loop
+          // iterates over all additions
+          additions = 0;
+          deletions = 0;
         }
 
-        // Add marker.
-        if (marker >= 0)
-            mEditor->markerAdd(lidx, marker);
-		 if (staged)
-          setStaged(lidx, true);
+        // Check if staged
+        int patchLinenumber = mPatch.lineNumber(mIndex, lidx, git::Diff::NewFile) - (mAdditions - mStagedAdditions) + (mDeletions - mStagedDeletions);
+        if (stagedAddLines.contains(patchLinenumber)) {
+          if (stagedAddLines.value(patchLinenumber) == mPatch.lineContent(mIndex, lidx)) {
+            mStagedAdditions++;
+            staged = true;
+          }
+        }
+
+        mAdditions++;
+        break;
+      }
+
+      case GIT_DIFF_LINE_DELETION: {
+        marker = TextEditor::Deletion;
+        deletions++;
+        mDeletions++;
+
+        // Check if staged
+        int patchLinenumber = mPatch.lineNumber(mIndex, lidx, git::Diff::OldFile);
+        if (stagedDelLines.contains(patchLinenumber)) {
+          if (stagedDelLines.value(patchLinenumber) == mPatch.lineContent(mIndex, lidx)) {
+            mStagedDeletions++;
+            staged = true;
+          }
+        }
+        break;
+      }
+
+      case 'O':
+        marker = TextEditor::Ours;
+        break;
+
+      case 'T':
+        marker = TextEditor::Theirs;
+        break;
     }
 
+    // Add marker.
+    if (marker >= 0)
+      mEditor->markerAdd(lidx, marker);
+    if (staged)
+      mEditor->markerAdd(lidx, TextEditor::StagedMarker);
+  }
 
+  // Diff matching lines. Highlight changes within the line!
+  for (int lidx = 0; lidx < count; ++lidx) {
+    const Line &line = lines.at(lidx);
+    int matchingLine = line.matchingLine();
+    if (line.origin() == GIT_DIFF_LINE_DELETION && matchingLine >= 0) {
+    // Split lines into tokens and diff corresponding tokens.
+    QList<Token> oldTokens = tokens(lidx);
+    QList<Token> newTokens = tokens(matchingLine);
+    QByteArray oldBuffer = tokenBuffer(oldTokens);
+    QByteArray newBuffer = tokenBuffer(newTokens);
+    git::Patch patch = git::Patch::fromBuffers(oldBuffer, newBuffer);
+    for (int pidx = 0; pidx < patch.count(); ++pidx) {
+      // Find the boundary between additions and deletions.
+      int index;
+      int count = patch.lineCount(pidx);
+      for (index = 0; index < count; ++index) {
+        if (patch.lineOrigin(pidx, index) == GIT_DIFF_LINE_ADDITION)
+          break;
+      }
 
-	 // Diff matching lines. Highlight changes within the line!
-	for (int lidx = 0; lidx < count; ++lidx) {
-	  const Line &line = lines.at(lidx);
-	  int matchingLine = line.matchingLine();
-	  if (line.origin() == GIT_DIFF_LINE_DELETION && matchingLine >= 0) {
-		// Split lines into tokens and diff corresponding tokens.
-		QList<Token> oldTokens = tokens(lidx);
-		QList<Token> newTokens = tokens(matchingLine);
-		QByteArray oldBuffer = tokenBuffer(oldTokens);
-		QByteArray newBuffer = tokenBuffer(newTokens);
-		git::Patch patch = git::Patch::fromBuffers(oldBuffer, newBuffer);
-		for (int pidx = 0; pidx < patch.count(); ++pidx) {
-		  // Find the boundary between additions and deletions.
-		  int index;
-		  int count = patch.lineCount(pidx);
-		  for (index = 0; index < count; ++index) {
-			if (patch.lineOrigin(pidx, index) == GIT_DIFF_LINE_ADDITION)
-			  break;
-		  }
+      // Map differences onto the deletion line.
+      if (index > 0) {
+        int first = patch.lineNumber(pidx, 0, git::Diff::OldFile) - 1;
+        int last = patch.lineNumber(pidx, index - 1, git::Diff::OldFile);
 
-		  // Map differences onto the deletion line.
-		  if (index > 0) {
-			int first = patch.lineNumber(pidx, 0, git::Diff::OldFile) - 1;
-			int last = patch.lineNumber(pidx, index - 1, git::Diff::OldFile);
+        int size = oldTokens.size();
+        if (first >= 0 && first < size && last >= 0 && last < size) {
+          int pos = oldTokens.at(first).pos;
+          mEditor->setIndicatorCurrent(TextEditor::WordDeletion);
+          mEditor->indicatorFillRange(pos, oldTokens.at(last).pos - pos);
+        }
+      }
 
-			int size = oldTokens.size();
-			if (first >= 0 && first < size && last >= 0 && last < size) {
-			  int pos = oldTokens.at(first).pos;
-			  mEditor->setIndicatorCurrent(TextEditor::WordDeletion);
-			  mEditor->indicatorFillRange(pos, oldTokens.at(last).pos - pos);
-			}
-		  }
+      // Map differences onto the addition line.
+      if (index < count) {
+        int first = patch.lineNumber(pidx, index, git::Diff::NewFile) - 1;
+        int last = patch.lineNumber(pidx, count - 1, git::Diff::NewFile);
 
-		  // Map differences onto the addition line.
-		  if (index < count) {
-			int first = patch.lineNumber(pidx, index, git::Diff::NewFile) - 1;
-			int last = patch.lineNumber(pidx, count - 1, git::Diff::NewFile);
-
-			int size = newTokens.size();
-			if (first >= 0 && first < size && last >= 0 && last < size) {
-			  int pos = newTokens.at(first).pos;
-			  mEditor->setIndicatorCurrent(TextEditor::WordAddition);
-			  mEditor->indicatorFillRange(pos, newTokens.at(last).pos - pos);
-			}
-		  }
-		}
-	  }
-	}
+        int size = newTokens.size();
+          if (first >= 0 && first < size && last >= 0 && last < size) {
+            int pos = newTokens.at(first).pos;
+            mEditor->setIndicatorCurrent(TextEditor::WordAddition);
+            mEditor->indicatorFillRange(pos, newTokens.at(last).pos - pos);
+          }
+        }
+      }
+    }
+  }
 }
 
 void HunkWidget::createMarkersAndLineNumbers(const Line& line, int lidx, Account::FileComments& comments, int width) const
@@ -1138,18 +1113,30 @@ void HunkWidget::createMarkersAndLineNumbers(const Line& line, int lidx, Account
     }
 }
 
-QList<int> HunkWidget::ignoreLines() const
+QList<int> HunkWidget::unstagedLines() const
 {
   QList<int> list;
   for (int i = 0; i < mEditor->lineCount(); i++) {
     int mask = mEditor->markers(i);
-    if (mask & (1 << TextEditor::Marker::Addition)) {
+    if (mask & (1 << TextEditor::Marker::Context))
+      continue;
+    if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion))
       if (!(mask & (1 << TextEditor::Marker::StagedMarker)))
         list.append(i);
-    } else if (mask & (1 << TextEditor::Marker::Deletion)) {
-      if (!(mask & (1 << TextEditor::Marker::StagedMarker)))
-        list.append(i);
-    }
+  }
+
+  return list;
+}
+
+QList<int> HunkWidget::discardedLines() const
+{
+  QList<int> list;
+  for (int i = 0; i < mEditor->lineCount(); i++) {
+    int mask = mEditor->markers(i);
+    if (mask & (1 << TextEditor::Marker::Context))
+      continue;
+    if (mask & (1 << TextEditor::Marker::DiscardMarker))
+      list.append(i);
   }
 
   return list;
@@ -1157,35 +1144,12 @@ QList<int> HunkWidget::ignoreLines() const
 
 git::Index::StagedState HunkWidget::stageState()
 {
-  if (mStagedStateLoaded)
-      return mStagedStage;
+  if ((mStagedAdditions + mStagedDeletions) == 0)
+    return git::Index::Unstaged;
+  else if ((mStagedAdditions + mStagedDeletions) == (mAdditions + mDeletions))
+    return git::Index::Staged;
 
-  int lineCount = mEditor->lineCount();
-  int staged = 0;
-  int diffLines = 0;
-  for (int i = 0; i < lineCount; i++) {
-      int mask = mEditor->markers(i);
-      if (!(mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)))
-          continue;
-
-      diffLines++;
-	  if (mask & 1 << TextEditor::Marker::StagedMarker) {
-          staged++;
-		  if (staged < diffLines)
-			  break; // No need to check more, because it is already clear that it is partially staged
-	  }
-  }
-
-  if (!staged)
-      mStagedStage = git::Index::Unstaged;
-  else if (staged == diffLines)
-      mStagedStage = git::Index::Staged;
-  else
-      mStagedStage = git::Index::PartiallyStaged;
-
-  mStagedStateLoaded = true;
-
-  return mStagedStage;
+  return git::Index::PartiallyStaged;
 }
 
 void HunkWidget::chooseLines(TextEditor::Marker kind)

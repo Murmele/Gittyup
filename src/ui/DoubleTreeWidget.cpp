@@ -231,7 +231,7 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
       QModelIndex index = mDiffTreeModel->index(path);
 
       // PartiallyStaged is a dummy signal for update only
-      git::Index::StagedState state = git::Index::StagedState::PartiallyStaged;
+      git::Index::StagedState state = git::Index::PartiallyStaged;
       mDiffTreeModel->setData(index, state, Qt::CheckStateRole);
     }
   });

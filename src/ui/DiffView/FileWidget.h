@@ -123,8 +123,7 @@ public slots:
    * \brief stageHunks
    */
   void stageHunks(HunkWidget *hunk,
-                  git::Index::StagedState stageState,
-                  bool completeHunk);
+                  git::Index::StagedState stageState);
   /*!
    * Discard specific hunk
    * Emitted by the hunk it self
