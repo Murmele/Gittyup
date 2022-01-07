@@ -136,27 +136,11 @@ public:
                    int start_line,
                    int end_line,
                    const FilterList &filters = FilterList()) const;
-  QByteArray apply(int hidx, QByteArray& hunkData, const FilterList &filters = FilterList()) const;
-  QByteArray apply(int hidx, QByteArray& hunkData, QByteArray fileContent, const FilterList &filters = FilterList()) const;
-  /*!
-   * applies all hunk data to the patch.
-   * Important: The length of hunkData must match with the number of hunks in the patch!
-   * \brief apply
-   * \param hunkData hunk contents
-   * \param filters
-   * \return
-   */
-  QByteArray apply(QList<QByteArray>& hunkData, const FilterList &filters = FilterList()) const;
+  void apply(QList<QList<QByteArray> > &image,
+             int hidx,
+             int start_line, int end_line,
+             const QList<int> &ignore_lines = QList<int>()) const;
 
-  /*!
-   * Applies changes of a hunk. Used to revert changes
-   * Does not change the length of the List, so other changes can be applied too
-   * \brief apply
-   * \param image
-   * \param hidx
-   * \param hunkData
-   */
-  void apply(QList<QList<QByteArray>> &image, int hidx, QByteArray& hunkData) const;
   QByteArray generateResult(QList<QList<QByteArray>>& image, const FilterList &filters = FilterList()) const;
   static Patch fromBuffers(
     const QByteArray &oldBuffer,
@@ -167,16 +151,6 @@ public:
   static void clearConflictResolutions(const Repository &repo);
 
 private:
-  /*!
-   * Applies changes to hunk and store result in image
-   * \brief Patch::apply
-   * \param image
-   * \param hunk_idx
-   * \param start_line
-   * \param end_line
-   */
-  void apply(QList<QList<QByteArray> > &image, int hidx, int start_line, int end_line) const;
-
   struct ConflictHunk
   {
     int line; // start line

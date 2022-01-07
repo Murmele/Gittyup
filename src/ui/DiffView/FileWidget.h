@@ -5,7 +5,6 @@
 
 #include <QWidget>
 #include <QFrame>
-#include <QModelIndex>
 
 #include "git/Diff.h"
 #include "git/Patch.h"
@@ -45,8 +44,8 @@ public:
   void setStageState(git::Index::StagedState state);
 
 signals:
-  void stageStateChanged(int stageState);
   void discard();
+
 protected:
   void mouseDoubleClickEvent(QMouseEvent *event) override;
   void contextMenuEvent(QContextMenuEvent *event) override;
@@ -84,19 +83,14 @@ public:
     const git::Diff &diff,
     const git::Patch &patch,
     const git::Patch &staged,
-    const QModelIndex modelIndex,
     QWidget *parent = nullptr);
   bool isEmpty();
   void updatePatch(const git::Patch &patch, const git::Patch &staged);
-  /*!
-   * Update hunks after index change and emits the current stage state of the hunks
-   * \brief updateHunks
-   */
-  void updateHunks(git::Patch stagedPatch);
-  _FileWidget::Header *header() const;
-  QString name() const;
 
-  QList<HunkWidget *> hunks() const;
+  _FileWidget::Header *header() const;
+
+  QString name() const { return mPatch.name(); }
+  QList<HunkWidget *> hunks() const { return mHunks; }
 
   QWidget *addImage(
     DisclosureButton *button,
@@ -109,27 +103,27 @@ public:
     int index,
     bool lfs,
     bool submodule);
-    void setStageState(git::Index::StagedState state);
-    QModelIndex modelIndex();
+    void updateStageState();
 
     // Fetching new hunks
     bool canFetchMore();
     /*!
      * \brief DiffView::fetchMore
-     * Fetch maxNewFiles more patches
+     * Fetch count more patches
      * use a while loop with canFetchMore() to get all
      */
-    int fetchMore();
-    void fetchAll(int index);
+    void fetchMore(int count = 4);
+    void fetchAll(int index = -1);
+
 public slots:
-  void headerCheckStateChanged(int state);
   /*!
    * Stages the changes of the hunk
    * emits signal "stageStateChanged" with the
    * current state of the hunk as parameter
    * \brief stageHunks
    */
-  void stageHunks(const HunkWidget *hunk, git::Index::StagedState stageState, bool completeFile=false, bool completeFileStaged=false);
+  void stageHunks(HunkWidget *hunk,
+                  git::Index::StagedState stageState);
   /*!
    * Discard specific hunk
    * Emitted by the hunk it self
@@ -139,27 +133,21 @@ public slots:
 
 signals:
   void diagnosticAdded(TextEditor::DiagnosticKind kind);
-  void stageStateChanged(const QModelIndex& idx, git::Index::StagedState state);
-  void discarded(const QModelIndex& idx);
+  void discarded(const QString &name);
 
 private:
   void discard();
-
 
   DiffView *mView{nullptr};
 
   git::Diff mDiff;
   git::Patch mPatch;
   git::Patch mStaged;
-  QModelIndex mModelIndex;
 
   _FileWidget::Header *mHeader{nullptr};
   QList<QWidget *> mImages;
   QList<HunkWidget *> mHunks;
   QVBoxLayout* mHunkLayout{nullptr};
-  bool mSuppressUpdate{false};
-  bool mSupressStaging{false};
 };
 
 #endif // FILEWIDGET_H
-

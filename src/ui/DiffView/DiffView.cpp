@@ -13,7 +13,6 @@
 #include "ui/RepoView.h"
 #include "DisclosureButton.h"
 #include "CommentWidget.h"
-#include "ui/DiffTreeModel.h"
 #include "ui/DoubleTreeWidget.h"
 #include "git/Tree.h"
 #include <QScrollBar>
@@ -48,7 +47,7 @@ bool copy(const QString &source, const QDir &targetDir)
 } // anon. namespace
 
 DiffView::DiffView(const git::Repository &repo, QWidget *parent)
-  : QScrollArea(parent), mParent(parent)
+  : QScrollArea(parent)
 {
   setStyleSheet(DiffViewStyle::kStyleSheet);
   setAcceptDrops(true);
@@ -93,7 +92,7 @@ DiffView::~DiffView() {}
 QWidget *DiffView::file(int index)
 {
   fetchAll(index);
-  return mFiles.at(index);
+  return mFiles.at(mIndexes.indexOf(index));
 }
 
 void DiffView::setDiff(const git::Diff &diff)
@@ -108,6 +107,7 @@ void DiffView::setDiff(const git::Diff &diff)
 
   // Clear state.
   mFiles.clear();
+  mIndexes.clear();
   mStagedPatches.clear();
   mComments = Account::CommitComments();
 
@@ -179,22 +179,47 @@ void DiffView::setDiff(const git::Diff &diff)
     }
   }
 
-  if (canFetchMore())
-    fetchMore();
-
   // Load patches on demand.
   QScrollBar *scrollBar = verticalScrollBar();
   mConnections.append(
     connect(scrollBar, &QScrollBar::valueChanged, [this](int value) {
-      if (value > verticalScrollBar()->maximum() / 2 && canFetchMore())
+      // Start loading (more) files when scrollbar hits the maximum
+      if (value >= verticalScrollBar()->maximum() && canFetchMore())
         fetchMore();
     })
   );
 
+  // Respond to index changes
   mConnections.append(
-    connect(scrollBar, &QScrollBar::rangeChanged, [this](int min, int max) {
-      if (max - min < this->widget()->height() / 2 && canFetchMore())
-        fetchMore();
+    connect(repo.notifier(), &git::RepositoryNotifier::indexChanged, this,
+            [this](const QStringList &paths) {
+      if (!mDiff.isValid())
+        return;
+
+      // Reset staged patch
+      RepoView *view = RepoView::parentView(this);
+      git::Repository repo = view->repo();
+      mStagedPatches.clear();
+      if (mDiff.isStatusDiff()) {
+        if (git::Reference head = repo.head()) {
+          if (git::Commit commit = head.target()) {
+            git::Diff stagedDiff = repo.diffTreeToIndex(commit.tree());
+            for (int i = 0; i < stagedDiff.count(); ++i)
+              mStagedPatches[stagedDiff.name(i)] = stagedDiff.patch(i);
+          }
+        }
+      }
+
+      // Staged patch changes
+      for (int i = 0; i < mFiles.count(); i++) {
+        if (paths.contains(mFiles[i]->name())) {
+          int pidx = mIndexes.at(i);
+          git::Patch patch = mDiff.patch(pidx);
+          git::Patch staged = mStagedPatches.value(patch.name(), git::Patch());
+          mFiles[i]->updatePatch(patch, staged);
+          mFiles[i]->updateStageState();
+        }
+      }
     })
   );
 
@@ -206,95 +231,41 @@ void DiffView::setDiff(const git::Diff &diff)
       remoteRepo->account()->requestComments(remoteRepo, oid);
     }
   }
-
-  //connect(repo.notifier(), &git::RepositoryNotifier::indexChanged, this, &DiffView::indexChanged);
 }
 
-bool DiffView::scrollToFile(int index)
+void DiffView::setFilter(const QStringList &paths)
 {
-  // Ensure that the given index is loaded.
-  fetchAll(index);
+  if (!mDiff.isValid())
+    return;
 
-  // Finish layout by processing events. May cause a new diff to
-  // be loaded. In that case the scroll widget will be different.
-  QWidget *ptr = widget();
-  QCoreApplication::processEvents();
-  if (widget() != ptr)
-    return false;
+  // Setup patch index list from paths
+  QList<int> list;
+  for (auto path : paths) {
+    int idx = mDiff.indexOf(path);
+    if (idx >= 0)
+      list.append(idx);
+  }
 
-  // Scroll to the widget.
-  verticalScrollBar()->setValue(mFiles.at(index)->y());
-  return true;
-}
+  if (list == mIndexes)
+    return;
 
-void DiffView::enable(bool enable)
-{
-    mEnabled = enable;
-}
+  mIndexes = list;
 
-void DiffView::setModel(DiffTreeModel* model)
-{
-    if (mDiffTreeModel)
-        disconnect(mDiffTreeModel, nullptr, this, nullptr);
+  // Remove files
+  while (mFiles.count()) {
+    FileWidget *file = mFiles.takeFirst();
+    mFileWidgetLayout->removeWidget(file);
+    delete file;
+  }
+  mFiles.clear();
 
-    mDiffTreeModel = model;
-    connect(mDiffTreeModel, &DiffTreeModel::dataChanged, this, &DiffView::diffTreeModelDataChanged);
-}
+  // Reset vertical scrollbar prior to (re)loading files
+  verticalScrollBar()->setRange(0,0);
+  verticalScrollBar()->setValue(0);
 
-void DiffView::diffTreeModelDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles)
-{
-    assert(topLeft == bottomRight);
-
-    if (!topLeft.isValid())
-        return;
-    if (roles[0] != Qt::CheckStateRole)
-        return;
-
-    QString modelName = topLeft.data(Qt::DisplayRole).toString();
-
-    git::Index::StagedState stageState = static_cast<git::Index::StagedState>(topLeft.data(Qt::CheckStateRole).toInt());
-
-    for (auto file: mFiles) {
-        if (file->modelIndex().internalPointer() == topLeft.internalPointer()) {
-
-            // Respond to index changes only when file is visible in the diffview
-            RepoView *view = RepoView::parentView(this);
-            git::Repository repo = view->repo();
-
-            mStagedPatches.clear();
-            // Generate a diff between the head tree and index.
-            if (mDiff.isStatusDiff()) {
-              if (git::Reference head = repo.head()) {
-                if (git::Commit commit = head.target()) {
-                  git::Diff stagedDiff = repo.diffTreeToIndex(commit.tree());
-                  for (int i = 0; i < stagedDiff.count(); ++i)
-                    mStagedPatches[stagedDiff.name(i)] = stagedDiff.patch(i);
-                }
-              }
-            }
-
-            QString filename = file->name();
-            git::Patch stagedPatch = mStagedPatches[file->name()];
-            file->updateHunks(stagedPatch);
-            file->setStageState(stageState);
-
-
-            return;
-        }
-    }
-}
-
-void DiffView::updateFiles()
-{
-    while (mFiles.count()) {
-        auto file = mFiles.takeFirst();
-        mFileWidgetLayout->removeWidget(file);
-        delete file;
-    }
-    mFiles.clear();
-
-    if (canFetchMore())
-      fetchMore();
+  // Add files
+  if (canFetchMore())
+    fetchMore();
 }
 
 QList<TextEditor *> DiffView::editors()
@@ -357,9 +328,13 @@ void DiffView::dragEnterEvent(QDragEnterEvent *event)
 
 bool DiffView::canFetchMore()
 {
-  auto dtw = dynamic_cast<DoubleTreeWidget*>(mParent); // for an unknown reason parent() and p are not the same
-  assert(dtw);
-  return  mDiff.isValid() && mFiles.size() < mDiffTreeModel->fileCount(dtw->selectedIndex());
+  if (!mFiles.isEmpty()) {
+    FileWidget *lastFile = mFiles.last();
+    if (lastFile->canFetchMore())
+      return true;
+  }
+
+  return mDiff.isValid() && mFiles.size() < mIndexes.count();
 }
 
 /*!
@@ -367,33 +342,39 @@ bool DiffView::canFetchMore()
  * Fetch maxNewFiles more patches
  * use a while loop with canFetchMore() to get all
  */
-void DiffView::fetchMore()
+void DiffView::fetchMore(int count)
 {
-  int maxNewFiles = 8;
-  QVBoxLayout *layout = static_cast<QVBoxLayout *>(widget()->layout());
-
   // Add widgets.
   RepoView *view = RepoView::parentView(this);
-  int addedFiles = 0;
 
-  auto dtw = dynamic_cast<DoubleTreeWidget*>(mParent);
-  //QList<int> patchIndices = mDiffTreeModel->patchIndices(dtw->selectedIndex());
-  QList<QModelIndex> indices = mDiffTreeModel->modelIndices(dtw->selectedIndex());
-  int count = indices.count();
+  // Fetch all files
+  bool fetchAll = count < 0 ? true : false;
+  if (count < 0)
+    count = 4;
 
-  // First load all hunks of last file and then go on with loading new files
+  // First load all hunks of last file before loading new files
   if (!mFiles.isEmpty()) {
-      auto lastFile = mFiles.last();
-      while (lastFile->canFetchMore() && maxNewFiles > 0) {
-        maxNewFiles -= lastFile->fetchMore();
-      }
+    FileWidget *lastFile = mFiles.last();
+    while (lastFile->canFetchMore() &&
+           ((verticalScrollBar()->maximum() - verticalScrollBar()->value() < height() / 2) ||
+            fetchAll)) {
+      lastFile->fetchMore(fetchAll ? -1 : 1);
+
+      // Load hunk(s) and update scrollbar
+      QApplication::processEvents();
+
+      // Running the eventloop may trigger a view refresh
+      if (mFiles.isEmpty())
+        return;
+    }
+
+    // Stop loading files
+    if (verticalScrollBar()->maximum() - verticalScrollBar()->value() > height() / 2)
+      count = fetchAll ? 4 : 0;
   }
 
-
-  for (int i = mFiles.count(); i < count && addedFiles < maxNewFiles; ++i) {
-
-    int pidx = indices[i].data(DiffTreeModel::PatchIndexRole).toInt();
-    addedFiles ++;
+  for (int i = mFiles.count(); i < mIndexes.count() && i < (mFiles.count() + count); i++) {
+    int pidx = mIndexes.at(i);
     git::Patch patch = mDiff.patch(pidx);
     if (!patch.isValid()) {
       // This diff is stale. Refresh the view.
@@ -401,14 +382,10 @@ void DiffView::fetchMore()
       return;
     }
 
-    auto state = static_cast<git::Index::StagedState>(indices[i].data(Qt::CheckStateRole).toInt());
+    git::Patch staged = mStagedPatches.value(patch.name(), git::Patch());
+    FileWidget *file = new FileWidget(this, mDiff, patch, staged, widget());
 
-    git::Patch staged = mStagedPatches.value(patch.name());
-    FileWidget *file = new FileWidget(this, mDiff, patch, staged, indices[i], widget());
-    addedFiles += file->hunks().count();
-    file->setStageState(state);
     mFileWidgetLayout->addWidget(file);
-
     mFiles.append(file);
 
     if (file->isEmpty()) {
@@ -420,24 +397,33 @@ void DiffView::fetchMore()
     // Respond to diagnostic signal.
     connect(file, &FileWidget::diagnosticAdded,
             this, &DiffView::diagnosticAdded);
-    connect(file, &FileWidget::stageStateChanged,
-            [this] (const QModelIndex index, int state) {
-        /*emit fileStageStateChanged(state);*/
-        mDiffTreeModel->setData(index, state, Qt::CheckStateRole);
-        });
-    connect(file, &FileWidget::discarded, [this](const QModelIndex& index) {
-        RepoView *view = RepoView::parentView(this);
-        if (!mDiffTreeModel->discard(index)) {
-            QString name = index.data(Qt::DisplayRole).toString();
-            LogEntry *parent = view->addLogEntry(name, FileWidget::tr("Discard"));
-            view->error(parent, FileWidget::tr("discard"), name);
-        }
-        view->refresh();
-    });
+
+    // Respond to discard signal.
+    connect(file, &FileWidget::discarded,
+            this, &DiffView::discarded);
+
+    // Load hunk(s) of file
+    while (file->canFetchMore() &&
+           ((verticalScrollBar()->maximum() - verticalScrollBar()->value() < height() / 2) ||
+            fetchAll)) {
+      file->fetchMore(fetchAll ? -1 : 1);
+
+      // Load hunk(s) and update scrollbar
+      QApplication::processEvents();
+
+      // Running the eventloop may trigger a view refresh
+      if (mFiles.isEmpty())
+        return;
+    }
+
+    // Stop loading files
+    if (verticalScrollBar()->maximum() - verticalScrollBar()->value() > height() / 2)
+      count = fetchAll ? 4 : 0;
   }
 
   // Finish layout.
   if (mFiles.size() == mDiff.count()) {
+    QVBoxLayout *layout = static_cast<QVBoxLayout *>(widget()->layout());
     // Add comments widget.
     if (!mComments.comments.isEmpty())
       layout->addWidget(new CommentWidget(mComments.comments, widget()));
@@ -449,32 +435,6 @@ void DiffView::fetchMore()
 void DiffView::fetchAll(int index)
 {
   // Load all patches up to and including index.
-  while ((index < 0 || mFiles.size() <= index) && canFetchMore())
-    fetchMore();
-}
-
-void DiffView::indexChanged(const QStringList &paths) {
-//    // Respond to index changes.
-//    RepoView *view = RepoView::parentView(this);
-//    git::Repository repo = view->repo();
-
-//    mStagedPatches.clear();
-//    // Generate a diff between the head tree and index.
-//    if (mDiff.isStatusDiff()) {
-//      if (git::Reference head = repo.head()) {
-//        if (git::Commit commit = head.target()) {
-//          git::Diff stagedDiff = repo.diffTreeToIndex(commit.tree());
-//          for (int i = 0; i < stagedDiff.count(); ++i)
-//            mStagedPatches[stagedDiff.name(i)] = stagedDiff.patch(i);
-//        }
-//      }
-//    }
-
-//    for (auto* file : mFiles) {
-//        for (auto path : paths) {
-//            git::Patch stagedPatch = mStagedPatches[path];
-//            if (file->name() == path)
-//                file->updateHunks(stagedPatch);
-//        }
-//    }
+  while ((index < 0 || mFiles.size() <= mIndexes.indexOf(index)) && canFetchMore())
+    fetchMore(-1);
 }

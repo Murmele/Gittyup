@@ -240,116 +240,102 @@ QVariant DiffTreeModel::data(const QModelIndex &index, int role) const
 }
 
 bool DiffTreeModel::setData(const QModelIndex &index,
-                        const QVariant &value,
-                        int role)
-{
-    return setData(index, value, role, false);
-}
-
-bool DiffTreeModel::discard(const QModelIndex &index)
-{
-    assert(index.isValid());
-
-    Node *node = this->node(index);
-    QList<int> list;
-    node->patchIndices(list);
-
-    QStringList trackedPatches;
-    for (auto i: list) {
-       auto patch = mDiff.patch(i);
-       if (patch.isUntracked()) {
-           QString name = patch.name();
-           git::Repository repo = patch.repo();
-           QDir dir = repo.workdir();
-           if (QFileInfo(dir.filePath(name)).isDir()) {
-             if (dir.cd(name))
-               dir.removeRecursively();
-           } else {
-             dir.remove(name);
-           }
-       } else {
-          trackedPatches.append(patch.name());
-       }
-    }
-
-	auto s = mRepo.submodules();
-	QStringList filePatches;
-	for (auto trackedPatch: trackedPatches) {
-		bool is_submodule = false;
-		for (auto submodule: s) {
-			if (submodule.path() == trackedPatch) {
-				is_submodule = true;
-				submodule.update(nullptr, false, true); // In Repo view it is done asynchron. Maybe changing here too!
-				break;
-			}
-			if (!is_submodule)
-				filePatches.append(trackedPatch);
-
-		}
-	}
-
-	if (filePatches.length() > 0) {
-		int strategy = GIT_CHECKOUT_FORCE;
-		auto repo = mDiff.patch(list[0]).repo(); // does not matter which index is used all are in the same repo
-		if (!repo.checkout(git::Commit(), nullptr, trackedPatches, strategy))
-			return false;
-	}
-    return true;
-}
-
-bool DiffTreeModel::setData(const QModelIndex &index,
-                        const QVariant &value,
-                        int role,
-                        bool ignoreIndexChanges)
+                            const QVariant &value,
+                            int role)
 {
   switch (role) {
     case Qt::CheckStateRole: {
       QStringList files;
       Node *node = this->node(index);
+      git::Index::StagedState state = static_cast<git::Index::StagedState>(value.toInt());
 
-      if (!ignoreIndexChanges) {
-          QStringList files;
-          node->childFiles(files);
-          git::Index::StagedState state = static_cast<git::Index::StagedState>(value.toInt());
-          if (state == git::Index::StagedState::Staged)
-            mDiff.index().setStaged(files, true);
-          else if (state == git::Index::StagedState::Unstaged)
-              mDiff.index().setStaged(files, false);
-          else if (state == git::Index::StagedState::PartiallyStaged)
-              // is done directly in the hunkwidget, because it gets to complicated to
-              // do line staging here.
-              (void)state;
+      if (state != git::Index::PartiallyStaged) {
+        node->childFiles(files);
+
+        if (state == git::Index::Staged)
+          mDiff.index().setStaged(files, true);
+        else if (state == git::Index::Unstaged)
+          mDiff.index().setStaged(files, false);
       }
 
-	  // childs
-	  if (hasChildren(index)) {
-		  // emit dataChanged() for all files in the folder
-		  // all children changed too. TODO: only the tracked files should emit a signal
-		  int count = rowCount(index);
-		  for (int row = 0; row < count; row++) {
-			  QModelIndex child = this->index(row, 0, index);
-			  emit dataChanged(child, child, {role});
-		  }
-	  }
-	  // parents
-	  // recursive approach to emit signal dataChanged also for the parents.
-	  // Because when a file in a folder is staged, the state of the folder changes too
-	  QModelIndex parent = this->parent(index);
-	  while (parent.isValid()) {
-		  emit dataChanged(parent, parent, {role});
-		  parent = this->parent(parent);
-	  }
+      // Handle childs
+      if (hasChildren(index)) {
+        // emit dataChanged() for all files in the folder
+        // all children changed too. TODO: only the tracked files should emit a signal
+        for (int row = 0; row < rowCount(index); row++) {
+          QModelIndex child = this->index(row, 0, index);
+          emit dataChanged(child, child, {role});
+        }
+      }
 
-	  // file/folder it self
-	  // emit dataChanged() for folder or file it self
-	  emit dataChanged(index, index, {role});
+      // Handle parents
+      // recursive approach to emit signal dataChanged also for the parents.
+      // Because when a file in a folder is staged, the state of the folder changes too
+      QModelIndex parent = this->parent(index);
+      while (parent.isValid()) {
+        emit dataChanged(parent, parent, {role});
+        parent = this->parent(parent);
+      }
+
+      // file/folder it self
+      // emit dataChanged() for folder or file it self
+      emit dataChanged(index, index, {role});
       emit checkStateChanged(index, value.toInt());
 
       return true;
     }
   }
-
   return false;
+}
+
+bool DiffTreeModel::discard(const QModelIndex &index)
+{
+  assert(index.isValid());
+
+  Node *node = this->node(index);
+  QList<int> list;
+  node->patchIndices(list);
+
+  QStringList trackedPatches;
+  for (auto i: list) {
+    auto patch = mDiff.patch(i);
+    if (patch.isUntracked()) {
+      QString name = patch.name();
+      git::Repository repo = patch.repo();
+      QDir dir = repo.workdir();
+      if (QFileInfo(dir.filePath(name)).isDir()) {
+        if (dir.cd(name))
+          dir.removeRecursively();
+      } else {
+        dir.remove(name);
+      }
+    } else {
+      trackedPatches.append(patch.name());
+    }
+  }
+
+  auto s = mRepo.submodules();
+  QStringList filePatches;
+  for (auto trackedPatch: trackedPatches) {
+    bool is_submodule = false;
+    for (auto submodule: s) {
+      if (submodule.path() == trackedPatch) {
+        is_submodule = true;
+        submodule.update(nullptr, false, true); // In Repo view it is done asynchron. Maybe changing here too!
+        break;
+      }
+    }
+    if (!is_submodule)
+      filePatches.append(trackedPatch);
+  }
+
+  if (!filePatches.isEmpty()) {
+    int strategy = GIT_CHECKOUT_FORCE;
+    auto repo = mDiff.patch(list[0]).repo(); // does not matter which index is used all are in the same repo
+    if (!repo.checkout(git::Commit(), nullptr, trackedPatches, strategy))
+      return false;
+  }
+  return true;
 }
 
 Qt::ItemFlags DiffTreeModel::flags(const QModelIndex &index) const
@@ -429,9 +415,9 @@ git::Index::StagedState Node::stageState(const git::Index& idx, ParentStageState
     for (auto child: mChildren) {
 
         childState = child->stageState(idx, searchingState);
-        if ((childState == git::Index::StagedState::Staged && searchingState == ParentStageState::Unstaged) ||
-            (childState == git::Index::StagedState::Unstaged && searchingState == ParentStageState::Staged) ||
-            childState == git::Index::PartiallyStaged)
+        if ((childState == git::Index::Staged && searchingState == ParentStageState::Unstaged) ||
+            (childState == git::Index::Unstaged && searchingState == ParentStageState::Staged) ||
+             childState == git::Index::PartiallyStaged)
             return git::Index::PartiallyStaged;
 
         if (searchingState == ParentStageState::Any) {

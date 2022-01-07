@@ -388,99 +388,61 @@ QByteArray Patch::apply(int hidx, int start_line, int end_line, const FilterList
     return generateResult(image, filters);
 }
 
-QByteArray Patch::apply(int hidx, QByteArray& hunkData, const FilterList &filters) const
+void Patch::apply(QList<QList<QByteArray>> &image,
+                  int hidx,
+                  int start_line, int end_line,
+                  const QList<int> &ignore_lines) const
 {
-    QList<QList<QByteArray>> image;
-    populatePreimage(image);
-    apply(image, hidx, hunkData);
-    return generateResult(image, filters);
-}
+  if (start_line == -1 && end_line == -1) {
+    start_line = 0;
+    end_line = image.length();
+  } else if (start_line == -1 || end_line == -1)
+    return; // not valid that only one is -1
 
-QByteArray Patch::apply(int hidx, QByteArray& hunkData, QByteArray fileContent, const FilterList &filters) const
-{
-    QList<QList<QByteArray>> image;
-    populatePreimage(image, fileContent);
-    apply(image, hidx, hunkData);
-    return generateResult(image, filters);
-}
+  if (start_line > end_line || end_line > image.length())
+    return;
 
-QByteArray Patch::apply(QList<QByteArray>& hunkData, const FilterList &filters) const
-{
+  size_t lines = 0;
+  const git_diff_hunk *hunk = nullptr;
+  if (git_patch_get_hunk(&hunk, &lines, d.data(), hidx)) // returns hunk_idx hunk
+    return;
 
-    assert(git_patch_num_hunks(d.data()) == hunkData.length());
-    QList<QList<QByteArray>> image;
-    populatePreimage(image);
-    for (int i = 0; i < hunkData.length(); i++) {
-        apply(image, i, hunkData[i]);
-    }
-    return generateResult(image, filters);
-}
+  // FIXME: Incorrectly prepends when there are zero lines
+  // of context and there's an addition after the first line.
+  int index = hunk->old_start ? hunk->old_start - 1 : 0;
+  bool prepend = (index == 0);
+  for (int j = start_line; j < end_line; ++j) {
+    const git_diff_line *line = nullptr;
+    if (git_patch_get_line_in_hunk(&line, d.data(), hidx, j))
+      continue;
 
-void Patch::apply(QList<QList<QByteArray>> &image, int hidx, QByteArray& hunkData) const
-{
-    size_t lines = 0;
-    const git_diff_hunk *hunk = nullptr;
-    if (git_patch_get_hunk(&hunk, &lines, d.data(), hidx)) // returns hunk_idx hunk
-      return;
+    if (line->old_lineno > 0)
+      index = line->old_lineno - 1;
 
-    assert(hunk->new_start - 1 + hunk->new_lines < image.length());
+    switch (line->origin) {
+      case GIT_DIFF_LINE_CONTEXT:
+        prepend = false;
+        break;
 
-
-    // delete old data
-    for (int i = hunk->new_start - 1; i < hunk->new_start - 1 + hunk->new_lines; i++) {
-        image[i].clear();
-    }
-    // the length of image is not changed, so the function can be applied for multiple hunks
-    image[hunk->new_start - 1].append(hunkData); // at least the line for the old_start must be available
-}
-
-void Patch::apply(QList<QList<QByteArray>> &image, int hidx, int start_line, int end_line) const {
-    if(start_line == -1 && end_line == -1) {
-        start_line = 0;
-        end_line = image.length();
-    } else if (start_line == -1 || end_line == -1)
-        return; // not valid that only one is -1
-
-    if (start_line > end_line || end_line > image.length())
-        return;
-
-    size_t lines = 0;
-    const git_diff_hunk *hunk = nullptr;
-    if (git_patch_get_hunk(&hunk, &lines, d.data(), hidx)) // returns hunk_idx hunk
-      return;
-
-    // FIXME: Incorrectly prepends when there are zero lines
-    // of context and there's an addition after the first line.
-    int index = hunk->old_start ? hunk->old_start - 1 : 0;
-    bool prepend = (index == 0);
-    for (int j = start_line; j < end_line; ++j) {
-      const git_diff_line *line = nullptr;
-      if (git_patch_get_line_in_hunk(&line, d.data(), hidx, j))
-        continue;
-
-      if (line->old_lineno > 0)
-        index = line->old_lineno - 1;
-
-      switch (line->origin) {
-        case GIT_DIFF_LINE_CONTEXT:
-          prepend = false;
-          break;
-
-        case GIT_DIFF_LINE_ADDITION: {
-          QByteArray text(line->content, line->content_len);
+      case GIT_DIFF_LINE_ADDITION: {
+        QByteArray text(line->content, line->content_len);
+        if (!ignore_lines.contains(j - start_line))
           image[index].insert(prepend ? 0 : image.at(index).size(), text);
-          break;
-        }
 
-        case GIT_DIFF_LINE_DELETION:
-          image[index].clear();
-          prepend = false;
-          break;
-
-        default:
-          break;
+        break;
       }
+
+      case GIT_DIFF_LINE_DELETION:
+        if (!ignore_lines.contains(j - start_line))
+          image[index].clear();
+
+        prepend = false;
+        break;
+
+      default:
+        break;
     }
+  }
 }
 
 Patch Patch::fromBuffers(

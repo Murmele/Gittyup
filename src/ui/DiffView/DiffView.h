@@ -21,11 +21,9 @@
 #include "app/Theme.h"
 #include <QMap>
 #include <QScrollArea>
+#include <QVBoxLayout>
 
-class QCheckBox;
-class QVBoxLayout;
 class FileWidget;
-class DiffTreeModel;
 
 namespace DiffViewStyle {
     const int kIndent = 2;
@@ -86,38 +84,17 @@ public:
   QWidget *file(int index);
 
   void setDiff(const git::Diff &diff);
-
-  bool scrollToFile(int index);
-
-  /*!
-   * \brief updateFiles
-   * Call this function to update the visible diff files.
-   * It fetches the files then from the diffTreeModel and the selection model
-   */
-  void updateFiles();
+  void setFilter(const QStringList &paths);
 
   const QList<PluginRef> &plugins() const { return mPlugins; }
   const Account::CommitComments &comments() const { return mComments; }
 
   QList<TextEditor *> editors() override;
   void ensureVisible(TextEditor *editor, int pos) override;
-  /*!
-   * Enables/disables showing diffs
-   * \brief enable
-   * \param enable
-   */
-  void enable(bool enable);
-  void setModel(DiffTreeModel *model);
-  void diffTreeModelDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles);
 
 signals:
   void diagnosticAdded(TextEditor::DiagnosticKind kind);
-  /*!
-   * Emitted when in one of the FileWidgets the stageState was changed
-   * \brief fileStageStateChanged
-   * \param state
-   */
-  void fileStageStateChanged(git::Index::StagedState state);
+  void discarded(const QString &name);
 
 protected:
   void dropEvent(QDropEvent *event) override;
@@ -125,9 +102,8 @@ protected:
 
 private:
   bool canFetchMore();
-  void fetchMore();
+  void fetchMore(int count = 4);
   void fetchAll(int index = -1);
-  void indexChanged(const QStringList& paths);
 
   git::Diff mDiff;
   QMap<QString,git::Patch> mStagedPatches;
@@ -138,10 +114,9 @@ private:
   QList<PluginRef> mPlugins;
   Account::CommitComments mComments;
 
-  bool mEnabled{true};
-  DiffTreeModel* mDiffTreeModel{nullptr};
-  QWidget* mParent{nullptr};
   QVBoxLayout* mFileWidgetLayout{nullptr};
+
+  QList<int> mIndexes;
 };
 
 #endif

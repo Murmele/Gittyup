@@ -3,8 +3,9 @@
 
 #include <QFrame>
 #include <QCheckBox>
-#include <QWidget>
 #include <QLabel>
+#include <QToolButton>
+#include <QWidget>
 
 #include "../../editor/TextEditor.h"
 #include "../../git/Patch.h"
@@ -13,8 +14,6 @@
 #include "git/Diff.h"
 
 class DiffView;
-class Header;
-class QToolButton;
 class DisclosureButton;
 class Line;
 
@@ -40,13 +39,12 @@ namespace _HunkWidget {
       QToolButton *theirsButton() const;
 
     public slots:
-      void setCheckState(git::Index::StagedState state);
+      void setStageState(git::Index::StagedState state);
 
     protected:
       void mouseDoubleClickEvent(QMouseEvent *event) override;
 
     signals:
-      void stageStateChanged(int stageState);
       void discard();
 
     private:
@@ -80,22 +78,9 @@ public:
   _HunkWidget::Header *header() const;
   TextEditor *editor(bool ensureLoaded = true);
   void invalidate();
-  /*!
-   * Return hunk retrieved from the editor with removed discard lines
-   * Idea is to store the changes only in the texteditor
-   * and provide the data to the patch if needed
-   * \brief hunk
-   * \return
-   */
-  QByteArray hunk() const;
-  /*!
-   * Return hunk retrieved from the editor to apply patch
-   * Idea is to store the changes only in the texteditor
-   * and provide the data to the patch if needed
-   * \brief hunk
-   * \return
-   */
-  QByteArray apply() const;
+
+  QList<int> unstagedLines() const;
+  QList<int> discardedLines() const;
   /*!
    * \brief stageState
    * Calculate stage state of the hunk. Git does not provide
@@ -104,19 +89,10 @@ public:
    * \return
    */
   git::Index::StagedState stageState();
-  /*!
-   * Stage/Unstage all
-   * \brief setStaged
-   * \param staged
-   */
-  void setStaged(bool staged);
-  void setStageState(git::Index::StagedState state);
-  /*!
-   * Called by the hunk header
-   * \brief discard
-   */
-  void discard();
-  void load();
+
+  void updatePatch(const git::Patch &patch,
+                   const git::Patch &staged);
+  void updateStageState(git::Index::StagedState stageState);
   /*!
    * update hunk content
    * \brief load
@@ -132,15 +108,15 @@ signals:
    * \brief stageStateChanged
    * \param stageState
    */
-  void stageStateChanged(git::Index::StagedState state);
-  void discardSignal();
+  void stageStateChanged(git::Index::StagedState stageState);
+  void discard();
 
 protected:
   void paintEvent(QPaintEvent *event);
 
 private slots:
-  void stageSelected(int startLine, int end, bool emitSignal=true);
-  void unstageSelected(int startLine, int end, bool emitSignal=true);
+  void stageSelected(int startLine, int end);
+  void unstageSelected(int startLine, int end);
   void discardSelected(int startLine, int end);
   /*!
    * Shows dialog if the changes should be discarded
@@ -149,14 +125,7 @@ private slots:
    * \param end
    */
   void discardDialog(int startLine, int end);
-  void headerCheckStateChanged(int state);
-  /*!
-   * Stage/Unstage line with index lidx
-   * \brief setStaged
-   * \param lidx Line index
-   * \param staged Staged if true, else unstaged
-   */
-  void setStaged(int lidx, bool staged, bool emitSignal=true);
+
   void marginClicked(int pos, int modifier, int margin);
 
 private:
@@ -188,10 +157,12 @@ private:
 
   _HunkWidget::Header *mHeader;
   TextEditor *mEditor;
-  bool mLoaded{false};
-  bool mLoading{false}; // during execution of the load() method
-  bool mStagedStateLoaded{false};
-  git::Index::StagedState mStagedStage;
+
+  bool mLoaded = false;
+  int mAdditions = 0;
+  int mDeletions = 0;
+  int mStagedAdditions = 0;
+  int mStagedDeletions = 0;
 };
 
 #endif // HUNKWIDGET_H
