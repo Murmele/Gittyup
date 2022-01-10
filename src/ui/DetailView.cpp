@@ -942,10 +942,10 @@ public:
     connect(mCommit, &QPushButton::clicked, this, &CommitEditor::commit);
 
     // Update buttons on index change.
-    connect(repo.notifier(), &git::RepositoryNotifier::indexChanged,
-    [this](const QStringList &paths, bool yieldFocus) {
-      updateButtons(yieldFocus);
-    });
+//    connect(repo.notifier(), &git::RepositoryNotifier::indexChanged,
+//    [this](const QStringList &paths, bool yieldFocus) {
+//      updateButtons(yieldFocus);
+//    });
 
     QVBoxLayout *buttonLayout = new QVBoxLayout;
     buttonLayout->setContentsMargins(0,8,12,0);
