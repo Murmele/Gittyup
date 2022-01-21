@@ -21,6 +21,22 @@
 
 using namespace Scintilla;
 
+namespace {
+const QString kIconFmt = ":/%1.png";
+const QString kThemeIconFmt = ":/%1_%2.png";
+QIcon getIcon(QString name) {
+	QPalette palette = QGuiApplication::palette();
+	QColor base = palette.color(QPalette::Base);
+	QColor text = palette.color(QPalette::Text);
+	if (text.lightnessF() > base.lightnessF()) {
+	  QFileInfo info(kThemeIconFmt.arg(name, "dark"));
+	  if (info.exists())
+		return QIcon(info.filePath());
+	}
+	return QIcon(kIconFmt.arg(name));
+}
+}
+
 extern LexerModule lmLPeg;
 
 TextEditor::TextEditor(QWidget *parent)
@@ -38,8 +54,8 @@ TextEditor::TextEditor(QWidget *parent)
   mNoteIcon = style->standardIcon(QStyle::SP_MessageBoxInformation);
   mWarningIcon = style->standardIcon(QStyle::SP_MessageBoxWarning);
   mErrorIcon = style->standardIcon(QStyle::SP_MessageBoxCritical);
-  mStagedIcon = QIcon(":/checkbox_marked.png");
-  mUnStagedIcon = QIcon(":/checkbox_unmarked.png");
+  mStagedIcon = getIcon("checkbox_marked");
+  mUnStagedIcon = getIcon("checkbox_unmarked");
 
   // Register the LPeg lexer.
   static bool initialized = false;
