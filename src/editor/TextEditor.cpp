@@ -38,7 +38,8 @@ TextEditor::TextEditor(QWidget *parent)
   mNoteIcon = style->standardIcon(QStyle::SP_MessageBoxInformation);
   mWarningIcon = style->standardIcon(QStyle::SP_MessageBoxWarning);
   mErrorIcon = style->standardIcon(QStyle::SP_MessageBoxCritical);
-  mStagedIcon = style->standardIcon(QStyle::SP_ArrowUp);
+  mStagedIcon = QIcon(":/checkbox_marked.png");
+  mUnStagedIcon = QIcon(":/checkbox_unmarked.png");
 
   // Register the LPeg lexer.
   static bool initialized = false;
@@ -62,7 +63,7 @@ TextEditor::TextEditor(QWidget *parent)
   }
 
 
-  setMarginMaskN(Staged, 1 << StagedMarker);
+  setMarginMaskN(Margin::Staged, (1 << StagedMarker) | (1 << UnstagedMarker));
   setStatusDiff(mStatusDiff); // to apply margin width
 
   int mask = 0;
@@ -173,6 +174,7 @@ void TextEditor::applySettings()
   markerDefine(Addition, SC_MARK_BACKGROUND);
   markerDefine(Deletion, SC_MARK_BACKGROUND);
   markerDefine(StagedMarker, SC_MARK_RGBAIMAGE);
+  markerDefine(UnstagedMarker, SC_MARK_RGBAIMAGE);
   markerDefine(DiscardMarker, SC_MARK_EMPTY);
 
   markerSetBack(Ours, mOursColor);
@@ -187,6 +189,7 @@ void TextEditor::applySettings()
 
 
   loadMarkerIcon(StagedMarker, mStagedIcon);
+  loadMarkerIcon(UnstagedMarker, mUnStagedIcon);
 
   // Set LPeg lexer language.
   QByteArray lexer = this->lexer().toUtf8();

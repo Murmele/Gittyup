@@ -66,5 +66,7 @@
         <file>misc.png</file>
         <file>misc@2x.png</file>
         <file>logo-type_light@2x.png</file>
+        <file>checkbox_marked.png</file>
+        <file>checkbox_unmarked.png</file>
     </qresource>
 </RCC>

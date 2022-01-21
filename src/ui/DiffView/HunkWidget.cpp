@@ -489,8 +489,10 @@ void HunkWidget::stageSelected(int startLine, int end, bool emitSignal) {
          int mask = mEditor->markers(i);
          if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
             // stage only when not already staged
-            if ((mask & 1 << TextEditor::Marker::StagedMarker) == 0)
-                mEditor->markerAdd(i, TextEditor::StagedMarker);
+			if ((mask & 1 << TextEditor::Marker::StagedMarker) == 0) {
+				mEditor->markerAdd(i, TextEditor::StagedMarker);
+				mEditor->markerDelete(i, TextEditor::UnstagedMarker);
+			}
          }
      }
 
@@ -501,8 +503,12 @@ void HunkWidget::stageSelected(int startLine, int end, bool emitSignal) {
  void HunkWidget::unstageSelected(int startLine, int end, bool emitSignal) {
     for (int i=startLine; i < end; i++) {
         int mask = mEditor->markers(i);
-        if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion))
-            mEditor->markerDelete(i, TextEditor::StagedMarker);
+		if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
+			if ((mask & 1 << TextEditor::Marker::UnstagedMarker) == 0) {
+				mEditor->markerAdd(i, TextEditor::UnstagedMarker);
+				mEditor->markerDelete(i, TextEditor::StagedMarker);
+			}
+		}
     }
 
     mStagedStateLoaded = false;
@@ -603,19 +609,18 @@ void HunkWidget::stageSelected(int startLine, int end, bool emitSignal) {
      if (!(markers & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)))
          return;
 
-     if (staged == (markers & 1 << TextEditor::Marker::StagedMarker) > 0)
-         return;
+	 if (staged && ((markers & (1<< TextEditor::Marker::StagedMarker)) > 0))
+		 return;
 
-     if (staged) {
-         stageSelected(lidx, lidx + 1, emitSignal);
-     } else {
+	 if (staged)
+		stageSelected(lidx, lidx + 1, emitSignal);
+	 else if (!staged)
         unstageSelected(lidx, lidx + 1, emitSignal);
-     }
      mLoaded = true;
  }
 
  void HunkWidget::marginClicked(int pos, int modifier, int margin) {
-     if (margin != TextEditor::Margin::Staged)
+	 if (margin != TextEditor::Margin::Staged)
          return;
 
      int lidx = mEditor->lineFromPosition(pos);
@@ -991,8 +996,7 @@ void HunkWidget::setEditorLineInfos(QList<Line>& lines, Account::FileComments& c
         // Add marker.
         if (marker >= 0)
             mEditor->markerAdd(lidx, marker);
-		 if (staged)
-          setStaged(lidx, true);
+		 setStaged(lidx, staged);
     }
 
 

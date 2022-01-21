@@ -184,6 +184,7 @@ private:
   QIcon mWarningIcon;
   QIcon mErrorIcon;
   QIcon mStagedIcon;
+  QIcon mUnStagedIcon;
 
   QMap<int,QList<Diagnostic>> mDiagnostics;
 };
