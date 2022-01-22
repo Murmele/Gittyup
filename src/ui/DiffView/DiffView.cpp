@@ -289,7 +289,7 @@ void DiffView::updateFiles()
     while (mFiles.count()) {
         auto file = mFiles.takeFirst();
         mFileWidgetLayout->removeWidget(file);
-        delete file;
+		file->deleteLater();
     }
     mFiles.clear();
 
