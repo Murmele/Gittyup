@@ -45,6 +45,7 @@ private:
 
 void refresh(RepoView *repoView, bool expectDirty = true);
 void fetch(RepoView *repoView, git::Remote remote);
+QString extractRepository(const QString &filename, bool useTempDir);
 
 Application createApp(int &argc, char *argv[]);
 
