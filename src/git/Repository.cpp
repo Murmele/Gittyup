@@ -313,6 +313,14 @@ void Repository::setIndex(const Index &index)
   git_repository_set_index(d->repo, index);
 }
 
+/*!
+ * \brief Repository::status
+ * Generates the diff from the index to the working directory
+ * \param index
+ * \param callbacks
+ * \param ignoreWhitespace
+ * \return
+ */
 Diff Repository::status(
   const Index &index,
   Diff::Callbacks *callbacks,

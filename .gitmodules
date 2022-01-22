@@ -16,3 +16,6 @@
 [submodule "dep/hunspell/hunspell"]
 	path = dep/hunspell/hunspell
 	url = https://github.com/hunspell/hunspell
+[submodule "test/dep/zip"]
+	path = test/dep/zip
+	url = https://github.com/kuba--/zip.git

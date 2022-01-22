@@ -1,6 +1,6 @@
 # Define test macro.
 macro(test TEST_NAME)
-  add_executable(test_${TEST_NAME} EXCLUDE_FROM_ALL ${TEST_NAME}.cpp)
+  add_executable(test_${TEST_NAME} ${TEST_NAME}.cpp)
   target_link_libraries(test_${TEST_NAME} testlib)
 
   set_target_properties(test_${TEST_NAME} PROPERTIES
@@ -36,9 +36,14 @@ add_custom_target(check
 enable_testing()
 
 # Add test library.
+add_subdirectory(dep/zip)
 add_library(testlib Test.cpp)
-target_link_libraries(testlib app git ui Qt5::Test)
+target_link_libraries(testlib app git ui Qt5::Test zip)
 target_include_directories(testlib PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_compile_definitions(testlib PRIVATE
+  TESTREPOSITORIES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/testRepos"
+)
+
 
 # Add tests.
 test(bare_repo)
@@ -56,3 +61,4 @@ test(new_branch_dialog)
 test(sanity)
 test(HunkWidget)
 test(Diff)
+test(EditorLineInfos)
