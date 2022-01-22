@@ -15,6 +15,7 @@
 #include <QFileInfo>
 #include <QProcess>
 #include <QUrl>
+#include <QDebug>
 
 #if defined(Q_OS_MAC)
 #define NAME QT_TRANSLATE_NOOP("ShowTool", "Finder")
@@ -84,8 +85,15 @@ bool ShowTool::openFileManager(QString path)
   for(QString &part : cmdParts)
     part = part.arg(path);
 
+#if defined(FLATPAK)
+  QStringList arguments;
+  arguments << "--host" << cmdParts;
+  qDebug() << "Show Tool. Arguments: " << arguments;
+  return QProcess::startDetached("flatpak-spawn", arguments);
+#else
   QString program = cmdParts.takeFirst();
   return QProcess::startDetached(program, cmdParts);
+#endif
 }
 
 ShowTool::ShowTool(const QString &file, QObject *parent)
