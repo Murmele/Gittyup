@@ -27,6 +27,11 @@ public:
   bool eventFilter(QObject *obj, QEvent *event) override;
   void deselectAll();
   /*!
+   * Get the rectangle occupied by the item's checkboy.
+   * Used in the UI tests
+   */
+  QRect checkRect(const QModelIndex &index);
+  /*!
    * \brief countCollapsed
    * Counts the number of collapsed items. In \sa DoubleTreeWidget it is used to
    * change the state of the expand/collapse all buttons

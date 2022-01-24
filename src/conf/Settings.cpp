@@ -118,9 +118,14 @@ void Settings::endGroup()
 
 QVariant Settings::value(const QString &key) const
 {
+  return value(key, defaultValue(key));
+}
+
+QVariant Settings::value(const QString &key, const QVariant &defaultValue) const
+{
   QSettings settings;
   settings.beginGroup(group());
-  QVariant result = settings.value(key, defaultValue(key));
+  QVariant result = settings.value(key, defaultValue);
   settings.endGroup();
   return result;
 }

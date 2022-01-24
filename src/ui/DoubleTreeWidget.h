@@ -40,8 +40,14 @@ public:
     const QString &file = QString(),
     const QString &pathspec = QString()) override;
 
-public slots:
-  void updateTreeModel(git::Index::StagedState state);
+  void cancelBackgroundTasks() override;
+
+  void find() override;
+  void findNext() override;
+  void findPrevious() override;
+
+protected:
+  void contextMenuEvent(QContextMenuEvent *event) override;
 
 private slots:
   void collapseCountChanged(int count);
@@ -94,5 +100,7 @@ private:
    */
   QStackedWidget* mFileView{nullptr};
   bool mIgnoreSelectionChange{false};
+
+  git::Diff mDiff;
 };
 #endif // DOUBLETREEWIDGET_H

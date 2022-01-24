@@ -11,6 +11,7 @@
 #include "conf/ConfFile.h"
 #include "conf/Settings.h"
 #include <QDir>
+#include <QPainter>
 #include <QProxyStyle>
 #include <QStandardPaths>
 #include <QStyleOptionButton>
@@ -75,7 +76,7 @@ public:
       }
 
       case PE_IndicatorTabClose:
-        Theme::drawCloseButton(option, painter);
+        CustomTheme::drawCloseButton(option, painter);
         break;
 
       default:
@@ -168,13 +169,6 @@ QString CustomTheme::styleSheet() const
     "  color: palette(bright-text)"
     "}"
 
-    "FileList {"
-    "  border-top: 1px solid palette(dark)"
-    "}"
-    "FileList QToolButton {"
-    "  background: none"
-    "}"
-
     "FindWidget {"
     "  background: palette(highlight)"
     "}"
@@ -246,7 +240,8 @@ QString CustomTheme::styleSheet() const
     "  border-bottom: 1px solid palette(window)"
     "}"
 
-    "CommitDetail QToolButton, HunkWidget QToolButton {"
+    "CommitDetail QToolButton,"
+    "HunkWidget QToolButton {"
     "  border: 1px solid palette(shadow);"
     "  border-radius: 4px"
     "}"
@@ -400,11 +395,10 @@ QPalette CustomTheme::commitList()
   QVariantMap commitList = mMap.value("commits").toMap();
 
   QPalette palette;
-  setPaletteColors(palette, QPalette::Base, commitList.value("background"));
-
   setPaletteColors(palette, QPalette::Text, commitList.value("text"));
   setPaletteColors(palette, QPalette::BrightText, commitList.value("bright_text"));
-
+  setPaletteColors(palette, QPalette::Base, commitList.value("background"));
+  setPaletteColors(palette, QPalette::AlternateBase, commitList.value("alternate"));
   setPaletteColors(palette, QPalette::Highlight, commitList.value("highlight"));
   setPaletteColors(palette, QPalette::HighlightedText, commitList.value("highlighted_text"));
   setPaletteColors(palette, QPalette::WindowText, commitList.value("highlighted_bright_text"));
@@ -441,20 +435,6 @@ QColor CustomTheme::diff(Diff color)
   }
 }
 
-QPalette CustomTheme::fileList()
-{
-  QVariantMap fileList = mMap.value("files").toMap();
-
-  QPalette palette;
-  setPaletteColors(palette, QPalette::Base, fileList.value("background"));
-  setPaletteColors(palette, QPalette::AlternateBase, fileList.value("alternate"));
-  setPaletteColors(palette, QPalette::Text, fileList.value("text"));
-  setPaletteColors(palette, QPalette::Highlight, fileList.value("highlight"));
-  setPaletteColors(palette, QPalette::HighlightedText,
-                   fileList.value("highlighted_text"));
-  return palette;
-}
-
 QColor CustomTheme::heatMap(HeatMap color)
 {
   QVariantMap heatmap = mMap.value("blame").toMap();
@@ -489,9 +469,43 @@ QColor CustomTheme::star()
 #ifndef Q_OS_MAC
 void CustomTheme::polishWindow(QWindow *window) const
 {
+  Q_UNUSED(window)
+
   // FIXME: Change title bar color?
 }
 #endif
+
+void CustomTheme::drawCloseButton(
+  const QStyleOption *option,
+  QPainter *painter)
+{
+  qreal in = 3.5;
+  qreal out = 8.0;
+  QRect rect = option->rect;
+  qreal x = rect.x() + (rect.width() / 2);
+  qreal y = rect.y() + (rect.height() / 2);
+
+  painter->save();
+  painter->setRenderHints(QPainter::Antialiasing);
+
+  // Draw background.
+  if (option->state & QStyle::State_MouseOver) {
+    painter->save();
+    painter->setPen(Qt::NoPen);
+    bool selected = (option->state & QStyle::State_Selected);
+    painter->setBrush(QColor(selected ? QPalette().color(QPalette::Highlight) :
+                                        QPalette().color(QPalette::Base)));
+    QRectF background(x - out, y - out, 2 * out, 2 * out);
+    painter->drawRoundedRect(background, 2.0, 2.0);
+    painter->restore();
+  }
+
+  // Draw x.
+  painter->setPen(QPen(QPalette().color(QPalette::WindowText), 1.5));
+  painter->drawLine(QPointF(x - in, y - in), QPointF(x + in, y + in));
+  painter->drawLine(QPointF(x - in, y + in), QPointF(x + in, y - in));
+  painter->restore();
+}
 
 QDir CustomTheme::userDir(bool create, bool *exists)
 {

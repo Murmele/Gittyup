@@ -15,6 +15,7 @@
 #include <QDesktopServices>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QLocale>
 #include <QMessageBox>
 #include <QPointer>
 #include <QTabBar>
@@ -29,7 +30,7 @@
 
 namespace {
 
-const QString kEmail = "TODO";
+const QString kEmail = QStringLiteral("TODO");
 
 const QString kUrl =
   "https://stackoverflow.com/questions/tagged/gittyup?sort=frequent";
@@ -86,7 +87,7 @@ AboutDialog::AboutDialog(QWidget *parent)
 
   QString revision = GITTYUP_BUILD_REVISION;
   QDateTime dateTime = QDateTime::fromString(GITTYUP_BUILD_DATE, Qt::ISODate);
-  QString date = dateTime.date().toString(Qt::DefaultLocaleLongDate);
+  QString date = dateTime.date().toString(QLocale().dateFormat(QLocale::LongFormat));
   QString text = kTextFmt.arg(name, version, date, revision, kUrl, kEmail);
   QLabel *label = new QLabel(text, this);
   label->setWordWrap(true);
@@ -102,21 +103,8 @@ AboutDialog::AboutDialog(QWidget *parent)
   browser->setOpenLinks(false);
   browser->document()->setDocumentMargin(12);
   browser->document()->setDefaultStyleSheet(kStyleSheet);
-  connect(browser, &QTextBrowser::anchorClicked, [this](const QUrl &url) {
-    if (url.isLocalFile() &&
-        QFileInfo(url.toLocalFile()).fileName() == "opt-out") {
-      Settings::instance()->setValue("tracking/enabled", false);
-      QString text =
-        tr("Usage reporting has been disabled. Restart "
-           "the application for changes to take effect.");
-      QMessageBox::information(this, tr("Usage Reporting Disabled"), text);
-      return;
-    }
 
-    QDesktopServices::openUrl(url);
-  });
-
-  connect(mTabs, &QTabBar::currentChanged, [this, browser](int index) {
+  connect(mTabs, &QTabBar::currentChanged, this, [this, browser](int index) {
     QString url = Settings::docDir().filePath(mTabs->tabData(index).toString());
     browser->setSource(QUrl::fromLocalFile(url));
   });

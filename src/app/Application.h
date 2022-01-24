@@ -27,30 +27,35 @@ public:
 
   void autoUpdate();
   bool restoreWindows();
+  bool runSingleInstance();
 
   static Theme *theme();
-
-  static void track(const QString &screen);
-  static void track(
-    const QString &category,
-    const QString &action,
-    const QString &label = QString(),
-    int value = -1);
 
 protected:
   bool event(QEvent *event) override;
 
 private:
   void registerService();
-  void track(const QUrlQuery &query);
   void handleSslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
 
   QString mPathspec = QString();
   QScopedPointer<Theme> mTheme;
   QStringList mPositionalArguments;
-
-  QString mClientId;
-  QNetworkAccessManager *mTrackingMgr = nullptr;
 };
+
+#ifdef Q_OS_LINUX
+class DBusGittyup: public QObject
+{
+  Q_OBJECT
+
+public:
+  DBusGittyup(QObject *parent = nullptr);
+
+public slots:
+  Q_SCRIPTABLE void openRepository(const QString &repo);
+  Q_SCRIPTABLE void openAndFocusRepository(const QString &repo);
+  Q_SCRIPTABLE void setFocus();
+};
+#endif
 
 #endif

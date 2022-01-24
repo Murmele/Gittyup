@@ -56,6 +56,14 @@ void DiffTreeModel::setDiff(const git::Diff &diff)
   endResetModel();
 }
 
+void DiffTreeModel::refresh(const QStringList &paths)
+{
+  for (auto path: paths) {
+    auto index = this->index(path);
+    emit dataChanged(index, index, {Qt::CheckStateRole});
+  }
+}
+
 int DiffTreeModel::rowCount(const QModelIndex &parent) const
 {
   return mDiff ? node(parent)->children().size() : 0;
@@ -282,10 +290,10 @@ bool DiffTreeModel::discard(const QModelIndex &index)
 				submodule.update(nullptr, false, true); // In Repo view it is done asynchron. Maybe changing here too!
 				break;
 			}
-			if (!is_submodule)
-				filePatches.append(trackedPatch);
-
 		}
+
+		if (!is_submodule)
+			filePatches.append(trackedPatch);
 	}
 
 	if (filePatches.length() > 0) {

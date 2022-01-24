@@ -14,6 +14,7 @@
 #include "ui/MainWindow.h"
 #include "ui/MenuBar.h"
 #include "ui/RepoView.h"
+#include "ui/TabWidget.h"
 #include "update/Updater.h"
 #include <QCloseEvent>
 #include <QCommandLineParser>
@@ -27,18 +28,23 @@
 #include <QNetworkReply>
 #include <QOperatingSystemVersion>
 #include <QSettings>
+#include <QStyle>
 #include <QTimer>
 #include <QTranslator>
 #include <QUrlQuery>
 #include <QUuid>
 
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_LINUX)
+#include <QtDBus/QtDBus>
+
+#elif defined(Q_OS_MAC)
 #include <unistd.h>
 
 #elif defined(Q_OS_WIN)
 #include <windows.h>
 #include <dbghelp.h>
 #include <strsafe.h>
+#include <QWindow>
 
 static LPTOP_LEVEL_EXCEPTION_FILTER defaultFilter = nullptr;
 
@@ -84,30 +90,6 @@ static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info)
 }
 #endif
 
-namespace {
-
-const QString kUserAgentFmt = "%1/%2 (%3)";
-
-QString userAgentSystem()
-{
-#if defined(Q_OS_WIN)
-  QOperatingSystemVersion current = QOperatingSystemVersion::current();
-  if (current < QOperatingSystemVersion::Windows8) {
-    return "Windows NT 6.1";
-  } else if (current < QOperatingSystemVersion::Windows10) {
-    return "Windows NT 6.2";
-  } else {
-    return "Windows NT 10.0";
-  }
-#elif defined(Q_OS_MAC)
-  return "Macintosh";
-#else
-  return "Linux";
-#endif
-}
-
-} // anon. namespace
-
 Application::Application(int &argc, char **argv, bool haltOnParseError)
   : QApplication(argc, argv)
 {
@@ -126,7 +108,7 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
 
   // Parse command line arguments.
   QCommandLineParser parser;
-  parser.setApplicationDescription("Gittyup");
+  parser.setApplicationDescription("Gittyup" BUILD_DESCRIPTION);
   parser.addHelpOption();
   parser.addVersionOption();
   parser.addPositionalArgument(
@@ -152,12 +134,25 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
   // Set pathspec filter.
   mPathspec = parser.value("filter");
 
+#if defined(Q_OS_WIN)
+  // Load default palette.
+  QApplication::setPalette(QApplication::style()->standardPalette());
+#endif
+
   // Initialize theme.
   mTheme.reset(Theme::create(parser.value("theme")));
   setStyle(mTheme->style());
   setStyleSheet(mTheme->styleSheet());
 
-  // Read translation settings
+#if defined(Q_OS_WIN)
+  // Set default font style and hinting.
+  QFont font = QApplication::font();
+  font.setStyleStrategy(QFont::PreferDefault);
+  font.setHintingPreference(QFont::PreferDefaultHinting);
+  QApplication::setFont(font);
+#endif
+
+  // Read translation settings.
   QSettings settings;
   if ((!settings.value("translation/disable", false).toBool()) &&
       (!parser.isSet("no-translation"))) {
@@ -224,33 +219,12 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
   // Initialize git library.
   git::Repository::init();
 
-  connect(this, &Application::aboutToQuit, [this] {
+  connect(this, &Application::aboutToQuit, [] {
     // Clean up git library.
     // Make sure windows are really deleted.
     sendPostedEvents(nullptr, QEvent::DeferredDelete);
     git::Repository::shutdown();
   });
-
-  // Read tracking settings.
-  settings.beginGroup("tracking");
-  QByteArray tid(GITTYUP_TRACKING_ID);
-  if (!tid.isEmpty() && settings.value("enabled", true).toBool()) {
-    // Get or create persistent client ID.
-    mClientId = settings.value("id").toString();
-    if (mClientId.isEmpty()) {
-      mClientId = QUuid::createUuid().toString();
-      settings.setValue("id", mClientId);
-    }
-
-    // Fire and forget, except to free the reply.
-    mTrackingMgr = new QNetworkAccessManager(this);
-    connect(mTrackingMgr, &QNetworkAccessManager::finished,
-    [](QNetworkReply *reply) {
-      reply->deleteLater();
-    });
-  }
-
-  settings.endGroup();
 }
 
 void Application::autoUpdate()
@@ -313,36 +287,181 @@ bool Application::restoreWindows()
   return MainWindow::restoreWindows();
 }
 
+static MainWindow *openOrSwitch(QDir repo)
+{
+  repo.makeAbsolute();
+
+  QList<MainWindow *> windows = MainWindow::windows();
+  for (MainWindow *window : windows) {
+    TabWidget *tabs = window->tabWidget();
+
+    for (int i = 0; i < tabs->count(); ++i) {
+      RepoView *view = (RepoView *)tabs->widget(i);
+      QDir openRepo = QDir(view->repo().workdir().path());
+
+      if (openRepo == repo) {
+        tabs->setCurrentIndex(i);
+        return window;
+      }
+    }
+  }
+
+  return MainWindow::open(repo.path(), true);
+}
+
+#if defined(Q_OS_LINUX)
+#define DBUS_SERVICE_NAME "com.github.Murmele.Gittyup"
+#define DBUS_INTERFACE_NAME "com.github.Murmele.Gittyup.Application"
+#define DBUS_OBJECT_PATH "/com/github/Murmele/Gittyup/Application"
+
+DBusGittyup::DBusGittyup(QObject *parent): QObject(parent)
+{
+}
+
+void DBusGittyup::openRepository(const QString &repo)
+{
+  openOrSwitch(QDir(repo));
+}
+
+void DBusGittyup::openAndFocusRepository(const QString &repo)
+{
+  openOrSwitch(QDir(repo))->activateWindow();
+}
+
+void DBusGittyup::setFocus()
+{
+  MainWindow::activeWindow()->activateWindow();
+}
+
+#elif defined(Q_OS_WIN)
+#define COPYDATA_WINDOW_TITLE "Gittyup WM_COPYDATA receiver 16b8b3f6-6446-4fa7-8c72-53c25b1f206c"
+enum CopyDataCommand
+{
+  Focus = 0,
+  FocusAndOpen = 1
+};
+
+namespace
+{
+  // Helper window class for receiving IPC messages
+  class CopyDataWindow: public QWindow
+  {
+  public:
+    CopyDataWindow()
+    {
+      setTitle(COPYDATA_WINDOW_TITLE);
+    }
+
+  protected:
+    virtual bool nativeEvent(const QByteArray &eventType, void *message, long *result) Q_DECL_OVERRIDE
+    {
+      MSG *msg = (MSG*) message;
+
+      if (msg->message == WM_COPYDATA) {
+        COPYDATASTRUCT *cds = (COPYDATASTRUCT*) msg->lParam;
+
+        switch (cds->dwData) {
+          case CopyDataCommand::Focus:
+            MainWindow::activeWindow()->activateWindow();
+            break;
+
+          case CopyDataCommand::FocusAndOpen:
+            if (cds->cbData % 2 == 0) {
+              QString repo = QString::fromUtf16((const char16_t*) cds->lpData, cds->cbData / 2);
+              openOrSwitch(QDir(repo));
+
+              MainWindow::activeWindow()->activateWindow();
+            }
+            break;
+        }
+
+        return true;
+      }
+
+      return QWindow::nativeEvent(eventType, message, result);
+    }
+  };
+}
+#endif
+
+bool Application::runSingleInstance()
+{
+  if (Settings::instance()->value("singleInstance").toBool()) {
+#if defined(Q_OS_LINUX)
+    QDBusConnection bus = QDBusConnection::sessionBus();
+
+    if (bus.isConnected()) {
+      QDBusInterface masterInstance(DBUS_SERVICE_NAME, DBUS_OBJECT_PATH, DBUS_INTERFACE_NAME, bus);
+
+      // Is another instance running on the current DBus session bus?
+      if (masterInstance.isValid()) {
+        if (!mPositionalArguments.isEmpty())
+          masterInstance.call("openAndFocusRepository", QDir(mPositionalArguments.first()).absolutePath());
+        return true;
+      }
+    }
+
+#elif defined(Q_OS_WIN)
+    HWND handle = FindWindowA(nullptr, COPYDATA_WINDOW_TITLE);
+    // Is another instance running in the current session?
+    if (handle != nullptr) {
+      QWindow sender;
+
+      COPYDATASTRUCT cds;
+
+      if (mPositionalArguments.isEmpty()) {
+        cds.dwData = CopyDataCommand::Focus;
+        cds.cbData = 0;
+        cds.lpData = nullptr;
+
+        SendMessage(handle, WM_COPYDATA, sender.winId(), (LPARAM) &cds);
+
+      } else {
+        QString arg = QDir(mPositionalArguments.first()).absolutePath();
+
+        cds.dwData = CopyDataCommand::FocusAndOpen;
+        cds.cbData = arg.length() * 2;
+        cds.lpData = (LPVOID) arg.utf16();
+
+        SendMessage(handle, WM_COPYDATA, sender.winId(), (LPARAM) &cds);
+      }
+
+      return true;
+    }
+
+#endif
+  }
+
+#ifndef Q_OS_MAC
+  registerService();
+#endif
+  return false;
+}
+
+#ifndef Q_OS_MAC
+void Application::registerService()
+{
+#if defined(Q_OS_LINUX)
+  QDBusConnection bus = QDBusConnection::sessionBus();
+
+  if (!bus.isConnected())
+    return;
+
+  if (!bus.registerService(DBUS_SERVICE_NAME))
+    return;
+
+  bus.registerObject(DBUS_OBJECT_PATH, DBUS_INTERFACE_NAME, new DBusGittyup(), QDBusConnection::ExportScriptableSlots);
+
+#elif defined(Q_OS_WIN)
+  CopyDataWindow *receiver = new CopyDataWindow();
+  receiver->winId();
+#endif
+}
+#endif
+
 Theme *Application::theme()
 {
   return static_cast<Application *>(instance())->mTheme.data();
-}
-
-void Application::track(const QString &screen)
-{
-  QUrlQuery query;
-  query.addQueryItem("t", "screenview");
-  query.addQueryItem("cd", screen);
-
-  static_cast<Application *>(instance())->track(query);
-}
-
-void Application::track(
-  const QString &category,
-  const QString &action,
-  const QString &label,
-  int value)
-{
-  QUrlQuery query;
-  query.addQueryItem("t", "event");
-  query.addQueryItem("ec", category);
-  query.addQueryItem("ea", action);
-  if (!label.isEmpty())
-    query.addQueryItem("el", label);
-  if (value >= 0)
-    query.addQueryItem("ev", QString::number(value));
-
-  static_cast<Application *>(instance())->track(query);
 }
 
 bool Application::event(QEvent *event)
@@ -351,32 +470,6 @@ bool Application::event(QEvent *event)
     MainWindow::open(static_cast<QFileOpenEvent *>(event)->file());
 
   return QApplication::event(event);
-}
-
-void Application::track(const QUrlQuery &query)
-{
-  if (!mTrackingMgr)
-    return;
-
-  QString sys = userAgentSystem();
-  QString language = QLocale().uiLanguages().first();
-  QString userAgent = kUserAgentFmt.arg(GITTYUP_NAME, GITTYUP_VERSION, sys);
-
-  QUrlQuery tmp = query;
-  tmp.addQueryItem("v", "1");
-  tmp.addQueryItem("ds", "app");
-  tmp.addQueryItem("ul", language);
-  tmp.addQueryItem("ua", userAgent);
-  tmp.addQueryItem("an", GITTYUP_NAME);
-  tmp.addQueryItem("av", GITTYUP_VERSION);
-  tmp.addQueryItem("tid", GITTYUP_TRACKING_ID);
-  tmp.addQueryItem("cid", mClientId);
-
-//  QString header = "application/x-www-form-urlencoded";
-//  QNetworkRequest request(QUrl("http://google-analytics.com/collect"));
-//  request.setHeader(QNetworkRequest::ContentTypeHeader, header);
-
-//  mTrackingMgr->post(request, tmp.query().toUtf8());
 }
 
 void Application::handleSslErrors(

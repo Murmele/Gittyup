@@ -13,6 +13,7 @@
 #include "EditorWindow.h"
 #include "FindWidget.h"
 #include "History.h"
+#include "HotkeyManager.h"
 #include "MainWindow.h"
 #include "RepoView.h"
 #include "TabWidget.h"
@@ -66,6 +67,350 @@ void openCloneDialog(CloneDialog::Kind kind)
 
 bool MenuBar::sDebugMenuVisible = false;
 
+static Hotkey newFileHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::New,
+  "file/new",
+  "File/New File"
+);
+
+static Hotkey newWinHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Meta+N",
+  "file/newWindow",
+  "File/New Window"
+);
+
+static Hotkey cloneHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+N",
+  "file/clone",
+  "File/Clone Repository"
+);
+
+static Hotkey initHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Alt+N",
+  "file/init",
+  "File/Initialize New Repository"
+);
+
+static Hotkey openHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Open,
+  "file/open",
+  "File/Open Repository"
+);
+
+static Hotkey closeHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Close,
+  "file/close",
+  "File/Close"
+);
+
+static Hotkey saveHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Save,
+  "file/save",
+  "File/Save"
+);
+
+#ifndef Q_OS_MAC
+static Hotkey quitHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Quit,
+  "file/quit",
+  "File/Exit"
+);
+#endif
+
+static Hotkey undoHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Undo,
+  "edit/undo",
+  "Edit/Undo"
+);
+
+static Hotkey redoHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Redo,
+  "edit/redo",
+  "Edit/Redo"
+);
+
+static Hotkey cutHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Cut,
+  "edit/cut",
+  "Edit/Cut"
+);
+
+static Hotkey copyHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Copy,
+  "edit/copy",
+  "Edit/Copy"
+);
+
+static Hotkey pasteHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Paste,
+  "edit/paste",
+  "Edit/Paste"
+);
+
+static Hotkey selectAllHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::SelectAll,
+  "edit/selectAll",
+  "Edit/Select All"
+);
+
+static Hotkey findHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Find,
+  "edit/find",
+  "Edit/Find"
+);
+
+static Hotkey findNextHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::FindNext,
+  "edit/findNext",
+  "Edit/Find Next"
+);
+
+static Hotkey findPreviousHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::FindPrevious,
+  "edit/findPrevious",
+  "Edit/Find Previous"
+);
+
+static Hotkey findSelectionHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+E",
+  "edit/findSelection",
+  "Edit/Use Selection for Find"
+);
+
+static Hotkey refreshHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Refresh,
+  "view/refresh",
+  "View/Refresh"
+);
+
+static Hotkey toggleLogHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "view/toggleLog",
+  "View/Toggle Log"
+);
+
+static Hotkey toggleMaximizeHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+M",
+  "view/toggleMaximize",
+  "View/Toggle Maximize"
+);
+
+static Hotkey toggleViewHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "view/toggleView",
+  "View/Toggle Tree View"
+);
+
+static Hotkey configureRepositoryHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "repository/configure",
+  "Repository/Configure Repository"
+);
+
+static Hotkey stageAllHotkey = HotkeyManager::registerHotkey(
+  "Ctrl++",
+  "repository/stageAll",
+  "Repository/Stage All"
+);
+
+static Hotkey unstageAllHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+-",
+  "repository/unstageAll",
+  "Repository/Unstage All"
+);
+
+static Hotkey commitHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+C",
+  "repository/commit",
+  "Repository/Commit"
+);
+
+static Hotkey amendCommitHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+A",
+  "repository/amendCommit",
+  "Repository/Amend Commit"
+);
+
+static Hotkey lfsUnlockHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "repository/lfs/unlock",
+  "Repository/Remove all LFS locks"
+);
+
+static Hotkey lfsInitializeHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "repository/lfs/initialize",
+  "Repository/Initialize LFS"
+);
+
+static Hotkey configureRemotesHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "remote/configure",
+  "Remote/Configure"
+);
+
+static Hotkey fetchHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+Alt+F",
+  "remote/fetch",
+  "Remote/Fetch"
+);
+
+static Hotkey fetchAllHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+Alt+A",
+  "remote/fetchAll",
+  "Remote/Fetch All"
+);
+
+static Hotkey fetchFromHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+F",
+  "remote/fetchFrom",
+  "Remote/Fetch From"
+);
+
+static Hotkey pullHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+Alt+L",
+  "remote/pull",
+  "Remote/Pull"
+);
+
+static Hotkey pullFromHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+L",
+  "remote/pullFrom",
+  "Remote/Pull From"
+);
+
+static Hotkey pushHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+Alt+P",
+  "remote/push",
+  "Remote/Push"
+);
+
+static Hotkey pushToHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+P",
+  "remote/pushTo",
+  "Remote/Push To"
+);
+
+static Hotkey configureBranchesHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "branch/configure",
+  "Branch/Configure"
+);
+
+static Hotkey newBranchHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "branch/new",
+  "Branch/New"
+);
+
+static Hotkey checkoutCurrentHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+Alt+H",
+  "branch/checkoutCurrent",
+  "Branch/Checkout Current"
+);
+
+static Hotkey checkoutHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+H",
+  "branch/checkout",
+  "Branch/Checkout"
+);
+
+static Hotkey mergeHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+M",
+  "branch/merge",
+  "Branch/Merge"
+);
+
+static Hotkey rebaseHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+R",
+  "branch/rebase",
+  "Branch/Rebase"
+);
+
+static Hotkey abortHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+A",
+  "branch/abort",
+  "Branch/Abort Merge"
+);
+
+static Hotkey configureSubmodulesHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "branch/configure",
+  "Branch/Configure"
+);
+
+static Hotkey updateSubmodulesHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+Alt+U",
+  "branch/update",
+  "Branch/Update All"
+);
+
+static Hotkey initSubmodulesHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+U",
+  "branch/init",
+  "Branch/Update"
+);
+
+static Hotkey showStashesHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "stash/show",
+  "Stash/Show Stashes"
+);
+
+static Hotkey stashHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+T",
+  "stash/stash",
+  "Stash/Stash"
+);
+
+static Hotkey stashPopHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+Alt+T",
+  "stash/pop",
+  "Stash/Pop"
+);
+
+static Hotkey prevHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Back,
+  "history/prev",
+  "History/Back"
+);
+
+static Hotkey nextHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::Forward,
+  "history/next",
+  "History/Forward"
+);
+
+static Hotkey prevTabHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::PreviousChild,
+  "window/prevTab",
+  "Window/Show Previous Tab"
+);
+
+static Hotkey nextTabHotkey = HotkeyManager::registerHotkey(
+  QKeySequence::NextChild,
+  "window/nextTab",
+  "Window/Show Next Tab"
+);
+
+static Hotkey chooserHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+O",
+  "window/chooser",
+  "Window/Show Repository Chooser"
+);
+
+static Hotkey preferencesHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "tools/preferences",
+  "Tools/Options"
+);
+
+static Hotkey squashHotkey = HotkeyManager::registerHotkey(
+  "Ctrl+Shift+Q",
+  "tools/preferences",
+  "Tools/Options"
+);
+
 MenuBar::MenuBar(QWidget *parent)
   : QMenuBar(parent)
 {
@@ -73,7 +418,7 @@ MenuBar::MenuBar(QWidget *parent)
   QMenu *file = addMenu(tr("File"));
 
   QAction *newFile = file->addAction(tr("New File"));
-  newFile->setShortcut(QKeySequence::New);
+  newFileHotkey.use(newFile);
   connect(newFile, &QAction::triggered, [] {
     if (MainWindow *window = MainWindow::activeWindow()) {
       if (RepoView *view = window->currentView()) {
@@ -87,19 +432,19 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   QAction *newWin = file->addAction(tr("New Window"));
-  newWin->setShortcut(tr("Ctrl+Meta+N"));
+  newWinHotkey.use(newWin);
   connect(newWin, &QAction::triggered, [] {
     MainWindow::open();
   });
 
   QAction *clone = file->addAction(tr("Clone Repository..."));
-  clone->setShortcut(tr("Ctrl+Shift+N"));
+  cloneHotkey.use(clone);
   connect(clone, &QAction::triggered, [] {
     openCloneDialog(CloneDialog::Clone);
   });
 
   QAction *init = file->addAction(tr("Initialize New Repository..."));
-  init->setShortcut(tr("Ctrl+Alt+N"));
+  initHotkey.use(init);
   connect(init, &QAction::triggered, [] {
     openCloneDialog(CloneDialog::Init);
   });
@@ -107,7 +452,7 @@ MenuBar::MenuBar(QWidget *parent)
   file->addSeparator();
 
   QAction *open = file->addAction(tr("Open Repository..."));
-  open->setShortcut(QKeySequence::Open);
+  openHotkey.use(open);
   connect(open, &QAction::triggered, [] {
     // FIXME: Filter out non-git dirs.
     Settings *settings = Settings::instance();
@@ -134,7 +479,7 @@ MenuBar::MenuBar(QWidget *parent)
   file->addSeparator();
 
   mClose = file->addAction(tr("Close"));
-  mClose->setShortcut(QKeySequence::Close);
+  closeHotkey.use(mClose);
   connect(mClose, &QAction::triggered, [] {
     QWidget *window = QApplication::activeWindow();
     if (!window)
@@ -151,7 +496,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mSave = file->addAction(tr("Save"));
-  mSave->setShortcut(QKeySequence::Save);
+  saveHotkey.use(mSave);
   mSave->setEnabled(false);
   connect(mSave, &QAction::triggered, [this] {
     static_cast<EditorWindow *>(window())->widget()->save();
@@ -162,7 +507,7 @@ MenuBar::MenuBar(QWidget *parent)
 #ifndef Q_OS_MAC
   QAction *quit = file->addAction(tr("Exit"));
   quit->setMenuRole(QAction::QuitRole);
-  quit->setShortcut(QKeySequence::Quit);
+  quitHotkey.use(quit);
   connect(quit, &QAction::triggered, &QApplication::closeAllWindows);
 #endif
 
@@ -170,7 +515,7 @@ MenuBar::MenuBar(QWidget *parent)
   QMenu *edit = addMenu(tr("Edit"));
 
   mUndo = edit->addAction(tr("Undo"));
-  mUndo->setShortcut(QKeySequence::Undo);
+  undoHotkey.use(mUndo);
   connect(mUndo, &QAction::triggered, [] {
     QWidget *widget = QApplication::focusWidget();
     if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
@@ -183,7 +528,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mRedo = edit->addAction(tr("Redo"));
-  mRedo->setShortcut(QKeySequence::Redo);
+  redoHotkey.use(mRedo);
   connect(mRedo, &QAction::triggered, [this] {
     QWidget *widget = QApplication::focusWidget();
     if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
@@ -198,7 +543,7 @@ MenuBar::MenuBar(QWidget *parent)
   edit->addSeparator();
 
   mCut = edit->addAction(tr("Cut"));
-  mCut->setShortcut(QKeySequence::Cut);
+  cutHotkey.use(mCut);
   connect(mCut, &QAction::triggered, [] {
     QWidget *widget = QApplication::focusWidget();
     if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
@@ -211,7 +556,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mCopy = edit->addAction(tr("Copy"));
-  mCopy->setShortcut(QKeySequence::Copy);
+  copyHotkey.use(mCopy);
   connect(mCopy, &QAction::triggered, [] {
     QWidget *widget = QApplication::focusWidget();
     if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
@@ -226,7 +571,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mPaste = edit->addAction(tr("Paste"));
-  mPaste->setShortcut(QKeySequence::Paste);
+  pasteHotkey.use(mPaste);
   connect(mPaste, &QAction::triggered, [] {
     QWidget *widget = QApplication::focusWidget();
     if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
@@ -239,7 +584,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mSelectAll = edit->addAction(tr("Select All"));
-  mSelectAll->setShortcut(QKeySequence::SelectAll);
+  selectAllHotkey.use(mSelectAll);
   connect(mSelectAll, &QAction::triggered, [] {
     QWidget *widget = QApplication::focusWidget();
     if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
@@ -255,7 +600,7 @@ MenuBar::MenuBar(QWidget *parent)
 
   mFind = edit->addAction(tr("Find..."));
   mFind->setObjectName("Find");
-  mFind->setShortcut(QKeySequence::Find);
+  findHotkey.use(mFind);
   connect(mFind, &QAction::triggered, [] {
     QWidget *widget = QApplication::activeWindow();
     if (MainWindow *window = qobject_cast<MainWindow *>(widget)) {
@@ -266,7 +611,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mFindNext = edit->addAction(tr("Find Next"));
-  mFindNext->setShortcut(QKeySequence::FindNext);
+  findNextHotkey.use(mFindNext);
   connect(mFindNext, &QAction::triggered, [] {
     QWidget *widget = QApplication::activeWindow();
     if (MainWindow *window = qobject_cast<MainWindow *>(widget)) {
@@ -277,7 +622,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mFindPrevious = edit->addAction(tr("Find Previous"));
-  mFindPrevious->setShortcut(QKeySequence::FindPrevious);
+  findPreviousHotkey.use(mFindPrevious);
   connect(mFindPrevious, &QAction::triggered, [] {
     QWidget *widget = QApplication::activeWindow();
     if (MainWindow *window = qobject_cast<MainWindow *>(widget)) {
@@ -288,7 +633,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mFindSelection = edit->addAction(tr("Use Selection for Find"));
-  mFindSelection->setShortcut(tr("Ctrl+E"));
+  findSelectionHotkey.use(mFindSelection);
   connect(mFindSelection, &QAction::triggered, [this] {
     QWidget *widget = QApplication::focusWidget();
     if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
@@ -307,7 +652,7 @@ MenuBar::MenuBar(QWidget *parent)
   QMenu *viewMenu = addMenu(tr("View"));
 
   mRefresh = viewMenu->addAction(tr("Refresh"));
-  mRefresh->setShortcut(QKeySequence::Refresh);
+  refreshHotkey.use(mRefresh);
   connect(mRefresh, &QAction::triggered, [this] {
     view()->refresh();
   });
@@ -315,6 +660,7 @@ MenuBar::MenuBar(QWidget *parent)
   viewMenu->addSeparator();
 
   mToggleLog = viewMenu->addAction(tr("Show Log"));
+  toggleLogHotkey.use(mToggleLog);
   connect(mToggleLog, &QAction::triggered, [this] {
     RepoView *view = this->view();
     view->setLogVisible(!view->isLogVisible());
@@ -322,6 +668,7 @@ MenuBar::MenuBar(QWidget *parent)
 
   mToggleMaximize = new StateAction(tr("Normal"), tr("Maximize"), viewMenu);
   viewMenu->addAction(mToggleMaximize);
+  toggleMaximizeHotkey.use(mToggleMaximize);
   mToggleMaximize->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_M));
   connect(mToggleMaximize, &QAction::triggered, [this] {
     bool maximize = mToggleMaximize->isActive();
@@ -336,6 +683,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mToggleView = viewMenu->addAction(tr("Show Tree View"));
+  toggleViewHotkey.use(mToggleView);
   connect(mToggleView, &QAction::triggered, [this] {
     RepoView *view = this->view();
     bool diff = (view->viewMode() == RepoView::DoubleTree);
@@ -346,7 +694,7 @@ MenuBar::MenuBar(QWidget *parent)
   QMenu *repository = addMenu(tr("Repository"));
 
   mConfigureRepository = repository->addAction(tr("Configure Repository..."));
-  mConfigureRepository->setMenuRole(QAction::NoRole);
+  configureRepositoryHotkey.use(mConfigureRepository);
   connect(mConfigureRepository, &QAction::triggered, [this] {
     view()->configureSettings();
   });
@@ -354,13 +702,13 @@ MenuBar::MenuBar(QWidget *parent)
   repository->addSeparator();
 
   mStageAll = repository->addAction(tr("Stage All"));
-  mStageAll->setShortcut(tr("Ctrl++"));
+  stageAllHotkey.use(mStageAll);
   connect(mStageAll, &QAction::triggered, [this] {
     view()->stage();
   });
 
   mUnstageAll = repository->addAction(tr("Unstage All"));
-  mUnstageAll->setShortcut(tr("Ctrl+-"));
+  unstageAllHotkey.use(mUnstageAll);
   connect(mUnstageAll, &QAction::triggered, [this] {
     view()->unstage();
   });
@@ -368,13 +716,13 @@ MenuBar::MenuBar(QWidget *parent)
   repository->addSeparator();
 
   mCommit = repository->addAction(tr("Commit"));
-  mCommit->setShortcut(tr("Ctrl+Shift+C"));
+  commitHotkey.use(mCommit);
   connect(mCommit, &QAction::triggered, [this] {
     view()->commit();
   });
 
   mAmendCommit = repository->addAction(tr("Amend Commit"));
-  mAmendCommit->setShortcut(tr("Ctrl+Shift+A"));
+  amendCommitHotkey.use(mAmendCommit);
   connect(mAmendCommit, &QAction::triggered, [this] {
     view()->amendCommit();
   });
@@ -383,6 +731,7 @@ MenuBar::MenuBar(QWidget *parent)
 
   QMenu *lfs = repository->addMenu(tr("Git LFS"));
   mLfsUnlock = lfs->addAction(tr("Remove all locks"));
+  lfsUnlockHotkey.use(mLfsUnlock);
   connect(mLfsUnlock, &QAction::triggered, [this] {
     view()->lfsSetLocked(view()->repo().lfsLocks().values(), false);
   });
@@ -390,6 +739,7 @@ MenuBar::MenuBar(QWidget *parent)
   lfs->addSeparator();
 
   mLfsInitialize = lfs->addAction(tr("Initialize"));
+  lfsInitializeHotkey.use(mLfsInitialize);
   connect(mLfsInitialize, &QAction::triggered, [this] {
     view()->lfsInitialize();
   });
@@ -399,6 +749,7 @@ MenuBar::MenuBar(QWidget *parent)
 
   mConfigureRemotes = remote->addAction(tr("Configure Remotes..."));
   mConfigureRemotes->setMenuRole(QAction::NoRole);
+  configureRemotesHotkey.use(mConfigureRemotes);
   connect(mConfigureRemotes, &QAction::triggered, [this] {
     view()->configureSettings(ConfigDialog::Remotes);
   });
@@ -406,19 +757,19 @@ MenuBar::MenuBar(QWidget *parent)
   remote->addSeparator();
 
   mFetch = remote->addAction(tr("Fetch"));
-  mFetch->setShortcut(tr("Ctrl+Shift+Alt+F"));
+  fetchHotkey.use(mFetch);
   connect(mFetch, &QAction::triggered, [this] {
     view()->fetch();
   });
 
   mFetchAll = remote->addAction(tr("Fetch All"));
-  mFetchAll->setShortcut(tr("Ctrl+Shift+Alt+A"));
+  fetchAllHotkey.use(mFetchAll);
   connect(mFetchAll, &QAction::triggered, [this] {
     view()->fetchAll();
   });
 
   mFetchFrom = remote->addAction(tr("Fetch From..."));
-  mFetchFrom->setShortcut(tr("Ctrl+Shift+F"));
+  fetchFromHotkey.use(mFetchFrom);
   connect(mFetchFrom, &QAction::triggered, [this] {
     RemoteDialog *dialog = new RemoteDialog(RemoteDialog::Fetch, view());
     dialog->open();
@@ -427,13 +778,13 @@ MenuBar::MenuBar(QWidget *parent)
   remote->addSeparator();
 
   mPull = remote->addAction(tr("Pull"));
-  mPull->setShortcut(tr("Ctrl+Shift+Alt+L"));
+  pullHotkey.use(mPull);
   connect(mPull, &QAction::triggered, [this] {
     view()->pull();
   });
 
   mPullFrom = remote->addAction(tr("Pull From..."));
-  mPullFrom->setShortcut(tr("Ctrl+Shift+L"));
+  pullFromHotkey.use(mPullFrom);
   connect(mPullFrom, &QAction::triggered, [this] {
     RemoteDialog *dialog = new RemoteDialog(RemoteDialog::Pull, view());
     dialog->open();
@@ -442,13 +793,13 @@ MenuBar::MenuBar(QWidget *parent)
   remote->addSeparator();
 
   mPush = remote->addAction(tr("Push"));
-  mPush->setShortcut(tr("Ctrl+Shift+Alt+P"));
+  pushHotkey.use(mPush);
   connect(mPush, &QAction::triggered, [this] {
     view()->push();
   });
 
   mPushTo = remote->addAction(tr("Push To..."));
-  mPushTo->setShortcut(tr("Ctrl+Shift+P"));
+  pushToHotkey.use(mPushTo);
   connect(mPushTo, &QAction::triggered, [this] {
     RemoteDialog *dialog = new RemoteDialog(RemoteDialog::Push, view());
     dialog->open();
@@ -459,11 +810,13 @@ MenuBar::MenuBar(QWidget *parent)
 
   mConfigureBranches = branch->addAction(tr("Configure Branches..."));
   mConfigureBranches->setMenuRole(QAction::NoRole);
+  configureBranchesHotkey.use(mConfigureBranches);
   connect(mConfigureBranches, &QAction::triggered, [this] {
     view()->configureSettings(ConfigDialog::Branches);
   });
 
   mNewBranch = branch->addAction(tr("New Branch..."));
+  newBranchHotkey.use(mNewBranch);
   connect(mNewBranch, &QAction::triggered, [this] {
     view()->promptToCreateBranch();
   });
@@ -471,7 +824,7 @@ MenuBar::MenuBar(QWidget *parent)
   branch->addSeparator();
 
   mCheckoutCurrent = branch->addAction(tr("Checkout Current"));
-  mCheckoutCurrent->setShortcut(tr("Ctrl+Shift+Alt+H"));
+  checkoutCurrentHotkey.use(mCheckoutCurrent);
   connect(mCheckoutCurrent, &QAction::triggered, [this] {
     RepoView *view = this->view();
     git::Reference ref = view->reference();
@@ -482,7 +835,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mCheckout = branch->addAction(tr("Checkout..."));
-  mCheckout->setShortcut(tr("Ctrl+Shift+H"));
+  checkoutHotkey.use(mCheckout);
   connect(mCheckout, &QAction::triggered, [this] {
     view()->promptToCheckout();
   });
@@ -490,7 +843,7 @@ MenuBar::MenuBar(QWidget *parent)
   branch->addSeparator();
 
   mMerge = branch->addAction(tr("Merge..."));
-  mMerge->setShortcut(tr("Ctrl+Shift+M"));
+  mergeHotkey.use(mMerge);
   connect(mMerge, &QAction::triggered, [this] {
     RepoView *view = this->view();
     MergeDialog *dialog =
@@ -503,7 +856,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mRebase = branch->addAction(tr("Rebase..."));
-  mRebase->setShortcut(tr("Ctrl+Shift+R"));
+  rebaseHotkey.use(mRebase);
   connect(mRebase, &QAction::triggered, [this] {
     RepoView *view = this->view();
     MergeDialog *dialog =
@@ -516,7 +869,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mSquash = branch->addAction(tr("Squash..."));
-  mSquash->setShortcut(tr("Ctrl+Shift+Q"));
+  squashHotkey.use(mSquash);
   connect(mSquash, &QAction::triggered, [this] {
     RepoView *view = this->view();
     MergeDialog *dialog =
@@ -531,7 +884,7 @@ MenuBar::MenuBar(QWidget *parent)
   branch->addSeparator();
 
   mAbort = branch->addAction(tr("Abort Merge"));
-  mAbort->setShortcut(tr("Ctrl+Shift+A"));
+  abortHotkey.use(mAbort);
   connect(mAbort, &QAction::triggered, [this] {
     view()->mergeAbort();
   });
@@ -541,6 +894,7 @@ MenuBar::MenuBar(QWidget *parent)
 
   mConfigureSubmodules = submodule->addAction(tr("Configure Submodules..."));
   mConfigureSubmodules->setMenuRole(QAction::NoRole);
+  configureSubmodulesHotkey.use(mConfigureSubmodules);
   connect(mConfigureSubmodules, &QAction::triggered, [this] {
     view()->configureSettings(ConfigDialog::Submodules);
   });
@@ -548,13 +902,13 @@ MenuBar::MenuBar(QWidget *parent)
   submodule->addSeparator();
 
   mUpdateSubmodules = submodule->addAction(tr("Update All"));
-  mUpdateSubmodules->setShortcut(tr("Ctrl+Shift+Alt+U"));
+  updateSubmodulesHotkey.use(mUpdateSubmodules);
   connect(mUpdateSubmodules, &QAction::triggered, [this] {
     view()->updateSubmodules();
   });
 
   mInitSubmodules = submodule->addAction(tr("Update..."));
-  mInitSubmodules->setShortcut(tr("Ctrl+Shift+U"));
+  initSubmodulesHotkey.use(mInitSubmodules);
   connect(mInitSubmodules, &QAction::triggered, [this] {
     RepoView *view = this->view();
     git::Repository repo = view->repo();
@@ -591,6 +945,7 @@ MenuBar::MenuBar(QWidget *parent)
   QMenu *stash = addMenu(tr("Stash"));
 
   mShowStashes = stash->addAction(tr("Show Stashes"));
+  showStashesHotkey.use(mShowStashes);
   connect(mShowStashes, &QAction::triggered, [this] {
     RepoView *view = this->view();
     view->selectReference(view->repo().stashRef());
@@ -599,13 +954,13 @@ MenuBar::MenuBar(QWidget *parent)
   stash->addSeparator();
 
   mStash = stash->addAction(tr("Stash..."));
-  mStash->setShortcut(tr("Ctrl+Shift+T"));
+  stashHotkey.use(mStash);
   connect(mStash, &QAction::triggered, [this] {
     view()->promptToStash();
   });
 
   mStashPop = stash->addAction(tr("Pop Stash"));
-  mStashPop->setShortcut(tr("Ctrl+Shift+Alt+T"));
+  stashPopHotkey.use(mStashPop);
   connect(mStashPop, &QAction::triggered, [this] {
     view()->popStash();
   });
@@ -614,14 +969,14 @@ MenuBar::MenuBar(QWidget *parent)
   QMenu *historyMenu = addMenu(tr("History"));
 
   mPrev = historyMenu->addAction(tr("Back"));
-  mPrev->setShortcut(QKeySequence::Back);
+  prevHotkey.use(mPrev);
   mPrev->setEnabled(false);
   connect(mPrev, &QAction::triggered, [this] {
     view()->history()->prev();
   });
 
   mNext = historyMenu->addAction(tr("Forward"));
-  mNext->setShortcut(QKeySequence::Forward);
+  nextHotkey.use(mNext);
   mNext->setEnabled(false);
   connect(mNext, &QAction::triggered, [this] {
     view()->history()->next();
@@ -630,7 +985,7 @@ MenuBar::MenuBar(QWidget *parent)
   // Window
   QMenu *windowMenu = addMenu(tr("Window"));
   mPrevTab = windowMenu->addAction(tr("Show Previous Tab"));
-  mPrevTab->setShortcut(QKeySequence::PreviousChild);
+  prevTabHotkey.use(mPrevTab);
   connect(mPrevTab, &QAction::triggered, [this] {
     MainWindow *win = static_cast<MainWindow *>(window());
     TabWidget *tabs = win->tabWidget();
@@ -639,7 +994,7 @@ MenuBar::MenuBar(QWidget *parent)
   });
 
   mNextTab = windowMenu->addAction(tr("Show Next Tab"));
-  mNextTab->setShortcut(QKeySequence::NextChild);
+  nextTabHotkey.use(mNextTab);
   connect(mNextTab, &QAction::triggered, [this] {
     MainWindow *win = static_cast<MainWindow *>(window());
     TabWidget *tabs = win->tabWidget();
@@ -650,13 +1005,13 @@ MenuBar::MenuBar(QWidget *parent)
   windowMenu->addSeparator();
 
   QAction *chooser = windowMenu->addAction(tr("Show Repository Chooser..."));
-  chooser->setShortcut(tr("Ctrl+Shift+O"));
+  chooserHotkey.use(chooser);
   connect(chooser, &QAction::triggered, &StartDialog::openSharedInstance);
 
   // Tools
   QMenu *tools = addMenu(tr("Tools"));
   QAction *preferences = tools->addAction(tr("Options..."));
-  preferences->setMenuRole(QAction::PreferencesRole);
+  preferencesHotkey.use(preferences);
   connect(preferences, &QAction::triggered, [] {
     SettingsDialog::openSharedInstance();
   });

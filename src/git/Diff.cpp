@@ -253,7 +253,7 @@ void Diff::setAllStaged(bool staged, bool yieldFocus)
   QStringList paths;
   for (int i = 0; i < count(); ++i)
     paths.append(name(i));
-  index().setStaged(paths, staged);
+  index().setStaged(paths, staged, yieldFocus);
 }
 
 char Diff::statusChar(git_delta_t status)

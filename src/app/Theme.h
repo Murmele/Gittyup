@@ -13,6 +13,7 @@
 #include <QDir>
 #include <QPalette>
 #include <QString>
+#include <QMap>
 
 class QStyle;
 class QStyleOption;
@@ -88,19 +89,17 @@ public:
   virtual QPalette commitList();
   virtual QColor commitEditor(CommitEditor color);
   virtual QColor diff(Diff color);
-  virtual QPalette fileList();
   virtual QColor heatMap(HeatMap color);
   virtual QColor remoteComment(Comment color);
   virtual QColor star();
-
-  static void drawCloseButton(
-    const QStyleOption *option,
-    QPainter *painter);
 
   static Theme *create(const QString &name = QString());
 
 private:
   bool mDark;
+  QString mName;
+  QDir mDir;
+  QVariantMap mMap;
 };
 
 #endif

@@ -224,29 +224,65 @@ bool Repository::isBare() const
   return git_repository_is_bare(d->repo);
 }
 
-Signature Repository::defaultSignature(bool *fake) const
+Signature Repository::defaultSignature(
+  bool *fake,
+  const QString &overrideUser,
+  const QString &overrideEmail
+) const
 {
+  QString name, email;
+
   if (fake)
     *fake = false;
 
   git_signature *signature = nullptr;
-  if (!git_signature_default(&signature, d->repo))
-    return Signature(signature, true);
+  if (!git_signature_default(&signature, d->repo)) {
+    Signature res(signature, true);
+
+    if (res.isValid() && (!overrideUser.isEmpty() || !overrideEmail.isEmpty())) {
+      if (overrideUser.isEmpty())
+        name = res.name();
+      else
+        name = overrideUser;
+
+      if (overrideEmail.isEmpty())
+        email = res.email();
+      else
+        email = overrideEmail;
+
+      git_signature_new(
+        &signature,
+        name.toUtf8(),
+        email.toUtf8(),
+        res.gitDate().time,
+        res.gitDate().offset
+      );
+
+      res = Signature(signature, true);
+    }
+
+    return res;
+  }
 
 #ifdef Q_OS_UNIX
   // Get user name.
   passwd *pw = getpwuid(getuid());
-  QString name = pw->pw_gecos;
+  name = pw->pw_gecos;
 
   // Create fake email address.
   char hostname[256];
   gethostname(hostname, sizeof(hostname));
-  QString email = QString("%1@%2").arg(pw->pw_name, hostname);
+  email = QString("%1@%2").arg(pw->pw_name, hostname);
 #else
-  QString name = getenv("USERNAME");
+  name = getenv("USERNAME");
   QString hostname = getenv("COMPUTERNAME");
-  QString email = QString("%1@%2.local").arg(name, hostname);
+  email = QString("%1@%2.local").arg(name, hostname);
 #endif
+
+  if (!overrideUser.isEmpty())
+    name = overrideUser;
+  if (!overrideEmail.isEmpty())
+    email = overrideEmail;
 
   if (!git_signature_now(&signature, name.toUtf8(), email.toUtf8())) {
     if (fake)
@@ -503,11 +539,13 @@ TagRef Repository::createTag(
   const Commit &target,
   const QString &name,
   const QString &message,
-  bool force)
+  bool force,
+  const QString &overrideUser,
+  const QString &overrideEmail)
 {
   Signature signature;
   if (!message.isEmpty()) {
-    signature = defaultSignature();
+    signature = defaultSignature(nullptr, overrideUser, overrideEmail);
     if (!signature.isValid())
       return TagRef();
   }
@@ -572,10 +610,17 @@ Commit Repository::lookupCommit(const Id &id) const
 Commit Repository::commit(
   const QString &message,
   const AnnotatedCommit &mergeHead,
-  bool *fakeSignature)
+  bool *fakeSignature,
+  const QString &overrideUser,
+  const QString &overrideEmail)
 {
   // Get the default signature for the repo.
-  Signature signature = defaultSignature(fakeSignature);
+  Signature signature = defaultSignature(
+    fakeSignature,
+    overrideUser,
+    overrideEmail
+  );
+
   if (!signature.isValid())
     return Commit();
 
@@ -884,12 +929,16 @@ bool Repository::merge(const AnnotatedCommit &mergeHead)
   return !error;
 }
 
-Rebase Repository::rebase(const AnnotatedCommit &mergeHead)
+Rebase Repository::rebase(
+  const AnnotatedCommit &mergeHead,
+  const QString &overrideUser,
+  const QString &overrideEmail
+)
 {
   git_rebase *rebase = nullptr;
   git_rebase_options opts = GIT_REBASE_OPTIONS_INIT;
   git_rebase_init(&rebase, d->repo, nullptr, mergeHead, nullptr, &opts);
-  return Rebase(d->repo, rebase);
+  return Rebase(d->repo, rebase, overrideUser, overrideEmail);
 }
 
 bool Repository::cherryPick(const Commit &commit)

@@ -18,10 +18,11 @@
 #define TEST_MAIN(TestClass) \
 int main(int argc, char *argv[]) \
 { \
-  Application app(argc, argv); \
+  int orig_argc = argc;\
+  Application app = Test::createApp(argc, argv); \
   TestClass test; \
   QTEST_SET_MAIN_SOURCE_PATH \
-  return QTest::qExec(&test, app.arguments()); \
+  return QTest::qExec(&test, orig_argc, argv); \
 }
 
 class RepoView;
@@ -44,6 +45,8 @@ private:
 
 void refresh(RepoView *repoView, bool expectDirty = true);
 void fetch(RepoView *repoView, git::Remote remote);
+
+Application createApp(int &argc, char *argv[]);
 
 } // namespace Test
 

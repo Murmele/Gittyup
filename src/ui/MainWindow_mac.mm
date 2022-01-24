@@ -80,7 +80,7 @@ NSImage *image(const QString &path, int badge = -1)
 
 @end
 
-static const NSTouchBarItemIdentifier kRemote = @"com.gitahead.Remote";
+static const NSTouchBarItemIdentifier kRemote = @"com.gittyup.Remote";
 
 @implementation TouchBarProvider {
   MainWindow *_window;

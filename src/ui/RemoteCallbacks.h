@@ -48,6 +48,13 @@ public:
     QString &username,
     QString &password) override;
 
+  virtual void interactiveAuth(
+    const QString &name,
+    const QString &instruction,
+    const QVector<git::Remote::SshInteractivePrompt> &prompts,
+    QVector<QString> &responses
+  ) override;
+
   void sideband(const QString &text) override;
   bool transfer(int total, int current, int bytes) override;
   bool resolve(int total, int current) override;
@@ -75,6 +82,14 @@ signals:
     QString &username,
     QString &password,
     QString &error);
+
+  void queueInteractiveAuth(
+    const QString &name,
+    const QString &instruction,
+    const QVector<git::Remote::SshInteractivePrompt> &prompts,
+    QVector<QString> &responses,
+    QString &error
+  );
   void queueSideband(const QString &text, const QString &fmt = QString());
   void queueTransfer(int total, int current, int bytes, int elapsed);
   void queueResolve(int total, int current);
@@ -89,6 +104,13 @@ private:
     QString &username,
     QString &password,
     QString &error);
+  void interactiveAuthImpl(
+    const QString &name,
+    const QString &instruction,
+    const QVector<git::Remote::SshInteractivePrompt> &prompts,
+    QVector<QString> &responses,
+    QString &error
+  );
   void sidebandImpl(const QString &text, const QString &fmt = QString());
   void transferImpl(int total, int current, int bytes, int elapsed);
   void resolveImpl(int total, int current);

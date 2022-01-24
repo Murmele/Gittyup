@@ -66,4 +66,16 @@ void fetch(RepoView *view, git::Remote remote)
   QVERIFY(!watcher.result().error());
 }
 
+Application createApp(int &argc, char *argv[])
+{
+  auto new_argv = new char*[argc + 1];
+  memcpy(new_argv, argv, sizeof(char*) * argc);
+
+  // Make string comparisons with messages fail less
+  new_argv[argc] = "--no-translation";
+
+  argc += 1;
+  return Application(argc, new_argv);
+}
+
 } // namespace Test

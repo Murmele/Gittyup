@@ -8,11 +8,12 @@
 //
 
 #include "Test.h"
-#include "ui/FileList.h"
 #include "ui/MainWindow.h"
 #include "ui/DetailView.h"
 #include "ui/DiffView/DiffView.h"
+#include "ui/DoubleTreeWidget.h"
 #include "ui/RepoView.h"
+#include "ui/TreeView.h"
 #include <QFile>
 #include <QPushButton>
 #include <QTextEdit>
@@ -40,10 +41,12 @@ private:
 
   ScratchRepository mRepo;
   MainWindow *mWindow = nullptr;
+  QString mMainBranch;
 };
 
 void TestMerge::initTestCase()
 {
+  mMainBranch = mRepo->unbornHeadName();
   mWindow = new MainWindow(mRepo);
   mWindow->show();
   QVERIFY(qWaitForWindowActive(mWindow));
@@ -59,7 +62,10 @@ void TestMerge::firstCommit()
   RepoView *view = mWindow->currentView();
   refresh(view);
 
-  FileList *files = view->findChild<FileList *>();
+  auto doubleTree = view->findChild<DoubleTreeWidget *>();
+  QVERIFY(doubleTree);
+
+  auto files = doubleTree->findChild<TreeView *>("Unstaged");
   QVERIFY(files);
 
   QAbstractItemModel *model = files->model();
@@ -95,7 +101,10 @@ void TestMerge::secondCommit()
 
   refresh(view);
 
-  FileList *files = view->findChild<FileList *>();
+  auto doubleTree = view->findChild<DoubleTreeWidget *>();
+  QVERIFY(doubleTree);
+
+  auto files = doubleTree->findChild<TreeView *>("Unstaged");
   QVERIFY(files);
 
   QAbstractItemModel *model = files->model();
@@ -120,11 +129,13 @@ void TestMerge::secondCommit()
 void TestMerge::thirdCommit()
 {
   RepoView *view = mWindow->currentView();
-  git::Reference ref = mRepo->lookupRef("refs/heads/master");
+  git::Reference ref = mRepo->lookupRef(
+    QString("refs/heads/%1").arg(mMainBranch)
+  );
   QVERIFY(ref);
 
   view->checkout(ref);
-  QCOMPARE(mRepo->head().name(), QString("master"));
+  QCOMPARE(mRepo->head().name(), mMainBranch);
 
   QFile file(mRepo->workdir().filePath("test"));
   QVERIFY(file.open(QFile::WriteOnly));
@@ -132,7 +143,10 @@ void TestMerge::thirdCommit()
 
   refresh(view);
 
-  FileList *files = view->findChild<FileList *>();
+  auto doubleTree = view->findChild<DoubleTreeWidget *>();
+  QVERIFY(doubleTree);
+
+  auto files = doubleTree->findChild<TreeView *>("Unstaged");
   QVERIFY(files);
 
   QAbstractItemModel *model = files->model();
@@ -156,13 +170,15 @@ void TestMerge::thirdCommit()
 void TestMerge::mergeConflict()
 {
   RepoView *view = mWindow->currentView();
-  git::Reference master = mRepo->lookupRef("refs/heads/master");
+  git::Reference master = mRepo->lookupRef(
+    QString("refs/heads/%1").arg(mMainBranch)
+  );
   QVERIFY(master);
 
   git::Reference branch2 = mRepo->lookupRef("refs/heads/branch2");
   QVERIFY(branch2);
 
-  QCOMPARE(mRepo->head().name(), QString("master"));
+  QCOMPARE(mRepo->head().name(), mMainBranch);
 
   view->merge(RepoView::Merge, branch2);
 
@@ -176,11 +192,23 @@ void TestMerge::resolve()
   RepoView *view = mWindow->currentView();
   DiffView *diffView = view->findChild<DiffView *>();
 
-  QToolButton *theirs = nullptr;
-  while (theirs == nullptr) {
-    theirs = diffView->findChild<QToolButton *>("ConflictTheirs");
-    qWait(100);
-  }
+  auto doubleTree = view->findChild<DoubleTreeWidget *>();
+  QVERIFY(doubleTree);
+
+  auto files = doubleTree->findChild<TreeView *>("Staged");
+  QVERIFY(files);
+
+  // Wait for refresh
+  QAbstractItemModel *model = files->model();
+  while(model->rowCount() < 1)
+    qWait(300);
+
+  files->selectionModel()->select(
+    files->model()->index(0, 0),
+    QItemSelectionModel::Select
+  );
+
+  QToolButton *theirs = diffView->findChild<QToolButton *>("ConflictTheirs");
   mouseClick(theirs, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(), inputDelay);
 
   QToolButton *undo = diffView->widget()->findChild<QToolButton *>("ConflictUndo");

@@ -48,7 +48,7 @@ public:
     mCalendar->setWindowFlags(Qt::Popup);
     mCalendar->setVisible(false);
 
-    connect(mCalendar, &QCalendarWidget::clicked, [this](const QDate &date) {
+    connect(mCalendar, &QCalendarWidget::clicked, this, [this](const QDate &date) {
       setCurrentText(date.toString(Index::dateFormat()));
       hidePopup();
     });
@@ -195,7 +195,6 @@ void AdvancedSearchWidget::accept()
   }
 
   emit accepted(fields.join(' '));
-  Application::track("search", "search", "advanced", fields.size());
 
   hide();
 }

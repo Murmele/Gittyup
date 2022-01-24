@@ -533,7 +533,7 @@ void MainWindow::updateWindowTitle(int ahead, int behind)
 {
   RepoView *view = currentView();
   if (!view) {
-    setWindowTitle(QCoreApplication::applicationName());
+    setWindowTitle(QCoreApplication::applicationName() + BUILD_DESCRIPTION);
     return;
   }
 
@@ -598,7 +598,7 @@ void MainWindow::updateWindowTitle(int ahead, int behind)
   if (!state.isEmpty())
     title = tr("%1 (%2)").arg(title, state);
 
-  setWindowTitle(title);
+  setWindowTitle(QString("%1%2").arg(title, BUILD_DESCRIPTION));
 }
 
 QStringList MainWindow::paths() const

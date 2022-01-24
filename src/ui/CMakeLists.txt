@@ -19,16 +19,15 @@ add_library(ui
   DiffView/Images.cpp
   DiffView/Comment.cpp
   DiffView/EditButton.cpp
-  DiffWidget.cpp
   DoubleTreeWidget.cpp
   EditorWindow.cpp
   ExpandButton.cpp
   FileContextMenu.cpp
-  FileList.cpp
   FindWidget.cpp
   Footer.cpp
   History.cpp
   IgnoreDialog.cpp
+  HotkeyManager.cpp
   IndexCompleter.cpp
   Location.cpp
   MainWindow.cpp
@@ -58,6 +57,12 @@ add_library(ui
   ViewDelegate.cpp
   ${IMPL_FILES}
 )
+
+target_compile_definitions(ui PRIVATE BUILD_DESCRIPTION="${BUILD_DESCRIPTION}")
+
+if (FLATPAK)
+    target_compile_definitions(ui PRIVATE FLATPAK)
+endif()
 
 target_include_directories(ui PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}

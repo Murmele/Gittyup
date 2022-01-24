@@ -27,6 +27,7 @@ public:
     Update,
     Plugins,
     Misc,
+    Hotkeys,
     Terminal
   };
 

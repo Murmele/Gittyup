@@ -10,9 +10,10 @@
 #include "Test.h"
 #include "ui/CommitList.h"
 #include "ui/DetailView.h"
-#include "ui/FileList.h"
+#include "ui/DoubleTreeWidget.h"
 #include "ui/MainWindow.h"
 #include "ui/RepoView.h"
+#include "ui/TreeView.h"
 #include <QMessageBox>
 #include <QPushButton>
 #include <QToolButton>
@@ -82,12 +83,33 @@ void TestLineEndings::overwriteFile()
 
 void TestLineEndings::testLineEndings()
 {
+  auto doubleTree = mRepoView->findChild<DoubleTreeWidget *>();
+  QVERIFY(doubleTree);
+
+  auto files = doubleTree->findChild<TreeView *>("Unstaged");
+  QVERIFY(files);
+
+  files->selectionModel()->select(
+    files->model()->index(0, 0),
+    QItemSelectionModel::Select
+  );
+
+  int inputDelay = this->inputDelay;
+  auto mRepoView = this->mRepoView;
+  QTimer::singleShot(100, [inputDelay, mRepoView] {
+    QMessageBox *popup = mRepoView->findChild<QMessageBox *>();
+    QVERIFY(popup);
+
+    QList<QAbstractButton *> buttons = popup->buttons();
+    QAbstractButton *accept =  buttons.at(0);
+    QVERIFY(accept);
+
+    mouseClick(accept, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(), inputDelay);
+  });
+
   QToolButton *button = mRepoView->findChild<QToolButton *>("DiscardButton");
   mouseClick(button, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(), inputDelay);
-  QMessageBox *popup = mRepoView->findChild<QMessageBox *>();
-  QList<QPushButton *> buttons = popup->findChildren<QPushButton *>();
-  QPushButton *accept =  buttons.at(1);
-  mouseClick(accept, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(), inputDelay);
+
   CommitList *commitList = mRepoView->findChild<CommitList *>();
   QVERIFY(!commitList->status().isValid());
 }

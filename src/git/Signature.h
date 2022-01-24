@@ -10,6 +10,7 @@
 #ifndef SIGNATURE_H
 #define SIGNATURE_H
 
+#include "git2/signature.h"
 #include <QSharedPointer>
 
 struct git_signature;
@@ -27,6 +28,7 @@ public:
   QString name() const;
   QString email() const;
   QDateTime date() const;
+  git_time gitDate() const;
 
   // Calculate initials.
   QString initials() const;

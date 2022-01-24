@@ -15,6 +15,7 @@
 #include "git2/net.h"
 #include "git2/proxy.h"
 #include <QSet>
+#include <QString>
 #include <QSharedPointer>
 
 struct git_cred;
@@ -38,8 +39,13 @@ public:
     Id dstId;
   };
 
-  class Callbacks
+  struct SshInteractivePrompt
   {
+    QString text;
+    bool echo;
+  };
+
+  class Callbacks {
   public:
     enum State {
       Transfer,
@@ -77,6 +83,14 @@ public:
     {
       return true;
     }
+
+    virtual void interactiveAuth(
+      const QString &name,
+      const QString &instruction,
+      const QVector<SshInteractivePrompt> &prompts,
+      QVector<QString> &responses
+    )
+    {}
 
     virtual bool transfer(
       int total,
@@ -186,6 +200,7 @@ public:
     State mState = Transfer;
     QSet<QString> mAgentNames;
     git_remote *mRemote = nullptr;
+    QSet<QString> mKeyFiles;
   };
 
   Remote();

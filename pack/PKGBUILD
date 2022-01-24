@@ -4,57 +4,57 @@
 # Contributor: Whovian9369 <Whovian9369@gmail.com>
 # Contributor: Angelo Theodorou <encelo@gmail.com>
 
-pkgname=gitahead
+pkgname=gittyup
 pkgrel=3
-pkgver=2.6.3
+pkgver=1.0.0
 branch="master"
 pkgdesc='Understand your Git history!'
-url='https://www.gitahead.com/'
+url='TODO replace: https://www.gitahead.com/'
 arch=('x86_64')
 license=('MIT')
 depends=('desktop-file-utils' 'qt5-base' 'git')
 makedepends=('cmake' 'ninja' 'git' 'qt5-tools' 'qt5-translations')
 source=(
-  "git+https://github.com/Murmele/gitahead#branch=${branch}"
+  "git+https://github.com/Murmele/Gittyup#branch=${branch}"
 )
 sha256sums=(
   'SKIP'
 )
 
 prepare() {
-  cd "$srcdir/gitahead"
+  cd "$srcdir/gittyup"
 
   git submodule update --init --recursive
 }
 
 build() {
-  if [ ! -d "$srcdir/gitahead-build" ]; then
-    mkdir "$srcdir/gitahead-build"
+  if [ ! -d "$srcdir/gittyup-build" ]; then
+    mkdir "$srcdir/gittyup-build"
   fi
-  cd "$srcdir/gitahead-build"
-  cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/lib ../gitahead
+  cd "$srcdir/gittyup-build"
+  cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/lib ../gittyup
   ninja
 }
 
 package() {
-  cd "$srcdir/gitahead-build"
+  cd "$srcdir/gittyup-build"
 
   ninja package
 
   mkdir -p "${pkgdir}/usr/"{share,bin}
 
-  cp -r "${srcdir}/gitahead-build/_CPack_Packages/Linux/STGZ/GitAhead-${pkgver}" "${pkgdir}/usr/share/gitahead"
+  cp -r "${srcdir}/gittyup-build/_CPack_Packages/Linux/STGZ/Gittyup-${pkgver}" "${pkgdir}/usr/share/gittyup"
 
-  rm -rf "${pkgdir}/usr/share/gitahead/"*.so.*
-  ln -s "/usr/share/gitahead/GitAhead" "${pkgdir}/usr/bin/gitahead"
+  rm -rf "${pkgdir}/usr/share/gittyup/"*.so.*
+  ln -s "/usr/share/gittyup/Gittyup" "${pkgdir}/usr/bin/gittyup"
 
-  install -D -m644 "${pkgdir}/usr/share/gitahead/Resources/GitAhead.iconset/icon_16x16.png" "${pkgdir}/usr/share/icons/hicolor/16x16/apps/gitahead.png"
-  install -D -m644 "${pkgdir}/usr/share/gitahead/Resources/GitAhead.iconset/icon_32x32.png" "${pkgdir}/usr/share/icons/hicolor/32x32/apps/gitahead.png"
-  install -D -m644 "${pkgdir}/usr/share/gitahead/Resources/GitAhead.iconset/icon_64x64.png" "${pkgdir}/usr/share/icons/hicolor/64x64/apps/gitahead.png"
-  install -D -m644 "${pkgdir}/usr/share/gitahead/Resources/GitAhead.iconset/icon_128x128.png" "${pkgdir}/usr/share/icons/hicolor/128x128/apps/gitahead.png"
-  install -D -m644 "${pkgdir}/usr/share/gitahead/Resources/GitAhead.iconset/icon_256x256.png" "${pkgdir}/usr/share/icons/hicolor/256x256/apps/gitahead.png"
-  install -D -m644 "${pkgdir}/usr/share/gitahead/Resources/GitAhead.iconset/icon_512x512.png" "${pkgdir}/usr/share/icons/hicolor/512x512/apps/gitahead.png"
+  install -D -m644 "${pkgdir}/usr/share/gittyup/Resources/Gittyup.iconset/icon_16x16.png" "${pkgdir}/usr/share/icons/hicolor/16x16/apps/gittyup.png"
+  install -D -m644 "${pkgdir}/usr/share/gittyup/Resources/Gittyup.iconset/icon_32x32.png" "${pkgdir}/usr/share/icons/hicolor/32x32/apps/gittyup.png"
+  install -D -m644 "${pkgdir}/usr/share/gittyup/Resources/Gittyup.iconset/icon_64x64.png" "${pkgdir}/usr/share/icons/hicolor/64x64/apps/gittyup.png"
+  install -D -m644 "${pkgdir}/usr/share/gittyup/Resources/Gittyup.iconset/icon_128x128.png" "${pkgdir}/usr/share/icons/hicolor/128x128/apps/gittyup.png"
+  install -D -m644 "${pkgdir}/usr/share/gittyup/Resources/Gittyup.iconset/icon_256x256.png" "${pkgdir}/usr/share/icons/hicolor/256x256/apps/gittyup.png"
+  install -D -m644 "${pkgdir}/usr/share/gittyup/Resources/Gittyup.iconset/icon_512x512.png" "${pkgdir}/usr/share/icons/hicolor/512x512/apps/gittyup.png"
 
-  install -D -m644 ${srcdir}/gitahead/LICENSE.md "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
-  install -D -m644 "${srcdir}/gitahead/rsrc/linux/io.github.gitahead.gitahead.desktop" "${pkgdir}/usr/share/applications/gitahead.desktop"
+  install -D -m644 ${srcdir}/gittyup/LICENSE.md "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  install -D -m644 "${srcdir}/gittyup/rsrc/linux/io.github.gittyup.gittyup.desktop" "${pkgdir}/usr/share/applications/gittyup.desktop"
 }

@@ -1,0 +1,209 @@
+---
+name: Gittyup
+on:
+  push:
+  pull_request:
+  page_build:
+  workflow_dispatch:
+
+
+jobs:
+  flatpak:
+    name: "Flatpak"
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:kde-5.15-21.08
+      options: --privileged
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Clone flatpak manifest from Flathub
+      uses: GuillaumeFalourd/clone-github-repo-action@v1
+      with:
+        owner: 'flathub'
+        repository: 'com.github.Murmele.Gittyup'
+
+    - name: Replace git tag by the commit id on which it runs
+      if: github.ref_type != 'tag'
+      run: >
+        sed -i 's@tag: gittyup_v[1-9]*.[0-9]*.[0-9]*@commit: "${{ github.sha }}"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+
+    - name: Use correct git tag
+      if: github.ref_type == 'tag'
+      run: >
+        sed -i 's@tag: .*$@tag: "${{ github.ref_name }}"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+
+    - name: Replace source url
+      run: >
+        sed -i "s@url: .*.git@url: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY@" com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+
+    - name: Add dev build marker to cmake options
+      if: github.ref_type != 'tag'
+      run: >
+        sed -i 's@config-opts: \["\(.*\)"\]@config-opts: ["\1", "-DDEV_BUILD=${{ github.ref_name }}"]@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+
+    - name: Replace desktop file name suffix
+      if: github.ref_type != 'tag'
+      run: >
+        sed -i 's@desktop-file-name-suffix: ""@desktop-file-name-suffix: " (Development)"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+
+    - name: Show Flatpak manifest
+      run: cat com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+
+    - name: Build package
+      uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v4
+      with:
+        bundle: com.github.Murmele.Gittyup.flatpak
+        manifest-path: com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        cache: false
+        branch: development
+
+
+  build:
+    runs-on: ${{ matrix.env.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - name: linux
+            os: ubuntu-latest
+            ninja_platform: linux
+            qt_platform: linux
+            openssl_arch: linux-x86_64
+            cmake_env: {}
+
+          - name: mac
+            os: macos-latest
+            ninja_platform: mac
+            qt_platform: mac
+            openssl_arch: darwin64-x86_64-cc
+            cmake_env: {}
+            pack: 1
+
+          - name: win64
+            os: windows-latest
+            ninja_platform: win
+            qt_platform: windows
+            qt_arch: win64_msvc2019_64
+            openssl_arch: VC-WIN64A
+            msvc_arch: x64
+            cmake_env:
+              CC: cl
+              CXX: cl
+            pack: 1
+
+          - name: win32
+            os: windows-latest
+            ninja_platform: win
+            qt_platform: windows
+            qt_arch: win32_msvc2019
+            openssl_arch: VC-WIN32
+            msvc_arch: x86
+            cmake_env:
+              CC: cl
+              CXX: cl
+            pack: 1
+
+    steps:
+      - name: Configure development build
+        if: github.ref_type != 'tag'
+        uses: allenevans/set-env@c4f231179ef63887be707202a295d9cb1c687eb9
+        with:
+          CMAKE_FLAGS: "-DDEV_BUILD=${{ github.ref_name }}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v1
+
+      - name: Initialize Submodules
+        uses: snickerbockers/submodules-init@v4
+
+      - name: Install Perl
+        if: matrix.env.ninja_platform == 'win'
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.30'
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2.13.0
+        timeout-minutes: 10
+        with:
+          version: 5.15.2
+          target: desktop
+          host: ${{ matrix.env.qt_platform }}
+          arch: ${{ matrix.env.qt_arch }}
+          install-deps: true
+          modules: qtwebengine
+
+      - name: Install Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v3
+        with:
+          version: 1.9.0
+          platform: ${{ matrix.env.ninja_platform }}
+          destination: ninja
+
+      - name: Setup MSVC environment
+        if: matrix.env.ninja_platform == 'win'
+        uses: seanmiddleditch/gha-setup-vsdevenv@v3
+        with:
+          arch: ${{ matrix.env.msvc_arch }}
+
+      - name: Install NASM
+        if: matrix.env.ninja_platform == 'win'
+        uses: ilammy/setup-nasm@v1.2.0
+
+      - name: Build OpenSSL (linux)
+        if: matrix.env.ninja_platform == 'linux'
+        run: |
+          cd dep/openssl/openssl
+          ./config -fPIC
+          make
+
+      - name: Build OpenSSL (mac)
+        if: matrix.env.ninja_platform == 'mac'
+        run: |
+          cd dep/openssl/openssl
+          ./Configure ${{ matrix.env.openssl_arch }} no-shared
+          make
+
+      - name: Build OpenSSL (win)
+        if: matrix.env.ninja_platform == 'win'
+        run: |
+          cd dep/openssl/openssl
+          perl Configure ${{ matrix.env.openssl_arch }}
+          nmake
+
+      - name: Configure Release
+        env: ${{ matrix.env.cmake_env }}
+        run: |
+          mkdir -p build/release
+          cd build/release
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_FLAGS }} ../..
+
+      - name: Build Information
+        run: |
+          echo "ninja version: $(ninja --version)"
+          git --version
+          qmake --version
+          cmake --version
+
+      - name: Build
+        run: |
+          cd build/release
+          ninja package
+
+      - name: Publish build artifacts
+        if: matrix.env.pack
+        uses: actions/upload-artifact@v2
+        with:
+          path: build/release/pack/Gittyup-*
+          name: Gittyup ${{ matrix.env.name }}
+
+      - name: Test
+        # TODO: Re-Enable this when https://github.com/actions/runner/issues/1206 gets resolved
+        if: matrix.env.ninja_platform != 'win'
+        continue-on-error: true
+        run: |
+          cd build/release
+          ninja check
+...

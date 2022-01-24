@@ -89,7 +89,11 @@ public:
   bool isBare() const;
 
   // signature
-  Signature defaultSignature(bool *fake = nullptr) const;
+  Signature defaultSignature(
+    bool *fake = nullptr,
+    const QString &overrideUser = QString(),
+    const QString &overrideEmail = QString()
+  ) const;
 
   // ignore
   bool isIgnored(const QString &path) const;
@@ -140,7 +144,9 @@ public:
     const Commit &target,
     const QString &name,
     const QString &message = QString(),
-    bool force = false);
+    bool force = false,
+    const QString &overrideUser = QString(),
+    const QString &overrideEmail = QString());
   QStringList existingTags() const;
 
   // blob
@@ -153,7 +159,9 @@ public:
   Commit commit(
     const QString &message,
     const AnnotatedCommit &mergeHead = AnnotatedCommit(),
-    bool *fakeSignature = nullptr);
+    bool *fakeSignature = nullptr,
+    const QString &overrideUser = QString(),
+    const QString &overrideEmail = QString());
 
   QList<Commit> starredCommits() const;
   bool isCommitStarred(const Id &commit) const;
@@ -192,7 +200,11 @@ public:
   // merge/rebase
   Commit mergeBase(const Commit &lhs, const Commit &rhs) const;
   bool merge(const AnnotatedCommit &mergeHead);
-  Rebase rebase(const AnnotatedCommit &mergeHead);
+  Rebase rebase(
+    const AnnotatedCommit &mergeHead,
+    const QString &overrideUser = QString(),
+    const QString &overrideEmail = QString()
+  );
 
   // cherry-pick
   bool cherryPick(const Commit &commit);

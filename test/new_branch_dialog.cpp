@@ -48,8 +48,9 @@ void TestNewBranchDialog::verifyName()
   QVERIFY(nameField && buttons);
 
   // Find the button with the accept role.
-  auto end = buttons->buttons().end();
-  auto begin = buttons->buttons().begin();
+  auto button_list = buttons->buttons();
+  auto end = button_list.end();
+  auto begin = button_list.begin();
   auto it = std::find_if(begin, end, [buttons](QAbstractButton *button) {
     return buttons->buttonRole(button) == QDialogButtonBox::AcceptRole;
   });

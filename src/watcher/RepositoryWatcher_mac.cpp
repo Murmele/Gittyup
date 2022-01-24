@@ -21,7 +21,7 @@ public:
     : QObject(parent), mRepo(repo)
   {
     // Create dispatch queue.
-    mQueue = dispatch_queue_create("com.gitahead.RepositoryWatcher", nullptr);
+    mQueue = dispatch_queue_create("com.gittyup.RepositoryWatcher", nullptr);
 
     // Create stream to watch the workdir.
     FSEventStreamContext context = { 0, this, nullptr, nullptr, nullptr };

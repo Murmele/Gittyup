@@ -33,10 +33,17 @@ public:
   bool finish();
 
 private:
-  Rebase(git_repository *repo, git_rebase *rebase = nullptr);
+  Rebase(
+    git_repository *repo,
+    git_rebase *rebase = nullptr,
+    const QString &overrideUser = QString(),
+    const QString &overrideEmail = QString()
+  );
 
   git_repository *mRepo;
   QSharedPointer<git_rebase> d;
+  QString mOverrideUser;
+  QString mOverrideEmail;
 
   friend class Repository;
 };

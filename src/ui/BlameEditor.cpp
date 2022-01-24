@@ -31,6 +31,8 @@
 
 namespace {
 
+const QString kSplitterKey = QString("blamesplitter");
+
 class BlameCallbacks : public git::Blame::Callbacks
 {
 public:
@@ -79,14 +81,18 @@ BlameEditor::BlameEditor(const git::Repository &repo, QWidget *parent)
   splitter->addWidget(mEditor);
   splitter->addWidget(mMargin);
   splitter->setStretchFactor(0, 1);
+  connect(splitter, &QSplitter::splitterMoved, this, [splitter] {
+    QSettings().setValue(kSplitterKey, splitter->saveState());
+  });
+
+  // Restore splitter state.
+  splitter->restoreState(QSettings().value(kSplitterKey).toByteArray());
 
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setContentsMargins(0,0,0,0);
   layout->setSpacing(0);
   layout->addWidget(mFind);
   layout->addWidget(splitter, 1);
-
-  // FIXME: Remember splitter position?
 
   // Handle asynchronous blame termination.
   connect(&mBlame, &QFutureWatcher<git::Blame>::finished, [this] {

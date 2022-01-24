@@ -101,6 +101,7 @@ public:
   virtual ~DiffTreeModel();
 
   void setDiff(const git::Diff &diff = git::Diff());
+  void refresh(const QStringList &paths);
 
   int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   int columnCount(const QModelIndex &parent = QModelIndex()) const override;

@@ -30,6 +30,8 @@
         <file>github.png</file>
         <file>github_dark.png</file>
         <file>gitlab.png</file>
+        <file>hotkeys.png</file>
+        <file>hotkeys@2x.png</file>
         <file>lfs.png</file>
         <file>lfs@2x.png</file>
         <file>logo-type.png</file>
@@ -52,6 +54,7 @@
         <file>submodules.png</file>
         <file>submodules@2x.png</file>
         <file>sunken.png</file>
+        <file>system.png</file>
         <file>terminal.png</file>
         <file>terminal@2x.png</file>
         <file>tools.png</file>

@@ -12,6 +12,8 @@ namespace {
     const QString separator = ":";
 }
 
+const QString TemplateButton::cursorPositionString = QStringLiteral("%|");
+
 TemplateButton::TemplateButton(git::Config config, QWidget* parent):
     QToolButton(parent),
     mConfig(config)

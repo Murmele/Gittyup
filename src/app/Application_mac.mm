@@ -13,7 +13,7 @@
 #import <AppKit/AppKit.h>
 
 @interface Launcher : NSObject
-- (void)openInGitAhead:(NSPasteboard *)pboard
+- (void)openInGittyup:(NSPasteboard *)pboard
   userData:(NSString *)userData
   error:(NSString **)error;
 @end

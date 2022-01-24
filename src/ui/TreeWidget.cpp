@@ -23,10 +23,13 @@
 #include <QAction>
 #include <QContextMenuEvent>
 #include <QMenu>
+#include <QSettings>
 #include <QSplitter>
 #include <QVBoxLayout>
 
 namespace {
+
+const QString kSplitterKey = QString("treesplitter");
 
 const QItemSelectionModel::SelectionFlags kSelectionFlags =
   QItemSelectionModel::Clear |
@@ -53,6 +56,12 @@ TreeWidget::TreeWidget(const git::Repository &repo, QWidget *parent)
   splitter->addWidget(mView);
   splitter->addWidget(mEditor);
   splitter->setStretchFactor(1, 1);
+  connect(splitter, &QSplitter::splitterMoved, this, [splitter] {
+    QSettings().setValue(kSplitterKey, splitter->saveState());
+  });
+
+  // Restore splitter state.
+  splitter->restoreState(QSettings().value(kSplitterKey).toByteArray());
 
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setContentsMargins(0,0,0,0);

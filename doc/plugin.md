@@ -28,7 +28,7 @@ strong {
 </head>
 <body>
 
-# GitAhead Plugin API
+# Gittyup Plugin API
 
 ---
 
@@ -39,9 +39,9 @@ Plugins are Lua scripts that detect one or more error kind. The name
 of the script defines the name of the plugin category in the settings
 interface. Plugins should be saved to one of the following locations:
 
-* (Windows) - %APPDATA%\GitAhead\plugins
-* (Linux) - ~/.config/GitAhead/plugins
-* (macOS) - ~/Library/Application Support/GitAhead/plugins
+* (Windows) - %APPDATA%\Gittyup\plugins
+* (Linux) - ~/.config/Gittyup/plugins
+* (macOS) - ~/Library/Application Support/Gittyup/plugins
 
 ---
 

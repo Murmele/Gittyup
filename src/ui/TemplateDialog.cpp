@@ -43,6 +43,7 @@ TemplateDialog::TemplateDialog(QList<TemplateButton::Template> &templates, QWidg
     vBox->addLayout(hBox);
     vBox->addWidget(lbl);
     vBox->addWidget(mTemplate);
+	vBox->addWidget(new QLabel("use " + TemplateButton::cursorPositionString +" to declare the position of the cursor.", this));
     vBox->addLayout(hBox2);
 
     // second column

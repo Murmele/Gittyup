@@ -16,6 +16,7 @@
 #include "git2/clone.h"
 #include "git2/remote.h"
 #include "git2/signature.h"
+#include "libssh2.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -34,7 +35,7 @@ namespace {
 const QString kLogKey = "remote/log";
 const QStringList kKeyKinds = {"ed25519", "rsa", "dsa"};
 
-bool keyFile(QString &key, const QString &path = QString())
+QString keyFile(const QString &path = QString())
 {
   QDir dir = QDir::home();
   if (!path.isEmpty()) {
@@ -44,22 +45,19 @@ bool keyFile(QString &key, const QString &path = QString())
       file.setFile(dir.absolutePath() + '/' + file.filePath());
 
     if (file.exists())
-      key = file.absoluteFilePath();
-    return file.exists();
+      return file.absoluteFilePath();
   }
 
   if (!dir.cd(".ssh"))
-    return false;
+    return QString();
 
   foreach (const QString &kind, kKeyKinds) {
     QString name = QString("id_%1").arg(kind);
-    if (dir.exists(name)) {
-      key = dir.absoluteFilePath(name);
-      return true;
-    }
+    if (dir.exists(name))
+      return dir.absoluteFilePath(name);
   }
 
-  return false;
+  return QString();
 }
 
 QString hostName(const QString &url)
@@ -120,7 +118,7 @@ int push_negotiation(
   void *payload)
 {
   QList<Remote::PushUpdate> list;
-  for (int i = 0; i < len; ++i) {
+  for (size_t i = 0; i < len; ++i) {
     const git_push_update *update = updates[i];
     list.append({
       update->src_refname,
@@ -222,6 +220,8 @@ int Remote::Callbacks::disconnect(
   git_remote *remote,
   void *payload)
 {
+  Q_UNUSED(remote)
+
   Remote::Callbacks *cbs = reinterpret_cast<Remote::Callbacks *>(payload);
   cbs->mRemote = nullptr;
   return 0;
@@ -237,6 +237,62 @@ int Remote::Callbacks::sideband(
   return 0;
 }
 
+static void interactiveCallback(
+  const char *name,
+  int name_len,
+  const char *instruction,
+  int instruction_len,
+  int num_prompts,
+  const LIBSSH2_USERAUTH_KBDINT_PROMPT *prompts,
+  LIBSSH2_USERAUTH_KBDINT_RESPONSE *responses,
+  void **abstract
+)
+{
+  if (num_prompts == 0)
+    return;
+
+  Remote::Callbacks *cbs = (Remote::Callbacks*)*abstract;
+
+  QVector<Remote::SshInteractivePrompt> promptsVector(num_prompts);
+  QVector<QString> responsesVector(num_prompts);
+
+  for (int i = 0; i < num_prompts; ++i) {
+    promptsVector[i] = {
+      QString::fromUtf8(prompts[i].text, prompts[i].length),
+      (bool)prompts[i].echo
+    };
+  }
+
+  cbs->interactiveAuth(
+    QString::fromUtf8(name, name_len),
+    QString::fromUtf8(instruction, instruction_len),
+    promptsVector,
+    responsesVector
+  );
+
+  if (responsesVector.length() < num_prompts)
+    responsesVector.resize(num_prompts);
+
+  for (int i = 0; i < num_prompts; ++i) {
+    if (responsesVector[i].isEmpty()) {
+      responses[i].text = nullptr;
+      responses[i].length = 0;
+
+    } else {
+      // The newline is also sent by OpenSSH and needed for some
+      // keyboard-interactive prompts
+      QByteArray bytes = (responsesVector[i] + "\n").toUtf8();
+
+      // Use malloc and copy the response data to it
+      // libssh2 free()s this memory by itself
+      responses[i].length = bytes.size() - 1;
+      responses[i].text = (char*)malloc(responses[i].length);
+
+      memcpy(responses[i].text, bytes.data(), responses[i].length);
+    }
+  }
+}
+
 int Remote::Callbacks::credentials(
   git_credential **out,
   const char *url,
@@ -244,14 +300,10 @@ int Remote::Callbacks::credentials(
   unsigned int types,
   void *payload)
 {
-  // FIXME: Should libgit2 really continue to prompt after this error?
-  const git_error *error = git_error_last();
-  if (error && error->klass == GIT_ERROR_SSH &&
-      QByteArray(error->message).endsWith("combination invalid"))
-    return -1;
-
   Remote::Callbacks *cbs = reinterpret_cast<Remote::Callbacks *>(payload);
   if (types & GIT_CREDENTIAL_SSH_KEY) {
+    const git_error *error = git_error_last();
+
     // First try to get key from agent.
     if (!cbs->mAgentNames.contains(name)) {
       log(QString("agent: %1").arg(name));
@@ -270,8 +322,8 @@ int Remote::Callbacks::credentials(
       // Extract hostname from the unresolved URL.
       QString name = hostName(cbs->url());
       foreach (const ConfigFile::Host &host, configFile.parse()) {
-        // Skip entries that don't have an identity file.
-        if (host.file.isEmpty())
+        // Skip entries that don't have an identity file or 
+        if (host.file.isEmpty() || cbs->mKeyFiles.contains(host.file))
           continue;
 
         foreach (const QString &pattern, host.patterns) {
@@ -287,58 +339,72 @@ int Remote::Callbacks::credentials(
       }
     }
 
+    if (key.isEmpty()) {
+      key = keyFile(cbs->keyFilePath());
+      if (cbs->mKeyFiles.contains(key))
+        key = "";
+    }
+
     // Search for default keys.
     if (!key.isEmpty()) {
+      cbs->mKeyFiles.insert(key);
+
       if (!QFile::exists(key)) {
         QString err = QString("identity file not found: %1").arg(key);
         git_error_set_str(GIT_ERROR_NET, err.toUtf8());
-        return -1;
+        return -GIT_ERROR_NET;
       }
-    } else if (!keyFile(key, cbs->keyFilePath())) {
-      git_error_set_str(GIT_ERROR_NET, "failed to find SSH identity file");
-      return -1;
+
+      QString pub = QString("%1.pub").arg(key);
+      if (!QFile::exists(pub))
+        pub = "";
+
+      // Check if the private key is encrypted.
+      QFile file(key);
+      if (!file.open(QFile::ReadOnly)) {
+        git_error_set_str(GIT_ERROR_NET, "failed to open SSH identity file");
+        return -GIT_ERROR_NET;
+      }
+
+      QTextStream in(&file);
+      in.readLine(); // -----BEGIN PRIVATE KEY-----
+      QString line = in.readLine();
+      if (!line.startsWith("Proc-Type:") || !line.endsWith("ENCRYPTED")) {
+        QByteArray base64 = QByteArray::fromBase64(line.toLocal8Bit());
+        if (!base64.contains("aes256-ctr") || !base64.contains("bcrypt"))
+          return git_credential_ssh_key_new(out, name,
+            !pub.isEmpty() ? pub.toLocal8Bit().constData() : nullptr,
+            key.toLocal8Bit(), nullptr);
+      }
+
+      // Prompt for passphrase to decrypt key.
+      QString passphrase;
+      QString username = name;
+      if (!cbs->credentials(url, username, passphrase))
+        return -1;
+
+      return git_credential_ssh_key_new(out, username.toUtf8(),
+        !pub.isEmpty() ? pub.toLocal8Bit().constData() : nullptr,
+        key.toLocal8Bit(), passphrase.toUtf8());
     }
+  }
 
-    QString pub = QString("%1.pub").arg(key);
-    if (!QFile::exists(pub))
-      pub = QString();
-
-    // Check if the private key is encrypted.
-    QFile file(key);
-    if (!file.open(QFile::ReadOnly)) {
-      git_error_set_str(GIT_ERROR_NET, "failed to open SSH identity file");
-      return -1;
-    }
-
-    QTextStream in(&file);
-    in.readLine(); // -----BEGIN PRIVATE KEY-----
-    QString line = in.readLine();
-    if (!line.startsWith("Proc-Type:") || !line.endsWith("ENCRYPTED")) {
-      QByteArray base64 = QByteArray::fromBase64(line.toLocal8Bit());
-      if (!base64.contains("aes256-ctr") || !base64.contains("bcrypt"))
-        return git_credential_ssh_key_new(out, name,
-          !pub.isEmpty() ? pub.toLocal8Bit().constData() : nullptr,
-          key.toLocal8Bit(), nullptr);
-    }
-
-    // Prompt for passphrase to decrypt key.
-    QString passphrase;
-    QString username = name;
-    if (!cbs->credentials(url, username, passphrase))
-      return -1;
-
-    return git_credential_ssh_key_new(out, username.toUtf8(),
-      !pub.isEmpty() ? pub.toLocal8Bit().constData() : nullptr,
-      key.toLocal8Bit(), passphrase.toUtf8());
-
-  } else if (types & GIT_CREDENTIAL_USERPASS_PLAINTEXT) {
+  if (types & GIT_CREDENTIAL_USERPASS_PLAINTEXT) {
     QString password;
     QString username = QUrl::fromPercentEncoding(name);
-    if (!cbs->credentials(url, username, password))
-      return -1;
+    if (cbs->credentials(url, username, password)) {
+      return git_credential_userpass_plaintext_new(
+        out, username.toUtf8(), password.toUtf8());
+    }
+  }
 
-    return git_credential_userpass_plaintext_new(
-      out, username.toUtf8(), password.toUtf8());
+  if (types & GIT_CREDENTIAL_SSH_INTERACTIVE) {
+    return git_credential_ssh_interactive_new(
+      out,
+      name,
+      interactiveCallback,
+      cbs
+    );
   }
 
   return -1;
@@ -350,6 +416,8 @@ int Remote::Callbacks::certificate(
   const char *host,
   void *payload)
 {
+  Q_UNUSED(host)
+
   if (valid || cert->cert_type == GIT_CERT_HOSTKEY_LIBSSH2)
     return 0;
 
@@ -364,7 +432,7 @@ int Remote::Callbacks::certificate(
     return 0;
 
   git_error_set_str(GIT_ERROR_SSL, "invalid certificate");
-  return -1;
+  return -GIT_ERROR_SSL;
 }
 
 int Remote::Callbacks::transfer(
@@ -401,6 +469,8 @@ int Remote::Callbacks::url(
   int direction,
   void *payload)
 {
+  Q_UNUSED(direction)
+
   Remote::Callbacks *cbs = reinterpret_cast<Remote::Callbacks *>(payload);
   QString resolved(url);
   if (!cbs->url(resolved))

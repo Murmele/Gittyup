@@ -49,10 +49,10 @@
       <key>NSMenuItem</key>
       <dict>
         <key>default</key>
-        <string>Open in GitAhead</string>
+        <string>Open in Gittyup</string>
       </dict>
       <key>NSMessage</key>
-      <string>openInGitAhead</string>
+      <string>openInGittyup</string>
       <key>NSRequiredContext</key>
       <dict>
         <key>NSTextContent</key>

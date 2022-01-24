@@ -19,7 +19,7 @@ macro(test TEST_NAME)
   if(WIN32)
     STRING(REPLACE ";" "\;" NEWPATH "$ENV{PATH}")
     set_tests_properties(${TEST_NAME} PROPERTIES
-      ENVIRONMENT "PATH=${CMAKE_BINARY_DIR}\;${NEWPATH}"
+      ENVIRONMENT "PATH=${CMAKE_BINARY_DIR}\;${NEWPATH};QT_PLUGIN_PATH=${CMAKE_BINARY_DIR}\\Plugins"
     )
   endif()
   message("PATH: " ${CMAKE_BINARY_DIR})

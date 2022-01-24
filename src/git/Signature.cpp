@@ -38,6 +38,11 @@ QDateTime Signature::date() const
   return QDateTime::fromTime_t(d->when.time, Qt::OffsetFromUTC, offset);
 }
 
+git_time Signature::gitDate() const
+{
+  return d->when;
+}
+
 QString Signature::initials() const
 {
   return initials(name());

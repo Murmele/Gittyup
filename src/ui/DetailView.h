@@ -11,6 +11,7 @@
 #define DETAILVIEW_H
 
 #include "RepoView.h"
+#include <QLabel>
 #include <QWidget>
 
 class QStackedWidget;
@@ -79,6 +80,9 @@ public:
   void findNext();
   void findPrevious();
 
+  QString overrideUser() const;
+  QString overrideEmail() const;
+
 signals:
   void viewModeChanged(RepoView::ViewMode mode, bool spontaneous = false);
 
@@ -97,6 +101,12 @@ private:
 
   QStackedWidget *mDetail;
   QStackedWidget *mContent;
+  QLabel *mAuthorLabel;
+  QString mOverrideUser;
+  QString mOverrideEmail;
+
+  void authorLinkActivated(const QString &href);
+  void updateAuthor();
 };
 
 #endif

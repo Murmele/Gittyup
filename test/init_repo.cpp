@@ -13,10 +13,11 @@
 #include "ui/CommitList.h"
 #include "ui/DetailView.h"
 #include "ui/DiffView/DiffView.h"
-#include "ui/FileList.h"
+#include "ui/DoubleTreeWidget.h"
 #include "ui/Footer.h"
 #include "ui/MainWindow.h"
 #include "ui/RepoView.h"
+#include "ui/TreeView.h"
 #include <QFile>
 #include <QLineEdit>
 #include <QMenu>
@@ -45,6 +46,10 @@ private:
 
 void TestInitRepo::initTestCase()
 {
+  QDir dir = QDir::temp();
+  if (dir.cd("test_init_repo"))
+    QVERIFY(dir.removeRecursively());
+
   StartDialog *dialog = StartDialog::openSharedInstance();
   QVERIFY(qWaitForWindowActive(dialog));
 
@@ -95,7 +100,10 @@ void TestInitRepo::addFile()
 
   // Check for a single file called "test".
   RepoView *view = mWindow->currentView();
-  FileList *files = view->findChild<FileList *>();
+  auto doubleTree = view->findChild<DoubleTreeWidget *>();
+  QVERIFY(doubleTree);
+
+  auto files = doubleTree->findChild<TreeView *>("Unstaged");
   QVERIFY(files);
 
   // Wait for refresh
@@ -147,10 +155,22 @@ void TestInitRepo::amendCommit()
 void TestInitRepo::editFile()
 {
   RepoView *view = mWindow->currentView();
+
+  auto doubleTree = view->findChild<DoubleTreeWidget *>();
+  QVERIFY(doubleTree);
+
+  auto files = doubleTree->findChild<TreeView *>("Staged");
+  QVERIFY(files);
+
+  files->selectionModel()->select(
+    files->model()->index(0, 0),
+    QItemSelectionModel::Select
+  );
+
   DiffView *diff = view->findChild<DiffView *>();
   QVERIFY(diff);
 
-  QToolButton *edit = view->findChild<QToolButton *>("EditButton");
+  QToolButton *edit = diff->findChild<QToolButton *>("EditButton");
   QVERIFY(edit);
 
   // Set up timer to dismiss the popup.

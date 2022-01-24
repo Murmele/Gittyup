@@ -42,6 +42,7 @@ const QString kLabelFmt = "<p style='color: gray; font-weight: bold'>%1</p>";
 TreeView::TreeView(QWidget *parent, const QString& name)
   : QTreeView(parent), mSharedDelegate(new ViewDelegate(this)), mName(name)
 {
+    setObjectName(name);
 }
 
 void TreeView::setModel(QAbstractItemModel *model)
@@ -276,4 +277,14 @@ void TreeView::deselectAll() {
 	suppressDeselectionHandling = true;
 	selectionModel()->clearSelection();
 	suppressDeselectionHandling = false;
+}
+
+QRect TreeView::checkRect(const QModelIndex &index)
+{
+    QStyleOptionViewItem options = viewOptions();
+    options.rect = visualRect(index);
+    options.features |= QStyleOptionViewItem::HasCheckIndicator;
+
+    QStyle::SubElement se = QStyle::SE_ItemViewItemCheckIndicator;
+    return style()->subElementRect(se, &options, this);
 }

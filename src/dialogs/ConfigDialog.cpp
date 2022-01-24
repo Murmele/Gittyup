@@ -108,35 +108,42 @@ public:
     init();
 
     // Connect signals after initializing fields.
-    connect(mName, &QLineEdit::textChanged, [this](const QString &text) {
-      mRepo.config().setValue("user.name", text);
+    connect(mName, &QLineEdit::textChanged, this, [this](const QString &text) {
+      git::Config config = mRepo.config();
+      config.setValue("user.name", text);
     });
 
-    connect(mEmail, &QLineEdit::textChanged, [this](const QString &text) {
-      mRepo.config().setValue("user.email", text);
+    connect(mEmail, &QLineEdit::textChanged, this, [this](const QString &text) {
+      git::Config config = mRepo.config();
+      config.setValue("user.email", text);
     });
 
-    connect(mFetch, &QCheckBox::toggled, [this, view](bool checked) {
-      mRepo.appConfig().setValue("autofetch.enable", checked);
+    connect(mFetch, &QCheckBox::toggled, view, [this, view](bool checked) {
+      git::Config config = mRepo.config();
+      config.setValue("autofetch.enable", checked);
       view->startFetchTimer();
     });
 
     using Signal = void (QSpinBox::*)(int);
     auto signal = static_cast<Signal>(&QSpinBox::valueChanged);
-    connect(mFetchMinutes, signal, [this](int value) {
-      mRepo.appConfig().setValue("autofetch.minutes", value);
+    connect(mFetchMinutes, signal, this, [this](int value) {
+      git::Config config = mRepo.config();
+      config.setValue("autofetch.minutes", value);
     });
 
-    connect(mPushCommit, &QCheckBox::toggled, [this](bool checked) {
-      mRepo.appConfig().setValue("autopush.enable", checked);
+    connect(mPushCommit, &QCheckBox::toggled, this, [this](bool checked) {
+      git::Config config = mRepo.config();
+      config.setValue("autopush.enable", checked);
     });
 
-    connect(mPullUpdate, &QCheckBox::toggled, [this](bool checked) {
-      mRepo.appConfig().setValue("autoupdate.enable", checked);
+    connect(mPullUpdate, &QCheckBox::toggled, this, [this](bool checked) {
+      git::Config config = mRepo.config();
+      config.setValue("autoupdate.enable", checked);
     });
 
-    connect(mAutoPrune, &QCheckBox::toggled, [this](bool checked) {
-      mRepo.appConfig().setValue("autoprune.enable", checked);
+    connect(mAutoPrune, &QCheckBox::toggled, this, [this](bool checked) {
+      git::Config config = mRepo.config();
+      config.setValue("autoprune.enable", checked);
     });
   }
 
@@ -221,7 +228,7 @@ public:
       }
     });
 
-    connect(table->selectionModel(), &QItemSelectionModel::selectionChanged,
+    connect(table->selectionModel(), &QItemSelectionModel::selectionChanged, this,
     [table, footer] {
       QModelIndexList indexes = table->selectionModel()->selectedRows();
       footer->setMinusEnabled(!indexes.isEmpty());
@@ -270,9 +277,9 @@ public:
     Footer *footer = new Footer(mTable);
     footer->setPlusEnabled(repo.head().isValid());
 
-    connect(footer, &Footer::plusClicked, [this, repo] {
+    connect(footer, &Footer::plusClicked, this, [this, repo] {
       NewBranchDialog *dialog = new NewBranchDialog(repo, git::Commit(), this);
-      connect(dialog, &QDialog::accepted, this, [this, repo, dialog] {
+      connect(dialog, &QDialog::accepted, this, [repo, dialog] {
         QString name = dialog->name();
         git::Commit commit = dialog->target();
         git::Branch branch = git::Repository(repo).createBranch(name, commit);
@@ -285,7 +292,7 @@ public:
       dialog->open();
     });
 
-    connect(footer, &Footer::minusClicked, [this] {
+    connect(footer, &Footer::minusClicked, this, [this] {
       // Get all selected branches before removing any.
       QList<git::Branch> branches;
       QModelIndexList indexes = mTable->selectionModel()->selectedRows();
@@ -366,7 +373,7 @@ public:
     table->horizontalHeader()->setSectionResizeMode(
       SubmoduleTableModel::Url, QHeaderView::Stretch);
 
-    connect(table, &QTableView::doubleClicked, [view](const QModelIndex &index) {
+    connect(table, &QTableView::doubleClicked, this, [view](const QModelIndex &index) {
       QVariant var = index.data(SubmoduleTableModel::SubmoduleRole);
       view->openSubmodule(var.value<git::Submodule>());
     });
@@ -399,7 +406,7 @@ public:
     // enable
     QCheckBox *enable = new QCheckBox(tr("Enable indexing"), this);
     enable->setChecked(config.value<bool>("index.enable", true));
-    connect(enable, &QCheckBox::toggled, [view](bool checked) {
+    connect(enable, &QCheckBox::toggled, this, [view](bool checked) {
       git::Config config = view->repo().appConfig();
       config.setValue("index.enable", checked);
 
@@ -417,7 +424,7 @@ public:
     terms->setMaximum(99999999);
     terms->setSingleStep(100000);
     terms->setValue(config.value<int>("index.termlimit", 1000000));
-    connect(terms, signal, [view](int value) {
+    connect(terms, signal, this, [view](int value) {
       view->repo().appConfig().setValue("index.termlimit", value);
     });
 
@@ -430,7 +437,7 @@ public:
     QSpinBox *context = new QSpinBox(this);
     QLabel *contextLabel = new QLabel(tr("lines"), this);
     context->setValue(config.value<int>("index.contextlines", 3));
-    connect(context, signal, [view](int value) {
+    connect(context, signal, this, [view](int value) {
       view->repo().appConfig().setValue("index.contextlines", value);
     });
 
@@ -462,7 +469,7 @@ public:
     // remove
     QPushButton *remove = new QPushButton(tr("Remove Index"), this);
     remove->setEnabled(view->index()->isValid());
-    connect(remove, &QPushButton::clicked, [view, remove] {
+    connect(remove, &QPushButton::clicked, this, [view, remove] {
       Index *index = view->index();
       view->cancelIndexing();
       index->remove();
@@ -488,7 +495,7 @@ public:
   {
     if (!view->repo().lfsIsInitialized()) {
       QPushButton *button = new QPushButton(tr("Initialize LFS"), this);
-      connect(button, &QPushButton::clicked, [this, view] {
+      connect(button, &QPushButton::clicked, this, [this, view] {
         view->lfsInitialize();
         window()->close();
       });
@@ -500,7 +507,6 @@ public:
       return;
     }
 
-    Settings *settings = Settings::instance();
     git::Repository repo = view->repo();
 
     QListView *list = new QListView(this);
@@ -512,7 +518,7 @@ public:
     list->setModel(model);
 
     QFutureWatcher<QStringList> *watcher = new QFutureWatcher<QStringList>(this);
-    connect(watcher, &QFutureWatcher<QStringList>::finished, [model, watcher] {
+    connect(watcher, &QFutureWatcher<QStringList>::finished, this, [model, watcher] {
       model->setStringList(watcher->result());
       watcher->deleteLater();
     });
@@ -520,7 +526,7 @@ public:
     watcher->setFuture(QtConcurrent::run(repo, &git::Repository::lfsTracked));
 
     Footer *footer = new Footer(list);
-    connect(footer, &Footer::plusClicked, [this, repo, model] {
+    connect(footer, &Footer::plusClicked, this, [this, repo, model] {
       QDialog *dialog = new QDialog(this);
       dialog->setAttribute(Qt::WA_DeleteOnClose);
 
@@ -554,7 +560,7 @@ public:
       layout->addLayout(form);
       layout->addWidget(buttons);
 
-      connect(pattern, &QLineEdit::textChanged, [track](const QString &text) {
+      connect(pattern, &QLineEdit::textChanged, this, [track](const QString &text) {
         track->setEnabled(!text.isEmpty());
       });
 
@@ -567,7 +573,7 @@ public:
       dialog->open();
     });
 
-    connect(footer, &Footer::minusClicked, [this, list, repo, model] {
+    connect(footer, &Footer::minusClicked, this, [list, repo, model] {
       git::Repository tmp(repo);
       QModelIndexList indexes = list->selectionModel()->selectedRows();
       foreach (const QModelIndex &index, indexes) {
@@ -605,16 +611,18 @@ public:
     QLineEdit *urlLineEdit = new QLineEdit(
       map.value("Endpoint").section(" ", 0, 0));
     connect(urlLineEdit, &QLineEdit::textChanged,
-    [this, repo](const QString &text) {
-      repo.config().setValue("lfs.url", text);
+    [repo](const QString &text) {
+      git::Config config = repo.config();
+      config.setValue("lfs.url", text);
     });
 
     // pruneoffsetdays
     QSpinBox *pruneOffsetDays = new QSpinBox(this);
     pruneOffsetDays->setValue(map.value("PruneOffsetDays").toInt());
     auto signal = QOverload<int>::of(&QSpinBox::valueChanged);
-    connect(pruneOffsetDays, signal, [this, repo](int value) {
-      repo.config().setValue("lfs.pruneoffsetdays", value);
+    connect(pruneOffsetDays, signal, [repo](int value) {
+      git::Config config = repo.config();
+      config.setValue("lfs.pruneoffsetdays", value);
     });
     QHBoxLayout *pruneOffsetLayout = new QHBoxLayout;
     pruneOffsetLayout->addWidget(pruneOffsetDays);
@@ -627,18 +635,20 @@ public:
     bool fetchRecentEnabled = map.value("FetchRecentAlways").contains("true");
     fetchRecentAlways->setChecked(fetchRecentEnabled);
     connect(fetchRecentAlways, &QCheckBox::toggled,
-    [settings, repo](bool checked) {
-      repo.config().setValue("lfs.fetchrecentalways", checked);
+    [repo](bool checked) {
+      git::Config config = repo.config();
+      config.setValue("lfs.fetchrecentalways", checked);
     });
 
     // fetchrecentrefsdays
     QSpinBox *fetchRecentRefsDays = new QSpinBox(this);
     fetchRecentRefsDays->setValue(map.value("FetchRecentRefsDays").toInt());
     fetchRecentRefsDays->setEnabled(fetchRecentEnabled);
-    connect(fetchRecentRefsDays, signal, [this, repo](int value) {
-      repo.config().setValue("lfs.fetchrecentrefsdays", value);
+    connect(fetchRecentRefsDays, signal, [repo](int value) {
+      git::Config config = repo.config();
+      config.setValue("lfs.fetchrecentrefsdays", value);
     });
-    connect(fetchRecentAlways, &QCheckBox::toggled,
+    connect(fetchRecentAlways, &QCheckBox::toggled, this,
     [fetchRecentRefsDays](bool checked) {
       fetchRecentRefsDays->setEnabled(checked);
     });
@@ -651,10 +661,11 @@ public:
     QSpinBox *fetchRecentCommitsDays = new QSpinBox(this);
     fetchRecentCommitsDays->setValue(map.value("FetchRecentCommitsDays").toInt());
     fetchRecentCommitsDays->setEnabled(fetchRecentEnabled);
-    connect(fetchRecentCommitsDays, signal, [this, repo](int value) {
-      repo.config().setValue("lfs.fetchrecentcommitsdays", value);
+    connect(fetchRecentCommitsDays, signal, [repo](int value) {
+      git::Config config = repo.config();
+      config.setValue("lfs.fetchrecentcommitsdays", value);
     });
-    connect(fetchRecentAlways, &QCheckBox::toggled,
+    connect(fetchRecentAlways, &QCheckBox::toggled, this,
     [fetchRecentCommitsDays](bool checked) {
       fetchRecentCommitsDays->setEnabled(checked);
     });
@@ -666,7 +677,7 @@ public:
 
     // lfs environment
     QPushButton *environment = new QPushButton(tr("View Environment"));
-    connect(environment, &QAbstractButton::clicked, [this, view] {
+    connect(environment, &QAbstractButton::clicked, this, [view] {
       git::Repository repo = view->repo();
 
       QDialog *dialog = new QDialog();
@@ -687,7 +698,7 @@ public:
     });
 
     QPushButton *deinit = new QPushButton(tr("Deinitialize LFS"));
-    connect(deinit, &QAbstractButton::clicked, [this, view] {
+    connect(deinit, &QAbstractButton::clicked, this, [this, view] {
       QString title = tr("Deinitialize LFS?");
       QString text =
         tr("Are you sure you want uninstall LFS from this repository?");
@@ -727,8 +738,6 @@ public:
 ConfigDialog::ConfigDialog(RepoView *view, Index index)
   : QDialog(view)
 {
-  Application::track("ConfigDialog");
-
   setMinimumWidth(500);
   setAttribute(Qt::WA_DeleteOnClose);
   setContextMenuPolicy(Qt::NoContextMenu);
@@ -756,7 +765,7 @@ ConfigDialog::ConfigDialog(RepoView *view, Index index)
 
   // Track actions in a group.
   mActions = new QActionGroup(this);
-  connect(mActions, &QActionGroup::triggered, [this](QAction *action) {
+  connect(mActions, &QActionGroup::triggered, this, [this](QAction *action) {
     mStack->setCurrentIndex(mActions->actions().indexOf(action));
     setWindowTitle(action->text());
   });
@@ -831,7 +840,7 @@ ConfigDialog::ConfigDialog(RepoView *view, Index index)
   // Add edit button.
   QPushButton *edit =
     buttons->addButton(tr("Edit Config File..."), QDialogButtonBox::ResetRole);
-  connect(edit, &QPushButton::clicked, this, [this, view, generalPanel] {
+  connect(edit, &QPushButton::clicked, this, [view, generalPanel] {
     QString file = view->repo().dir().filePath("config");
     if (EditorWindow *window = view->openEditor(file))
       connect(window->widget(), &BlameEditor::saved,

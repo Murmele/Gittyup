@@ -8,10 +8,12 @@
 class TemplateButton: public QToolButton {
     Q_OBJECT
 public:
-    typedef struct Template {
+	struct Template {
         QString name{""};
         QString value{""};
     };
+	static const QString cursorPositionString;
+
     TemplateButton(git::Config config, QWidget* parent = nullptr);
     QMenu* menu() const;
     void showMenu();
@@ -19,7 +21,7 @@ public:
     QList<Template> loadTemplates();
     void updateMenu();
 signals:
-    void templateChanged(const QString& str);
+	void templateChanged(QString& str);
 private:
     void actionTriggered(QAction* action);
 

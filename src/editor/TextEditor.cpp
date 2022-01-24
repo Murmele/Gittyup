@@ -554,32 +554,34 @@ void TextEditor::loadMarkerIcon(Marker marker, const QIcon &icon)
 }
 
 void TextEditor::keyPressEvent(QKeyEvent * ke) {
-    if (ke->key() == Qt::Key_S || ke->key() == Qt::Key_U || ke->key() == Qt::Key_R) {
-        if (!mStatusDiff)
-            return;
-
-        int startLine = lineFromPosition(selectionStart());
-        int end = lineFromPosition(selectionEnd()) + 1;
-        int staged = 0;
-        int diffLines = 0;
-        for (int i = startLine; i < end; i ++) {
-            int mask = markers(i);
-            if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
-                diffLines++;
-                if (mask & 1 << TextEditor::Marker::StagedMarker)
-                    staged++;
-            }
-        }
-
-        if (ke->key() == Qt::Key_S && diffLines - staged > 0) {
-            Command(stageSelected);
-            return;
-        } else if (ke->key() == Qt::Key_U && staged > 0) {
-            Command(unstageSelected);
-            return;
-        } else if (ke->key() == Qt::Key_R && diffLines > 0) {
-            Command(discardSelected);
-            return;
-        }
+  if (
+    mStatusDiff
+    && (ke->key() == Qt::Key_S || ke->key() == Qt::Key_U || ke->key() == Qt::Key_R)
+  ) {
+    int startLine = lineFromPosition(selectionStart());
+    int end = lineFromPosition(selectionEnd()) + 1;
+    int staged = 0;
+    int diffLines = 0;
+    for (int i = startLine; i < end; i ++) {
+      int mask = markers(i);
+      if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
+        diffLines++;
+        if (mask & 1 << TextEditor::Marker::StagedMarker)
+          staged++;
+      }
     }
+
+    if (ke->key() == Qt::Key_S && diffLines - staged > 0) {
+      Command(stageSelected);
+      return;
+    } else if (ke->key() == Qt::Key_U && staged > 0) {
+      Command(unstageSelected);
+      return;
+    } else if (ke->key() == Qt::Key_R && diffLines > 0) {
+      Command(discardSelected);
+      return;
+    }
+  }
+
+  ScintillaIFace::keyPressEvent(ke);
 }

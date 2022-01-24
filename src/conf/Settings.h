@@ -34,6 +34,7 @@ public:
   void endGroup();
 
   QVariant value(const QString &key) const;
+  QVariant value(const QString &key, const QVariant &defaultValue) const;
   QVariant defaultValue(const QString &key) const;
   void setValue(const QString &key, const QVariant &value, bool refresh = false);
 

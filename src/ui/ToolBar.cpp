@@ -16,6 +16,7 @@
 #include "dialogs/PullRequestDialog.h"
 #include "git/Branch.h"
 #include "git/Commit.h"
+#include "ui/HotkeyManager.h"
 #include <QAction>
 #include <QButtonGroup>
 #include <QHBoxLayout>
@@ -730,6 +731,41 @@ private:
   QButtonGroup mButtons;
 };
 
+class TerminalButton : public Button
+{
+public:
+  TerminalButton(QWidget *parent = nullptr)
+    : Button(parent)
+  {}
+
+  void paintEvent(QPaintEvent *event)
+  {
+    Button::paintEvent(event);
+
+    QStyleOptionToolButton opt;
+    initStyleOption(&opt);
+
+    QColor color = opt.palette.buttonText().color();
+    QColor light = (isEnabled() && isActiveWindow()) ? color.lighter() : color;
+
+    QPainter painter(this);
+    painter.setPen(QPen(color, 1.0));
+    if (window()->windowHandle()->devicePixelRatio() > 1.0)
+      painter.setRenderHint(QPainter::Antialiasing);
+
+    qreal x = width() / 2.0;
+    qreal y = height() / 2.0;
+    
+    painter.drawRect(QRectF(x - 8, y - 7, 16, 13));
+
+    painter.setPen(QPen(light, 1.0));
+    painter.drawLine(QLineF(x - 6, y - 5, x - 4, y - 3));
+    painter.drawLine(QLineF(x - 6, y - 1, x - 4, y - 3));
+
+    painter.drawLine(QLineF(x - 2, y - 1, x, y - 1));
+  }
+};
+
 class FileManagerButton : public Button
 {
 public:
@@ -765,6 +801,18 @@ public:
     }).translated(x - 8, y - 7));
   }
 };
+
+static Hotkey terminalHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "tools/terminal",
+  "Tools/Open Terminal"
+);
+
+static Hotkey fileManagerHotkey = HotkeyManager::registerHotkey(
+  nullptr,
+  "tools/fileManager",
+  "Tools/Open File Manager"
+);
 
 } // anon. namespace
 
@@ -907,12 +955,29 @@ ToolBar::ToolBar(MainWindow *parent)
 
   addWidget(new Spacer(-1, this));
 
+  mTerminalButton = new TerminalButton(this);
+  mTerminalButton->setToolTip(tr("Open Terminal"));
+  addWidget(mTerminalButton);
+  connect(mTerminalButton, &Button::clicked, [this] {
+    currentView()->openTerminal();
+  });
+
+  QShortcut *shortcut = new QShortcut(this);
+  terminalHotkey.use(shortcut);
+  connect(shortcut, &QShortcut::activated, mTerminalButton, &Button::click);
+
+  addWidget(new Spacer(4, this));
+
   mFileManagerButton = new FileManagerButton(this);
   mFileManagerButton->setToolTip(tr("Open file manager"));
   addWidget(mFileManagerButton);
   connect(mFileManagerButton, &Button::clicked, [this] {
     currentView()->openFileManager();
   });
+
+  shortcut = new QShortcut(this);
+  fileManagerHotkey.use(shortcut);
+  connect(shortcut, &QShortcut::activated, mFileManagerButton, &Button::click);
 
   addWidget(new Spacer(4, this));
 
@@ -1052,6 +1117,7 @@ void ToolBar::updateStash()
 void ToolBar::updateView()
 {
   RepoView *view = currentView();
+  mTerminalButton->setEnabled(view);
   mFileManagerButton->setEnabled(view);
   mConfigButton->setEnabled(view);
   mLogButton->setEnabled(view);

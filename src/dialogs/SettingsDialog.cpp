@@ -11,6 +11,7 @@
 #include "AboutDialog.h"
 #include "DiffPanel.h"
 #include "ExternalToolsDialog.h"
+#include "HotkeysPanel.h"
 #include "PluginsPanel.h"
 #include "app/Application.h"
 #include "app/CustomTheme.h"
@@ -120,13 +121,13 @@ public:
     mStoreCredentials = new QCheckBox(
       tr("Store credentials in secure storage"), this);
 
-    mUsageReporting = new QCheckBox(
-      tr("Allow collection of usage data"), this);
     QLabel *privacy = new QLabel(tr("<a href='view'>View privacy policy</a>"));
     connect(privacy, &QLabel::linkActivated, [] {
       AboutDialog::openSharedInstance(AboutDialog::Privacy);
     });
-	mUsageReporting->setEnabled(false);
+
+    mSingleInstance = new QCheckBox(
+      tr("Only allow a single running instance"), this);
 
     QFormLayout *form = new QFormLayout;
     form->addRow(tr("User name:"), mName);
@@ -137,8 +138,12 @@ public:
     form->addRow(QString(), mAutoPrune);
     form->addRow(tr("Language:"), mNoTranslation);
     form->addRow(tr("Credentials:"), mStoreCredentials);
-    form->addRow(tr("Usage reporting:"), mUsageReporting);
     form->addRow(QString(), privacy);
+    form->addRow(QString(), new QLabel(tr("%1 will be replaced with the repository's directory")));
+
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
+    form->addRow(tr("Single instance:"), mSingleInstance);
+#endif
 
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->setContentsMargins(16,12,16,12);
@@ -148,14 +153,16 @@ public:
 
     // Connect signals after initializing fields.
     connect(mName, &QLineEdit::textChanged, [](const QString &text) {
-      git::Config::global().setValue("user.name", text);
+      git::Config config = git::Config::global();
+      config.setValue("user.name", text);
     });
 
     connect(mEmail, &QLineEdit::textChanged, [](const QString &text) {
-      git::Config::global().setValue("user.email", text);
+      git::Config config = git::Config::global();
+      config.setValue("user.email", text);
     });
 
-    connect(mFetch, &QCheckBox::toggled, [](bool checked) {
+    connect(mFetch, &QCheckBox::toggled, this, [](bool checked) {
       Settings::instance()->setValue("global/autofetch/enable", checked);
       foreach (MainWindow *window, MainWindow::windows()) {
         for (int i = 0; i < window->count(); ++i)
@@ -189,8 +196,8 @@ public:
       delete CredentialHelper::instance();
     });
 
-    connect(mUsageReporting, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("tracking/enabled", checked);
+    connect(mSingleInstance, &QCheckBox::toggled, [](bool checked) {
+      Settings::instance()->setValue("singleInstance", checked);
     });
   }
 
@@ -214,7 +221,8 @@ public:
 
     mNoTranslation->setChecked(settings->value("translation/disable").toBool());
     mStoreCredentials->setChecked(settings->value("credential/store").toBool());
-    mUsageReporting->setChecked(settings->value("tracking/enabled").toBool());
+
+    mSingleInstance->setChecked(settings->value("singleInstance").toBool());
   }
 
 private:
@@ -228,7 +236,7 @@ private:
   QCheckBox *mAutoPrune;
   QCheckBox *mNoTranslation;
   QCheckBox *mStoreCredentials;
-  QCheckBox *mUsageReporting;
+  QCheckBox *mSingleInstance;
 };
 
 class ToolsPanel : public QWidget
@@ -242,7 +250,7 @@ public:
     // external editor
     QLineEdit *editTool = new QLineEdit(this);
     editTool->setText(mConfig.value<QString>("gui.editor"));
-    connect(editTool, &QLineEdit::textChanged, [this](const QString &text) {
+    connect(editTool, &QLineEdit::textChanged, this, [this](const QString &text) {
       if (text.isEmpty()) {
         mConfig.remove("gui.editor");
       } else {
@@ -258,7 +266,7 @@ public:
     QCheckBox *backup =
       new QCheckBox(tr("Keep backup of merge files (.orig)"), this);
     backup->setChecked(mConfig.value<bool>("mergetool.keepBackup"));
-    connect(backup, &QCheckBox::toggled, [this](bool checked) {
+    connect(backup, &QCheckBox::toggled, this, [this](bool checked) {
       mConfig.setValue("mergetool.keepBackup", checked);
     });
 
@@ -268,8 +276,19 @@ public:
     layout->addRow(tr("External merge:"), mergeTool);
     layout->addRow(tr("Backup files:"), backup);
 
+    QLineEdit *mTerminalCommand = new QLineEdit(this);
+    layout->addRow(tr("Terminal emulator command:"), mTerminalCommand);
+    mTerminalCommand->setText(Settings::instance()->value("terminal/command").toString());
+
+    connect(mTerminalCommand, &QLineEdit::textChanged, [](const QString &text) {
+      Settings::instance()->setValue("terminal/command", text);
+    });
+    
     QLineEdit *mFileManagerCommand = new QLineEdit(this);
-    layout->addRow(tr("File manager command:"), mFileManagerCommand);
+	QHBoxLayout* fileManagerLayout = new QHBoxLayout();
+	fileManagerLayout->addWidget(mFileManagerCommand);
+	fileManagerLayout->addWidget(new QLabel("\"%1\" = Repo Path", this));
+	layout->addRow(tr("File manager command:"), fileManagerLayout);
 
     connect(mFileManagerCommand, &QLineEdit::textChanged, [](const QString &text) {
       Settings::instance()->setValue("filemanager/command", text);
@@ -291,16 +310,16 @@ private:
 
     // React to combo box selections.
     auto signal = QOverload<int>::of(&QComboBox::currentIndexChanged);
-    connect(comboBox, signal, [this, key, comboBox](int index) {
+    connect(comboBox, signal, this, [this, key, comboBox](int index) {
       mConfig.setValue(key, comboBox->currentText());
     });
 
     QPushButton *configure = new QPushButton(tr("Configure"), this);
-    connect(configure, &QPushButton::clicked, [this, comboBox, type] {
+    connect(configure, &QPushButton::clicked, this, [this, comboBox, type] {
       ExternalToolsDialog *dialog = new ExternalToolsDialog(type, this);
 
       // Update combo box when external tools dialog closes.
-      connect(dialog, &QDialog::finished, [dialog, comboBox, type] {
+      connect(dialog, &QDialog::finished, this, [comboBox, type] {
         QString name = comboBox->currentText();
         populateExternalTools(comboBox, type);
         comboBox->setCurrentIndex(comboBox->findText(name));
@@ -380,8 +399,7 @@ public:
       model->item(comboBox->count() - 1)->setEnabled(false);
 
     auto signal = QOverload<int>::of(&QComboBox::currentIndexChanged);
-    connect(comboBox, signal, [this, parent, comboBox] {
-
+    connect(comboBox, signal, this, [this, parent, comboBox] {
       //Add new theme
       if (comboBox->currentIndex() == comboBox->count() - 2) {
         QDialog dialog;
@@ -396,7 +414,7 @@ public:
         create->setEnabled(false);
 
         QLineEdit *nameField = new QLineEdit(&dialog);
-        connect(nameField, &QLineEdit::textChanged, [this, create, nameField] {
+        connect(nameField, &QLineEdit::textChanged, this, [create, nameField] {
           create->setEnabled(!nameField->text().isEmpty());
         });
 
@@ -444,7 +462,7 @@ public:
 
       if (mb.clickedButton() == restart) {
         QWidget *dialog = window();
-        QTimer::singleShot(0, [dialog] {
+        QTimer::singleShot(0, this, [dialog] {
           // Close the dialog.
           dialog->close();
 
@@ -800,7 +818,7 @@ SettingsDialog::SettingsDialog(Index index, QWidget *parent)
 
   // Track actions in a group.
   QActionGroup *actions = new QActionGroup(this);
-  connect(actions, &QActionGroup::triggered,
+  connect(actions, &QActionGroup::triggered, this,
   [this, stack, description, edit](QAction *action) {
     int index = action->data().toInt();
     bool config = (index < Window);
@@ -876,6 +894,14 @@ SettingsDialog::SettingsDialog(Index index, QWidget *parent)
 
   stack->addWidget(new MiscPanel(this));
 
+  // Add hotkeys panel.
+  QAction *hotkeys = toolbar->addAction(QIcon(":/hotkeys.png"), tr("Hotkeys"));
+  hotkeys->setData(Hotkeys);
+  hotkeys->setActionGroup(actions);
+  hotkeys->setCheckable(true);
+
+  stack->addWidget(new HotkeysPanel(this));
+
 #ifdef Q_OS_UNIX
   // Add terminal panel.
   QAction *terminal = toolbar->addAction(QIcon(":/terminal.png"), tr("Terminal"));
@@ -902,8 +928,6 @@ SettingsDialog::SettingsDialog(Index index, QWidget *parent)
 
 void SettingsDialog::openSharedInstance(Index index)
 {
-  Application::track("SettingsDialog");
-
   static QPointer<SettingsDialog> dialog;
   if (dialog) {
     dialog->show();

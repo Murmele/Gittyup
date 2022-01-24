@@ -19,8 +19,16 @@
 
 namespace git {
 
-Rebase::Rebase(git_repository *repo, git_rebase *rebase)
-  : mRepo(repo), d(rebase, git_rebase_free)
+Rebase::Rebase(
+  git_repository *repo,
+  git_rebase *rebase,
+  const QString &overrideUser,
+  const QString &overrideEmail
+)
+  : mRepo(repo),
+  d(rebase, git_rebase_free),
+  mOverrideUser(overrideUser),
+  mOverrideEmail(overrideEmail)
 {}
 
 int Rebase::count() const
@@ -50,7 +58,13 @@ Commit Rebase::commit()
 {
   git_oid id;
   git_rebase *ptr = d.data();
-  Signature sig = Repository(mRepo).defaultSignature();
+
+  Signature sig = Repository(mRepo).defaultSignature(
+    nullptr,
+    mOverrideUser,
+    mOverrideEmail
+  );
+
   if (int err = git_rebase_commit(&id, ptr, nullptr, sig, nullptr, nullptr)) {
     if (err != GIT_EAPPLIED)
       return Commit();
@@ -81,7 +95,13 @@ void Rebase::abort()
 bool Rebase::finish()
 {
   Repository repo(mRepo);
-  int error = git_rebase_finish(d.data(), repo.defaultSignature());
+
+  int error = git_rebase_finish(d.data(), repo.defaultSignature(
+    nullptr,
+    mOverrideUser,
+    mOverrideEmail
+  ));
+
   emit repo.notifier()->referenceUpdated(repo.head());
   return !error;
 }

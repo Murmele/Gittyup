@@ -413,7 +413,7 @@ StartDialog::StartDialog(QWidget *parent)
   mRepoList = new QListView(this);
   mRepoList->setIconSize(QSize(32, 32));
   mRepoList->setSelectionMode(QAbstractItemView::ExtendedSelection);
-  connect(mRepoList, &QListView::clicked, [this](const QModelIndex &index) {
+  connect(mRepoList, &QListView::clicked, this, [this](const QModelIndex &index) {
     if (!index.data(Qt::UserRole).isValid()) {
       switch (index.row()) {
         case RepoModel::Clone: mClone->trigger(); break;
@@ -427,12 +427,12 @@ StartDialog::StartDialog(QWidget *parent)
 
   RepoModel *repoModel = new RepoModel(mRepoList);
   mRepoList->setModel(repoModel);
-  connect(repoModel, &RepoModel::modelReset, [this] {
+  connect(repoModel, &RepoModel::modelReset, this, [this] {
     mRepoList->setCurrentIndex(mRepoList->model()->index(0, 0));
   });
 
   mRepoFooter = new Footer(mRepoList);
-  connect(mRepoFooter, &Footer::minusClicked, [this] {
+  connect(mRepoFooter, &Footer::minusClicked, this, [this] {
     // Sort selection in reverse order.
     QModelIndexList indexes = mRepoList->selectionModel()->selectedIndexes();
     std::sort(indexes.begin(), indexes.end(),
@@ -449,9 +449,9 @@ StartDialog::StartDialog(QWidget *parent)
   mRepoFooter->setPlusMenu(repoPlusMenu);
 
   mClone = repoPlusMenu->addAction(tr("Clone Repository"));
-  connect(mClone, &QAction::triggered, [this] {
+  connect(mClone, &QAction::triggered, this, [this] {
     CloneDialog *dialog = new CloneDialog(CloneDialog::Clone, this);
-    connect(dialog, &CloneDialog::accepted, [this, dialog] {
+    connect(dialog, &CloneDialog::accepted, this, [this, dialog] {
       if (MainWindow *window = openWindow(dialog->path()))
         window->currentView()->addLogEntry(
           dialog->message(), dialog->messageTitle());
@@ -460,7 +460,7 @@ StartDialog::StartDialog(QWidget *parent)
   });
 
   mOpen = repoPlusMenu->addAction(tr("Open Existing Repository"));
-  connect(mOpen, &QAction::triggered, [this] {
+  connect(mOpen, &QAction::triggered, this, [this] {
     // FIXME: Filter out non-git dirs.
     QFileDialog *dialog =
       new QFileDialog(this, tr("Open Repository"), QDir::homePath());
@@ -473,9 +473,9 @@ StartDialog::StartDialog(QWidget *parent)
   });
 
   mInit = repoPlusMenu->addAction(tr("Initialize New Repository"));
-  connect(mInit, &QAction::triggered, [this] {
+  connect(mInit, &QAction::triggered, this, [this] {
     CloneDialog *dialog = new CloneDialog(CloneDialog::Init, this);
-    connect(dialog, &CloneDialog::accepted, [this, dialog] {
+    connect(dialog, &CloneDialog::accepted, this, [this, dialog] {
       if (MainWindow *window = openWindow(dialog->path()))
         window->currentView()->addLogEntry(dialog->message(), dialog->messageTitle());
     });
@@ -486,7 +486,7 @@ StartDialog::StartDialog(QWidget *parent)
   mRepoFooter->setContextMenu(repoContextMenu);
 
   QAction *clear = repoContextMenu->addAction(tr("Clear All"));
-  connect(clear, &QAction::triggered, [this] {
+  connect(clear, &QAction::triggered, [] {
     RecentRepositories::instance()->clear();
   });
 
@@ -496,7 +496,7 @@ StartDialog::StartDialog(QWidget *parent)
   showFullPath->setCheckable(true);
   showFullPath->setChecked(recentChecked);
   repoModel->setShowFullPath(recentChecked);
-  connect(showFullPath, &QAction::triggered, [repoModel](bool checked) {
+  connect(showFullPath, &QAction::triggered, this, [repoModel](bool checked) {
     QSettings().setValue("start/recent/fullpath", checked);
     repoModel->setShowFullPath(checked);
   });
@@ -520,13 +520,13 @@ StartDialog::StartDialog(QWidget *parent)
   mHostTree->setExpandsOnDoubleClick(false);
   mHostTree->setIconSize(QSize(32, 32));
   mHostTree->setSelectionMode(QAbstractItemView::ExtendedSelection);
-  connect(mHostTree, &QTreeView::clicked, [this](const QModelIndex &index) {
+  connect(mHostTree, &QTreeView::clicked, this, [this](const QModelIndex &index) {
     int rows = mHostTree->model()->rowCount(index);
     if (!rows && !index.data(RepositoryRole).isValid())
       edit(index);
   });
 
-  connect(mHostTree, &QTreeView::doubleClicked,
+  connect(mHostTree, &QTreeView::doubleClicked, this,
   [this](const QModelIndex &index) {
     QModelIndex parent = index.parent();
     if (parent.isValid()) {
@@ -542,7 +542,7 @@ StartDialog::StartDialog(QWidget *parent)
 
   HostModel *hostModel = new HostModel(style(), mHostTree);
   mHostTree->setModel(hostModel);
-  connect(hostModel, &QAbstractItemModel::modelReset, [this] {
+  connect(hostModel, &QAbstractItemModel::modelReset, this, [this] {
     QModelIndex index = mHostTree->model()->index(0, 0);
     mHostTree->setRootIsDecorated(index.data(AccountRole).isValid());
     mHostTree->expandAll();
@@ -551,14 +551,14 @@ StartDialog::StartDialog(QWidget *parent)
   mHostTree->setItemDelegate(new ProgressDelegate(this));
 
   mHostFooter = new Footer(mHostTree);
-  connect(mHostFooter, &Footer::plusClicked, [this] { edit(); });
+  connect(mHostFooter, &Footer::plusClicked, this, [this] { edit(); });
   connect(mHostFooter, &Footer::minusClicked, this, &StartDialog::remove);
 
   QMenu *hostContextMenu = new QMenu(this);
   mHostFooter->setContextMenu(hostContextMenu);
 
   QAction *refresh = hostContextMenu->addAction(tr("Refresh"));
-  connect(refresh, &QAction::triggered, [] {
+  connect(refresh, &QAction::triggered, this, [] {
     Accounts *accounts = Accounts::instance();
     for (int i = 0; i < accounts->count(); ++i)
       accounts->account(i)->connect();
@@ -569,14 +569,14 @@ StartDialog::StartDialog(QWidget *parent)
   showFullName->setCheckable(true);
   showFullName->setChecked(remoteChecked);
   hostModel->setShowFullName(remoteChecked);
-  connect(showFullName, &QAction::triggered, [hostModel](bool checked) {
+  connect(showFullName, &QAction::triggered, this, [hostModel](bool checked) {
     QSettings().setValue("start/remote/fullname", checked);
     hostModel->setShowFullName(checked);
   });
 
   // Clear the other list when this selection changes.
   QItemSelectionModel *repoSelModel = mRepoList->selectionModel();
-  connect(repoSelModel, &QItemSelectionModel::selectionChanged, [this] {
+  connect(repoSelModel, &QItemSelectionModel::selectionChanged, this, [this] {
     if (!mRepoList->selectionModel()->selectedIndexes().isEmpty())
       mHostTree->clearSelection();
     updateButtons();
@@ -584,7 +584,7 @@ StartDialog::StartDialog(QWidget *parent)
 
   // Clear the other list when this selection changes.
   QItemSelectionModel *hostSelModel = mHostTree->selectionModel();
-  connect(hostSelModel, &QItemSelectionModel::selectionChanged, [this] {
+  connect(hostSelModel, &QItemSelectionModel::selectionChanged, this, [this] {
     if (!mHostTree->selectionModel()->selectedIndexes().isEmpty())
       mRepoList->clearSelection();
     updateButtons();
@@ -671,8 +671,6 @@ void StartDialog::accept()
 
 StartDialog *StartDialog::openSharedInstance()
 {
-  Application::track("StartDialog");
-
   static QPointer<StartDialog> dialog;
   if (dialog) {
     dialog->show();
@@ -776,7 +774,7 @@ void StartDialog::edit(const QModelIndex &index)
     return;
 
   CloneDialog *dialog = new CloneDialog(CloneDialog::Clone, this, repo);
-  connect(dialog, &CloneDialog::accepted, [this, index, dialog] {
+  connect(dialog, &CloneDialog::accepted, this, [this, index, dialog] {
     // Set local path.
     Account *account = Accounts::instance()->account(index.parent().row());
     account->setRepositoryPath(index.row(), dialog->path());

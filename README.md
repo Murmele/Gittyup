@@ -1,5 +1,4 @@
-[![Actions Status](https://github.com/Murmele/gitahead/workflows/GitAhead%20%28master%29/badge.svg)](https://github.com/Murmele/gitahead/actions) [![Actions Status](https://github.com/Murmele/gitahead/workflows/GitAhead%20%28stage%29/badge.svg)](https://github.com/Murmele/gitahead/actions)
-
+[![Actions Status](https://github.com/Murmele/Gittyup/actions/workflows/build.yml/badge.svg)](https://github.com/Murmele/Gittyup/actions/workflows/build.yml)
 
 Gittyup
 ==================================
@@ -10,6 +9,8 @@ binary for Windows, Linux, and macOS](https://gitahead.github.io/gitahead.com/),
 following the directions below.
 
 Gittyup is a continuation of the [GitAhead](https://github.com/gitahead/gitahead) client.
+
+![Gittyup](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/dark.png)
 
 How to Get Help
 ---------------
@@ -126,7 +127,7 @@ documentation and translations. By contributing, you agree to release
 your contributions under the terms of the license.
 
 Contribute by following the typical
-[GitHub workflow](https://guides.github.com/introduction/flow/index.html)
+[GitHub workflow](https://docs.github.com/en/get-started/quickstart/github-flow)
 for pull requests. Fork the repository and make changes on a new named
 branch. Create pull requests against the `master` branch. Follow the
 [seven guidelines](https://chris.beams.io/posts/git-commit/) to writing a
