@@ -59,6 +59,17 @@ jobs:
         cache: false
         branch: development
 
+    - name: Release to Github Pages
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/GithubReleases' }} # TODO change to master!
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            com.github.Murmele.Gittyup/*
+
 
   build:
     runs-on: ${{ matrix.env.os }}
