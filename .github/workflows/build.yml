@@ -200,7 +200,7 @@ jobs:
           name: Gittyup ${{ matrix.env.name }}
 
       - name: Release to Github Pages
-        if: ${{ github.ref == 'refs/heads/GithubReleases' }} # TODO change to master!
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/GithubReleases' }} # TODO change to master!
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
