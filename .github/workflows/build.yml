@@ -199,20 +199,19 @@ jobs:
           path: build/release/pack/Gittyup-*
           name: Gittyup ${{ matrix.env.name }}
 
-      - name: Release
+      - name: Release to Github Pages
         on:
           push:
             branches:
               - "GithubReleases" # TODO: change to master!
-        steps:
-          - uses: "marvinpinto/action-automatic-releases@latest"
-            with:
-              repo_token: "${{ secrets.GITHUB_TOKEN }}"
-              automatic_release_tag: "latest"
-              prerelease: true
-              title: "Development Build"
-              files: |
-                build/release/pack/Gittyup-*
+        uses: "marvinpinto/action-automatic-releases@latest"
+          with:
+            repo_token: "${{ secrets.GITHUB_TOKEN }}"
+            automatic_release_tag: "latest"
+            prerelease: true
+            title: "Development Build"
+            files: |
+              build/release/pack/Gittyup-*
             
       - name: Test
         # TODO: Re-Enable this when https://github.com/actions/runner/issues/1206 gets resolved
