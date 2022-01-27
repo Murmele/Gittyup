@@ -84,8 +84,14 @@ bool ShowTool::openFileManager(QString path)
   for(QString &part : cmdParts)
     part = part.arg(path);
 
+#if defined(FLATPAK)
+  QStringList arguments;
+  arguments << "--host" << cmdParts;
+  return QProcess::startDetached("flatpak-spawn", arguments);
+#else
   QString program = cmdParts.takeFirst();
   return QProcess::startDetached(program, cmdParts);
+#endif
 }
 
 ShowTool::ShowTool(const QString &file, QObject *parent)
