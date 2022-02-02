@@ -4,8 +4,8 @@ Gittyup
 ==================================
 
 Gittyup is a graphical Git client designed to help you understand
-and manage your source code history. It's available as a [pre-built
-binary for Windows, Linux, and macOS](https://gitahead.github.io/gitahead.com/), or can be built from source by
+and manage your source code history. The pre-release is available as a [pre-built
+binary for Windows](https://github.com/Murmele/Gittyup/releases), or can be built from source by
 following the directions below.
 
 Gittyup is a continuation of the [GitAhead](https://github.com/gitahead/gitahead) client.
