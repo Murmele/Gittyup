@@ -46,9 +46,6 @@ public:
   void findNext() override;
   void findPrevious() override;
 
-protected:
-  void contextMenuEvent(QContextMenuEvent *event) override;
-
 private slots:
   void collapseCountChanged(int count);
 

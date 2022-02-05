@@ -7,6 +7,7 @@
 // Author: Martin Marmsoler
 //
 
+#include "FileContextMenu.h"
 #include "TreeView.h"
 #include "ColumnView.h"
 #include "ViewDelegate.h"
@@ -97,46 +98,17 @@ void TreeView::discard(const QModelIndex& index)
 
 void TreeView::onCustomContextMenu(const QPointF& point)
 {
-    auto proxy = qobject_cast<TreeProxy*>(model());
-    if (!proxy)
-        return;
+  QStringList files;
+  QModelIndexList indexes = selectionModel()->selectedIndexes();
+  foreach (const QModelIndex &index, indexes)
+    files.append(index.data(Qt::EditRole).toString());
 
+  if (files.isEmpty())
+    return;
 
-    QPoint p(qRound(point.x()), qRound(point.y()));
-    QModelIndex index = indexAt(p);
-    if (!index.isValid())
-        return;
-
-    QVariant checkState = index.data(Qt::CheckStateRole);
-
-    if (checkState.isNull()) {
-        // at the moment there is no case that a context menu
-        // is shown when a commit, instead of the
-        // current changes is selected
-        return;
-    }
-
-    QMenu contextMenu;
-    QAction a;
-    //    if (proxy->staged()) {
-    //        a.setText(tr("Unstage selected"));
-
-    //    } else {
-    //        a.setText(tr("Stage selected"));
-    //    }
-    //    contextMenu.addAction(&a);
-
-    // means that the current head is selected where
-    // changes are visible. If not valid it means a commit
-    // is selected and then it should not be possible to
-    // discard
-    auto discardAction = QAction(tr("Discard selected"));
-    contextMenu.addAction(&discardAction);
-    connect(&discardAction, &QAction::triggered, [this, index]() {
-        this->discard(index);
-    });
-
-    contextMenu.exec(viewport()->mapToGlobal(p));
+  RepoView *view = RepoView::parentView(this);
+  FileContextMenu menu(view, files, view->repo().index());
+  menu.exec(viewport()->mapToGlobal(point.toPoint()));
 }
 
 bool TreeView::eventFilter(QObject *obj, QEvent *event)
