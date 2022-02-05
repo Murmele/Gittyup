@@ -14,6 +14,8 @@ public:
     : QItemDelegate(parent)
   {}
 
+  void setDrawArrow(bool enable) { mDrawArrow = enable; }
+
   void paint(
     QPainter *painter,
     const QStyleOptionViewItem &option,
@@ -22,6 +24,9 @@ public:
   QSize sizeHint(
     const QStyleOptionViewItem &option,
     const QModelIndex &index) const override;
+
+private:
+  bool mDrawArrow = true;
 };
 
 #endif // VIEWDELEGATE_H

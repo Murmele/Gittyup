@@ -111,7 +111,9 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
   treewrapperStaged->setSourceModel(mDiffTreeModel);
   stagedFiles->setModel(treewrapperStaged);
   stagedFiles->setHeaderHidden(true);
-  stagedFiles->setItemDelegateForColumn(0, new ViewDelegate());
+  ViewDelegate *stagedDelegate = new ViewDelegate();
+  stagedDelegate->setDrawArrow(false);
+  stagedFiles->setItemDelegateForColumn(0, stagedDelegate);
 
   QHBoxLayout* hBoxLayout = new QHBoxLayout();
   QLabel* label = new QLabel(kStagedFiles);
@@ -133,7 +135,9 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
   treewrapperUnstaged->setSourceModel(mDiffTreeModel);
   unstagedFiles->setModel(treewrapperUnstaged);
   unstagedFiles->setHeaderHidden(true);
-  unstagedFiles->setItemDelegateForColumn(0, new ViewDelegate());
+  ViewDelegate *unstagedDelegate = new ViewDelegate();
+  unstagedDelegate->setDrawArrow(false);
+  unstagedFiles->setItemDelegateForColumn(0, unstagedDelegate);
 
   hBoxLayout = new QHBoxLayout();
   mUnstagedCommitedFiles = new QLabel(kUnstagedFiles);

@@ -14,7 +14,7 @@ void ViewDelegate::paint(
   drawBackground(painter, opt, index);
 
   // Draw >.
-  if (index.model()->hasChildren(index)) {
+  if (mDrawArrow && index.model()->hasChildren(index)) {
 	painter->save();
 	painter->setRenderHint(QPainter::Antialiasing, true);
 
