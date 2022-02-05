@@ -380,25 +380,10 @@ void DoubleTreeWidget::findNext() { mEditor->findNext(); }
 
 void DoubleTreeWidget::findPrevious() { mEditor->findPrevious(); }
 
-void DoubleTreeWidget::contextMenuEvent(QContextMenuEvent *event) {
-  QStringList files;
-  QModelIndexList indexes = unstagedFiles->selectionModel()->selectedIndexes();
-  foreach (const QModelIndex &index, indexes)
-    files.append(index.data(Qt::EditRole).toString());
-
-  indexes = stagedFiles->selectionModel()->selectedIndexes();
-  foreach (const QModelIndex &index, indexes)
-    files.append(index.data(Qt::EditRole).toString());
-
-  if (files.isEmpty())
-    return;
-
-  RepoView *view = RepoView::parentView(this);
-  FileContextMenu menu(view, files);
-  menu.exec(event->globalPos());
+void DoubleTreeWidget::cancelBackgroundTasks()
+{
+  mEditor->cancelBlame();
 }
-
-void DoubleTreeWidget::cancelBackgroundTasks() { mEditor->cancelBlame(); }
 
 void DoubleTreeWidget::storeSelection() {
   QModelIndexList indexes = stagedFiles->selectionModel()->selectedIndexes();

@@ -7,6 +7,7 @@
 // Author: Martin Marmsoler
 //
 
+#include "FileContextMenu.h"
 #include "TreeView.h"
 #include "ColumnView.h"
 #include "ViewDelegate.h"
@@ -84,18 +85,33 @@ void TreeView::discard(const QModelIndex &index) {
 
   QPushButton *discard =
       dialog->addButton(tr("Discard"), QMessageBox::AcceptRole);
-  connect(discard, &QPushButton::clicked, [this, m, sIndex] {
-    RepoView *view = RepoView::parentView(this);
-    assert(view);
-    if (!m->discard(sIndex)) {
-      QString patchName = sIndex.data(Qt::DisplayRole).toString();
-      LogEntry *parent = view->addLogEntry(patchName, tr("Discard"));
-      view->error(parent, tr("discard"), patchName);
-    }
-    // FIXME: Work dir changed?
-    view->refresh();
-  });
-  dialog->exec();
+    connect(discard, &QPushButton::clicked, [this, m, sIndex] {
+        RepoView *view = RepoView::parentView(this);
+        assert(view);
+        if (!m->discard(sIndex)) {
+            QString patchName = sIndex.data(Qt::DisplayRole).toString();
+            LogEntry *parent = view->addLogEntry(patchName, tr("Discard"));
+            view->error(parent, tr("discard"), patchName);
+        }
+        // FIXME: Work dir changed?
+        view->refresh();
+    });
+    dialog->exec();
+}
+
+void TreeView::onCustomContextMenu(const QPointF& point)
+{
+  QStringList files;
+  QModelIndexList indexes = selectionModel()->selectedIndexes();
+  foreach (const QModelIndex &index, indexes)
+    files.append(index.data(Qt::EditRole).toString());
+
+  if (files.isEmpty())
+    return;
+
+  RepoView *view = RepoView::parentView(this);
+  FileContextMenu menu(view, files, view->repo().index());
+  menu.exec(viewport()->mapToGlobal(point.toPoint()));
 }
 
 void TreeView::onCustomContextMenu(const QPointF &point) {
