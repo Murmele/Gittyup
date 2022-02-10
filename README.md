@@ -21,7 +21,7 @@ including the `gittyup` tag. Remember to search for existing questions
 before creating a new one.
 
 Report bugs in Gittyup by opening an issue in the
-[issue tracker](https://github.com/Murmele/gitahead/issues).
+[issue tracker](https://github.com/Murmele/gittyup/issues).
 Remember to search for existing issues before creating a new one.
 
 If you still need help, check out our Matrix channel
