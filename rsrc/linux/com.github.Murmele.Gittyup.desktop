@@ -2,7 +2,7 @@
 Encoding=UTF-8
 Name=Gittyup
 Comment=Graphical Git client for Windows, Linux and macOS
-Exec=/usr/bin/gittyup
+Exec=gittyup
 StartupWMClass=gittyup
 Icon=gittyup
 Terminal=false
