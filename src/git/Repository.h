@@ -210,11 +210,10 @@ public:
   bool cherryPick(const Commit &commit);
 
   // checkout
-  bool checkout(
-    const Commit &commit,
+  bool checkout(const Commit &commit,
     CheckoutCallbacks *callbacks = nullptr,
     const QStringList &paths = QStringList(),
-    int strategy = GIT_CHECKOUT_SAFE);
+    int strategy = GIT_CHECKOUT_SAFE, const QString &targetDirectory = QString());
 
   // Clean up after merge/rebase/cherry-pick/etc.
   int state() const;
