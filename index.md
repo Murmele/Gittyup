@@ -13,12 +13,12 @@ The [development version](https://github.com/Murmele/Gittyup/releases) is availa
 
 or, can be built from source by following the directions in the [Gittyup Repository](https://github.com/Murmele/Gittyup#how-to-build).
 
-Gittyup is a continuation of the [GitAhead](https://github.com/gitahead/gitahead) client.
+To see the changes of the current version please have a look at the <A href="#changelog">changelog</A> section
 
 ![Gittyup](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/main_dark_orig.png)
 
 How to Get Help
----------------
+===============
 
 Ask questions about building or using Gittyup on
 [Stack Overflow](http://stackoverflow.com/questions/tagged/gittyup) by
@@ -33,45 +33,51 @@ If you still need help, check out our Matrix channel
 [Gittyup:martix.org](https://matrix.to/#/#Gittyup:matrix.org).
 
 Features
---------
+========
 
-# Single branch view to focus on your work
+### Single branch view to focus on your work
 Select "Show Selected Branch" in the drop down menu above the commit list
 ![Single branch](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/main_show_selected_branch.png)
 
-# Single line staging 
+### Single line staging 
 by eighter clicking on the checkboxes next to each line or by selecting the relevant code and pressing "S". For unstaging you can uncheck the checkboxes or press "U". To revert changes, select the text and press "R".
 
 ![Single line staging](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/double_treeview_single_line_staging.png)
 
-# Fullscreen
+### Fullscreen
 of the history or the change dialog by pressing Ctrl+M
 
-# Staring commits
+### Staring commits
 to find specific commits much faster
 ![Staring commits](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/starring_commits.png)
 
-# Tag selection
+### Tag selection
 Use an existing tag as template for your next tag. So you never have to look which is your latest tag
 
 ![Tag selection](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/tag_selection.png)
 
-# Tree View
+### Tree View
 To visit the blame with its history for unchanged files
 
 ![Tree View](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/treeview.png)
 
-# Blame View
+### Blame View
 See blame of the current version with an integrated timeline to see who changed which line
 
-# Commit message template
+### Commit message template
 Create you commit messages according a defined template
 
 ![Commit message template selection](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/CommitMessageTemplateSelection.png)
 
 ![Commit message template editor](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/CommitMessageTemplateEditor.png)
 
-# Tabs
+### Tabs
 to be able to switch fast between repositories
 
-# And a lot more ...
+### And a lot more ...
+
+Changelog
+=========
+
+{% include_relative changelog.md %}
+
