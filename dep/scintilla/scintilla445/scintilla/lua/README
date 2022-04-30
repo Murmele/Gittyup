@@ -1,7 +1,0 @@
-
-This is Lua 5.3.4, released on 12 Jan 2017.
-
-For further information about Lua, see doc/manual.html.
-
-Scintilla only uses Lua with its LPeg lexer, which is disabled by default.
-In order to enable it, see ../doc/LPegLexer.html.

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="64" height="64">
-  <rect x="3" y="3" width="60" height="60" rx="6" ry="6" fill="darkgray" />
-  <rect x="1" y="1" width="60" height="60" rx="6" ry="6" fill="forestgreen" stroke-width="1" stroke="darkgreen" />
-  <text x="15" y="33" font-family="monospace" font-weight="bold" font-size="24" letter-spacing="2px" fill="white" fill-opacity="0.9">++</text>
-  <text x="15" y="49" font-family="monospace" font-weight="bold" font-size="24" letter-spacing="2px" fill="white" fill-opacity="0.9">&#x2212;&#x2212;</text>
-</svg>

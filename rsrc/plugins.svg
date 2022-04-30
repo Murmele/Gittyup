@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="64" height="64">
-  <rect x="3" y="3" width="60" height="60" rx="6" ry="6" fill="darkgray" />
-  <rect x="1" y="1" width="60" height="60" rx="6" ry="6" fill="goldenrod" stroke-width="1" stroke="darkgoldenrod" />
-  <path d="M 20 15 H 42 C 52 15, 52 47, 42 47 H 20 C 10 47, 10 15, 20 15" fill="white" />
-  <rect x="23" y="23" width="3" height="9" fill="goldenrod" />
-  <rect x="36" y="23" width="3" height="9" fill="goldenrod" />
-  <path d="M 28 41 C 27 33, 35 33, 34 41 H 29" fill="goldenrod" />
-</svg>
