@@ -14,6 +14,7 @@ Second release of Gittyup
 * Do not automatically abort rebase if conflicts occur
 * Add possibility to save file of any version on local system
 * Add possibility to open a file of any version with default editor
+
 ----
 
 ### v1.0.0 - 2021-11-18
