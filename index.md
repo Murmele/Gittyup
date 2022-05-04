@@ -9,7 +9,8 @@ The release version is available for
 
 The [development version](https://github.com/Murmele/Gittyup/releases) is available either as pre-built for
 - [flatpak for Linux](https://github.com/Murmele/Gittyup/releases/download/latest/Gittyup.flatpak),
-- [32](https://github.com/Murmele/Gittyup/releases/download/latest/Gittyup-win32-1.1.0-dev.exe) / [64](https://github.com/Murmele/Gittyup/releases/download/latest/Gittyup-win64-1.1.0-dev.exe) binary for Windows
+- [32](https://github.com/Murmele/Gittyup/releases/download/latest/Gittyup-win32-1.1.0-dev.exe) / [64](https://github.com/Murmele/Gittyup/releases/download/latest/Gittyup-win64-1.1.0-dev.exe) binary for Windows,
+- [macOS X](https://github.com/Murmele/Gittyup/releases/download/latest/Gittyup-1.1.0-dev.dmg)
 
 or, can be built from source by following the directions in the [Gittyup Repository](https://github.com/Murmele/Gittyup#how-to-build).
 
