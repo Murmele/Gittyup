@@ -104,12 +104,12 @@ QString extractRepository(const QString &filename, bool useTempDir) {
 
   QDir repoPath(TESTREPOSITORIES_PATH);
   QFileInfo f(repoPath.filePath(filename));
-  char *path_c;
+  QByteArray exportPath;
   if (useTempDir)
-    path_c = tempDir.path().toLatin1().data();
+    exportPath = tempDir.path().toLatin1();
   else
-    path_c = repoPath.path().toLatin1().data();
-  QString exportFolder = QDir(path_c).filePath(f.baseName());
+    exportPath = repoPath.path().toLatin1();
+  QString exportFolder = QDir(exportPath).filePath(f.baseName());
 
   if (!QDir(exportFolder).exists() && !f.exists()) {
     qDebug() << "Zip file does not exist: " << f;
@@ -121,21 +121,18 @@ QString extractRepository(const QString &filename, bool useTempDir) {
     return "";
   }
 
-  const char *filename_c = f.absoluteFilePath().toLatin1().data();
-
   auto folder = QDir(exportFolder);
+
   if (folder.exists()) {
     // Delete folder, because if the testrepo is used by multiple tests
     // there should be a clean environment
     folder.removeRecursively();
-
-    // for some reason path_c and filename_c changed. Don't understand why
-    if (useTempDir)
-      path_c = tempDir.path().toLatin1().data();
-    else
-      path_c = repoPath.path().toLatin1().data();
-    filename_c = f.absoluteFilePath().toLatin1().data();
   }
+  const char *path_c = exportPath.data();
+  // Copy data because for some reason the pointer to the char array might change otherwise
+  QByteArray ba_filename = f.absoluteFilePath().toLatin1();
+  const char *filename_c = ba_filename.data();
+
 
   int arg = 2;
   auto res = zip_extract(filename_c, path_c, on_extract_entry, &arg);
