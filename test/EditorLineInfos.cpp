@@ -839,6 +839,8 @@ void TestEditorLineInfo::windowsCRLF() {
   delete fw;
 }
 
+// TODO: add test with crlf and multiple hunks!
+
 
 void TestEditorLineInfo::cleanupTestCase() { qWait(closeDelay); }
 

@@ -1180,6 +1180,7 @@ QByteArray HunkWidget::apply() const {
   QByteArray ar;
   int lineCount = mEditor->lineCount();
   for (int i = 0; i < lineCount; i++) {
+    qDebug() << mEditor->line(i);
     bool appended = false;
     int mask = mEditor->markers(i);
     if (mask & 1 << TextEditor::Marker::Addition) {

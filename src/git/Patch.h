@@ -105,14 +105,14 @@ public:
    * \brief populatePreimage
    * \param image Populated preimage
    */
-  void populatePreimage(QList<QList<QByteArray>> &image) const;
+  void populatePreimage(QList<QList<QByteArray>> &image, bool crlf) const;
   /*!
    * Splits the content of fileContent into lines and stores the content in
    * image \brief populatePreimage \param image Populated preimage \param
    * fileContent Content of a file in which changes should occur
    */
   static void populatePreimage(QList<QList<QByteArray>> &image,
-                               QByteArray fileContent);
+                               QByteArray fileContent, bool crlf);
   // Apply the given hunk indexes to the old buffer.
 
   /*!
@@ -124,19 +124,7 @@ public:
    */
   QByteArray apply(const QBitArray &hunks,
                    const FilterList &filters = FilterList()) const;
-  QByteArray apply(int hidx, int start_line, int end_line,
-                   const FilterList &filters = FilterList()) const;
-  QByteArray apply(int hidx, QByteArray &hunkData,
-                   const FilterList &filters = FilterList()) const;
-  QByteArray apply(int hidx, QByteArray &hunkData, QByteArray fileContent,
-                   const FilterList &filters = FilterList()) const;
-  /*!
-   * applies all hunk data to the patch.
-   * Important: The length of hunkData must match with the number of hunks in
-   * the patch! \brief apply \param hunkData hunk contents \param filters
-   * \return
-   */
-  QByteArray apply(QList<QByteArray> &hunkData,
+  QByteArray apply(int hidx, QByteArray &hunkData, QByteArray fileContent, bool crlf,
                    const FilterList &filters = FilterList()) const;
 
   /*!

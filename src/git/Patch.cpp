@@ -289,23 +289,28 @@ void Patch::setConflictResolution(int hidx, ConflictResolution resolution) {
   writeConflictResolutions(repo, map);
 }
 
-void Patch::populatePreimage(QList<QList<QByteArray>> &image) const {
+void Patch::populatePreimage(QList<QList<QByteArray>> &image, bool crlf) const {
   // Populate preimage.
   // image holds the text and changes are made in this list
   // this list is written afterwards back into the file
   QByteArray source = blob(Diff::OldFile).content();
 
-  populatePreimage(image, source);
+  populatePreimage(image, source, crlf);
 }
 
 void Patch::populatePreimage(QList<QList<QByteArray>> &image,
-                             QByteArray fileContent) {
+                             QByteArray fileContent, bool crlf) {
+
+  QString newLineCharacter = QStringLiteral("\n");
+  if (crlf)
+      newLineCharacter =  QStringLiteral("\r\n");
+
   int index = 0;
-  int newline = fileContent.indexOf('\n');
+  int newline = fileContent.indexOf(newLineCharacter.toUtf8());
   while (newline >= 0) {
     image.append({fileContent.mid(index, newline - index + 1)});
     index = newline + 1;
-    newline = fileContent.indexOf('\n', index);
+    newline = fileContent.indexOf(newLineCharacter.toUtf8(), index);
   }
 
   image.append({fileContent.mid(index)});
@@ -337,7 +342,7 @@ QByteArray Patch::generateResult(QList<QList<QByteArray>> &image,
 QByteArray Patch::apply(const QBitArray &hunks,
                         const FilterList &filters) const {
   QList<QList<QByteArray>> image;
-  populatePreimage(image);
+  populatePreimage(image, false);
 
   // Apply hunks.
   for (int i = 0; i < hunks.size(); ++i) {
@@ -350,39 +355,11 @@ QByteArray Patch::apply(const QBitArray &hunks,
   return generateResult(image, filters);
 }
 
-QByteArray Patch::apply(int hidx, int start_line, int end_line,
+QByteArray Patch::apply(int hidx, QByteArray &hunkData, QByteArray fileContent, bool crlf,
                         const FilterList &filters) const {
   QList<QList<QByteArray>> image;
-  populatePreimage(image);
-  apply(image, hidx, start_line, end_line);
-  return generateResult(image, filters);
-}
-
-QByteArray Patch::apply(int hidx, QByteArray &hunkData,
-                        const FilterList &filters) const {
-  QList<QList<QByteArray>> image;
-  populatePreimage(image);
+  populatePreimage(image, fileContent, crlf);
   apply(image, hidx, hunkData);
-  return generateResult(image, filters);
-}
-
-QByteArray Patch::apply(int hidx, QByteArray &hunkData, QByteArray fileContent,
-                        const FilterList &filters) const {
-  QList<QList<QByteArray>> image;
-  populatePreimage(image, fileContent);
-  apply(image, hidx, hunkData);
-  return generateResult(image, filters);
-}
-
-QByteArray Patch::apply(QList<QByteArray> &hunkData,
-                        const FilterList &filters) const {
-
-  assert(git_patch_num_hunks(d.data()) == hunkData.length());
-  QList<QList<QByteArray>> image;
-  populatePreimage(image);
-  for (int i = 0; i < hunkData.length(); i++) {
-    apply(image, i, hunkData[i]);
-  }
   return generateResult(image, filters);
 }
 
