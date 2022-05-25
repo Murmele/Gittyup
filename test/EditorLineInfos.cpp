@@ -108,9 +108,7 @@ private slots:
   void multipleHunks_StageSingleLines2();
 #endif
 
-  #ifdef Q_OS_WIN
   void windowsCRLF();
-  #endif
 
 private:
   int closeDelay = 0;
@@ -788,7 +786,6 @@ void TestEditorLineInfo::multipleHunks_StageSingleLines2() {
 
 #endif
 
-#ifdef Q_OS_WIN
 void TestEditorLineInfo::windowsCRLF() {
   /*
    * Staging single lines in a file with CRLF instead of single LF
@@ -813,49 +810,9 @@ void TestEditorLineInfo::windowsCRLF() {
   QVERIFY(hunks.count() == 1);
   hunks[0]->load();
 
-  auto editor = hunks.at(0)->editor();
-  auto unstagedAddition = QVector<int>();
-  auto stagedAddition = QVector<int>();
-  auto unstagedDeletion = QVector<int>({3, 4, 5});
-  auto stagedDeletion = QVector<int>();
-  for (int i = 0; i < editor->lineCount(); i++) {                              \
-	QString line = editor->line(i);                                            \
-	int markers = editor->markers(i);                                          \
-																			   \
-	QString state = "";                                                        \
-	if (BITSET(markers, TextEditor::Marker::Addition))                         \
-	  state = "Addition";                                                      \
-	else if (BITSET(markers, TextEditor::Marker::Deletion))                    \
-	  state = "Deletion";                                                      \
-	else if (BITSET(markers, TextEditor::Marker::Context))                     \
-	  state = "Unchanged";                                                     \
-	else                                                                       \
-	  state = QString::number(markers);                                        \
-																			   \
-	qDebug() << "Index: " << i << ", State: " << state << ", Staged: "         \
-			 << BITSET(markers, TextEditor::Marker::StagedMarker) << line;     \
-	if (unstagedAddition.indexOf(i) != -1) {                                   \
-	  /* unstaged addition */                                                  \
-	  QVERIFY(BITSET(markers, TextEditor::Marker::Addition));                  \
-	  QVERIFY(!BITSET(markers, TextEditor::Marker::StagedMarker));             \
-	} else if (stagedAddition.indexOf(i) != -1) {                              \
-	  /* staged addition */                                                    \
-	  QVERIFY(BITSET(markers, TextEditor::Marker::Addition));                  \
-	  QVERIFY(BITSET(markers, TextEditor::Marker::StagedMarker));              \
-	} else if (unstagedDeletion.indexOf(i) != -1) {                            \
-	  /* unstaged deletion */                                                  \
-	  QVERIFY(BITSET(markers, TextEditor::Marker::Deletion));                  \
-	  QVERIFY(!BITSET(markers, TextEditor::Marker::StagedMarker));             \
-	} else if (stagedDeletion.indexOf(i) != -1) {                              \
-	  /* staged deletion */                                                    \
-	  QVERIFY(BITSET(markers, TextEditor::Marker::Deletion));                  \
-	  QVERIFY(BITSET(markers, TextEditor::Marker::StagedMarker));              \
-	} else {                                                                   \
-	  QVERIFY(!BITSET(markers, TextEditor::Marker::Deletion));                 \
-	  QVERIFY(!BITSET(markers, TextEditor::Marker::Addition));                 \
-	  QVERIFY(!BITSET(markers, TextEditor::Marker::StagedMarker));             \
-	}                                                                          \
-  }
+  checkEditorMarkers(hunks.at(0)->editor(),
+                     QVector<int>(), QVector<int>(),
+                     QVector<int>({3, 4, 5}), QVector<int>());
 
   // Stage single lines
   hunks[0]->stageSelected(3, 5);
@@ -876,12 +833,11 @@ void TestEditorLineInfo::windowsCRLF() {
   hunks[0]->load();
 
   checkEditorMarkers(hunks.at(0)->editor(),
-					 QVector<int>(), QVector<int>(),
-					 QVector<int>(5), QVector<int>({3, 4}));
+                     QVector<int>(), QVector<int>(),
+                     QVector<int>({5}), QVector<int>({3, 4}));
+
   delete fw;
 }
-#endif
-
 
 
 void TestEditorLineInfo::cleanupTestCase() { qWait(closeDelay); }
