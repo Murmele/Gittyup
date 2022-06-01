@@ -114,47 +114,6 @@ void TreeView::onCustomContextMenu(const QPointF& point)
   menu.exec(viewport()->mapToGlobal(point.toPoint()));
 }
 
-void TreeView::onCustomContextMenu(const QPointF &point) {
-  auto proxy = qobject_cast<TreeProxy *>(model());
-  if (!proxy)
-    return;
-
-  QPoint p(qRound(point.x()), qRound(point.y()));
-  QModelIndex index = indexAt(p);
-  if (!index.isValid())
-    return;
-
-  QVariant checkState = index.data(Qt::CheckStateRole);
-
-  if (checkState.isNull()) {
-    // at the moment there is no case that a context menu
-    // is shown when a commit, instead of the
-    // current changes is selected
-    return;
-  }
-
-  QMenu contextMenu;
-  QAction a;
-  //    if (proxy->staged()) {
-  //        a.setText(tr("Unstage selected"));
-
-  //    } else {
-  //        a.setText(tr("Stage selected"));
-  //    }
-  //    contextMenu.addAction(&a);
-
-  // means that the current head is selected where
-  // changes are visible. If not valid it means a commit
-  // is selected and then it should not be possible to
-  // discard
-  auto discardAction = QAction(tr("Discard selected"));
-  contextMenu.addAction(&discardAction);
-  connect(&discardAction, &QAction::triggered,
-          [this, index]() { this->discard(index); });
-
-  contextMenu.exec(viewport()->mapToGlobal(p));
-}
-
 bool TreeView::eventFilter(QObject *obj, QEvent *event) {
   if (event->type() == QEvent::MouseButtonPress) {
     QWidget *TreeViewport = static_cast<QWidget *>(obj);
