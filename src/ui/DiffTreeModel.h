@@ -162,6 +162,7 @@ private:
   git::Repository mRepo;
 
   bool mListView = false;
+  bool suppressRefresh{false};
 };
 
 #endif /* DIFFTREEMODEL */
