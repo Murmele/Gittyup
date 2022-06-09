@@ -294,7 +294,7 @@ jobs:
           name: Gittyup-VERSION
 
       - name: Test
-        if: matrix.env.ninja_platform != 'win' && matrix.env.ninja_platform != 'mac'
+        if: matrix.env.ninja_platform != 'win'
         uses: GabrielBB/xvfb-action@v1
         with:
           working-directory: build/release
