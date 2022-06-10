@@ -191,13 +191,11 @@ if(NOT FLATPAK)
   endif()
 endif()
 
-if(NOT APPLE)
-  if(UNIX)
+if(UNIX AND NOT APPLE)
     install(
       DIRECTORY ${RSRC_DIR}/Gittyup.iconset
       DESTINATION ./${DATA_INSTALL_PREFIX}/Resources
       COMPONENT ${GITTYUP_NAME})
-  endif()
 endif()
 
 # Sign bundle on Mac.
