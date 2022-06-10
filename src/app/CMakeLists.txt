@@ -206,7 +206,7 @@ execute_process(COMMAND
     COMPONENT ${GITTYUP_NAME})
 else()
   # must be ./ otherwise it is interpreted as absolute path
-  set(RESOURCES_INSTALL_DIR "${DATADIR}/Gittyup/Resources")
+  set(RESOURCES_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/Gittyup/Resources")
   # Install config files.
   if(CHANGELOG_HTML
      AND ACKNOWLEDGMENTS_HTML

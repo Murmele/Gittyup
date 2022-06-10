@@ -194,7 +194,7 @@ endif()
 if(UNIX AND NOT APPLE)
     install(
       DIRECTORY ${RSRC_DIR}/Gittyup.iconset
-      DESTINATION ${DATADIR}/Gittyup/Resources
+      DESTINATION ${CMAKE_INSTALL_DATADIR}/Gittyup/Resources
       COMPONENT ${GITTYUP_NAME})
 endif()
 
