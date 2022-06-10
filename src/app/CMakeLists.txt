@@ -205,7 +205,8 @@ execute_process(COMMAND
   )"
     COMPONENT ${GITTYUP_NAME})
 else()
-  set(RESOURCES_INSTALL_DIR "${DATA_INSTALL_PREFIX}/Resources")
+  # must be ./ otherwise it is interpreted as absolute path
+  set(RESOURCES_INSTALL_DIR "./${DATA_INSTALL_PREFIX}/Resources")
   # Install config files.
   if(CHANGELOG_HTML
      AND ACKNOWLEDGMENTS_HTML
