@@ -205,6 +205,7 @@ execute_process(COMMAND
   )"
     COMPONENT ${GITTYUP_NAME})
 else()
+  set(RESOURCES_INSTALL_DIR "${DATA_INSTALL_PREFIX}/Resources")
   # Install config files.
   if(CHANGELOG_HTML
      AND ACKNOWLEDGMENTS_HTML
@@ -213,41 +214,41 @@ else()
     install(
       FILES ${CHANGELOG_HTML} ${ACKNOWLEDGMENTS_HTML} ${PRIVACY_HTML}
             ${PLUGIN_HTML}
-      DESTINATION Resources
+      DESTINATION ${RESOURCES_INSTALL_DIR}
       COMPONENT ${GITTYUP_NAME})
   endif()
 
   install(
     FILES ${EMOJI} ${MERGETOOLS}
-    DESTINATION Resources
+    DESTINATION ${RESOURCES_INSTALL_DIR}
     COMPONENT ${GITTYUP_NAME})
 
   foreach(CONFIG_FILE ${CONFIG_FILES})
     install(
       FILES ${CONFIG_FILE}
-      DESTINATION Resources
+      DESTINATION ${RESOURCES_INSTALL_DIR}
       COMPONENT ${GITTYUP_NAME})
   endforeach()
 
   install(
     FILES ${DICTIONARIES}
-    DESTINATION Resources/dictionaries
+    DESTINATION ${RESOURCES_INSTALL_DIR}/dictionaries
     COMPONENT ${GITTYUP_NAME})
 
   install(
     FILES ${THEMES}
-    DESTINATION Resources/themes
+    DESTINATION ${RESOURCES_INSTALL_DIR}/themes
     COMPONENT ${GITTYUP_NAME})
 
   install(
     FILES ${LUA_PLUGINS}
-    DESTINATION Resources/plugins
+    DESTINATION ${RESOURCES_INSTALL_DIR}/plugins
     COMPONENT ${GITTYUP_NAME})
 
   foreach(SCINTILLUA_LEXER ${SCINTILLUA_LEXERS})
     install(
       FILES ${SCINTILLUA_LEXER}
-      DESTINATION Resources/lexers
+      DESTINATION ${RESOURCES_INSTALL_DIR}/lexers
       COMPONENT ${GITTYUP_NAME})
   endforeach()
 endif()
