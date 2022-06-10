@@ -1,3 +1,22 @@
+### v1.1.1 - 2022-06-09
+
+Bug fix release
+
+#### Added
+* Distinguish between commit author and committer
+* Show image preview also for deleted files
+* Official macOS X release
+
+#### Changed
+* Fix single line staging if not all hunks are loaded
+* Fix cherrypick commit author
+* Fix segmentation fault if submodule update fails
+* Fix line staging with windows new lines
+* Show first change in the diff view when loading
+* Improved windows icon
+
+----
+
 ### v1.1.0 - 2022-04-30
 
 Second release of Gittyup
