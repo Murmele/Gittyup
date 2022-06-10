@@ -195,7 +195,7 @@ if(NOT APPLE)
   if(UNIX)
     install(
       DIRECTORY ${RSRC_DIR}/Gittyup.iconset
-      DESTINATION Resources
+      DESTINATION ./${DATA_INSTALL_PREFIX}/Resources
       COMPONENT ${GITTYUP_NAME})
   endif()
 endif()
