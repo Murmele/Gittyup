@@ -5,7 +5,7 @@ Bug fix release
 #### Added
 * Distinguish between commit author and committer
 * Show image preview also for deleted files
-* Official macOS X release
+* Official macOS release
 
 #### Changed
 * Fix single line staging if not all hunks are loaded
