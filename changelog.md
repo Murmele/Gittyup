@@ -1,3 +1,13 @@
+### v1.1.2 - 2022-08-12
+
+Bug fix release
+
+#### Changed
+
+* Fix bundled OpenSSL version incompatibility
+
+----
+
 ### v1.1.1 - 2022-06-09
 
 Bug fix release
@@ -5,7 +15,7 @@ Bug fix release
 #### Added
 * Distinguish between commit author and committer
 * Show image preview also for deleted files
-* Official macOS release
+* Official macOS X release
 
 #### Changed
 * Fix single line staging if not all hunks are loaded
