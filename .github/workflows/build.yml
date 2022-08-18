@@ -365,13 +365,28 @@ jobs:
           if_true: 'stable'
           if_false: 'latest'
 
-      - name: Update GitHub release
+      - name: Update GitHub release (stable / latest tag)
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: ${{ env.IS_RELEASE == 'false' }}
           title: ${{ steps.release_title.outputs.value }}
           automatic_release_tag: ${{ steps.release_tag.outputs.value }}
+          files: |
+            **/artifacts/Gittyup win64/Gittyup*.exe
+            **/artifacts/Gittyup win32/Gittyup*.exe
+            **/artifacts/Gittyup mac/Gittyup*.dmg
+            **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
+            **/Gittyup-x86_64/*.flatpak
+
+      - name: Update GitHub release (version tag)
+        uses: marvinpinto/action-automatic-releases@latest
+        if: ${{ env.IS_RELEASE == 'true'}}
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: ${{ env.IS_RELEASE == 'false' }}
+          title: ${{ steps.release_title.outputs.value }}
+          automatic_release_tag: ${{ steps.version.outputs.VERSION }}
           files: |
             **/artifacts/Gittyup win64/Gittyup*.exe
             **/artifacts/Gittyup win32/Gittyup*.exe
