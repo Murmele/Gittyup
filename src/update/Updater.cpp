@@ -13,6 +13,7 @@
 #include "UpdateDialog.h"
 #include "UpToDateDialog.h"
 #include "conf/Settings.h"
+#include "ui/MainWindow.h"
 #include <QApplication>
 #include <QCloseEvent>
 #include <QDialog>
@@ -225,12 +226,20 @@ Updater::DownloadRef Updater::download(const QString &link) {
 
 void Updater::install(const DownloadRef &download) {
   // First try to close all windows. Disable quit on close.
-  QCloseEvent event;
-  QString errorText = tr("Unable to install update");
   bool quitOnClose = QGuiApplication::quitOnLastWindowClosed();
   QGuiApplication::setQuitOnLastWindowClosed(false);
-  bool rejected = (!qApp->notify(qApp, &event) || !event.isAccepted());
+
+  bool rejected = false;
+  for (MainWindow *window : MainWindow::windows()) {
+    rejected = !window->close();
+    if (rejected) {
+      break;
+    }
+  }
+
   QGuiApplication::setQuitOnLastWindowClosed(quitOnClose);
+
+  QString errorText = tr("Unable to install update");
   if (rejected) {
     emit updateError(errorText, tr("Some windows failed to close"));
     return;
