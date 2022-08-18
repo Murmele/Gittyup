@@ -8,8 +8,14 @@ endif()
 add_library(update DownloadDialog.cpp UpdateDialog.cpp Updater.cpp
                    UpToDateDialog.cpp ${UPDATER_IMPL_FILE})
 
-target_link_libraries(update conf ${LIBCMARK_LIBRARIES} Qt5::Network
-                      Qt5::Widgets ${UPDATER_IMPL_LIBS})
+target_link_libraries(
+  update
+  conf
+  ${LIBCMARK_LIBRARIES}
+  git
+  Qt5::Network
+  Qt5::Widgets
+  ${UPDATER_IMPL_LIBS})
 
 set_target_properties(update PROPERTIES AUTOMOC ON)
 
