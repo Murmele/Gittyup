@@ -67,7 +67,7 @@ void Index::reset() {
   QFile idFile(dir.filePath(kIdFile));
   if (idFile.open(QIODevice::ReadOnly)) {
     while (idFile.bytesAvailable() > 0)
-      mIds.append(idFile.read(GIT_OID_RAWSZ));
+	  mIds.append(idFile.read(GIT_OID_SHA1));
   }
 
   // Read dictionary.
@@ -140,7 +140,7 @@ bool Index::write(PostingMap map) {
 
   // Write id file.
   foreach (const git::Id &id, mIds)
-    idFile.write(id.toByteArray(), GIT_OID_RAWSZ);
+	idFile.write(id.toByteArray(), GIT_OID_SHA1);
 
   // Merge new entries into existing postings file.
   // Write dictionary and postings files in lockstep.

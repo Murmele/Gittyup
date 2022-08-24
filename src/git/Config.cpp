@@ -182,7 +182,7 @@ QString Config::globalPath() {
     config.remove("global.force");
   }
 
-  git_buf buf = GIT_BUF_INIT_CONST(nullptr, 0);
+  git_buf buf = GIT_BUF_INIT;
   git_config_find_global(&buf);
   QString path = QString::fromUtf8(buf.ptr, buf.size);
   git_buf_dispose(&buf);

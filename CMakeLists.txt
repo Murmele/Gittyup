@@ -44,6 +44,7 @@ endif()
 set(BUILD_SHARED_LIBS OFF)
 
 option(FLATPAK "Building for flatpak" OFF)
+option(BUILD_GITTYUP_TEST "Building unittests of Gittyup" ON)
 
 # Require C++17.
 set(CMAKE_CXX_STANDARD 17)
@@ -98,5 +99,8 @@ endif()
 add_subdirectory(dep)
 add_subdirectory(src)
 add_subdirectory(l10n)
-add_subdirectory(test)
+
+if (BUILD_GITTYUP_TEST)
+	add_subdirectory(test)
+endif()
 add_subdirectory(pack)

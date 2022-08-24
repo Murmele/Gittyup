@@ -8,12 +8,17 @@
 //
 
 #include "Buffer.h"
+#include "git2/blob.h"
 
 namespace git {
 
 Buffer::Buffer(const char *data, int size)
-    : d(GIT_BUF_INIT_CONST(data, size)) {}
+  : data(data), size(size)
+{}
 
-bool Buffer::isBinary() const { return git_buf_is_binary(&d); }
+bool Buffer::isBinary() const
+{
+  return git_blob_data_is_binary(data, size);
+}
 
 } // namespace git

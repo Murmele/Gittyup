@@ -159,6 +159,7 @@ public:
   void invalidateSubmoduleCache();
   QList<Submodule> submodules() const;
   Submodule lookupSubmodule(const QString &path) const;
+  int submoduleStatus(const QString& name) const;
 
   // remote
   Remote addRemote(const QString &name, const QString &url);

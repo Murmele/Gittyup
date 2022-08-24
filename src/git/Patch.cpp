@@ -323,11 +323,9 @@ QByteArray Patch::generateResult(QList<QList<QByteArray>> &image,
   if (!filters.isValid())
     return result;
 
-  // Apply filters.
-  git_buf out = GIT_BUF_INIT_CONST(nullptr, 0);
-  git_buf raw = GIT_BUF_INIT_CONST(result.constData(), result.length());
-  (&out, filters, &raw);
-  git_buf_dispose(&raw);
+    // Apply filters.
+	git_buf out = GIT_BUF_INIT;
+	git_filter_list_apply_to_buffer(&out, filters, result.data(), result.length());
 
   QByteArray filtered(out.ptr, out.size);
   git_buf_dispose(&out);

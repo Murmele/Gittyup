@@ -182,18 +182,16 @@ private:
 
 } // namespace
 
-int Remote::Callbacks::connect(git_remote *remote, void *payload) {
+void Remote::Callbacks::connected(git_remote *remote, void *payload) {
   Remote::Callbacks *cbs = reinterpret_cast<Remote::Callbacks *>(payload);
   cbs->mRemote = remote;
-  return 0;
 }
 
-int Remote::Callbacks::disconnect(git_remote *remote, void *payload) {
+void Remote::Callbacks::about_to_disconnect(git_remote *remote, void *payload) {
   Q_UNUSED(remote)
 
   Remote::Callbacks *cbs = reinterpret_cast<Remote::Callbacks *>(payload);
   cbs->mRemote = nullptr;
-  return 0;
 }
 
 int Remote::Callbacks::sideband(const char *str, int len, void *payload) {
@@ -405,12 +403,15 @@ int Remote::Callbacks::update(const char *name, const git_oid *a,
   return 0;
 }
 
-int Remote::Callbacks::url(git_buf *out, const char *url, int direction,
-                           void *payload) {
+int Remote::Callbacks::remoteReady(
+  git_remote* remote,
+  int direction,
+  void *payload)
+{
   Q_UNUSED(direction)
 
   Remote::Callbacks *cbs = reinterpret_cast<Remote::Callbacks *>(payload);
-  QString resolved(url);
+  QString resolved(git_remote_url(remote));
   if (!cbs->url(resolved))
     return -1;
 
@@ -461,7 +462,7 @@ int Remote::Callbacks::url(git_buf *out, const char *url, int direction,
     }
   }
 
-  git_buf_set(out, resolved.toUtf8(), resolved.length());
+  git_remote_set_instance_url(remote, resolved.toUtf8());
   return 0;
 }
 
@@ -499,14 +500,14 @@ void Remote::setUrl(const QString &url) {
 
 Result Remote::fetch(Callbacks *callbacks, bool tags, bool prune) {
   git_fetch_options opts = GIT_FETCH_OPTIONS_INIT;
-  opts.callbacks.connect = &Remote::Callbacks::connect;
-  opts.callbacks.disconnect = &Remote::Callbacks::disconnect;
+  opts.callbacks.connected = &Remote::Callbacks::connected;
+  opts.callbacks.about_to_disconnect = &Remote::Callbacks::about_to_disconnect;
   opts.callbacks.sideband_progress = &Remote::Callbacks::sideband;
   opts.callbacks.credentials = &Remote::Callbacks::credentials;
   opts.callbacks.certificate_check = &Remote::Callbacks::certificate;
   opts.callbacks.transfer_progress = &Remote::Callbacks::transfer;
   opts.callbacks.update_tips = &Remote::Callbacks::update;
-  opts.callbacks.resolve_url = &Remote::Callbacks::url;
+  opts.callbacks.remote_ready = &Remote::Callbacks::remoteReady;
   opts.callbacks.payload = callbacks;
 
   QByteArray proxy = proxyUrl(url(), opts.proxy_opts.type);
@@ -526,14 +527,14 @@ Result Remote::fetch(Callbacks *callbacks, bool tags, bool prune) {
 
 Result Remote::push(Callbacks *callbacks, const QStringList &refspecs) {
   git_push_options opts = GIT_PUSH_OPTIONS_INIT;
-  opts.callbacks.connect = &Remote::Callbacks::connect;
-  opts.callbacks.disconnect = &Remote::Callbacks::disconnect;
+  opts.callbacks.connected = &Remote::Callbacks::connected;
+  opts.callbacks.about_to_disconnect = &Remote::Callbacks::about_to_disconnect;
   opts.callbacks.sideband_progress = &Remote::Callbacks::sideband;
   opts.callbacks.credentials = &Remote::Callbacks::credentials;
   opts.callbacks.certificate_check = &Remote::Callbacks::certificate;
   opts.callbacks.transfer_progress = &Remote::Callbacks::transfer;
   opts.callbacks.update_tips = &Remote::Callbacks::update;
-  opts.callbacks.resolve_url = &Remote::Callbacks::url;
+  opts.callbacks.remote_ready = &Remote::Callbacks::remoteReady;
   opts.callbacks.pack_progress = &pack_progress;
   opts.callbacks.push_transfer_progress = &push_transfer_progress;
   opts.callbacks.push_update_reference = &push_update_reference;
@@ -584,14 +585,14 @@ Result Remote::clone(Callbacks *callbacks, const QString &url,
                      const QString &path, bool bare) {
   git_repository *repo = nullptr;
   git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
-  opts.fetch_opts.callbacks.connect = &Remote::Callbacks::connect;
-  opts.fetch_opts.callbacks.disconnect = &Remote::Callbacks::disconnect;
+  opts.fetch_opts.callbacks.connected = &Remote::Callbacks::connected;
+  opts.fetch_opts.callbacks.about_to_disconnect = &Remote::Callbacks::about_to_disconnect;
   opts.fetch_opts.callbacks.sideband_progress = &Remote::Callbacks::sideband;
   opts.fetch_opts.callbacks.credentials = &Remote::Callbacks::credentials;
   opts.fetch_opts.callbacks.certificate_check = &Remote::Callbacks::certificate;
   opts.fetch_opts.callbacks.transfer_progress = &Remote::Callbacks::transfer;
   opts.fetch_opts.callbacks.update_tips = &Remote::Callbacks::update;
-  opts.fetch_opts.callbacks.resolve_url = &Remote::Callbacks::url;
+  opts.fetch_opts.callbacks.remote_ready = &Remote::Callbacks::remoteReady;
   opts.fetch_opts.callbacks.payload = callbacks;
   opts.bare = bare;
 

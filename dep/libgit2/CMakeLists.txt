@@ -33,5 +33,7 @@ if(WIN32)
 endif()
 
 add_subdirectory(libgit2)
-target_include_directories(
-  git2 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libgit2/include)
+# otherwise the zlib is not available in the src/git
+set(LIBGIT2_DEPENDENCY_OBJECTS ${LIBGIT2_DEPENDENCY_OBJECTS} PARENT_SCOPE)
+set(LIBGIT2_SYSTEM_LIBS ${LIBGIT2_SYSTEM_LIBS} PARENT_SCOPE)
+set(LIBGIT2_INCLUDES ${LIBGIT2_INCLUDES} PARENT_SCOPE)

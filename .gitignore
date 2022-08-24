@@ -3,3 +3,4 @@ build
 .project
 .vscode/
 CMakeLists.txt.user
+build*
