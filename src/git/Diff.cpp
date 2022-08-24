@@ -108,10 +108,10 @@ QByteArray Diff::print() {
   QByteArray diff;
   for (auto file : data.files) {
     for (auto hunk : file.hunks) {
-      diff.append(hunk.header);
+	  diff.append(hunk.header.toUtf8());
 
       for (auto line : hunk.lines)
-        diff.append(line);
+		diff.append(line.toUtf8());
     }
   }
   qDebug() << QString(diff);
