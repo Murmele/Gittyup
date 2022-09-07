@@ -175,8 +175,9 @@ Id Repository::workdirId(const QString &path) const {
   return id;
 }
 
-QString Repository::message() const {
-  git_buf buf = GIT_BUF_INIT_CONST(nullptr, 0);
+QString Repository::message() const
+{
+  git_buf buf = GIT_BUF_INIT;
   git_repository_message(&buf, d->repo);
   return QString::fromUtf8(buf.ptr, buf.size);
 }
@@ -334,7 +335,7 @@ Diff Repository::diffIndexToWorkdir(const Index &index,
                                     Diff::Callbacks *callbacks,
                                     bool ignoreWhitespace) const {
   git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
-  opts.flags |= (GIT_DIFF_DISABLE_MMAP | GIT_DIFF_INCLUDE_TYPECHANGE);
+  opts.flags |= GIT_DIFF_INCLUDE_TYPECHANGE; // GIT_DIFF_DISABLE_MMAP flag really needed?
 
   if (!appConfig().value<bool>("untracked.hide", false))
     opts.flags |= GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS;
@@ -706,7 +707,18 @@ Submodule Repository::lookupSubmodule(const QString &name) const {
   return Submodule(submodule);
 }
 
-Remote Repository::addRemote(const QString &name, const QString &url) {
+int Repository::submoduleStatus(const QString& name) const {
+
+	unsigned int status;
+	// TODO: testing!!!!
+	int returnValue = git_submodule_status(&status, d->repo, name.toLocal8Bit().data(), GIT_SUBMODULE_IGNORE_UNSPECIFIED);
+	if (returnValue < 0)
+		return returnValue;
+	return status;
+}
+
+Remote Repository::addRemote(const QString &name, const QString &url)
+{
   // FIXME: Validate name?
 
   emit d->notifier->remoteAboutToBeAdded(name);
