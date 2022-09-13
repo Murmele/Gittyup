@@ -28,11 +28,11 @@ add_library(
   Tree.cpp)
 
 target_link_libraries(git
-  git2
+  $<TARGET_OBJECTS:libgit2>
+  $<TARGET_OBJECTS:util> # util of libgit2
+  gittyupUtil
   ${LIBGIT2_DEPENDENCY_OBJECTS}
   ${LIBGIT2_SYSTEM_LIBS}
-  $<TARGET_OBJECTS:libgit2>
-  $<TARGET_OBJECTS:util>
   Qt5::Core
   Qt5::Network
 )
