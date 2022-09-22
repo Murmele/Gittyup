@@ -12,8 +12,10 @@
 #include "Config.h"
 #include "git2/errors.h"
 #include "git2/filter.h"
+#include "str.h"
 #include "git2/repository.h"
 #include "git2/sys/filter.h"
+#include "git2_util.h"
 #include <QMap>
 #include <QProcess>
 
@@ -38,6 +40,40 @@ struct FilterInfo {
 
 QString quote(const QString &path) { return QString("\"%1\"").arg(path); }
 
+int apply(git_filter *self, void **payload, git_str *to, const git_str *from,
+          const git_filter_source *src) {
+    FilterInfo *info = reinterpret_cast<FilterInfo *>(self);
+      git_filter_mode_t mode = git_filter_source_mode(src);
+      QString command = (mode == GIT_FILTER_SMUDGE) ? info->smudge : info->clean;
+
+      // Substitute path.
+      command.replace("%f", quote(git_filter_source_path(src)));
+
+      QString bash = Command::bashPath();
+      if (bash.isEmpty())
+        return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
+
+      QProcess process;
+      git_repository *repo = git_filter_source_repo(src);
+      process.setWorkingDirectory(git_repository_workdir(repo));
+
+      process.start(bash, {"-c", command});
+      if (!process.waitForStarted())
+        return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
+
+      process.write(from->ptr, from->size);
+      process.closeWriteChannel();
+
+      if (!process.waitForFinished() || process.exitCode()) {
+        git_error_set_str(GIT_ERROR_FILTER, process.readAllStandardError());
+        return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
+      }
+
+      QByteArray data = process.readAll();
+      git_str_set(to, data.constData(), data.length());
+      return 0;
+}
+
 int stream(
   git_writestream **out,
   git_filter *self,
@@ -45,37 +81,8 @@ int stream(
   const git_filter_source *src,
   git_writestream *next)
 {
-	return -1;
-//  FilterInfo *info = reinterpret_cast<FilterInfo *>(self);
-//  git_filter_mode_t mode = git_filter_source_mode(src);
-//  QString command = (mode == GIT_FILTER_SMUDGE) ? info->smudge : info->clean;
-
-//  // Substitute path.
-//  command.replace("%f", quote(git_filter_source_path(src)));
-
-//  QString bash = Command::bashPath();
-//  if (bash.isEmpty())
-//    return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
-
-//  QProcess process;
-//  git_repository *repo = git_filter_source_repo(src);
-//  process.setWorkingDirectory(git_repository_workdir(repo));
-
-//  process.start(bash, {"-c", command});
-//  if (!process.waitForStarted())
-//    return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
-
-//  process.write(from->ptr, from->size);
-//  process.closeWriteChannel();
-
-//  if (!process.waitForFinished() || process.exitCode()) {
-//    git_error_set_str(GIT_ERROR_FILTER, process.readAllStandardError());
-//    return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
-//  }
-
-//  QByteArray data = process.readAll();
-//  git_buf_set(to, data.constData(), data.length());
-//  return 0;
+    return git_filter_buffered_stream_new(out,
+        self, apply, NULL, payload, src, next);
 }
 
 } // namespace
