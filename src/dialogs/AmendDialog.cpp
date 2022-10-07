@@ -147,15 +147,15 @@ AmendDialog::AmendDialog(const git::Signature &author,
 
 void AmendDialog::authorDateTimeTypeChanged(const SelectedDateTimeType type) {
   const auto enabled = type == AmendDialog::SelectedDateTimeType::Manual;
-  this->m_lAuthorCommitDate->setVisible(enabled);
-  this->m_authorCommitDate->setVisible(enabled);
+  m_lAuthorCommitDate->setVisible(enabled);
+  m_authorCommitDate->setVisible(enabled);
 }
 
 void AmendDialog::committerDateTimeTypeChanged(
     const SelectedDateTimeType type) {
   const auto enabled = type == AmendDialog::SelectedDateTimeType::Manual;
-  this->m_lCommitterCommitDate->setVisible(enabled);
-  this->m_committerCommitDate->setVisible(enabled);
+  m_lCommitterCommitDate->setVisible(enabled);
+  m_committerCommitDate->setVisible(enabled);
 }
 
 QString AmendDialog::authorName() const { return m_authorName->text(); }
