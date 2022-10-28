@@ -2,12 +2,12 @@
 
 Gittyup is a graphical Git client designed to help you understand and manage your source code history. Gittyup is an open source software developed by voluntiers, if you like the application please support us [![Donate Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/Gittyup/donate)
 
-The [stable version](https://github.com/Murmele/Gittyup/releases/stable) is available for
-- flatpak for Linux
-- 32 / 64 binary for Windows or
-- macOS
+Stable versions for different packages are available for
+- Flatpak for Linux [![Flathub](https://img.shields.io/badge/Flathub-gray?logo=Flathub&logoColor=23FBB04)](https://flathub.org/apps/details/com.github.Murmele.Gittyup)
+- [32 / 64 binary for Windows](https://github.com/Murmele/Gittyup/releases/stable) or
+- [macOS](https://github.com/Murmele/Gittyup/releases/stable) or from [![homebrew](https://img.shields.io/badge/Homebrew-gray?logo=Homebrew&logoColor=%23FBB040)](https://formulae.brew.sh/cask/gittyup)
 
-The [latest version](https://github.com/Murmele/Gittyup/releases/latest) is available either as pre-built for
+The [latest development version](https://github.com/Murmele/Gittyup/releases/tag/latest) is available either as pre-built for
 - flatpak for Linux,
 - 32 / 64 binary for Windows,
 - macOS
@@ -40,13 +40,39 @@ Features
 Select "Show Selected Branch" in the drop down menu above the commit list
 ![Single branch](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/main_show_selected_branch.png)
 
+### Fullscreen
+of the history or the change dialog by pressing Ctrl+M
+
+### Tabs
+to be able to switch fast between repositories
+
+### Diff View
+Staging and unstaging changes, viewing Blame
+![Diff View](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/DiffView.png)
+
+### Tree View
+To visit the blame with its history for unchanged files
+
+![Tree View](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/treeview.png)
+
+### Blame View
+See blame of the current version with an integrated timeline to see who changed which line
+
+![Blame View](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/BlameView.png)
+
 ### Single line staging 
 by eighter clicking on the checkboxes next to each line or by selecting the relevant code and pressing "S". For unstaging you can uncheck the checkboxes or press "U". To revert changes, select the text and press "R".
 
 ![Single line staging](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/double_treeview_single_line_staging.png)
 
-### Fullscreen
-of the history or the change dialog by pressing Ctrl+M
+### Amending commits
+Editing properties of a commit
+![Amend Dialog](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/AmendDialog.png)
+
+### Solving rebase conflicts
+Solving rebase conflicts and continuouing after conflicts are solved
+
+![Rebase Conflicts](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/RebaseConflicts.png)
 
 ### Staring commits
 to find specific commits much faster
@@ -57,23 +83,12 @@ Use an existing tag as template for your next tag. So you never have to look whi
 
 ![Tag selection](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/tag_selection.png)
 
-### Tree View
-To visit the blame with its history for unchanged files
-
-![Tree View](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/treeview.png)
-
-### Blame View
-See blame of the current version with an integrated timeline to see who changed which line
-
 ### Commit message template
 Create you commit messages according a defined template
 
 ![Commit message template selection](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/CommitMessageTemplateSelection.png)
 
 ![Commit message template editor](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/CommitMessageTemplateEditor.png)
-
-### Tabs
-to be able to switch fast between repositories
 
 ### And a lot more ...
 
