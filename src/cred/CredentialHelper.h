@@ -33,6 +33,9 @@ public:
   static bool isLoggingEnabled();
   static void setLoggingEnabled(bool enabled);
 
+  static QStringList getAvailableHelperNames();
+  static bool isHelperValid(const QString &name);
+
 protected:
   static void log(const QString &text);
 };
