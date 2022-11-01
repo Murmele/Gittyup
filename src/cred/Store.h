@@ -11,6 +11,7 @@
 #define STORE_H
 
 #include "CredentialHelper.h"
+#include <QMap>
 
 class Store : public CredentialHelper {
 public:

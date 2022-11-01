@@ -10,6 +10,7 @@
 #include "Store.h"
 #include <QUrl>
 #include <QFile>
+#include <QTextStream>
 
 namespace {
 
@@ -78,20 +79,30 @@ bool Store::get(const QString &url, QString &username, QString &password) {
 
 bool Store::store(const QString &url, const QString &username,
                   const QString &password) {
-  QUrl temp(url);
-  temp.setScheme(protocol(url));
-  temp.setHost(host(url));
-  temp.setUserName(username);
-  temp.setPassword(password);
-
-  auto encoded = QUrl::toPercentEncoding(temp.toString(), "@:/");
+  auto store = readCredFile();
+  store[protocol(url)][host(url)][username] = password;
 
   QFile file(mPath);
-  if (!file.open(QIODevice::WriteOnly | QIODevice::Append))
+  if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
     return false;
 
-  QTextStream fout(&file);
-  fout << encoded << "\n";
+  foreach (const auto &protocolKey, store.keys()) {
+    auto protocol = store[protocolKey];
+    foreach (const auto &hostKey, protocol.keys()) {
+      auto host = protocol[hostKey];
+      foreach (const auto &usernameKey, host.keys()) {
+        QUrl temp;
+        temp.setScheme(protocolKey);
+        temp.setHost(hostKey);
+        temp.setUserName(usernameKey);
+        temp.setPassword(host[usernameKey]);
+        auto encoded = QUrl::toPercentEncoding(temp.toString(), "@:/");
+        QTextStream fout(&file);
+        fout << encoded << "\n";
+      }
+    }
+  }
+
   file.close();
 
   return true;
