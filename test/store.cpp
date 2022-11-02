@@ -2,10 +2,13 @@
 
 #include "cred/Store.h"
 
-#define PATH "./test/fakeCred.txt"
-
 class TestStore : public QObject {
   Q_OBJECT
+
+private:
+  QTemporaryDir mTempDir;
+
+  QString getTestFilePath();
 
 private slots:
   void initTestCase();
@@ -18,8 +21,12 @@ private slots:
   void cleanupTestCase();
 };
 
+QString TestStore::getTestFilePath() {
+  return mTempDir.path() + "/fakeCred.txt";
+}
+
 void TestStore::initTestCase() {
-  QFile file(PATH);
+  QFile file(getTestFilePath());
   if (file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
     QTextStream fout(&file);
     fout << "http://joneDoe:secretPassword@192.168.1.1\n";
@@ -29,7 +36,7 @@ void TestStore::initTestCase() {
 }
 
 void TestStore::readUserPassTestCase() {
-  Store store(PATH);
+  Store store(getTestFilePath());
 
   auto url = "https://192.168.2.2:3000/h-4nd-h/fake.git";
   QString username;
@@ -42,7 +49,7 @@ void TestStore::readUserPassTestCase() {
 }
 
 void TestStore::wrongProtocolTestCase() {
-  Store store(PATH);
+  Store store(getTestFilePath());
 
   auto url = "https://192.168.1.1/h-4nd-h/fake.git";
   QString username;
@@ -53,7 +60,7 @@ void TestStore::wrongProtocolTestCase() {
 }
 
 void TestStore::wrongUrlTestCase() {
-  Store store(PATH);
+  Store store(getTestFilePath());
 
   auto url = "http://192.168.1.2/h-4nd-h/fake.git";
   QString username;
@@ -64,7 +71,7 @@ void TestStore::wrongUrlTestCase() {
 }
 
 void TestStore::wrongUsernameTestCase() {
-  Store store(PATH);
+  Store store(getTestFilePath());
 
   auto url = "http://192.168.1.1/h-4nd-h/fake.git";
   QString username = "janeDoe";
@@ -75,7 +82,7 @@ void TestStore::wrongUsernameTestCase() {
 }
 
 void TestStore::saveUserPassTestCase() {
-  Store store(PATH);
+  Store store(getTestFilePath());
 
   auto url = "http://192.168.1.2/h-4nd-h/fake.git";
   QString username = "NewUser";
@@ -105,7 +112,7 @@ void TestStore::wrongFilePathTestCase() {
 }
 
 void TestStore::cleanupTestCase() {
-  QFile file(PATH);
+  QFile file(getTestFilePath());
   file.remove();
 }
 
