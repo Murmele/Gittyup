@@ -12,10 +12,8 @@
 #include "Config.h"
 #include "git2/errors.h"
 #include "git2/filter.h"
-#include "str.h"
 #include "git2/repository.h"
 #include "git2/sys/filter.h"
-#include "git2_util.h"
 #include <QMap>
 #include <QProcess>
 
@@ -81,7 +79,7 @@ struct Stream {
   const git_filter_source *filter_source;
 };
 
-static void stream_free(git_writestream *stream) { git__free(stream); }
+static void stream_free(git_writestream *stream) { free(stream); }
 
 static int stream_close(git_writestream *s) {
   struct Stream *stream = (struct Stream *)s;
@@ -103,7 +101,7 @@ static int stream_init(git_writestream **out, git_filter *self, void **payload,
                        const git_filter_source *src, git_writestream *next) {
 
   struct Stream *stream =
-      static_cast<struct Stream *>(git__calloc(1, sizeof(struct Stream)));
+      static_cast<struct Stream *>(calloc(1, sizeof(struct Stream)));
   if (!stream)
     return -1;
 

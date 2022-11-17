@@ -2,7 +2,7 @@
 set(BUILD_SHARED_LIBS
     OFF
     CACHE BOOL "" FORCE)
-set(BUILD_CLAR
+set(BUILD_TESTS
     OFF
     CACHE BOOL "" FORCE)
 set(STATIC_CRT
@@ -34,14 +34,8 @@ endif()
 
 if(NOT USE_SYSTEM_LIBGIT2)
   add_subdirectory(libgit2)
-  # otherwise the zlib is not available in the src/git
-  set(LIBGIT2_DEPENDENCY_OBJECTS
-      ${LIBGIT2_DEPENDENCY_OBJECTS}
-      PARENT_SCOPE)
-  set(LIBGIT2_SYSTEM_LIBS
-      ${LIBGIT2_SYSTEM_LIBS}
-      PARENT_SCOPE)
-  set(LIBGIT2_INCLUDES
-      ${LIBGIT2_INCLUDES}
-      PARENT_SCOPE)
+
+  # Include the generated experimental.h
+  target_include_directories(
+    libgit2 INTERFACE ${PROJECT_BINARY_DIR}/dep/libgit2/libgit2/include/git2)
 endif()
