@@ -40,49 +40,82 @@ struct FilterInfo {
 
 QString quote(const QString &path) { return QString("\"%1\"").arg(path); }
 
-int apply(git_filter *self, void **payload, git_str *to, const git_str *from,
-          const git_filter_source *src) {
-    FilterInfo *info = reinterpret_cast<FilterInfo *>(self);
-      git_filter_mode_t mode = git_filter_source_mode(src);
-      QString command = (mode == GIT_FILTER_SMUDGE) ? info->smudge : info->clean;
+int apply(const git_filter *self, QByteArray &to, const char *from,
+          const size_t from_length, const git_filter_source *src) {
+  const FilterInfo *info = reinterpret_cast<const FilterInfo *>(self);
+  git_filter_mode_t mode = git_filter_source_mode(src);
+  QString command = (mode == GIT_FILTER_SMUDGE) ? info->smudge : info->clean;
 
-      // Substitute path.
-      command.replace("%f", quote(git_filter_source_path(src)));
+  // Substitute path.
+  command.replace("%f", quote(git_filter_source_path(src)));
 
-      QString bash = Command::bashPath();
-      if (bash.isEmpty())
-        return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
+  QString bash = Command::bashPath();
+  if (bash.isEmpty())
+    return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
 
-      QProcess process;
-      git_repository *repo = git_filter_source_repo(src);
-      process.setWorkingDirectory(git_repository_workdir(repo));
+  QProcess process;
+  git_repository *repo = git_filter_source_repo(src);
+  process.setWorkingDirectory(git_repository_workdir(repo));
 
-      process.start(bash, {"-c", command});
-      if (!process.waitForStarted())
-        return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
+  process.start(bash, {"-c", command});
+  if (!process.waitForStarted())
+    return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
 
-      process.write(from->ptr, from->size);
-      process.closeWriteChannel();
+  process.write(from);
+  process.closeWriteChannel();
 
-      if (!process.waitForFinished() || process.exitCode()) {
-        git_error_set_str(GIT_ERROR_FILTER, process.readAllStandardError());
-        return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
-      }
+  if (!process.waitForFinished() || process.exitCode()) {
+    git_error_set_str(GIT_ERROR_FILTER, process.readAllStandardError());
+    return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
+  }
 
-      QByteArray data = process.readAll();
-      git_str_set(to, data.constData(), data.length());
-      return 0;
+  to = process.readAll();
+  return 0;
 }
 
-int stream(
-  git_writestream **out,
-  git_filter *self,
-  void **payload,
-  const git_filter_source *src,
-  git_writestream *next)
-{
-    return git_filter_buffered_stream_new(out,
-        self, apply, NULL, payload, src, next);
+struct Stream {
+  git_writestream parent; // must be the first. No pointer!
+  git_writestream *next;
+  git_filter_mode_t mode;
+  const git_filter *filter;
+  const git_filter_source *filter_source;
+};
+
+static void stream_free(git_writestream *stream) { git__free(stream); }
+
+static int stream_close(git_writestream *s) {
+  struct Stream *stream = (struct Stream *)s;
+  stream->next->close(stream->next);
+  return 0;
+}
+
+static int stream_write(git_writestream *s, const char *buffer, size_t len) {
+
+  struct Stream *stream = (struct Stream *)s;
+  QByteArray to;
+  apply(stream->filter, to, buffer, len, stream->filter_source);
+  stream->next->write(stream->next, to.data(), to.length());
+  return 0;
+}
+
+// Called for every new stream
+static int stream_init(git_writestream **out, git_filter *self, void **payload,
+                       const git_filter_source *src, git_writestream *next) {
+
+  struct Stream *stream =
+      static_cast<struct Stream *>(git__calloc(1, sizeof(struct Stream)));
+  if (!stream)
+    return -1;
+
+  stream->parent.write = stream_write;
+  stream->parent.close = stream_close;
+  stream->parent.free = stream_free;
+  stream->next = next;
+  stream->filter_source = src;
+  stream->filter = self;
+
+  *out = (git_writestream *)stream;
+  return 0;
 }
 
 } // namespace
@@ -114,7 +147,7 @@ void Filter::init() {
     info.name = key.toUtf8();
     info.attributes = kFilterFmt.arg(key).toUtf8();
 
-	info.filter.stream = &stream;
+    info.filter.stream = stream_init;
     info.filter.attributes = info.attributes.constData();
     git_filter_register(info.name.constData(), &info.filter,
                         GIT_FILTER_DRIVER_PRIORITY);
