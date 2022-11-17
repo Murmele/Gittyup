@@ -26,7 +26,7 @@ const QString kLogKey = "credential/log";
 const QString cacheStoreName = "cache";
 const QString storeStoreName = "store";
 const QString osxKeyChainStoreName = "osxkeychain";
-const QString winCredStoreName = "winCred";
+const QString winCredStoreName = "wincred";
 const QString libSecretStoreName = "libsecret";
 const QString gnomeKeyringStoreName = "gnome-keyring";
 
@@ -78,7 +78,7 @@ QStringList CredentialHelper::getAvailableHelperNames() {
 #if defined(Q_OS_MAC)
   list.append(osxKeyChainStoreName);
 #elif defined(Q_OS_WIN)
-  list.append(winCredStoreName),
+  list.append(winCredStoreName);
 #else
   QLibrary lib("secret-1", 0);
   if (lib.load()) {
