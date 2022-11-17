@@ -194,9 +194,6 @@ public:
         config.remove("credential.helper");
       }
 
-      Settings::instance()->setValue(
-          "credential/store", config.value<QString>("credential.helper"));
-
       delete CredentialHelper::instance();
     });
 
@@ -205,9 +202,6 @@ public:
               git::Config config = git::Config::global();
               config.setValue("credential.helper", text);
 
-              Settings::instance()->setValue(
-                  "credential/store",
-                  config.value<QString>("credential.helper"));
               delete CredentialHelper::instance();
             });
 

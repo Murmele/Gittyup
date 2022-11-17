@@ -13,6 +13,7 @@
 #include "WinCred.h"
 #include "Store.h"
 #include "conf/Settings.h"
+#include "git/Config.h"
 #include <QLibrary>
 #include <QPointer>
 #include <QSettings>
@@ -35,7 +36,8 @@ const QString gnomeKeyringStoreName = "gnome-keyring";
 CredentialHelper *CredentialHelper::instance() {
   static QPointer<CredentialHelper> instance;
   if (!instance) {
-    auto helperName = Settings::instance()->value(kStoreKey).toString();
+    git::Config config = git::Config::global();
+    auto helperName = config.value<QString>("credential.helper");
     if (isHelperValid(helperName)) {
       if (helperName == cacheStoreName) {
         instance = new Cache;
