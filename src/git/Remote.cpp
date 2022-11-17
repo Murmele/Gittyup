@@ -455,11 +455,8 @@ int Remote::Callbacks::update(const char *name, const git_oid *a,
   return 0;
 }
 
-int Remote::Callbacks::remoteReady(
-  git_remote* remote,
-  int direction,
-  void *payload)
-{
+int Remote::Callbacks::remoteReady(git_remote *remote, int direction,
+                                   void *payload) {
   Q_UNUSED(direction)
 
   Remote::Callbacks *cbs = reinterpret_cast<Remote::Callbacks *>(payload);
@@ -619,7 +616,8 @@ Result Remote::clone(Callbacks *callbacks, const QString &url,
   git_repository *repo = nullptr;
   git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
   opts.fetch_opts.callbacks.connected = &Remote::Callbacks::connected;
-  opts.fetch_opts.callbacks.about_to_disconnect = &Remote::Callbacks::about_to_disconnect;
+  opts.fetch_opts.callbacks.about_to_disconnect =
+      &Remote::Callbacks::about_to_disconnect;
   opts.fetch_opts.callbacks.sideband_progress = &Remote::Callbacks::sideband;
   opts.fetch_opts.callbacks.credentials = &Remote::Callbacks::credentials;
   opts.fetch_opts.callbacks.certificate_check = &Remote::Callbacks::certificate;

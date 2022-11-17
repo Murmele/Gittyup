@@ -93,9 +93,9 @@ public:
     virtual bool connectToAgent() const { return false; }
 
     // static callback wrappers
-	static void connected(git_remote *remote, void *payload);
+    static void connected(git_remote *remote, void *payload);
 
-	static void about_to_disconnect(git_remote *remote, void *payload);
+    static void about_to_disconnect(git_remote *remote, void *payload);
 
     static int sideband(const char *str, int len, void *payload);
 
@@ -110,9 +110,7 @@ public:
     static int update(const char *name, const git_oid *a, const git_oid *b,
                       void *payload);
 
-	static int remoteReady(git_remote *remote,
-						   int direction,
-						   void *payload);
+    static int remoteReady(git_remote *remote, int direction, void *payload);
 
   protected:
     // Try to stop the current remote.

@@ -27,19 +27,17 @@ add_library(
   TagRef.cpp
   Tree.cpp)
 
-target_link_libraries(git
+target_link_libraries(
+  git
   $<TARGET_OBJECTS:libgit2>
   $<TARGET_OBJECTS:util> # util of libgit2
   gittyupUtil
   ${LIBGIT2_DEPENDENCY_OBJECTS}
   ${LIBGIT2_SYSTEM_LIBS}
   Qt5::Core
-  Qt5::Network
-)
+  Qt5::Network)
 
 # needed also by the plugin target so it must be public
-target_include_directories(git PUBLIC
-    ${LIBGIT2_INCLUDES}
-    )
+target_include_directories(git PUBLIC ${LIBGIT2_INCLUDES})
 
 set_target_properties(git PROPERTIES AUTOMOC ON)

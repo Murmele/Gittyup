@@ -44,7 +44,8 @@ public:
   Id indexId() const;
   Id workdirId() const;
 
-  Result update(Remote::Callbacks *callbacks, bool init = false, bool checkout_force = false);
+  Result update(Remote::Callbacks *callbacks, bool init = false,
+                bool checkout_force = false);
 
   Repository open() const;
 

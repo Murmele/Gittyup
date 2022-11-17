@@ -126,7 +126,8 @@ bool SubmoduleTableModel::setData(const QModelIndex &index,
           QMessageBox::Warning, tr("Deinitialize Submodule?"), text,
           QMessageBox::Cancel, qobject_cast<QWidget *>(parent()));
 
-	  if (GIT_SUBMODULE_STATUS_IS_WD_DIRTY(mRepo.submoduleStatus(submodule.name())))
+      if (GIT_SUBMODULE_STATUS_IS_WD_DIRTY(
+              mRepo.submoduleStatus(submodule.name())))
         mb->setInformativeText(
             tr("The submodule working directory contains uncommitted "
                "changes that will be lost if you continue."));

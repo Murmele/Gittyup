@@ -31,7 +31,7 @@ Id::Id(const git_oid *id) {
   if (id) {
     git_oid_cpy(&d, id);
   } else {
-	memset(d.id, 0, GIT_OID_SHA1_SIZE);
+    memset(d.id, 0, GIT_OID_SHA1_SIZE);
   }
 }
 

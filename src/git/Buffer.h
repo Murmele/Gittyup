@@ -19,7 +19,7 @@ public:
   bool isBinary() const;
 
 private:
-  const char* data;
+  const char *data;
   const int size;
 };
 

@@ -175,8 +175,7 @@ Id Repository::workdirId(const QString &path) const {
   return id;
 }
 
-QString Repository::message() const
-{
+QString Repository::message() const {
   git_buf buf = GIT_BUF_INIT;
   git_repository_message(&buf, d->repo);
   return QString::fromUtf8(buf.ptr, buf.size);
@@ -707,18 +706,19 @@ Submodule Repository::lookupSubmodule(const QString &name) const {
   return Submodule(submodule);
 }
 
-int Repository::submoduleStatus(const QString& name) const {
+int Repository::submoduleStatus(const QString &name) const {
 
-	unsigned int status;
-	// TODO: testing!!!!
-	int returnValue = git_submodule_status(&status, d->repo, name.toLocal8Bit().data(), GIT_SUBMODULE_IGNORE_UNSPECIFIED);
-	if (returnValue < 0)
-		return returnValue;
-	return status;
+  unsigned int status;
+  // TODO: testing!!!!
+  int returnValue =
+      git_submodule_status(&status, d->repo, name.toLocal8Bit().data(),
+                           GIT_SUBMODULE_IGNORE_UNSPECIFIED);
+  if (returnValue < 0)
+    return returnValue;
+  return status;
 }
 
-Remote Repository::addRemote(const QString &name, const QString &url)
-{
+Remote Repository::addRemote(const QString &name, const QString &url) {
   // FIXME: Validate name?
 
   emit d->notifier->remoteAboutToBeAdded(name);
