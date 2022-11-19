@@ -245,7 +245,9 @@ void TreeView::itemExpanded(const QModelIndex &index) {
     return;
   qDebug() << "Expanded: Name: " << mName
            << ", Index data: " << index.data().toString();
-  setCollapseCount(mCollapseCount - 1 + countCollapsed(index, false));
+
+  mCollapseCount = mCollapseCount <= 0 ? mCollapseCount : mCollapseCount - 1;
+  setCollapseCount(mCollapseCount + countCollapsed(index, false));
 }
 
 void TreeView::itemCollapsed(const QModelIndex &index) {
