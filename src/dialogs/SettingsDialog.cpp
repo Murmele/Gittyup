@@ -243,6 +243,7 @@ public:
       mAvailableStores->addItem(helper);
     }
     mAvailableStores->setCurrentText(currentHelper);
+    mAvailableStores->setEditable(true);
 
     mSingleInstance->setChecked(
         settings->value(Setting::Id::AllowSingleInstanceOnly).toBool());

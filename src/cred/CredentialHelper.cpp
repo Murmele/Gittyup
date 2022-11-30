@@ -64,13 +64,7 @@ CredentialHelper *CredentialHelper::instance() {
 }
 
 bool CredentialHelper::isHelperValid(const QString &name) {
-  auto helpers = getAvailableHelperNames();
-  foreach (auto helper, helpers) {
-    if (helper == name) {
-      return true;
-    }
-  }
-  return false;
+  return !name.isEmpty();
 }
 
 QStringList CredentialHelper::getAvailableHelperNames() {
