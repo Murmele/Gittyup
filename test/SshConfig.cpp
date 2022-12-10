@@ -39,16 +39,10 @@ private slots:
 private:
   static QString transformUrl(const QString &url, const QString config) {
     auto callbacks = Callbacks(url, config);
-    git_buf buf;
-    buf.asize = 0;
-    buf.size = 0;
-    buf.ptr = nullptr;
 
-    Callbacks::url(&buf, url.toUtf8().data(), 0, &callbacks);
-
-    QString res = QString::fromUtf8(buf.ptr, (int)buf.size);
-    git_buf_dispose(&buf);
-    return res;
+	//git::Remote remote();
+	//Callbacks::remoteReady(*remote, 0, &callbacks);
+	return ""; // remote.url();
   }
 };
 
