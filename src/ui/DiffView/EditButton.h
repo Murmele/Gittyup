@@ -9,10 +9,10 @@ class EditButton : public Button {
   Q_OBJECT
 
 public:
-  EditButton(const git::Patch &patch, int index, bool binary, bool lfs,
-             QWidget *parent = nullptr);
+  EditButton(git::Patch &patch, int index, bool binary, bool lfs,
+			 QWidget *parent = nullptr);
 
-  void updatePatch(const git::Patch &patch, int index, bool init = false);
+  void updatePatch(git::Patch &patch, int index, bool init = false);
 
 protected:
   void paintEvent(QPaintEvent *event) override;

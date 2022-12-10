@@ -34,7 +34,7 @@ const QString noNewLineAtEndOfFile =
     HunkWidget::tr("No newline at end of file");
 } // namespace
 
-_HunkWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
+_HunkWidget::Header::Header(const git::Diff &diff, git::Patch &patch,
                             int index, bool lfs, bool submodule,
                             QWidget *parent)
     : QFrame(parent) {
@@ -179,7 +179,7 @@ void _HunkWidget::Header::mouseDoubleClickEvent(QMouseEvent *event) {
 //#############################################################################
 
 HunkWidget::HunkWidget(DiffView *view, const git::Diff &diff,
-                       const git::Patch &patch, const git::Patch &staged,
+					   git::Patch &patch, const git::Patch &staged,
                        int index, bool lfs, bool submodule, QWidget *parent)
     : QFrame(parent), mView(view), mPatch(patch), mStaged(staged),
       mIndex(index), mLfs(lfs) {

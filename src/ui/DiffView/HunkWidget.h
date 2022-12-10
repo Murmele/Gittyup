@@ -22,8 +22,8 @@ namespace _HunkWidget {
 class Header : public QFrame {
   Q_OBJECT
 public:
-  Header(const git::Diff &diff, const git::Patch &patch, int index, bool lfs,
-         bool submodule, QWidget *parent = nullptr);
+  Header(const git::Diff &diff, git::Patch &patch, int index, bool lfs,
+		 bool submodule, QWidget *parent = nullptr);
   QCheckBox *check() const;
 
   DisclosureButton *button() const;
@@ -61,9 +61,9 @@ class HunkWidget : public QFrame {
   Q_OBJECT
 
 public:
-  HunkWidget(DiffView *view, const git::Diff &diff, const git::Patch &patch,
-             const git::Patch &staged, int index, bool lfs, bool submodule,
-             QWidget *parent = nullptr);
+  HunkWidget(DiffView *view, const git::Diff &diff, git::Patch &patch,
+			 const git::Patch &staged, int index, bool lfs, bool submodule,
+			 QWidget *parent = nullptr);
   _HunkWidget::Header *header() const;
   TextEditor *editor(bool ensureLoaded = true);
   void invalidate();

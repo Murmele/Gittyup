@@ -135,7 +135,15 @@ bool Patch::isLfsPointer() const {
   return false;
 }
 
-Blob Patch::blob(Diff::File file) const {
+Blob Patch::blob(Diff::File file) {
+	if (file == Diff::File::NewFile) {
+		if (mNewBlob.isValid())
+			return mNewBlob;
+	} else {
+		if (mOldBlob.isValid())
+			return mOldBlob;
+	}
+
   git_repository *repo = git_patch_owner(d.data());
   if (!repo)
     return Blob();
@@ -146,7 +154,15 @@ Blob Patch::blob(Diff::File file) const {
 
   git_object *obj = nullptr;
   git_object_lookup(&obj, repo, &id, GIT_OBJECT_BLOB);
-  return Blob(reinterpret_cast<git_blob *>(obj));
+
+  auto b = Blob(reinterpret_cast<git_blob *>(obj));
+  if (file == Diff::File::NewFile) {
+	  mNewBlob = b;
+  } else {
+	  mOldBlob = b;
+  }
+
+  return b;
 }
 
 Patch::LineStats Patch::lineStats() const {
@@ -161,7 +177,7 @@ Patch::LineStats Patch::lineStats() const {
   return stats;
 }
 
-QList<QString> Patch::print() const {
+QList<QString> Patch::print() {
   if (!this->d) {
     // can occur, when the object is created with the default
     // constructor.
@@ -290,7 +306,7 @@ void Patch::setConflictResolution(int hidx, ConflictResolution resolution) {
   writeConflictResolutions(repo, map);
 }
 
-void Patch::populatePreimage(QList<QList<QByteArray>> &image) const {
+void Patch::populatePreimage(QList<QList<QByteArray>> &image) {
   // Populate preimage.
   // image holds the text and changes are made in this list
   // this list is written afterwards back into the file
@@ -336,7 +352,7 @@ QByteArray Patch::generateResult(QList<QList<QByteArray>> &image,
 }
 
 QByteArray Patch::apply(const QBitArray &hunks,
-                        const FilterList &filters) const {
+						const FilterList &filters) {
   QList<QList<QByteArray>> image;
   populatePreimage(image);
 
