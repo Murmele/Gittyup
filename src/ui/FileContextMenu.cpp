@@ -80,10 +80,13 @@ void handlePath(const git::Repository &repo, const QString &path,
 
 FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
                                  const git::Index &index, QWidget *parent)
-    : QMenu(parent), mFiles(files), mView(view) {
+    : QMenu(parent), mView(view), mFiles(files) {
   // Show diff and merge tools for the currently selected diff.
   git::Diff diff = view->diff();
   git::Repository repo = view->repo();
+
+  if (!diff.isValid())
+    return;
 
   // Create external tools.
   QList<ExternalTool *> showTools;
@@ -142,238 +145,13 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
 
   QList<git::Commit> commits = view->commits();
   if (commits.isEmpty()) {
-    if (index.isValid()) {
-      // Stage/Unstage
-      QAction *stage = addAction(tr("Stage"), [index, files] {
-        git::Index(index).setStaged(files, true);
-      });
-
-      QAction *unstage = addAction(tr("Unstage"), [index, files] {
-        git::Index(index).setStaged(files, false);
-      });
-
-      int staged = 0;
-      int unstaged = 0;
-      foreach (const QString &file, files) {
-        switch (index.isStaged(file)) {
-          case git::Index::Disabled:
-            break;
-
-          case git::Index::Unstaged:
-            ++unstaged;
-            break;
-
-          case git::Index::PartiallyStaged:
-            ++staged;
-            ++unstaged;
-            break;
-
-          case git::Index::Staged:
-            ++staged;
-            break;
-
-          case git::Index::Conflicted:
-            // FIXME: Resolve conflicts?
-            break;
-        }
-      }
-
-      stage->setEnabled(unstaged > 0);
-      unstage->setEnabled(staged > 0);
-
-      addSeparator();
-    }
-  }
-
-  // Discard
-  QStringList modified;
-  QStringList untracked;
-  if (diff.isValid()) {
-    // copied from DiffTreeModel.cpp
-    // handle submodules
-    auto s = repo.submodules();
-    QList<git::Submodule> submodules;
-    QStringList filePatches;
-    for (auto trackedPatch : files) {
-      bool is_submodule = false;
-      for (auto submodule : s) {
-        if (submodule.path() == trackedPatch) {
-          is_submodule = true;
-          submodules.append(submodule);
-          break;
-        }
-      }
-      if (!is_submodule)
-        filePatches.append(trackedPatch);
-    }
-
-    // handle files not submodules
-    foreach (const QString &file, filePatches) {
-      handlePath(repo, file, diff, modified, untracked);
-    }
-
-    QAction *discard =
-        addAction(tr("Discard Changes"), [view, modified, submodules] {
-          QMessageBox *dialog =
-              new QMessageBox(QMessageBox::Warning, tr("Discard Changes?"),
-                              tr("Are you sure you want to discard changes in "
-                                 "the selected files?"),
-                              QMessageBox::Cancel, view);
-          dialog->setAttribute(Qt::WA_DeleteOnClose);
-          dialog->setInformativeText(tr("This action cannot be undone."));
-          QString detailedText = modified.join('\n');
-          for (const auto s : submodules)
-            detailedText += s.path() + " " + tr("(Submodule)") + "\n";
-          dialog->setDetailedText(detailedText);
-
-          // Expand the Show Details
-          foreach (QAbstractButton *button, dialog->buttons()) {
-            if (dialog->buttonRole(button) == QMessageBox::ActionRole) {
-              button->click(); // click it to expand the text
-              break;
-            }
-          }
-
-          QString text = tr("Discard Changes");
-          QPushButton *discard =
-              dialog->addButton(text, QMessageBox::AcceptRole);
-          discard->setObjectName("DiscardButton");
-          connect(discard, &QPushButton::clicked, [view, modified, submodules] {
-            git::Repository repo = view->repo();
-            int strategy = GIT_CHECKOUT_FORCE;
-            if (modified.count() &&
-                !repo.checkout(git::Commit(), nullptr, modified, strategy)) {
-              QString text = tr("%1 files").arg(modified.size());
-              LogEntry *parent = view->addLogEntry(text, tr("Discard"));
-              view->error(parent, tr("discard"), text);
-            }
-            view->updateSubmodules(submodules, true, false, true);
-
-            // FIXME: Work dir changed?
-            view->refresh(); // TODO: check that refresh is called only once!
-          });
-
-          dialog->open();
-        });
-    discard->setEnabled(!modified.isEmpty() || submodules.count());
-
-    QAction *remove = addAction(tr("Remove Untracked Files"),
-                                [view, untracked] { view->clean(untracked); });
-    remove->setObjectName("RemoveAction");
-    remove->setEnabled(!untracked.isEmpty());
-
-    // Ignore
-    QAction *ignore = addAction(tr("Ignore"));
-    ignore->setObjectName("IgnoreAction");
-    connect(ignore, &QAction::triggered, this, &FileContextMenu::ignoreFile);
-
-    if (!diff.isValid()) {
-      ignore->setEnabled(false);
-    } else {
-      foreach (const QString &file, files) {
-        int index = diff.indexOf(file);
-        if (index < 0)
-          continue;
-
-        if (diff.status(index) != GIT_DELTA_UNTRACKED) {
-          ignore->setEnabled(false);
-          break;
-        }
-      }
-    }
-
+    handleUncommittedChanges(index, files);
   } else {
-    // Checkout
-    QAction *checkout = addAction(tr("Checkout"), [this, view, files] {
-      view->checkout(view->commits().first(), files);
-      view->setViewMode(RepoView::DoubleTree);
-    });
-
-    // Checkout to ...
-    QAction *checkoutTo =
-        addAction(tr("Save Selected Version as ..."), [this, view, files] {
-          QFileDialog d(this);
-          d.setFileMode(QFileDialog::FileMode::Directory);
-          d.setOption(QFileDialog::ShowDirsOnly);
-          d.setWindowTitle(tr("Select new file directory"));
-          if (d.exec()) {
-            const auto folder = d.selectedFiles().first();
-            const auto save = view->addLogEntry(
-                tr("Saving files"),
-                tr("Saving files of selected version to disk"));
-            for (const auto &file : files) {
-              const auto saveFile =
-                  view->addLogEntry(tr("Save file ") + file, "Save file", save);
-              // assumption. file is a file not a folder!
-              if (!exportFile(view, folder, file))
-                view->error(saveFile, "save file", file, tr("Invalid Blob"));
-            }
-            view->setViewMode(RepoView::DoubleTree);
-          }
-          return true;
-        });
-
-    QAction *open = addAction(tr("Open this version"), [this, view, files] {
-      QString folder = QDir::tempPath();
-      const auto &file = files.first();
-      auto filename = file.split("/").last();
-
-      auto logentry =
-          view->addLogEntry(tr("Opening file"), tr("Open ") + filename);
-
-      if (exportFile(view, folder, file))
-        QDesktopServices::openUrl(QUrl::fromLocalFile(
-            QFileInfo(folder + "/" + filename).absoluteFilePath()));
-      else
-        view->error(logentry, tr("open file"), filename,
-                    tr("Blob is invalid."));
-    });
-
-    // should show a dialog to select an application
-    // Don't forgett to uncomment "openWith->setEnabled(!isBare);" below
-    //	QAction *openWith = addAction(tr("Open this Version with ..."),
-    //[this,
-    // view, files] { 	  QString folder = QDir::tempPath(); const auto&
-    // file = files.first(); 	  auto filename = file.split("/").last();
-
-    //	  auto logentry = view->addLogEntry(tr("Opening file with ..."),
-    // tr("Open ") + filename);
-
-    //	  if (exportFile(view, folder, file))
-    //		QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(folder
-    //+
-    //"/"
-    //+ filename).absoluteFilePath())); 	  else
-    // view->error(logentry, tr("open file"), filename, tr("Blob is
-    // invalid."));
-    //	});
-
-    auto isBare = view->repo().isBare();
-    const auto blob = view->commits().first().blob(files.first());
-    checkout->setEnabled(!isBare);
-    checkout->setToolTip(!isBare ? ""
-                                 : tr("Unable to checkout bare repositories"));
-    checkoutTo->setEnabled(!isBare && blob.isValid());
-    checkoutTo->setToolTip(
-        !isBare ? "" : tr("Unable to checkout bare repositories"));
-    open->setEnabled(!isBare && blob.isValid());
-    open->setToolTip(!isBare ? ""
-                             : tr("Unable to open files from bare repository"));
-    // openWith->setEnabled(!isBare && blob.isValid());
-
-    /* disable checkout if the file is already
-     * in the current working directory */
-    git::Commit commit = commits.first();
-    foreach (const QString &file, files) {
-      if (commit.tree().id(file) == repo.workdirId(file)) {
-        checkout->setEnabled(false);
-        checkout->setToolTip(
-            tr("The file is already in the current working directory"));
-        break;
-      }
-    }
+    handleCommits(commits, files);
   }
 
+  // TODO: moving this into handleWorkingDirChanges()? Because
+  // Locking committed files does not make sense or?
   // LFS
   if (repo.lfsIsInitialized()) {
     addSeparator();
@@ -446,6 +224,241 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
       });
 
       exeAct->setEnabled(exe || mode == GIT_FILEMODE_BLOB);
+    }
+  }
+}
+
+void FileContextMenu::handleUncommittedChanges(const git::Index &index,
+                                               const QStringList &files) {
+  git::Diff diff = mView->diff();
+  git::Repository repo = mView->repo();
+  const auto view = mView;
+  if (index.isValid()) {
+    // Stage/Unstage
+    QAction *stage = addAction(tr("Stage"), [index, files] {
+      git::Index(index).setStaged(files, true);
+    });
+
+    QAction *unstage = addAction(tr("Unstage"), [index, files] {
+      git::Index(index).setStaged(files, false);
+    });
+
+    int staged = 0;
+    int unstaged = 0;
+    foreach (const QString &file, files) {
+      switch (index.isStaged(file)) {
+        case git::Index::Disabled:
+          break;
+
+        case git::Index::Unstaged:
+          ++unstaged;
+          break;
+
+        case git::Index::PartiallyStaged:
+          ++staged;
+          ++unstaged;
+          break;
+
+        case git::Index::Staged:
+          ++staged;
+          break;
+
+        case git::Index::Conflicted:
+          // FIXME: Resolve conflicts?
+          break;
+      }
+    }
+
+    stage->setEnabled(unstaged > 0);
+    unstage->setEnabled(staged > 0);
+
+    addSeparator();
+  }
+
+  // Discard
+  QStringList modified;
+  QStringList untracked;
+  // copied from DiffTreeModel.cpp
+  // handle submodules
+  auto s = repo.submodules();
+  QList<git::Submodule> submodules;
+  QStringList filePatches;
+  for (auto trackedPatch : files) {
+    bool is_submodule = false;
+    for (auto submodule : s) {
+      if (submodule.path() == trackedPatch) {
+        is_submodule = true;
+        submodules.append(submodule);
+        break;
+      }
+    }
+    if (!is_submodule)
+      filePatches.append(trackedPatch);
+  }
+
+  // handle files not submodules
+  foreach (const QString &file, filePatches) {
+    handlePath(repo, file, diff, modified, untracked);
+  }
+
+  QAction *discard =
+      addAction(tr("Discard Changes"), [view, modified, submodules] {
+        QMessageBox *dialog =
+            new QMessageBox(QMessageBox::Warning, tr("Discard Changes?"),
+                            tr("Are you sure you want to discard changes in "
+                               "the selected files?"),
+                            QMessageBox::Cancel, view);
+        dialog->setAttribute(Qt::WA_DeleteOnClose);
+        dialog->setInformativeText(tr("This action cannot be undone."));
+        QString detailedText = modified.join('\n');
+        for (const auto &s : submodules)
+          detailedText += s.path() + " " + tr("(Submodule)") + "\n";
+        dialog->setDetailedText(detailedText);
+
+        // Expand the Show Details
+        foreach (QAbstractButton *button, dialog->buttons()) {
+          if (dialog->buttonRole(button) == QMessageBox::ActionRole) {
+            button->click(); // click it to expand the text
+            break;
+          }
+        }
+
+        QString text = tr("Discard Changes");
+        QPushButton *discard = dialog->addButton(text, QMessageBox::AcceptRole);
+        discard->setObjectName("DiscardButton");
+        connect(discard, &QPushButton::clicked, [view, modified, submodules] {
+          git::Repository repo = view->repo();
+          int strategy = GIT_CHECKOUT_FORCE;
+          if (modified.count() &&
+              !repo.checkout(git::Commit(), nullptr, modified, strategy)) {
+            QString text = tr("%1 files").arg(modified.size());
+            LogEntry *parent = view->addLogEntry(text, tr("Discard"));
+            view->error(parent, tr("discard"), text);
+          }
+          view->updateSubmodules(submodules, true, false, true);
+
+          // FIXME: Work dir changed?
+          view->refresh(); // TODO: check that refresh is called only once!
+        });
+
+        dialog->open();
+      });
+  discard->setEnabled(!modified.isEmpty() || submodules.count());
+
+  QAction *remove = addAction(tr("Remove Untracked Files"),
+                              [view, untracked] { view->clean(untracked); });
+  remove->setObjectName("RemoveAction");
+  remove->setEnabled(!untracked.isEmpty());
+
+  // Ignore
+  QAction *ignore = addAction(tr("Ignore"));
+  ignore->setObjectName("IgnoreAction");
+  connect(ignore, &QAction::triggered, this, &FileContextMenu::ignoreFile);
+  foreach (const QString &file, files) {
+    int index = diff.indexOf(file);
+    if (index < 0)
+      continue;
+
+    if (diff.status(index) != GIT_DELTA_UNTRACKED) {
+      ignore->setEnabled(false);
+      break;
+    }
+  }
+}
+
+void FileContextMenu::handleCommits(const QList<git::Commit> &commits,
+                                    const QStringList &files) {
+  // because this might not live anymore
+  // when the lambdas are handled
+  const auto view = mView;
+  git::Repository repo = view->repo();
+
+  // Checkout
+  QAction *checkout = addAction(tr("Checkout"), [view, files] {
+    view->checkout(view->commits().first(), files);
+    view->setViewMode(RepoView::DoubleTree);
+  });
+
+  // Checkout to ...
+  QAction *checkoutTo =
+      addAction(tr("Save Selected Version as ..."), [this, view, files] {
+        QFileDialog d(this); // TODO: this might not live anymore??
+        d.setFileMode(QFileDialog::FileMode::Directory);
+        d.setOption(QFileDialog::ShowDirsOnly);
+        d.setWindowTitle(tr("Select new file directory"));
+        if (d.exec()) {
+          const auto folder = d.selectedFiles().first();
+          const auto save =
+              view->addLogEntry(tr("Saving files"),
+                                tr("Saving files of selected version to disk"));
+          for (const auto &file : files) {
+            const auto saveFile =
+                view->addLogEntry(tr("Save file ") + file, "Save file", save);
+            // assumption. file is a file not a folder!
+            if (!exportFile(view, folder, file))
+              view->error(saveFile, "save file", file, tr("Invalid Blob"));
+          }
+          view->setViewMode(RepoView::DoubleTree);
+        }
+        return true;
+      });
+
+  QAction *open = addAction(tr("Open this version"), [this, view, files] {
+    QString folder = QDir::tempPath();
+    const auto &file = files.first();
+    auto filename = file.split("/").last();
+
+    auto logentry =
+        view->addLogEntry(tr("Opening file"), tr("Open ") + filename);
+
+    if (exportFile(view, folder, file))
+      QDesktopServices::openUrl(QUrl::fromLocalFile(
+          QFileInfo(folder + "/" + filename).absoluteFilePath()));
+    else
+      view->error(logentry, tr("open file"), filename, tr("Blob is invalid."));
+  });
+
+  // should show a dialog to select an application
+  // Don't forgett to uncomment "openWith->setEnabled(!isBare);" below
+  //	QAction *openWith = addAction(tr("Open this Version with ..."),
+  //[this,
+  // view, files] { 	  QString folder = QDir::tempPath(); const auto&
+  // file = files.first(); 	  auto filename = file.split("/").last();
+
+  //	  auto logentry = view->addLogEntry(tr("Opening file with ..."),
+  // tr("Open ") + filename);
+
+  //	  if (exportFile(view, folder, file))
+  //		QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(folder
+  //+
+  //"/"
+  //+ filename).absoluteFilePath())); 	  else
+  // view->error(logentry, tr("open file"), filename, tr("Blob is
+  // invalid."));
+  //	});
+
+  auto isBare = view->repo().isBare();
+  const auto blob = view->commits().first().blob(files.first());
+  checkout->setEnabled(!isBare);
+  checkout->setToolTip(!isBare ? ""
+                               : tr("Unable to checkout bare repositories"));
+  checkoutTo->setEnabled(!isBare && blob.isValid());
+  checkoutTo->setToolTip(!isBare ? ""
+                                 : tr("Unable to checkout bare repositories"));
+  open->setEnabled(!isBare && blob.isValid());
+  open->setToolTip(!isBare ? ""
+                           : tr("Unable to open files from bare repository"));
+  // openWith->setEnabled(!isBare && blob.isValid());
+
+  /* disable checkout if the file is already
+   * in the current working directory */
+  git::Commit commit = commits.first();
+  foreach (const QString &file, files) {
+    if (commit.tree().id(file) == repo.workdirId(file)) {
+      checkout->setEnabled(false);
+      checkout->setToolTip(
+          tr("The file is already in the current working directory"));
+      break;
     }
   }
 }
