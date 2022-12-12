@@ -192,10 +192,19 @@ if(NOT APPLE)
 endif()
 
 if(UNIX AND NOT APPLE)
-  install(
-    DIRECTORY ${RSRC_DIR}/Gittyup.iconset
-    DESTINATION "Resources"
-    COMPONENT ${GITTYUP_NAME})
+  foreach(icon 16 32 64 128 256 512)
+    install(
+      FILES ${RSRC_DIR}/Gittyup.iconset/icon_${icon}x${icon}.png
+      DESTINATION share/icons/hicolor/${icon}x${icon}/apps
+      COMPONENT ${GITTYUP_NAME}
+      RENAME gittyup.png)
+
+    install(
+      FILES ${RSRC_DIR}/Gittyup.iconset/gittyup_logo.svg
+      DESTINATION share/icons/hicolor/scalable/apps
+      COMPONENT ${GITTYUP_NAME}
+      RENAME gittyup.png)
+  endforeach()
 endif()
 
 # Sign bundle on macOS.
