@@ -52,11 +52,12 @@ if(APPLE OR UNIX)
   set(RESOURCES_PREFIX ${CONTENTS_DIR}/)
 endif()
 
+set(L10N_INSTALL_DIR ${RESOURCES_PREFIX}Resources/l10n)
 foreach(QM_FILE ${QM_FILES} ${QT_QM_FILES})
   if(EXISTS ${QM_FILE})
     install(
       FILES ${QM_FILE}
-      DESTINATION ${RESOURCES_PREFIX}Resources/l10n
+      DESTINATION ${L10N_INSTALL_DIR}
       COMPONENT ${GITTYUP_NAME})
   endif()
 endforeach()

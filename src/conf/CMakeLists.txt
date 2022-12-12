@@ -8,9 +8,8 @@ target_compile_definitions(
 
 if(UNIX)
   target_compile_definitions(
-    conf
-    PRIVATE CONF_DIR="${CMAKE_INSTALL_FULL_DATADIR}/gittyup/Resources"
-            L10N_DIR="${CMAKE_INSTALL_FULL_DATADIR}/gittyup/Resources/l10n")
+    conf PRIVATE CONF_DIR="${CMAKE_INSTALL_FULL_DATADIR}/gittyup/Resources"
+                 L10N_DIR="${L10N_INSTALL_DIR}")
 else()
 
   target_compile_definitions(conf PRIVATE CONF_DIR="" L10N_DIR="")
