@@ -35,7 +35,7 @@ jobs:
 
   flatpak:
     name: "Flatpak"
-    runs-on: ubuntu-22.10
+    runs-on: ubuntu-22.04
     steps:
     - name: Show environment variables
       run: >
@@ -89,6 +89,8 @@ jobs:
 
     - name: Build package
       run: |
+         sudo apt update --assume-yes
+         sudo apt upgrade --assume-yes
          sudo apt install --assume-yes flatpak flatpak-builder
          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
          flatpak install -y org.freedesktop.Sdk.Extension.golang/x86_64/21.08
