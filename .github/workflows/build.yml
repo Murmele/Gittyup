@@ -37,7 +37,8 @@ jobs:
     name: "Flatpak"
     runs-on: ubuntu-latest
     container:
-      image: bilelmoussaoui/flatpak-github-actions:kde-5.15-21.08
+      # image: bilelmoussaoui/flatpak-github-actions:kde-5.15-21.08
+      image: exactlyonekas/gittyup-flatpak-builder:latest
       options: --privileged
     steps:
     - name: Show environment variables
