@@ -2,10 +2,16 @@
 
 Bug fix release
 
+### Added
+* Possibility to hide avatar (Settings - Window - View - Show Avatars)
+
 #### Changed
 
 * Fix download url for flatpak and macos
 * Fix Segmentation fault when ignoring files
+* Fix discard of complete files and submodules
+* Fix bytesize overflow
+
 ----
 
 ### v1.2.0 - 2022-10-28
