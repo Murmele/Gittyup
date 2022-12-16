@@ -109,7 +109,7 @@ private:
 
   int fileCountExpansionThreshold{100};
 
-  bool mSetDiffCounter{0};
+  uint32_t mSetDiffCounter{0};
 
   friend class TestTreeView;
 };
