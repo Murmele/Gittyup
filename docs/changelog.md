@@ -2,7 +2,7 @@
 
 Bug fix release
 
-### Added
+#### Added
 * Possibility to hide avatar (Settings - Window - View - Show Avatars)
 
 #### Changed
