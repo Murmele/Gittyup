@@ -314,7 +314,7 @@ static void addNodeToMenu(const git::Index &index, QStringList &files,
     auto stageState = index.isStaged(path);
 
     if ((staged && stageState != git::Index::Unstaged) ||
-		(!staged && stageState != git::Index::Staged) || !statusDiff) {
+        (!staged && stageState != git::Index::Staged) || !statusDiff) {
       files.append(path);
     }
   }
