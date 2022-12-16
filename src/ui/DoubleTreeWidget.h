@@ -47,6 +47,8 @@ public:
   void findNext() override;
   void findPrevious() override;
 
+  uint32_t setDiffCounter() {return mSetDiffCounter;}
+
 private slots:
   void collapseCountChanged(int count);
   static void showFileContextMenu(const QPoint &pos, RepoView *view,
@@ -106,6 +108,8 @@ private:
   git::Diff mDiff;
 
   int fileCountExpansionThreshold{100};
+
+  bool mSetDiffCounter{0};
 
   friend class TestTreeView;
 };

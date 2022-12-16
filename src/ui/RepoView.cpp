@@ -16,12 +16,12 @@
 #include "History.h"
 #include "MainWindow.h"
 #include "MenuBar.h"
+#include "DoubleTreeWidget.h"
 #include "PathspecWidget.h"
 #include "ReferenceWidget.h"
 #include "RemoteCallbacks.h"
 #include "SearchField.h"
 #include "ToolBar.h"
-#include "app/Application.h"
 #include "conf/Settings.h"
 #include "dialogs/AmendDialog.h"
 #include "dialogs/CheckoutDialog.h"
@@ -2760,6 +2760,11 @@ EditorWindow *RepoView::openEditor(const QString &path, int line,
 
 void RepoView::refresh() {
   // Fake head update.
+	uint32_t counter = 0;
+  auto dtw = findChild<DoubleTreeWidget*>();
+  if (dtw)
+	  counter = dtw->setDiffCounter();
+  qDebug() << "RepoView::refresh: time: " << QDateTime::currentDateTime() << " Set diff counter: " << counter;
   emit mRepo.notifier()->referenceUpdated(mRepo.head());
 }
 
