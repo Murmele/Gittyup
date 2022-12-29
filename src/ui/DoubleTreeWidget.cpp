@@ -543,10 +543,8 @@ void DoubleTreeWidget::filesSelected(const QModelIndexList &indexes) {
     TreeView *treeview = static_cast<TreeView *>(obj);
     if (treeview == stagedFiles) {
       unstagedFiles->deselectAll();
-      stagedFiles->setFocus();
     } else if (treeview == unstagedFiles) {
       stagedFiles->deselectAll();
-      unstagedFiles->setFocus();
     }
   }
   loadEditorContent(indexes);
