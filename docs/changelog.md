@@ -11,6 +11,7 @@ Bug fix release
 * Fix Segmentation fault when ignoring files
 * Fix discard of complete files and submodules
 * Fix bytesize overflow
+* Fix focus loose during scrolling in the Commitlist with the keyboard
 
 ----
 
