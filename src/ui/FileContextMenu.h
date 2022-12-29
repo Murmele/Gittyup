@@ -12,6 +12,7 @@
 
 #include "git/Id.h"
 #include "git/Index.h"
+#include "git/Commit.h"
 #include <QMenu>
 
 class ExternalTool;
@@ -31,6 +32,10 @@ private:
   void addExternalToolsAction(const QList<ExternalTool *> &tools);
   bool exportFile(const RepoView *view, const QString &folder,
                   const QString &file);
+  void handleUncommittedChanges(const git::Index &index,
+                                const QStringList &files);
+  void handleCommits(const QList<git::Commit> &commits,
+                     const QStringList &files);
 
   RepoView *mView;
   QStringList mFiles;

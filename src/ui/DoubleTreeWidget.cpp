@@ -300,12 +300,12 @@ QModelIndex DoubleTreeWidget::selectedIndex() const {
 }
 
 static void addNodeToMenu(const git::Index &index, QStringList &files,
-                          const Node *node, bool staged) {
+                          const Node *node, bool staged, bool statusDiff) {
   qDebug() << "DoubleTreeWidgetr addNodeToMenu()" << node->name();
 
   if (node->hasChildren()) {
     for (auto child : node->children()) {
-      addNodeToMenu(index, files, child, staged);
+      addNodeToMenu(index, files, child, staged, statusDiff);
     }
 
   } else {
@@ -314,7 +314,7 @@ static void addNodeToMenu(const git::Index &index, QStringList &files,
     auto stageState = index.isStaged(path);
 
     if ((staged && stageState != git::Index::Unstaged) ||
-        !staged && stageState != git::Index::Staged) {
+        (!staged && stageState != git::Index::Staged) || !statusDiff) {
       files.append(path);
     }
   }
@@ -324,10 +324,15 @@ void DoubleTreeWidget::showFileContextMenu(const QPoint &pos, RepoView *view,
                                            QTreeView *tree, bool staged) {
   QStringList files;
   QModelIndexList indexes = tree->selectionModel()->selectedIndexes();
+  const auto diff = view->diff();
+  if (!diff.isValid())
+    return;
+
+  const bool statusDiff = diff.isStatusDiff();
   foreach (const QModelIndex &index, indexes) {
     auto node = index.data(Qt::UserRole).value<Node *>();
 
-    addNodeToMenu(view->repo().index(), files, node, staged);
+    addNodeToMenu(view->repo().index(), files, node, staged, statusDiff);
   }
 
   if (files.isEmpty())
@@ -538,10 +543,8 @@ void DoubleTreeWidget::filesSelected(const QModelIndexList &indexes) {
     TreeView *treeview = static_cast<TreeView *>(obj);
     if (treeview == stagedFiles) {
       unstagedFiles->deselectAll();
-      stagedFiles->setFocus();
     } else if (treeview == unstagedFiles) {
       stagedFiles->deselectAll();
-      unstagedFiles->setFocus();
     }
   }
   loadEditorContent(indexes);
