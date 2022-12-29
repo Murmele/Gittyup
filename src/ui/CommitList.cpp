@@ -13,6 +13,7 @@
 #include "MainWindow.h"
 #include "ProgressIndicator.h"
 #include "RepoView.h"
+#include "Debug.h"
 #include "app/Application.h"
 #include "conf/Settings.h"
 #include "dialogs/MergeDialog.h"
@@ -72,6 +73,10 @@ private:
   bool mCanceled = false;
 };
 
+/*!
+ * \brief The CommitModel class
+ * Model showing all commits as timeline
+ */
 class CommitModel : public QAbstractListModel {
   Q_OBJECT
 
@@ -92,14 +97,10 @@ public:
       emit statusFinished(!mRows.isEmpty() && !mRows.first().commit.isValid());
     });
 
-    git::RepositoryNotifier *notifier = repo.notifier();
-    connect(notifier, &git::RepositoryNotifier::referenceUpdated, this,
-            &CommitModel::resetReference);
-    connect(notifier, &git::RepositoryNotifier::workdirChanged,
-            [this] { resetReference(mRef); });
-
     resetSettings();
   }
+
+  void restoreSelection(bool restore) { mRestoreSelection = restore; }
 
   git::Reference reference() const { return mRef; }
 
@@ -150,9 +151,15 @@ public:
     resetWalker();
   }
 
+  void suppressResetWalker(bool suppress) { mSuppressResetWalker = suppress; }
+
+  bool isSuppressResetWalker() { return mSuppressResetWalker; }
+
   void setReference(const git::Reference &ref) {
     mRef = ref;
-    resetWalker();
+    if (!mSuppressResetWalker) {
+      resetWalker();
+    }
   }
 
   void resetReference(const git::Reference &ref) {
@@ -165,7 +172,11 @@ public:
     if (!ref.isValid() || ref.isHead())
       startStatus();
 
-    resetWalker();
+    if (!mSuppressResetWalker) {
+      resetWalker();
+    } else {
+      // reset walker will be done when status finished
+    }
   }
 
   void resetWalker() {
@@ -174,6 +185,7 @@ public:
     // Reset state.
     mParents.clear();
     mRows.clear();
+    DebugRefresh("");
 
     // Update status row.
     bool head = (!mRef.isValid() || mRef.isHead());
@@ -184,8 +196,8 @@ public:
         row.append({Segment(Bottom, kTaintedColor), Segment(Dot, QColor())});
         mParents.append(Parent(mRef.target(), nextColor(), true));
       }
-
-      mRows.append(Row(git::Commit(), row));
+      DebugRefresh("mRows append invalid commit");
+      mRows.append(Row(git::Commit(), row)); // Uncommitted changes
     }
 
     // Begin walking commits.
@@ -284,6 +296,7 @@ public:
         row = columns(commit, parents, root);
 
       rows.append(Row(commit, row));
+      DebugRefresh("Append commit: " << commit.shortId());
 
       // Bail out.
       if (i++ >= 64)
@@ -546,12 +559,18 @@ private:
   QList<Parent> mParents;
 
   // walker settings
+  bool mSuppressResetWalker{false};
+  bool mRestoreSelection{true};
   bool mRefsAll = true;
   bool mSortDate = true;
   bool mCleanStatus = true;
   bool mGraphVisible = true;
 };
 
+/*!
+ * \brief The ListModel class
+ * Used to show a list of commits. This is used when a filter is used
+ */
 class ListModel : public QAbstractListModel {
 public:
   ListModel(QObject *parent = nullptr) : QAbstractListModel(parent) {}
@@ -1103,7 +1122,8 @@ CommitList::CommitList(Index *index, QWidget *parent)
           &CommitList::restoreSelection);
 
   CommitModel *model = static_cast<CommitModel *>(mModel);
-  connect(model, &CommitModel::statusFinished, [this](bool visible) {
+  connect(model, &CommitModel::statusFinished, [this, model](bool visible) {
+    mRestoreSelection = true; // Reset to default
     // Fake a selection notification if the diff is visible and selected.
     if (visible && selectionModel()->isSelected(mModel->index(0, 0)))
       resetSelection();
@@ -1112,31 +1132,24 @@ CommitList::CommitList(Index *index, QWidget *parent)
     if (selectedIndexes().isEmpty())
       selectFirstCommit();
 
+    model->restoreSelection(true);
+
     // Notify main window.
     emit statusChanged(visible);
   });
 
-  connect(this, &CommitList::entered,
-          [this](const QModelIndex &index) { update(index); });
-
   git::RepositoryNotifier *notifier = repo.notifier();
   connect(notifier, &git::RepositoryNotifier::referenceUpdated,
-          [this](const git::Reference &ref) {
-            if (!ref.isValid())
-              return;
-
-            if (ref.isStash())
-              updateModel();
-
-            if (ref.isHead()) {
-              QModelIndex index = this->model()->index(0, 0);
-              if (!index.data(CommitRole).isValid()) {
-                selectFirstCommit();
-              } else {
-                selectRange(ref.target().id().toString());
-              }
-            }
+          [this](const git::Reference &ref, bool restoreSelection) {
+            mRestoreSelection = restoreSelection;
+            resetReference(ref);
           });
+  connect(notifier, &git::RepositoryNotifier::workdirChanged, [this] {
+    resetReference(static_cast<const CommitModel *>(mModel)->reference());
+  });
+
+  connect(this, &CommitList::entered,
+          [this](const QModelIndex &index) { update(index); });
 
 #ifdef Q_OS_MAC
   QFont font = this->font();
@@ -1164,6 +1177,11 @@ QString CommitList::selectedRange() const {
 
 git::Diff CommitList::selectedDiff() const {
   QModelIndexList indexes = sortedIndexes();
+  DebugRefresh("Selected indices count: " << indexes.count());
+  for (const auto &index : indexes) {
+    const auto &id = index.data(CommitRole).value<git::Commit>().shortId();
+    DebugRefresh("Commit: " << id);
+  }
   if (indexes.isEmpty())
     return git::Diff();
 
@@ -1197,8 +1215,13 @@ void CommitList::cancelStatus() {
 }
 
 void CommitList::setReference(const git::Reference &ref) {
+  // storeSelection(); // If it will not be called because resetWalker was
+  // suppressed
   static_cast<CommitModel *>(mModel)->setReference(ref);
-  updateModel();
+  // restoreSelection(); // If it will not be called because resetWalker was
+  // suppressed
+  if (!isSuppressResetWalker())
+    updateModel();
   setFocus();
 }
 
@@ -1241,6 +1264,11 @@ void CommitList::resetSelection(bool spontaneous) {
 
 void CommitList::selectFirstCommit(bool spontaneous) {
   QModelIndex index = model()->index(0, 0);
+  const auto commit = index.data(CommitRole).value<git::Commit>();
+  if (commit.isValid())
+    DebugRefresh("Commit id: " << commit.shortId());
+  else
+    DebugRefresh("Invalid commit");
   if (index.isValid()) {
     selectIndexes(QItemSelection(index, index), QString(), spontaneous);
   } else {
@@ -1293,6 +1321,18 @@ bool CommitList::selectRange(const QString &range, const QString &file,
 
   selectIndexes(selection, file, spontaneous);
   return true;
+}
+
+void CommitList::suppressResetWalker(bool suppress) {
+  static_cast<CommitModel *>(mModel)->suppressResetWalker(suppress);
+}
+
+void CommitList::resetReference(const git::Reference &ref) {
+  static_cast<CommitModel *>(mModel)->resetReference(ref);
+}
+
+bool CommitList::isSuppressResetWalker() {
+  return static_cast<CommitModel *>(mModel)->isSuppressResetWalker();
 }
 
 void CommitList::resetSettings() {
@@ -1574,12 +1614,20 @@ void CommitList::leaveEvent(QEvent *event) {
   QListView::leaveEvent(event);
 }
 
-void CommitList::storeSelection() { mSelectedRange = selectedRange(); }
+void CommitList::storeSelection() {
+  mSelectedRange = selectedRange();
+  DebugRefresh("Selected Range: " << mSelectedRange);
+  Debug(mSelectedRange);
+}
 
 void CommitList::restoreSelection() {
   // Restore selection.
-  if (!mSelectedRange.isEmpty() && !selectRange(mSelectedRange))
+  DebugRefresh(mSelectedRange);
+  if (!mRestoreSelection ||
+      (!mSelectedRange.isEmpty() && !selectRange(mSelectedRange))) {
+    DebugRefresh("Failed to restore");
     emit diffSelected(git::Diff());
+  }
 
   mSelectedRange = QString();
 }

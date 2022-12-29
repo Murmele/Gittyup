@@ -302,6 +302,7 @@ public:
 
   // refresh
   void refresh();
+  void refresh1(bool restoreSelection);
 
   // pathspec search filter
   void setPathspec(const QString &path);

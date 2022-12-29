@@ -16,6 +16,7 @@
 #include "TreeProxy.h"
 #include "TreeView.h"
 #include "ViewDelegate.h"
+#include "Debug.h"
 #include "conf/Settings.h"
 #include "DiffView/DiffView.h"
 #include "git/Index.h"
@@ -301,7 +302,7 @@ QModelIndex DoubleTreeWidget::selectedIndex() const {
 
 static void addNodeToMenu(const git::Index &index, QStringList &files,
                           const Node *node, bool staged, bool statusDiff) {
-  qDebug() << "DoubleTreeWidgetr addNodeToMenu()" << node->name();
+  Debug("DoubleTreeWidgetr addNodeToMenu()" << node->name());
 
   if (node->hasChildren()) {
     for (auto child : node->children()) {
@@ -382,6 +383,12 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
                                const QString &pathspec) {
   Q_UNUSED(file)
   Q_UNUSED(pathspec)
+
+  mSetDiffCounter++;
+
+  DebugRefresh("DoubleTreeWidget::setDiff: time: "
+               << QDateTime::currentDateTime()
+               << "Counter: " << mSetDiffCounter);
 
   mDiff = diff;
 

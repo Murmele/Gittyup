@@ -9,12 +9,11 @@
 
 #include "Settings.h"
 #include "ConfFile.h"
+#include "Debug.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QSettings>
 #include <QStandardPaths>
-
-#include <QDebug>
 
 #ifdef Q_OS_WIN
 #define CS Qt::CaseInsensitive

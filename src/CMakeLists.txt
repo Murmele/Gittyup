@@ -1,5 +1,6 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+add_subdirectory(util)
 add_subdirectory(cli)
 add_subdirectory(conf)
 add_subdirectory(cred)
@@ -13,7 +14,6 @@ add_subdirectory(plugins)
 add_subdirectory(tools)
 add_subdirectory(ui)
 add_subdirectory(update)
-add_subdirectory(util)
 add_subdirectory(watcher)
 
 # Add executable last.

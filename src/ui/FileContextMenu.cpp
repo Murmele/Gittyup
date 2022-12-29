@@ -11,6 +11,7 @@
 #include "RepoView.h"
 #include "IgnoreDialog.h"
 #include "conf/Settings.h"
+#include "Debug.h"
 #include "dialogs/SettingsDialog.h"
 #include "git/Diff.h"
 #include "git/Index.h"
@@ -45,7 +46,7 @@ void handlePath(const git::Repository &repo, const QString &path,
                 const git::Diff &diff, QStringList &modified,
                 QStringList &untracked) {
   auto fullPath = repo.workdir().absoluteFilePath(path);
-  qDebug() << "FileContextMenu handlePath()" << path;
+  Debug("FileContextMenu handlePath()" << path);
 
   if (QFileInfo(fullPath).isDir()) {
     auto dir = QDir(path);

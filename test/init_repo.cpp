@@ -170,6 +170,7 @@ void TestInitRepo::amendCommit() {
   QVERIFY(commitList);
   QAbstractItemModel *commitModel = commitList->model();
   QModelIndex index = commitModel->index(0, 0);
+  QVERIFY(index.isValid());
   auto commit = commitModel->data(index, CommitList::Role::CommitRole)
                     .value<git::Commit>();
   QCOMPARE(commit.message(), QString("Some other commit message"));

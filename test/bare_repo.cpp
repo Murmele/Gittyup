@@ -8,6 +8,7 @@
 //
 
 #include "Test.h"
+#include "Debug.h"
 #include "dialogs/CloneDialog.h"
 #include "dialogs/StartDialog.h"
 #include "ui/Footer.h"
@@ -66,7 +67,7 @@ void TestBareRepo::initTestCase() {
   cloneDialog->setField("path", QDir::tempPath());
   cloneDialog->setField("bare", true);
   qWait(2000);
-  qDebug() << cloneDialog->field("bare").toBool();
+  Debug(cloneDialog->field("bare").toBool());
 
   // Click return.
   keyClick(cloneDialog, Qt::Key_Return);

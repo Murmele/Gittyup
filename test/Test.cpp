@@ -8,6 +8,7 @@
 //
 
 #include "Test.h"
+#include "Debug.h"
 #include "git/Config.h"
 #include "ui/RepoView.h"
 // #include <JlCompress.h>
@@ -113,12 +114,12 @@ QString extractRepository(const QString &filename, bool useTempDir) {
   QString exportFolder = QDir(exportPath).filePath(f.baseName());
 
   if (!QDir(exportFolder).exists() && !f.exists()) {
-    qDebug() << "Zip file does not exist: " << f;
+    Debug("Zip file does not exist: " << f);
     return "";
   }
 
   if (useTempDir && !tempDir.isValid()) {
-    qDebug() << "Not able to create temporary directory.";
+    Debug("Not able to create temporary directory.");
     return "";
   }
 
@@ -138,7 +139,7 @@ QString extractRepository(const QString &filename, bool useTempDir) {
   int arg = 2;
   auto res = zip_extract(filename_c, path_c, on_extract_entry, &arg);
   if (res < 0) {
-    qDebug() << "Error opening zip file: " << zipReturnValueToString(res);
+    Debug("Error opening zip file: " << zipReturnValueToString(res));
     return "";
   }
   return exportFolder; // successfully extracted
