@@ -3,7 +3,7 @@
 
 #include <QDebug>
 
-#define DEBUG 0
+#define DEBUG 1
 #define DEBUG_REFRESH 1
 
 #if DEBUG == 1
