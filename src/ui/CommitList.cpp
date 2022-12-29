@@ -171,11 +171,9 @@ public:
     // Status is invalid after HEAD changes.
     if (!ref.isValid() || ref.isHead())
       startStatus();
-
-    if (!mSuppressResetWalker) {
-      resetWalker();
-    } else {
+    else if (!mSuppressResetWalker) {
       // reset walker will be done when status finished
+      resetWalker();
     }
   }
 
