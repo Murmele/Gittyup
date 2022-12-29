@@ -29,6 +29,7 @@ private slots:
   void restoreStagedFileAfterCommit();
   void discardFiles();
   void fileMergeCrash();
+  void dirtySubmoduleAndStagedSubmodule();
 
 private:
 };
@@ -259,6 +260,44 @@ void TestTreeView::fileMergeCrash() {
   mouseClick(save, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(), 0);
 
   // should not crash
+}
+
+void TestTreeView::dirtySubmoduleAndStagedSubmodule() {
+  INIT_REPO("DirtySubmoduleUnstagedTree.zip", false);
+
+  auto doubleTree = repoView->findChild<DoubleTreeWidget *>();
+  QVERIFY(doubleTree);
+  doubleTree->fileCountExpansionThreshold = 5;
+  auto stagedTree = doubleTree->findChild<TreeView *>("Staged");
+  QVERIFY(stagedTree);
+  auto unstagedTree = doubleTree->findChild<TreeView *>("Unstaged");
+  QVERIFY(unstagedTree);
+
+  {
+    QAbstractItemModel *stagedModel = stagedTree->model();
+    QCOMPARE(stagedModel->rowCount(), 1);
+    QModelIndex index = stagedModel->index(0, 0); // submodules folder
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "submodules");
+
+    QCOMPARE(stagedModel->rowCount(index), 1);
+    index = stagedModel->index(0, 0, index); // submodule1
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "submodule1");
+  }
+
+  {
+    QAbstractItemModel *unstagedModel = unstagedTree->model();
+    QCOMPARE(unstagedModel->rowCount(), 1);
+    QModelIndex index = unstagedModel->index(0, 0); // submodules folder
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "submodules");
+
+    QCOMPARE(unstagedModel->rowCount(index), 1);
+    index = unstagedModel->index(0, 0, index); // submodule2
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "submodule2");
+  }
 }
 
 TEST_MAIN(TestTreeView)
