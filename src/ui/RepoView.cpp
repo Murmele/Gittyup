@@ -308,7 +308,7 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
   // Refresh the diff when a whole directory is added to the index.
   // FIXME: This is a workaround.
   connect(notifier, &git::RepositoryNotifier::directoryStaged, this,
-          &RepoView::refresh, Qt::QueuedConnection);
+          QOverload<>::of(&RepoView::refresh), Qt::QueuedConnection);
   connect(notifier, &git::RepositoryNotifier::directoryAboutToBeStaged, this,
           [this](const QString &dir, int count, bool &allow) {
             if (!Settings::instance()->prompt(Prompt::Kind::Directories))
@@ -1305,7 +1305,7 @@ void RepoView::merge(MergeFlags flags, const git::AnnotatedCommit &upstream,
     return;
 
   if (flags & NoCommit) {
-    refresh1(false);
+    refresh(false);
     // selectHead();
     return;
   }
@@ -1400,13 +1400,13 @@ void RepoView::mergeAbort(LogEntry *parent) {
 
   addLogEntry(text, tr("Abort"), parent);
   mDetails->setCommitMessage(QString());
-  refresh1(false);
+  refresh(false);
 }
 
 void RepoView::abortRebase() {
   mRepo.rebaseAbort();
   mRebase = nullptr;
-  refresh1(false);
+  refresh(false);
 }
 
 void RepoView::continueRebase() {
@@ -1465,7 +1465,7 @@ void RepoView::rebaseConflict(const git::Rebase rebase) {
     mRebase->addEntry(tr("Please resolve conflicts before continue"),
                       tr("Conflict"));
   }
-  refresh1(false);
+  refresh(false);
 }
 
 void RepoView::rebaseCommitSuccess(const git::Rebase rebase,
@@ -2083,7 +2083,7 @@ void RepoView::stash(const QString &message) {
   }
 
   entry->setText(msg(commit));
-  refresh1(false);
+  refresh(false);
 }
 
 void RepoView::applyStash(int index) {
@@ -2097,7 +2097,7 @@ void RepoView::applyStash(int index) {
     return;
   }
 
-  refresh1(false);
+  refresh(false);
 }
 
 void RepoView::dropStash(int index) {
@@ -2121,7 +2121,7 @@ void RepoView::popStash(int index) {
     return;
   }
 
-  refresh1(false);
+  refresh(false);
 }
 
 void RepoView::promptToAddTag(const git::Commit &commit) {
@@ -2302,7 +2302,7 @@ void RepoView::resetSubmodules(const QList<git::Submodule> &submodules,
 void RepoView::resetSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
                                     bool recursive, git_reset_t type) {
   if (submodules.isEmpty()) {
-    refresh1(true);
+    refresh(true);
     return;
   }
 
@@ -2460,7 +2460,7 @@ void RepoView::updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
                                      bool recursive, bool init,
                                      bool checkout_force) {
   if (submodules.isEmpty()) {
-    refresh1(true);
+    refresh(true);
     return;
   }
 
@@ -2726,7 +2726,7 @@ void RepoView::ignore(const QString &name) {
   QTextStream(&file) << name << "\n";
   file.close();
 
-  refresh1(true);
+  refresh(true);
 }
 
 EditorWindow *RepoView::newEditor() {
@@ -2768,9 +2768,9 @@ EditorWindow *RepoView::openEditor(const QString &path, int line,
   return window;
 }
 
-void RepoView::refresh() { refresh1(true); }
+void RepoView::refresh() { refresh(true); }
 
-void RepoView::refresh1(bool restoreSelection) {
+void RepoView::refresh(bool restoreSelection) {
   // Fake head update.
   uint32_t counter = 0;
   auto dtw = findChild<DoubleTreeWidget *>();
@@ -2935,7 +2935,7 @@ bool RepoView::checkForConflicts(LogEntry *parent, const QString &action) {
     entry->addEntry(LogEntry::Hint, abort.arg(action));
   }
 
-  refresh1(false); // TODO do something else
+  refresh(false); // TODO do something else
   return true;
 }
 
