@@ -423,18 +423,34 @@ Node::stageState(const git::Index &idx, ParentStageState searchingState) const {
   for (auto child : mChildren) {
 
     childState = child->stageState(idx, searchingState);
+
+    // determine new searching state
+    // conflicted and disabled files/submodules are in the unstaged treeview,
     if ((childState == git::Index::StagedState::Staged &&
          searchingState == ParentStageState::Unstaged) ||
-        (childState == git::Index::StagedState::Unstaged &&
+        ((childState == git::Index::StagedState::Unstaged ||
+          childState == git::Index::StagedState::Conflicted ||
+          childState == git::Index::StagedState::Disabled) &&
          searchingState == ParentStageState::Staged) ||
         childState == git::Index::PartiallyStaged)
       return git::Index::PartiallyStaged;
 
     if (searchingState == ParentStageState::Any) {
-      if (childState == git::Index::Unstaged)
-        searchingState = ParentStageState::Unstaged;
-      else if (childState == git::Index::Staged)
-        searchingState = ParentStageState::Staged;
+      switch (childState) {
+        case git::Index::Unstaged:
+          searchingState = ParentStageState::Unstaged;
+          break;
+        case git::Index::Staged:
+          searchingState = ParentStageState::Staged;
+          break;
+        case git::Index::PartiallyStaged:
+          break; // does not change searchingState
+        case git::Index::Conflicted:
+          // fall through
+        case git::Index::Disabled:
+          searchingState = ParentStageState::Unstaged;
+          break;
+      }
     }
   }
 
