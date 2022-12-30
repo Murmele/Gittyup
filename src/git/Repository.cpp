@@ -889,8 +889,10 @@ void Repository::rebase(const AnnotatedCommit &mergeHead,
   git_rebase_init(&r, d->repo, nullptr, mergeHead, nullptr, &opts);
   auto rebase = git::Rebase(d->repo, r, overrideUser, overrideEmail);
 
-  if (!rebase.isValid())
+  if (!rebase.isValid()) {
     emit d->notifier->rebaseInitError();
+    return;
+  }
 
   // start rebasing
   rebaseContinue(QStringLiteral(""));
