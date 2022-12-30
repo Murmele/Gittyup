@@ -13,6 +13,11 @@ const QString separator = ":";
 } // namespace
 
 const QString TemplateButton::cursorPositionString = QStringLiteral("%|");
+// Showing the position where the files shall be placed
+// The number regex dertermines how many filenames shall be shown and if
+// there are more it will be replaced by ...
+const QString TemplateButton::filesPosition =
+    QStringLiteral("${files:([0-9]*)}");
 
 TemplateButton::TemplateButton(git::Config config, QWidget *parent)
     : QToolButton(parent), mConfig(config) {
@@ -56,6 +61,10 @@ void TemplateButton::updateMenu() {
   mMenu->addAction(configTemplate);
 
   setMenu(mMenu);
+}
+
+const QList<TemplateButton::Template> &TemplateButton::templates() {
+  return mTemplates;
 }
 
 void TemplateButton::storeTemplates() {

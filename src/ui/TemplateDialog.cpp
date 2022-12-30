@@ -10,7 +10,6 @@
 #include <QSpacerItem>
 #include <QDialogButtonBox>
 
-// TODO: ask Jason if it can be build with the designer
 TemplateDialog::TemplateDialog(QList<TemplateButton::Template> &templates,
                                QWidget *parent)
     : QDialog(parent), mTemplates(templates), mNew(templates) {
@@ -42,9 +41,13 @@ TemplateDialog::TemplateDialog(QList<TemplateButton::Template> &templates,
   vBox->addLayout(hBox);
   vBox->addWidget(lbl);
   vBox->addWidget(mTemplate);
-  vBox->addWidget(new QLabel("use " + TemplateButton::cursorPositionString +
-                                 " to declare the position of the cursor.",
+  vBox->addWidget(new QLabel(tr("use %1 to declare the position of the cursor.")
+                                 .arg(TemplateButton::cursorPositionString),
                              this));
+  vBox->addWidget(
+      new QLabel(tr("use ${files:x} to add all updated file names,\nx (number) "
+                    "determines the number of maximum files shown"),
+                 this));
   vBox->addLayout(hBox2);
 
   // second column

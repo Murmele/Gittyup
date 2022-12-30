@@ -727,10 +727,10 @@ public:
       : QFrame(parent), mRepo(repo) {
     git::Config config = repo.appConfig();
 
-    TemplateButton *templateButton = new TemplateButton(config, this);
-    templateButton->setText(tr("T"));
-    connect(templateButton, &TemplateButton::templateChanged, this,
-            &CommitEditor::applyTemplate);
+    mTemplate = new TemplateButton(config, this);
+    mTemplate->setText(tr("T"));
+    connect(mTemplate, &TemplateButton::templateChanged, this,
+            QOverload<const QString &>::of(&CommitEditor::applyTemplate));
 
     QLabel *label = new QLabel(tr("<b>Commit Message:</b>"), this);
 
@@ -882,7 +882,7 @@ public:
     });
 
     QHBoxLayout *labelLayout = new QHBoxLayout;
-    labelLayout->addWidget(templateButton);
+    labelLayout->addWidget(mTemplate);
     labelLayout->addWidget(label);
     labelLayout->addStretch();
     labelLayout->addWidget(mStatus);
@@ -1020,6 +1020,49 @@ public:
 
   bool isUnstageEnabled() const { return mUnstage->isEnabled(); }
 
+  QString createFileList(const QStringList &list, int maxFiles) {
+    QString msg;
+
+    const int numberFiles = list.size();
+
+    if (numberFiles == 0 || maxFiles == 0)
+      return QStringLiteral("");
+
+    if (numberFiles == 1) {
+      return tr("%1").arg(list.first());
+    } else if (numberFiles == 2 && maxFiles >= 2) {
+      return tr("%1 and %2").arg(list.first(), list.last());
+    } else if (numberFiles == 3 && maxFiles >= 3) {
+      return tr("%1, %2, and %3").arg(list.at(0), list.at(1), list.at(2));
+    }
+
+    // numberFiles > 3 || maxFiles < numberFiles
+    const int s = qMin(numberFiles, maxFiles) - 1;
+
+    for (int i = 0; i < s; i++) {
+      msg += list.at(i) + QStringLiteral(", ");
+    }
+
+    if (numberFiles > s + 1) {
+      msg += list.at(s) + QStringLiteral(", ");
+      msg += QStringLiteral("and %1 more files").arg(numberFiles - s - 1);
+    } else {
+      msg += QStringLiteral("and %1").arg(list.at(s));
+    }
+    return msg;
+  }
+
+  void setMessage(const QStringList &list) {
+    if (mTemplate->templates().count() > 0) {
+      applyTemplate(mTemplate->templates().first().value, list);
+    } else {
+      QString msg = createFileList(list, 3);
+      if (!msg.isEmpty())
+        msg = QStringLiteral("Update ") + msg;
+      setMessage(msg);
+    }
+  }
+
   void setMessage(const QString &message) {
     mMessage->setPlainText(message);
     mMessage->selectAll();
@@ -1038,17 +1081,48 @@ public:
   }
 
 public slots:
-  void applyTemplate(QString &templ) {
-    auto index = templ.indexOf(TemplateButton::cursorPositionString);
+  void applyTemplate(const QString &t, const QStringList &files) {
+
+    QString templ = t;
+
+    QString pattern = TemplateButton::filesPosition;
+    pattern.replace("{", "\\{");
+    pattern.replace("}", "\\}");
+    pattern.replace("$", "\\$");
+    QRegularExpression re(pattern);
+    QRegularExpressionMatch match = re.match(templ);
+    int start = -1;
+    int offset = 0;
+    if (match.hasMatch()) {
+      start = match.capturedStart(0);
+      int origLength = match.capturedLength(0);
+      const auto matchComplete = match.captured(0);
+      bool ok;
+      const auto number = match.captured(1).toInt(&ok);
+
+      if (ok) {
+        const QString filesStr = createFileList(files, number);
+        templ.replace(matchComplete, filesStr);
+        offset = filesStr.length() - origLength;
+      }
+    }
+
+    auto index = t.indexOf(TemplateButton::cursorPositionString);
     if (index < 0)
       index = templ.length();
+    else if (start > 0 && index > start) {
+      // offset, because fileStr has different length than matchComplete
+      index += offset;
+    }
 
-    templ.replace("%|", "");
+    templ.replace(TemplateButton::cursorPositionString, "");
     mMessage->setText(templ);
     auto cursor = mMessage->textCursor();
     cursor.setPosition(index);
     mMessage->setTextCursor(cursor);
   }
+
+  void applyTemplate(const QString &t) { applyTemplate(t, {}); }
 
 private:
   void updateButtons(bool yieldFocus = true) {
@@ -1137,32 +1211,7 @@ private:
       QSignalBlocker blocker(mMessage);
       (void)blocker;
 
-      QString msg;
-      switch (list.size()) {
-        case 0:
-          break;
-
-        case 1:
-          msg = tr("Update %1").arg(list.first());
-          break;
-
-        case 2:
-          msg = tr("Update %1 and %2").arg(list.first(), list.last());
-          break;
-
-        case 3:
-          msg = tr("Update %1, %2, and %3")
-                    .arg(list.at(0), list.at(1), list.at(2));
-          break;
-
-        default:
-          msg = tr("Update %1, %2, and %3 more files...")
-                    .arg(list.at(0), list.at(1),
-                         QString::number(list.size() - 2));
-          break;
-      }
-
-      setMessage(msg);
+      setMessage(list);
       if (yieldFocus && !mMessage->toPlainText().isEmpty())
         mMessage->setFocus();
     }
@@ -1234,6 +1283,7 @@ private:
   QPushButton *mRebaseAbort;
   QPushButton *mRebaseContinue;
   QPushButton *mMergeAbort;
+  TemplateButton *mTemplate;
 
   bool mEditorEmpty = true;
   bool mPopulate = true;
