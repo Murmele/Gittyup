@@ -296,7 +296,8 @@ void TestFileContextMenu::testDiscardNothing() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(1000); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -364,7 +365,8 @@ void TestFileContextMenu::testIgnoreFile() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(1000); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -418,7 +420,8 @@ void TestFileContextMenu::testIgnoreFileUntracked() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(1000); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -481,7 +484,8 @@ void TestFileContextMenu::testIgnoreFolder() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(1000); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -551,7 +555,8 @@ void TestFileContextMenu::testRemoveUntrackedFolder() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(1000); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
