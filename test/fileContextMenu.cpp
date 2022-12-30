@@ -63,7 +63,8 @@ void TestFileContextMenu::testDiscardFile() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(1000); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -139,6 +140,7 @@ void TestFileContextMenu::testDiscardSubmodule() {
 
   // refresh repo
   emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(1000); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -217,6 +219,7 @@ void TestFileContextMenu::testDiscardFolder() {
 
   // refresh repo
   emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(1000); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
