@@ -1045,7 +1045,10 @@ public:
 
     if (numberFiles > s + 1) {
       msg += list.at(s) + QStringLiteral(", ");
-      msg += QStringLiteral("and %1 more files").arg(numberFiles - s - 1);
+      const int remainingFiles = numberFiles - s - 1;
+      msg += QStringLiteral("and %1 more file").arg(remainingFiles);
+      if (remainingFiles > 1)
+        msg += QStringLiteral("s");
     } else {
       msg += QStringLiteral("and %1").arg(list.at(s));
     }
