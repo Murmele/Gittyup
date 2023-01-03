@@ -7,6 +7,7 @@ add_library(
   ColumnView.cpp
   CommitList.cpp
   CommitToolBar.cpp
+  CommitEditor.cpp
   ContextMenuButton.cpp
   DetailView.cpp
   DiffView/DiffView.cpp
