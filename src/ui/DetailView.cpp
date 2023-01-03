@@ -725,9 +725,7 @@ class CommitEditor : public QFrame {
 public:
   CommitEditor(const git::Repository &repo, QWidget *parent = nullptr)
       : QFrame(parent), mRepo(repo) {
-    git::Config config = repo.appConfig();
-
-    mTemplate = new TemplateButton(config, this);
+    mTemplate = new TemplateButton(this);
     mTemplate->setText(tr("T"));
     connect(mTemplate, &TemplateButton::templateChanged, this,
             QOverload<const QString &>::of(&CommitEditor::applyTemplate));
