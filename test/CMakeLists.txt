@@ -112,6 +112,7 @@ test(NAME SshConfig)
 test(NAME fileContextMenu NO_WIN32_OFFSCREEN)
 test(NAME Setting)
 test(NAME commitMessageTemplate)
+test(NAME commitEditor)
 
 option(GITTYUP_CI_TESTS "Run tests that change global settings" OFF)
 if(GITTYUP_CI_TESTS)

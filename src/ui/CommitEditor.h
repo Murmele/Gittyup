@@ -11,6 +11,7 @@ class QPushButton;
 class QLabel;
 class TemplateButton;
 class TextEdit;
+class QTextEdit;
 
 /*!
  * \brief The CommitEditor class
@@ -33,7 +34,7 @@ public:
   bool isStageEnabled() const;
   void unstage();
   bool isUnstageEnabled() const;
-  QString createFileList(const QStringList &list, int maxFiles);
+  static QString createFileList(const QStringList &list, int maxFiles);
   void setMessage(const QStringList &list);
   void setMessage(const QString &message);
   QString message() const;
@@ -45,6 +46,7 @@ public slots:
 
 private:
   void updateButtons(bool yieldFocus = true);
+  QTextEdit *textEdit() const;
 
   git::Repository mRepo;
   git::Diff mDiff;
@@ -68,6 +70,8 @@ private:
 
   QTextCharFormat mSpellError;
   QTextCharFormat mSpellIgnore;
+
+  friend class TestCommitEditor;
 };
 
 #endif // COMMITEDITOR_H

@@ -803,4 +803,6 @@ void CommitEditor::updateButtons(bool yieldFocus) {
   MenuBar::instance(this)->updateRepository();
 }
 
+QTextEdit *CommitEditor::textEdit() const { return mMessage; }
+
 #include "CommitEditor.moc"
