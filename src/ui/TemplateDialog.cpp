@@ -9,6 +9,14 @@
 #include <QVBoxLayout>
 #include <QSpacerItem>
 #include <QDialogButtonBox>
+#include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
+
+namespace {
+const QString kTemplateFileExtension =
+    QStringLiteral(".GittyupCommitMessageTemplate");
+}
 
 TemplateDialog::TemplateDialog(QList<TemplateButton::Template> &templates,
                                QWidget *parent)
@@ -81,11 +89,16 @@ TemplateDialog::TemplateDialog(QList<TemplateButton::Template> &templates,
   hBox->addLayout(vBox2);
   hBox->addLayout(vBox3);
 
+  // Import, export, ok, cancel
+  auto importButton = new QPushButton(tr("Import"), this);
+  auto exportButton = new QPushButton(tr("Export"), this);
   spacer =
       new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
   mButtonBox = new QDialogButtonBox(
       QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
   hBox2 = new QHBoxLayout();
+  hBox2->addWidget(importButton);
+  hBox2->addWidget(exportButton);
   hBox2->addItem(spacer);
   hBox2->addWidget(mButtonBox);
 
@@ -114,6 +127,8 @@ TemplateDialog::TemplateDialog(QList<TemplateButton::Template> &templates,
   connect(mName, &QLineEdit::textChanged, this, &TemplateDialog::checkName);
   connect(mTemplateList, &QListWidget::currentRowChanged, this,
           &TemplateDialog::showTemplate);
+  connect(importButton, &QPushButton::pressed, [this] { importTemplates(); });
+  connect(exportButton, &QPushButton::pressed, [this] { exportTemplates(); });
 }
 
 void TemplateDialog::addTemplate() {
@@ -141,7 +156,7 @@ void TemplateDialog::addTemplate() {
 
 void TemplateDialog::removeTemplate() {
   QListWidgetItem *itm = mTemplateList->currentItem();
-  if (!itm) // not item selected
+  if (!itm) // no item selected
     return;
 
   mSupress = true;
@@ -218,6 +233,82 @@ void TemplateDialog::moveTemplateDown() {
   }
 
   showTemplate(mTemplateList->currentRow());
+}
+
+void TemplateDialog::importTemplates(QString filename) {
+  if (filename.isEmpty()) {
+    filename = QFileDialog::getOpenFileName(
+        this, tr("Open File"), "/home",
+        tr("Gittyup Templates (*%1)").arg(kTemplateFileExtension));
+  }
+
+  mNew.clear();
+  mTemplateList->clear();
+
+  QFile file(filename);
+  if (file.open(QIODevice::ReadOnly)) {
+    while (!file.atEnd()) {
+      QString line = file.readLine();
+      line.remove(line.length() - 1, 1);
+      const int index = line.indexOf(QStringLiteral(":"));
+      if (index == -1)
+        continue;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+      const QString name = line.sliced(0, index);
+      if (index + 1 >= line.length())
+        continue;
+      QString value = line.sliced(index + 1);
+#else
+      const auto list = line.split(QStringLiteral(":"));
+      if (list.length() < 2)
+        continue;
+      const QString name = list.at(0);
+      QString value;
+      for (int i = 1; i < list.length() - 1; i++)
+        value += QStringLiteral("%1:").arg(list.at(i));
+      value += list.last();
+#endif
+      value = value.replace(QStringLiteral("\\n"), QStringLiteral("\n"));
+      value = value.replace(QStringLiteral("\\t"), QStringLiteral("\t"));
+      TemplateButton::Template t;
+      t.name = name;
+      t.value = value;
+      mNew.append(t);
+    }
+  }
+  if (mNew.count() > 0) {
+    for (const auto &t : mNew)
+      mTemplateList->addItem(t.name);
+    showTemplate(0);
+  } else {
+    mName->setText(QStringLiteral(""));
+    mTemplate->setText(QStringLiteral(""));
+  }
+}
+
+void TemplateDialog::exportTemplates(QString filename) {
+  if (filename.isEmpty()) {
+    filename = QFileDialog::getSaveFileName(
+        this, tr("Save Templates"),
+        QStringLiteral("/home/%1%2")
+            .arg("GittyupTemplates", kTemplateFileExtension),
+        tr("Gittyup Templates (*%1)").arg(kTemplateFileExtension));
+  }
+
+  QString templatesStr;
+  for (const auto tmpl : mNew) {
+    QString name = tmpl.name;
+    QString value = tmpl.value;
+    value = value.replace(QStringLiteral("\n"), QStringLiteral("\\n"));
+    value = value.replace(QStringLiteral("\t"), QStringLiteral("\\t"));
+    templatesStr += QStringLiteral("%1:%2\n").arg(name, value);
+  }
+
+  QFile file(filename);
+  if (file.open(QIODevice::WriteOnly)) {
+    QTextStream stream(&file);
+    stream << templatesStr;
+  }
 }
 
 void TemplateDialog::applyTemplates() {
