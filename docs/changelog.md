@@ -10,6 +10,7 @@ Bug fix release
 * Fix download url for flatpak and macos
 * Fix Segmentation fault when ignoring files
 * Fix discard of complete files and submodules
+* Fix context menu entries
 * Fix bytesize overflow
 * Fix focus loose during scrolling in the Commitlist with the keyboard
 
