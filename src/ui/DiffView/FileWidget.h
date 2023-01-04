@@ -29,7 +29,7 @@ class Header : public QFrame {
 
 public:
   Header(const git::Diff &diff, git::Patch &patch, bool binary, bool lfs,
-		 bool submodule, QWidget *parent = nullptr);
+         bool submodule, QWidget *parent = nullptr);
   void updatePatch(git::Patch &patch);
   QCheckBox *check() const;
 
@@ -92,7 +92,7 @@ public:
              QWidget *parent = nullptr);
   bool isEmpty();
   void updatePatch(git::Patch &patch, const git::Patch &staged,
-				   const QString &name, const QString &path, bool submodule);
+                   const QString &name, const QString &path, bool submodule);
   /*!
    * Update hunks after index change and emits the current stage state of the
    * hunks \brief updateHunks
@@ -106,8 +106,8 @@ public:
   QWidget *addImage(DisclosureButton *button, const git::Patch patch,
                     bool lfs = false);
   HunkWidget *addHunk(const git::Diff &diff, git::Patch &patch,
-					  const git::Patch &staged, int index, bool lfs,
-					  bool submodule);
+                      const git::Patch &staged, int index, bool lfs,
+                      bool submodule);
   void setStageState(git::Index::StagedState state);
   QModelIndex modelIndex();
 

@@ -34,9 +34,8 @@ const QString noNewLineAtEndOfFile =
     HunkWidget::tr("No newline at end of file");
 } // namespace
 
-_HunkWidget::Header::Header(const git::Diff &diff, git::Patch &patch,
-                            int index, bool lfs, bool submodule,
-                            QWidget *parent)
+_HunkWidget::Header::Header(const git::Diff &diff, git::Patch &patch, int index,
+                            bool lfs, bool submodule, QWidget *parent)
     : QFrame(parent) {
   setObjectName("HunkHeader");
   mCheck = new QCheckBox(this);
@@ -178,9 +177,9 @@ void _HunkWidget::Header::mouseDoubleClickEvent(QMouseEvent *event) {
 //##########     HunkWidget     ###############################################
 //#############################################################################
 
-HunkWidget::HunkWidget(DiffView *view, const git::Diff &diff,
-					   git::Patch &patch, const git::Patch &staged,
-                       int index, bool lfs, bool submodule, QWidget *parent)
+HunkWidget::HunkWidget(DiffView *view, const git::Diff &diff, git::Patch &patch,
+                       const git::Patch &staged, int index, bool lfs,
+                       bool submodule, QWidget *parent)
     : QFrame(parent), mView(view), mPatch(patch), mStaged(staged),
       mIndex(index), mLfs(lfs) {
   setObjectName("HunkWidget");

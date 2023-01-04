@@ -136,13 +136,13 @@ bool Patch::isLfsPointer() const {
 }
 
 Blob Patch::blob(Diff::File file) {
-	if (file == Diff::File::NewFile) {
-		if (mNewBlob.isValid())
-			return mNewBlob;
-	} else {
-		if (mOldBlob.isValid())
-			return mOldBlob;
-	}
+  if (file == Diff::File::NewFile) {
+    if (mNewBlob.isValid())
+      return mNewBlob;
+  } else {
+    if (mOldBlob.isValid())
+      return mOldBlob;
+  }
 
   git_repository *repo = git_patch_owner(d.data());
   if (!repo)
@@ -157,9 +157,9 @@ Blob Patch::blob(Diff::File file) {
 
   auto b = Blob(reinterpret_cast<git_blob *>(obj));
   if (file == Diff::File::NewFile) {
-	  mNewBlob = b;
+    mNewBlob = b;
   } else {
-	  mOldBlob = b;
+    mOldBlob = b;
   }
 
   return b;
@@ -351,8 +351,7 @@ QByteArray Patch::generateResult(QList<QList<QByteArray>> &image,
   return filtered;
 }
 
-QByteArray Patch::apply(const QBitArray &hunks,
-						const FilterList &filters) {
+QByteArray Patch::apply(const QBitArray &hunks, const FilterList &filters) {
   QList<QList<QByteArray>> image;
   populatePreimage(image);
 

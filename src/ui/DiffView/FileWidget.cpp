@@ -333,10 +333,10 @@ void _FileWidget::Header::updateCheckState() {
 //###############      FileWidget ###########################################
 //###############################################################################
 
-FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
-					   git::Patch &patch, const git::Patch &staged,
-                       const QModelIndex modelIndex, const QString &name,
-                       const QString &path, bool submodule, QWidget *parent)
+FileWidget::FileWidget(DiffView *view, const git::Diff &diff, git::Patch &patch,
+                       const git::Patch &staged, const QModelIndex modelIndex,
+                       const QString &name, const QString &path, bool submodule,
+                       QWidget *parent)
     : QWidget(parent), mView(view), mDiff(diff), mPatch(patch),
       mModelIndex(modelIndex) {
   auto stageState = static_cast<git::Index::StagedState>(

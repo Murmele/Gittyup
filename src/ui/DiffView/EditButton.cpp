@@ -3,8 +3,8 @@
 #include "ui/RepoView.h"
 #include <QPainterPath>
 
-EditButton::EditButton(git::Patch &patch, int index, bool binary,
-                       bool lfs, QWidget *parent)
+EditButton::EditButton(git::Patch &patch, int index, bool binary, bool lfs,
+                       QWidget *parent)
     : Button(parent) {
   setObjectName("EditButton");
 

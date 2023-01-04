@@ -124,7 +124,7 @@ public:
    * \return edited file
    */
   QByteArray apply(const QBitArray &hunks,
-				   const FilterList &filters = FilterList());
+                   const FilterList &filters = FilterList());
   QByteArray apply(int hidx, QByteArray &hunkData, QByteArray fileContent,
                    const FilterList &filters = FilterList()) const;
 

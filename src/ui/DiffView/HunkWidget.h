@@ -23,7 +23,7 @@ class Header : public QFrame {
   Q_OBJECT
 public:
   Header(const git::Diff &diff, git::Patch &patch, int index, bool lfs,
-		 bool submodule, QWidget *parent = nullptr);
+         bool submodule, QWidget *parent = nullptr);
   QCheckBox *check() const;
 
   DisclosureButton *button() const;
@@ -62,8 +62,8 @@ class HunkWidget : public QFrame {
 
 public:
   HunkWidget(DiffView *view, const git::Diff &diff, git::Patch &patch,
-			 const git::Patch &staged, int index, bool lfs, bool submodule,
-			 QWidget *parent = nullptr);
+             const git::Patch &staged, int index, bool lfs, bool submodule,
+             QWidget *parent = nullptr);
   _HunkWidget::Header *header() const;
   TextEditor *editor(bool ensureLoaded = true);
   void invalidate();

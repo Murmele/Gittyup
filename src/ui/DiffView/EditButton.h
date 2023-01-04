@@ -10,7 +10,7 @@ class EditButton : public Button {
 
 public:
   EditButton(git::Patch &patch, int index, bool binary, bool lfs,
-			 QWidget *parent = nullptr);
+             QWidget *parent = nullptr);
 
   void updatePatch(git::Patch &patch, int index, bool init = false);
 
