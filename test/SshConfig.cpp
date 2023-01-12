@@ -40,9 +40,9 @@ private:
   static QString transformUrl(const QString &url, const QString config) {
     auto callbacks = Callbacks(url, config);
 
-	//git::Remote remote();
-	//Callbacks::remoteReady(*remote, 0, &callbacks);
-	return ""; // remote.url();
+    // git::Remote remote();
+    // Callbacks::remoteReady(*remote, 0, &callbacks);
+    return ""; // remote.url();
   }
 };
 
