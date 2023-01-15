@@ -116,8 +116,8 @@ QString BlameEditor::revision() const {
   return !mRevision.isEmpty() ? mRevision : tr("Not Tracked");
 }
 
-bool BlameEditor::load(const QString &name, const git::Blob &blob,
-                       const git::Commit &commit) {
+bool BlameEditor::load(const QString &name, const git::Blob &blob, const git::Commit& from,
+                       const git::Commit &to) {
   // Clear content.
   clear();
 
@@ -131,7 +131,7 @@ bool BlameEditor::load(const QString &name, const git::Blob &blob,
       return false;
 
     content = blob.content();
-    mRevision = commit.isValid() ? commit.shortId() : tr("HEAD");
+    mRevision = to.isValid() ? to.shortId() : tr("HEAD");
 
   } else {
     if (mRepo.isValid() && mRepo.index().isTracked(name))
@@ -157,8 +157,8 @@ bool BlameEditor::load(const QString &name, const git::Blob &blob,
   // Calculate blame.
   if (mRepo.isValid() && !content.isEmpty()) {
     mMargin->startBlame(name);
-    mBlame.setFuture(QtConcurrent::run(mRepo, &git::Repository::blame, name,
-                                       commit, mCallbacks.data()));
+    mBlame.setFuture(QtConcurrent::run(mRepo, &git::Repository::blame, name, git::Commit(),
+                                       to, mCallbacks.data()));
   }
 
   return true;

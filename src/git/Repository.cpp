@@ -815,12 +815,14 @@ bool Repository::popStash(int index) {
   return !error;
 }
 
-Blame Repository::blame(const QString &name, const Commit &from,
+Blame Repository::blame(const QString &name, const Commit &from, const Commit& to,
                         Blame::Callbacks *callbacks) const {
   git_blame *blame = nullptr;
   git_blame_options options = GIT_BLAME_OPTIONS_INIT;
   if (from.isValid()) // Set start commit.
-    options.newest_commit = *git_commit_id(from);
+    options.oldest_commit = *git_commit_id(from);
+  if (to.isValid())
+      options.newest_commit = *git_commit_id(to);
   if (callbacks) {
     options.progress_cb = blame_progress;
     options.payload = callbacks;

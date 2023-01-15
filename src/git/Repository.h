@@ -184,7 +184,7 @@ public:
   bool popStash(int index = 0);
 
   // blame
-  Blame blame(const QString &name, const Commit &from,
+  Blame blame(const QString &name, const Commit &from, const Commit &to,
               Blame::Callbacks *callbacks = nullptr) const;
 
   // filter

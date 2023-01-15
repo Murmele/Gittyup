@@ -37,8 +37,8 @@ public:
   QList<TextEditor *> editors() override { return {mEditor}; }
   void ensureVisible(TextEditor *editor, int pos) override {}
 
-  bool load(const QString &name, const git::Blob &blob,
-            const git::Commit &commit);
+  bool load(const QString &name, const git::Blob &blob, const git::Commit &from,
+            const git::Commit &to);
 
   void cancelBlame();
 

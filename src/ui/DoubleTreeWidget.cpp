@@ -553,19 +553,21 @@ void DoubleTreeWidget::filesSelected(const QModelIndexList &indexes) {
 void DoubleTreeWidget::loadEditorContent(const QModelIndexList &indexes) {
   QString name;
   git::Blob blob;
-  git::Commit commit;
+  git::Commit to, from;
 
   if (indexes.count() == 1) {
     RepoView *view = RepoView::parentView(this);
     name = indexes.first().data(Qt::EditRole).toString();
     QList<git::Commit> commits = view->commits();
-    commit = !commits.isEmpty() ? commits.first() : git::Commit();
+    to = !commits.isEmpty() ? commits.first() : git::Commit();
     int idx = mDiff.isValid() ? mDiff.indexOf(name) : -1;
     blob = idx < 0 ? git::Blob()
                    : view->repo().lookupBlob(mDiff.id(idx, git::Diff::NewFile));
+  } else if (indexes.count() == 2) {
+      from = indexes.last();
   }
 
-  mEditor->load(name, blob, commit);
+  mEditor->load(name, blob, git::Commit(), to);
 
   mDiffView->enable(true);
   mDiffView->updateFiles();
