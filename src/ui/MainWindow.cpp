@@ -591,15 +591,14 @@ QString MainWindow::windowGroup() const {
   return QString::fromUtf8(hash.toHex());
 }
 
-void MainWindow::changeEvent(QEvent* e)
+void MainWindow::changeEvent(QEvent *e)
 {
 #ifdef Q_OS_MACX
-  if ( e->type() == QEvent::PaletteChange )
-  {
-    Application *app = qobject_cast<Application*>(QApplication::instance());
+  if (e->type() == QEvent::PaletteChange) {
+    Application *app = qobject_cast<Application *>(QApplication::instance());
     if (app)
       app->applyTheme();
   }
 #endif
-  QMainWindow::changeEvent( e );
+  QMainWindow::changeEvent(e);
 }
