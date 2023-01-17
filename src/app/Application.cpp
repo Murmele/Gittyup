@@ -142,8 +142,7 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
 
   // Initialize theme.
   mTheme.reset(Theme::create(parser.value("theme")));
-  setStyle(mTheme->style());
-  setStyleSheet(mTheme->styleSheet());
+  applyTheme();
 
 #if defined(Q_OS_WIN)
   // Set default font style and hinting.
@@ -488,4 +487,9 @@ void Application::handleSslErrors(QNetworkReply *reply,
     reply->ignoreSslErrors(errors);
     settings.setValue("ssl/ignore", true);
   }
+}
+
+void Application::applyTheme() {
+  setStyle(mTheme->style());
+  setStyleSheet(mTheme->styleSheet());
 }

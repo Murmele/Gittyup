@@ -21,6 +21,7 @@
 #include "git/Repository.h"
 #include "git/Config.h"
 #include "git/Submodule.h"
+#include "app/Application.h"
 #include <QApplication>
 #include <QCloseEvent>
 #include <QGuiApplication>
@@ -588,4 +589,17 @@ QString MainWindow::windowGroup() const {
   QByteArray group = paths().join(';').toUtf8();
   QByteArray hash = QCryptographicHash::hash(group, QCryptographicHash::Md5);
   return QString::fromUtf8(hash.toHex());
+}
+
+void MainWindow::changeEvent(QEvent* e)
+{
+#ifdef Q_OS_MACX
+  if ( e->type() == QEvent::PaletteChange )
+  {
+    Application *app = qobject_cast<Application*>(QApplication::instance());
+    if (app)
+      app->applyTheme();
+  }
+#endif
+  QMainWindow::changeEvent( e );
 }
