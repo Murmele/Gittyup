@@ -427,12 +427,8 @@ public:
     int count = 0;
     QList<git::Commit> commits;
     git::Commit commit = mWalker.next();
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
     QSet<git::Id> ids(mIndex.ids().begin(), mIndex.ids().end());
-#else
-    QSet<git::Id> ids = QSet<git::Id>::fromList(mIndex.ids());
-#endif
+
     while (commit.isValid() && count < 8192) {
       // Don't index merge commits.
       if (!commit.isMerge() && !ids.contains(commit.id())) {
@@ -453,7 +449,7 @@ public:
     using CommitList = QList<git::Commit>;
     mWatcher.setFuture(
         QtConcurrent::mappedReduced<Index::PostingMap, CommitList, Map, Reduce>(
-            commits, Map(mIndex.repo(), mLexers, mOut),
+            std::move(commits), Map(mIndex.repo(), mLexers, mOut),
             Reduce(mIndex.ids(), mOut)));
     return true;
   }
@@ -476,7 +472,7 @@ public:
   }
 
   bool nativeEventFilter(const QByteArray &type, void *message,
-                         long *result) override {
+                         qintptr *result) override {
     Q_UNUSED(result);
 #ifdef Q_OS_WIN
     MSG *msg = static_cast<MSG *>(message);

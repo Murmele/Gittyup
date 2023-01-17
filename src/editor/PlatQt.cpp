@@ -329,7 +329,7 @@ void SurfaceImpl::MeasureWidths(Font &font, std::string_view s,
 
 XYPOSITION SurfaceImpl::WidthText(Font &font, std::string_view s) {
   QFontMetricsF metrics(*static_cast<QFont *>(font.GetID()), device);
-  return metrics.width(QString::fromUtf8(s.data(), s.length()));
+  return metrics.horizontalAdvance(QString::fromUtf8(s.data(), s.length()));
 }
 
 XYPOSITION SurfaceImpl::Ascent(Font &font) {

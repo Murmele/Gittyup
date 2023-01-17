@@ -12,6 +12,7 @@
 #include "RepoView.h"
 #include "conf/Settings.h"
 #include "git/Config.h"
+#include <QActionGroup>
 #include <QApplication>
 #include <QMenu>
 #include <QPainter>

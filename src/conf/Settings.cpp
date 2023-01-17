@@ -13,6 +13,7 @@
 #include "qtsupport.h"
 #include <QCoreApplication>
 #include <QDir>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QStandardPaths>
 
@@ -117,8 +118,8 @@ QString Settings::lexer(const QString &filename) {
     QVariantMap map(lexers.value(key).toMap());
     if (map.contains("patterns")) {
       foreach (QString pattern, map.value("patterns").toString().split(",")) {
-        QRegExp regExp(pattern, CS, QRegExp::Wildcard);
-        if (regExp.exactMatch(name))
+        QRegularExpression regExp{QRegularExpression::fromWildcard(pattern, CS)};
+        if (regExp.match(name).hasMatch())
           return key;
       }
     }

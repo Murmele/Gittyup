@@ -53,8 +53,9 @@ DeleteTagDialog::DeleteTagDialog(const git::TagRef &tag, QWidget *parent)
 
       entry->setBusy(true);
       QStringList refspecs(QString(":refs/tags/%1").arg(name));
+      git::Result (git::Remote::*push)(git::Remote::Callbacks*, const QStringList&) = &git::Remote::push;
       watcher->setFuture(
-          QtConcurrent::run(remote, &git::Remote::push, callbacks, refspecs));
+          QtConcurrent::run(push, remote, callbacks, refspecs));
 
       connect(watcher, &QFutureWatcher<git::Result>::finished, watcher,
               [entry, watcher, callbacks, remoteName] {

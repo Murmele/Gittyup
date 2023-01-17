@@ -18,6 +18,7 @@
 #include <QHeaderView>
 #include <QMimeData>
 #include <QMouseEvent>
+#include <QRegularExpression>
 
 namespace {
 
@@ -94,7 +95,7 @@ void LogView::copy() {
 
     QString text = index.data().toString();
     plainText +=
-        QString("%1 %2\n").arg(prefix, text.remove(QRegExp("<[^>]*>")));
+        QString("%1 %2\n").arg(prefix, text.remove(QRegularExpression("<[^>]*>")));
     richText += QString("%1 %2<br>").arg(prefix, text);
   }
 
@@ -169,7 +170,8 @@ QString LogView::linkAt(const QModelIndex &index, const QPoint &pos) {
     return QString();
 
   LogDelegate *delegate = static_cast<LogDelegate *>(itemDelegate());
-  QStyleOptionViewItem options = viewOptions();
+  QStyleOptionViewItem options;
+  initViewItemOption(&options);
   options.rect = visualRect(index);
   QPoint docPos = pos - delegate->documentPosition(options, index);
   return delegate->document(index)->documentLayout()->anchorAt(docPos);
@@ -180,7 +182,8 @@ bool LogView::isDecoration(const QModelIndex &index, const QPoint &pos) {
     return false;
 
   LogDelegate *delegate = static_cast<LogDelegate *>(itemDelegate());
-  QStyleOptionViewItem options = viewOptions();
+  QStyleOptionViewItem options;
+  initViewItemOption(&options);
   options.rect = visualRect(index);
   return delegate->decorationRect(options, index).contains(pos);
 }

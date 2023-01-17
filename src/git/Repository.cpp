@@ -51,7 +51,6 @@
 #include <QProcess>
 #include <QSaveFile>
 #include <QStandardPaths>
-#include <QTextCodec>
 #include <QVector>
 
 #ifdef Q_OS_UNIX
@@ -1022,14 +1021,14 @@ void Repository::cleanupState() {
   }
 }
 
-QTextCodec *Repository::codec() const {
+QStringConverter::Encoding Repository::encoding() const {
   QString encoding = gitConfig().value<QString>("gui.encoding");
-  QTextCodec *codec = QTextCodec::codecForName(encoding.toUtf8());
-  return codec ? codec : QTextCodec::codecForLocale();
+  auto conv = QStringConverter::encodingForName(encoding.toLocal8Bit().data());
+  return conv ? conv.value() : QStringConverter::System;
 }
 
 QString Repository::decode(const QByteArray &text) const {
-  return codec()->toUnicode(text);
+  return QStringDecoder{encoding()}.decode(text);
 }
 
 bool Repository::lfsIsInitialized() { return dir().exists("hooks/pre-push"); }

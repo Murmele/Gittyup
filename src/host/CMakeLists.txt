@@ -9,7 +9,7 @@ add_library(
   GitLab.cpp
   Repository.cpp)
 
-target_link_libraries(host conf cred Qt5::Core Qt5::Gui Qt5::Network)
+target_link_libraries(host conf cred Qt6::Core Qt6::Gui Qt6::Network)
 
 target_compile_definitions(
   host

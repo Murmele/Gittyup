@@ -104,7 +104,7 @@ void TreeView::discard(DiffTreeModel *model, const QModelIndex &index) {
 bool TreeView::eventFilter(QObject *obj, QEvent *event) {
   if (event->type() == QEvent::MouseButtonPress) {
     QWidget *TreeViewport = static_cast<QWidget *>(obj);
-    QPoint globalPos = static_cast<QMouseEvent *>(event)->globalPos();
+    QPoint globalPos = static_cast<QMouseEvent *>(event)->globalPosition().toPoint();
     QModelIndex index = indexAt(viewport()->mapFromGlobal(globalPos));
     if (!TreeViewport->hasFocus() && index.row() < 0) {
       TreeViewport->setFocus();
@@ -267,7 +267,8 @@ void TreeView::deselectAll() {
 }
 
 QRect TreeView::checkRect(const QModelIndex &index) {
-  QStyleOptionViewItem options = viewOptions();
+  QStyleOptionViewItem options;
+  initViewItemOption(&options);
   options.rect = visualRect(index);
   options.features |= QStyleOptionViewItem::HasCheckIndicator;
 
