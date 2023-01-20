@@ -597,12 +597,11 @@ QString MainWindow::windowGroup() const {
 }
 
 void MainWindow::changeEvent(QEvent *e) {
-#ifdef Q_OS_MACX
   if (e->type() == QEvent::PaletteChange) {
     Application *app = qobject_cast<Application *>(QApplication::instance());
     if (app)
       app->applyTheme();
   }
-#endif
+
   QMainWindow::changeEvent(e);
 }
