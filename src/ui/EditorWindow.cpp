@@ -66,7 +66,7 @@ EditorWindow *EditorWindow::open(const QString &path, const git::Blob &blob,
   BlameEditor *widget = window->widget();
 
   // Try to load the content.
-  if (!widget->load(path, blob, commit)) {
+  if (!widget->load(path, blob, git::Commit(), commit)) {
     delete window;
     return nullptr;
   }

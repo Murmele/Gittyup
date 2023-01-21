@@ -141,7 +141,7 @@ void TreeWidget::loadEditorContent(const QModelIndex &index) {
 
   QList<git::Commit> commits = RepoView::parentView(this)->commits();
   git::Commit commit = !commits.isEmpty() ? commits.first() : git::Commit();
-  mEditor->load(name, blob, commit);
+  mEditor->load(name, blob, git::Commit(), commit);
 }
 
 void TreeWidget::selectFile(const QString &file) {

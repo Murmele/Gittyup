@@ -564,7 +564,7 @@ void DoubleTreeWidget::loadEditorContent(const QModelIndexList &indexes) {
     blob = idx < 0 ? git::Blob()
                    : view->repo().lookupBlob(mDiff.id(idx, git::Diff::NewFile));
   } else if (indexes.count() == 2) {
-      from = indexes.last();
+      //from = indexes.last();
   }
 
   mEditor->load(name, blob, git::Commit(), to);
