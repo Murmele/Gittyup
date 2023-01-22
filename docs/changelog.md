@@ -1,3 +1,11 @@
+### v1.2.2 - 2023-01-22
+
+Bug fix release
+
+#### Changed
+
+* Fix flatpak install process
+
 ### v1.2.1 - 2023-01-22
 
 Bug fix release
