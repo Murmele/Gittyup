@@ -271,8 +271,36 @@ Updater *Updater::instance() {
 }
 
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
+bool Updater::uninstallGittyup(bool system) {
+  QString bash = git::Command::bashPath();
+  QString loc = system ? "--system" : "--user";
+
+  QStringList args;
+  args.append("-c");
+  args.append(
+      QString(
+          "flatpak-spawn --host flatpak remove %1 com.github.Murmele.Gittyup")
+          .arg(loc));
+  auto *p = new QProcess(this);
+
+  p->start(bash, args);
+  if (!p->waitForFinished()) {
+    const QString es = p->errorString();
+    qDebug() << "Uninstalling Gittyup failed: " + es;
+    return false;
+  } else {
+    qDebug() << "Uninstall: " + p->readAll();
+  }
+  p->deleteLater();
+  return true;
+}
+
 bool Updater::install(const DownloadRef &download, QString &error) {
   QString path = download->file()->fileName();
+
+  // Ignore return value
+  uninstallGittyup(true);
+  uninstallGittyup(false);
 
   QDir dir(QCoreApplication::applicationDirPath());
   QStringList args;
@@ -294,6 +322,7 @@ bool Updater::install(const DownloadRef &download, QString &error) {
   } else {
     qDebug() << "Successfully installed bundle: " + p->readAll();
   }
+  p->deleteLater();
 
   auto relauncher_cmd = dir.filePath("relauncher");
   qDebug() << "Relauncher command: " << relauncher_cmd;
