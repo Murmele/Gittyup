@@ -1,13 +1,13 @@
 <!--- Github page main file --->
 
-Gittyup is a graphical Git client designed to help you understand and manage your source code history. Gittyup is an open source software developed by voluntiers, if you like the application please support us [![Donate Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/Gittyup/donate)
+Gittyup is a graphical Git client designed to help you understand and manage your source code history. Gittyup is an open source software developed by volunteers, if you like the application please support us [![Donate Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/Gittyup/donate)
 
 Stable versions for different packages are available for
 - Flatpak for Linux [![Flathub](https://img.shields.io/badge/Flathub-gray?logo=Flathub&logoColor=23FBB04)](https://flathub.org/apps/details/com.github.Murmele.Gittyup)
 - [32 / 64 binary for Windows](https://github.com/Murmele/Gittyup/releases/stable) or
 - [macOS](https://github.com/Murmele/Gittyup/releases/stable) or from [![homebrew](https://img.shields.io/badge/Homebrew-gray?logo=Homebrew&logoColor=%23FBB040)](https://formulae.brew.sh/cask/gittyup)
 
-The [latest development version](https://github.com/Murmele/Gittyup/releases/tag/latest) is available either as pre-built for
+The [latest development version](https://github.com/Murmele/Gittyup/releases/tag/development) is available either as pre-built for
 - flatpak for Linux,
 - 32 / 64 binary for Windows,
 - macOS
@@ -70,7 +70,7 @@ Editing properties of a commit
 ![Amend Dialog](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/AmendDialog.png)
 
 ### Solving rebase conflicts
-Solving rebase conflicts and continuouing after conflicts are solved
+Solving rebase conflicts and continuing after conflicts are solved
 
 ![Rebase Conflicts](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/RebaseConflicts.png)
 
