@@ -173,6 +173,9 @@ void Diff::findSimilar(bool untracked) {
   if (untracked)
     opts.flags = GIT_DIFF_FIND_FOR_UNTRACKED;
 
+  if (!isValid())
+    return;
+
   git_diff_find_similar(d->diff, &opts);
   d->resetMap();
 }
