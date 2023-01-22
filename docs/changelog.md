@@ -1,11 +1,22 @@
-### v1.2.1 - 2022-11-10
+### v1.2.1 - 2023-01-22
 
 Bug fix release
+
+#### Added
+* Possibility to hide avatar (Settings - Window - View - Show Avatars)
+* Show log entry when a conflict during rebase happens
 
 #### Changed
 
 * Fix download url for flatpak and macos
 * Fix Segmentation fault when ignoring files
+* Fix discard of complete files and submodules
+* Fix context menu entries
+* Fix bytesize overflow
+* Fix focus loose during scrolling in the Commitlist with the keyboard
+* Do not crash when the repository is for some reason broken
+* Fix crash if rebasing is not possible
+
 ----
 
 ### v1.2.0 - 2022-10-28
