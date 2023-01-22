@@ -279,7 +279,7 @@ bool Updater::uninstallGittyup(bool system) {
   args.append("-c");
   args.append(
       QString(
-          "flatpak-spawn --host flatpak remove %1 com.github.Murmele.Gittyup")
+          "flatpak-spawn --host flatpak remove -y %1 com.github.Murmele.Gittyup")
           .arg(loc));
   auto *p = new QProcess(this);
 
