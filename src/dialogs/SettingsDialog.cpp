@@ -113,9 +113,6 @@ public:
     connect(privacy, &QLabel::linkActivated,
             [] { AboutDialog::openSharedInstance(AboutDialog::Privacy); });
 
-    mSingleInstance =
-        new QCheckBox(tr("Only allow a single running instance"), this);
-
     QFormLayout *form = new QFormLayout;
     form->addRow(tr("User name:"), mName);
     form->addRow(tr("User email:"), mEmail);
@@ -127,8 +124,13 @@ public:
     form->addRow(tr("Credentials:"), mStoreCredentials);
     form->addRow(QString(), privacy);
 
+    mSingleInstance =
+        new QCheckBox(tr("Only allow a single running instance"), this);
+
 #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
     form->addRow(tr("Single instance:"), mSingleInstance);
+#elif defined(Q_OS_MACX)
+    mSingleInstance->setVisible(false);
 #endif
 
     QVBoxLayout *layout = new QVBoxLayout(this);
