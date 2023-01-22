@@ -1456,7 +1456,13 @@ void RepoView::rebaseAboutToRebase(const git::Rebase rebase,
   LogEntry *entry = mRebase->addEntry(text, tr("Apply"));
 }
 
-void RepoView::rebaseConflict(const git::Rebase rebase) { refresh(); }
+void RepoView::rebaseConflict(const git::Rebase rebase) {
+  if (mRebase) {
+    mRebase->addEntry(tr("Please resolve conflicts before continue"),
+                      tr("Conflict"));
+  }
+  refresh();
+}
 
 void RepoView::rebaseCommitSuccess(const git::Rebase rebase,
                                    const git::Commit before,
