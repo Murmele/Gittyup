@@ -42,7 +42,9 @@ const QString kSubtitleFmt = "<h4 style='margin-top: 0px; color: gray'>%2</h4>";
 
 const QString kTextFmt =
     "<p style='white-space: nowrap'><b style='font-size: large'>%1 v%2</b> "
-    "- %3 - %4<br>Copyright © 2021-2022 Gittyup contributors"
+    "- %3 - %4<br>Copyright © 2021-" +
+    QString::number(CURR_YEAR) +
+    " Gittyup contributors"
     "<br>Copyright © 2016-2020 Scientific Toolworks, Inc. and "
     "contributors</p><p> If you have a question that might benefit the "
     "community, consider asking it on <a href='%5'>Stack Overflow</a> by "

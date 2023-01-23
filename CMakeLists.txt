@@ -10,6 +10,11 @@ set(GITTYUP_VERSION
     "${GITTYUP_VERSION_MAJOR}.${GITTYUP_VERSION_MINOR}.${GITTYUP_VERSION_PATCH}"
 )
 
+string(TIMESTAMP CURR_YEAR "%Y")
+add_compile_definitions(CURR_YEAR=${CURR_YEAR})
+configure_file(${CMAKE_SOURCE_DIR}/LICENSE.md.in ${CMAKE_BINARY_DIR}/LICENSE.md
+               @ONLY)
+
 # Write version to file so it can be used also from external, for example in the
 # github manifest
 file(WRITE "${CMAKE_BINARY_DIR}/Version.txt" ${GITTYUP_VERSION})
