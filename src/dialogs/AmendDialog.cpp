@@ -172,7 +172,8 @@ AmendDialog::AmendDialog(const git::Signature &author,
   l->addWidget(m_committerInfo, Row::Committer, 0, 1, 2);
 
   auto *lMessage = new QLabel(tr("Commit Message:"), this);
-  m_commitMessage = new QTextEdit(commitMessage, this);
+  m_commitMessage = new QTextEdit(this);
+  m_commitMessage->setPlainText(commitMessage);
   m_commitMessage->setObjectName("Textlabel Commit Message");
   l->addWidget(lMessage, Row::CommitMessageLabel, 0);
   l->addWidget(m_commitMessage, Row::CommitMessage, 0, 1, 2);
