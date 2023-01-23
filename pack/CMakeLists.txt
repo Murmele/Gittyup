@@ -2,7 +2,6 @@ set(CONF_DIR ${CMAKE_SOURCE_DIR}/conf)
 set(RSRC_DIR ${CMAKE_SOURCE_DIR}/rsrc)
 
 set(MAC $<PLATFORM_ID:Darwin>)
-set(CONTENTS_DIR ${GITTYUP_NAME}.app/Contents)
 
 # Install Qt plugins.
 set(QT_PLUGINS QJpegPlugin)
@@ -186,7 +185,7 @@ if(NOT APPLE)
     set(QT_CONF ${CONF_DIR}/qt.conf)
     install(
       FILES ${QT_CONF}
-      DESTINATION $<${MAC}:${CONTENTS_DIR}/Resources/>.
+      DESTINATION $<${MAC}:${RESOURCES_DIR}/>.
       COMPONENT ${GITTYUP_NAME})
   endif()
 endif()
@@ -294,7 +293,7 @@ set(CPACK_PACKAGE_VERSION_PATCH ${GITTYUP_VERSION_PATCH})
 if(WIN32)
   set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/LICENSE.md)
 else()
-    install(FILES ${CMAKE_SOURCE_DIR}/LICENSE.md DESTINATION ${DATAROOTDIR}/licenses/Gittyup RENAME LICENSE)
+    install(FILES ${CMAKE_SOURCE_DIR}/LICENSE.md DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/Gittyup RENAME LICENSE)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})

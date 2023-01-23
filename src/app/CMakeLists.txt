@@ -211,9 +211,9 @@ else()
     set(RESOURCES_INSTALL_DIR
         "${CMAKE_INSTALL_DATADIR}/gittyup/Resources"
         CACHE STRING "The path for installing resource files")
-        install(FILES ${CMAKE_SOURCE_DIR}/rsrc/linux/com.github.Murmele.Gittyup.desktop DESTINATION ${DATAROOTDIR}/applications RENAME ${GITTYUP_NAME}.desktop)
+        install(FILES ${CMAKE_SOURCE_DIR}/rsrc/linux/com.github.Murmele.Gittyup.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications RENAME ${GITTYUP_NAME}.desktop)
         if (${GENERATE_APPDATA})
-            install(FILES ${APPDATA} DESTINATION ${DATAROOTDIR}/metainfo RENAME ${GITTYUP_NAME}.appdata.xml)
+            install(FILES ${APPDATA} DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo RENAME ${GITTYUP_NAME}.appdata.xml)
         endif()
   else()
     set(RESOURCES_INSTALL_DIR
