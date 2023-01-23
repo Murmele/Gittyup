@@ -69,7 +69,7 @@ theme['commits']   = {
 -- { normal, selected, conflicted, head, notification }
 theme['badge']     = {
   foreground       = {
-    normal         = '#FFFFFF',
+    normal         = '#000000',
     selected       = '#6C6C6C'
   },
   background       = {
@@ -77,7 +77,12 @@ theme['badge']     = {
     selected       = '#FFFFFF', -- the color when a list item is selected
     conflicted     = '#D22222', -- the color of conflicted items
     head           = '#6F7379', -- a bolder color to indicate the HEAD
-    notification   = '#FF0000'  -- the color of toolbar notifications badges
+    notification   = '#FF0000',  -- the color of toolbar notifications badges
+    modified       = '#FFEEDB', -- (yellow) the color of the badge when the file is modified
+    added          = '#DCFFDC', -- (green) the color of the badge when the file was newly added
+    deleted        = '#FFDCDC', -- (red) the color of the badge when the file was deleted
+	untracked	   = '#d9ead2', -- (green blue) the color of the badge when the file is untracked
+	renamed		   = '#d2e8fc'  -- (blue) the color of the badge when the file is renamed
   }
 }
 

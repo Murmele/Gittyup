@@ -284,7 +284,7 @@ public:
     connect(&mWatcher, &QFutureWatcher<QString>::finished, this, [this] {
       QString result = mWatcher.result();
       if (result.contains('+'))
-        mRefs->appendLabel({result, false, true});
+        mRefs->appendLabel({Badge::Label::Type::Ref, result, false, true});
     });
 
     // Respond to reference changes.
@@ -303,7 +303,8 @@ public:
     QList<Badge::Label> refs;
     foreach (const git::Commit &commit, commits) {
       foreach (const git::Reference &ref, commit.refs())
-        refs.append({ref.name(), ref.isHead(), ref.isTag()});
+        refs.append(
+            {Badge::Label::Type::Ref, ref.name(), ref.isHead(), ref.isTag()});
     }
 
     mRefs->setLabels(refs);

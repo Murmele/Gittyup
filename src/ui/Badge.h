@@ -21,12 +21,22 @@ class QStyleOption;
 class Badge : public QWidget {
 public:
   struct Label {
-    Label(const QString &text = QString(), bool bold = false, bool tag = false)
+    enum class Type {
+      Ref,    // Badges in the CommitList
+      Log,    // Badges in the Log View
+      Status, // Badges in the TreeView // Changed, Added, Removed, Conflicted,
+              // ...
+      Conflict, // Conflict badges in the FileWidget next to the status
+      LFS,
+    };
+    Label(Type t, const QString &text = QString(), bool bold = false,
+          bool tag = false)
         : text(text), bold(bold), tag(tag) {}
 
     QString text;
     bool bold;
     bool tag;
+    Type type;
   };
 
   Badge(const QList<Label> &labels, QWidget *parent = nullptr);
@@ -38,7 +48,7 @@ public:
   QSize minimumSizeHint() const override;
 
   static QSize size(const QFont &font, const QList<Label> &labels);
-  static QSize size(const QFont &font, const Label &label = Label());
+  static QSize size(const QFont &font, const Label &label);
 
   static int paint(QPainter *painter, const QList<Label> &labels,
                    const QRect &rect, QStyleOption *opt = nullptr,
