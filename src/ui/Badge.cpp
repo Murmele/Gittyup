@@ -147,7 +147,7 @@ void Badge::paint(QPainter *painter, const Label &label, const QRect &rect,
   }
 
   if (label.type == Label::Type::Status) {
-    if (label.text == "!") {
+    if (label.text == '!') {
       state = Theme::BadgeState::Conflicted;
     } else if (label.text == 'M') {
       state = Theme::BadgeState::Modified;
