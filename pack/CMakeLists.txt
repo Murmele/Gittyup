@@ -197,13 +197,13 @@ if(UNIX AND NOT APPLE)
       FILES ${RSRC_DIR}/Gittyup.iconset/icon_${icon}x${icon}.png
       DESTINATION share/icons/hicolor/${icon}x${icon}/apps
       COMPONENT ${GITTYUP_NAME}
-      RENAME gittyup.png)
+      RENAME ${GITTYUP_NAME}.png)
 
     install(
       FILES ${RSRC_DIR}/Gittyup.iconset/gittyup_logo.svg
       DESTINATION share/icons/hicolor/scalable/apps
       COMPONENT ${GITTYUP_NAME}
-      RENAME gittyup.svg)
+      RENAME ${GITTYUP_NAME}.svg)
   endforeach()
 endif()
 
