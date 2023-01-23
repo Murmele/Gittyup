@@ -1,3 +1,17 @@
+### v9.9.9 - 2099-12-31
+
+Release description
+
+#### Added
+
+* Colorized status badges
+
+#### Changed
+
+* Placeholder REMOVE when adding the first change
+
+----
+
 ### v1.2.2 - 2023-01-22
 
 Bug fix release
