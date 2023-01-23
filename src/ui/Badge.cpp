@@ -142,13 +142,13 @@ void Badge::paint(QPainter *painter, const Label &label, const QRect &rect,
   Theme::BadgeState state = Theme::BadgeState::Normal;
   if (selected && active) {
     state = Theme::BadgeState::Selected;
+  } else if (label.bold) {
+    state = Theme::BadgeState::Head;
   }
 
   if (label.type == Label::Type::Status) {
     if (label.text == "!") {
       state = Theme::BadgeState::Conflicted;
-    } else if (label.bold) {
-      state = Theme::BadgeState::Head;
     } else if (label.text == 'M') {
       state = Theme::BadgeState::Modified;
     } else if (label.text == 'A') {
