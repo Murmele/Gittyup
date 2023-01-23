@@ -233,7 +233,7 @@ QDir Settings::confDir() {
 QDir Settings::l10nDir() {
   QDir dir = confDir();
   if (!dir.cd("l10n"))
-    dir = QDir(L10N_DIR);
+    dir = QDir(L10N_DIR);  // For debugging search in source dir
 
   qDebug() << "l10n dir: " << dir;
   return dir;
@@ -249,7 +249,7 @@ QDir Settings::dictionariesDir() {
 QDir Settings::lexerDir() {
   QDir dir = confDir();
   if (!dir.cd("lexers"))
-    dir = QDir(SCINTILLUA_LEXERS_DIR);
+    dir = QDir(SCINTILLUA_LEXERS_DIR); // For debugging search in source dir
   qDebug() << "Lexers dir: " << dir;
   return dir;
 }
