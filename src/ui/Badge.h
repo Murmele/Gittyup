@@ -31,12 +31,12 @@ public:
     };
     Label(Type t, const QString &text = QString(), bool bold = false,
           bool tag = false)
-        : text(text), bold(bold), tag(tag) {}
+        : type(t), text(text), bold(bold), tag(tag) {}
 
+    Type type;
     QString text;
     bool bold;
     bool tag;
-    Type type;
   };
 
   Badge(const QList<Label> &labels, QWidget *parent = nullptr);
