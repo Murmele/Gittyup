@@ -156,7 +156,7 @@ if(FLATPAK)
   # Install application.
   install(
     TARGETS gittyup
-    DESTINATION ./bin # otherwise the executable will not be found by flatpak
+    DESTINATION bin # otherwise the executable will not be found by flatpak
     COMPONENT ${GITTYUP_NAME})
 else()
   # Install application.
