@@ -84,6 +84,7 @@ public:
   };
 
   TextEditor(QWidget *parent = nullptr);
+  ~TextEditor();
 
   void applySettings();
 
@@ -118,6 +119,8 @@ public:
     Scintilla::PRectangle pr = GetTextRectangle();
     return QRect(pr.left, pr.top, pr.Width(), pr.Height());
   }
+
+  static void applyThemeAndSettingsToAllInstances();
 
 signals:
   void settingsChanged();
@@ -156,6 +159,7 @@ private:
   void loadMarkerPixmap(Marker marker, const QPixmap &pixmap);
   void AddToPopUp(const char *label, int cmd = 0, bool enabled = true);
   void ContextMenu(Scintilla::Point pt);
+  void applyThemeAndSettings();
 
   QString mPath;
   int mLineCount = -1;
@@ -179,6 +183,8 @@ private:
   QPixmap mUnStagedIcon;
 
   QMap<int, QList<Diagnostic>> mDiagnostics;
+
+  static QList<TextEditor*> instances;
 };
 
 #endif
