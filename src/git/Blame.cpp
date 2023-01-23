@@ -17,16 +17,11 @@ namespace git {
 Blame::Blame() {}
 
 Blame::Blame(git_blame *blame, git_repository *repo)
-  : repo(repo), d(blame, git_blame_free)
-{}
+    : repo(repo), d(blame, git_blame_free) {}
 
-int Blame::count() const
-{
-  return git_blame_get_hunk_count(d.data());
-}
+int Blame::count() const { return git_blame_get_hunk_count(d.data()); }
 
-int Blame::index(int line) const
-{
+int Blame::index(int line) const {
   // binary search
   int min = 0;
   int max = count() - 1;
@@ -44,37 +39,31 @@ int Blame::index(int line) const
   return min;
 }
 
-int Blame::line(int index) const
-{
+int Blame::line(int index) const {
   return git_blame_get_hunk_byindex(d.data(), index)->final_start_line_number;
 }
 
-Id Blame::id(int index) const
-{
+Id Blame::id(int index) const {
   return git_blame_get_hunk_byindex(d.data(), index)->final_commit_id;
 }
 
-QString Blame::message(int index) const
-{
+QString Blame::message(int index) const {
   git_commit *commit = nullptr;
   const git_blame_hunk *hunk = git_blame_get_hunk_byindex(d.data(), index);
   git_commit_lookup(&commit, repo, &hunk->final_commit_id);
   return commit ? Commit(commit).message(Commit::SubstituteEmoji) : QString();
 }
 
-Signature Blame::signature(int index) const
-{
+Signature Blame::signature(int index) const {
   return git_blame_get_hunk_byindex(d.data(), index)->final_signature;
 }
 
-bool Blame::isCommitted(int index) const
-{
+bool Blame::isCommitted(int index) const {
   const git_blame_hunk *hunk = git_blame_get_hunk_byindex(d.data(), index);
   return !git_oid_is_zero(&hunk->final_commit_id);
 }
 
-Blame Blame::updated(const QByteArray &buffer) const
-{
+Blame Blame::updated(const QByteArray &buffer) const {
   git_blame *blame = nullptr;
   git_blame_buffer(&blame, d.data(), buffer, buffer.length());
   return Blame(blame, repo);

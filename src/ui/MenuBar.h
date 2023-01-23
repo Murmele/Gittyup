@@ -16,8 +16,7 @@ class History;
 class RepoView;
 class StateAction;
 
-class MenuBar : public QMenuBar
-{
+class MenuBar : public QMenuBar {
   Q_OBJECT
 
 public:
@@ -36,6 +35,7 @@ public:
   void updateBranch();
   void updateSubmodules();
   void updateStash();
+  void updateRebase();
   void updateHistory();
   void updateWindow();
 
@@ -47,6 +47,10 @@ public:
    * \return
    */
   bool isMaximized();
+
+  void registerActions(QWidget *parent) const;
+
+  static const QString donationUrlLiberapay;
 
 private:
   QWidget *window() const;
@@ -84,6 +88,7 @@ private:
   QAction *mRefresh;
   QAction *mToggleLog;
   QAction *mToggleView;
+  QAction *mToggleMenuBar;
   StateAction *mToggleMaximize;
 
   // Repository

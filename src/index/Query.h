@@ -15,8 +15,7 @@
 
 using QueryRef = QSharedPointer<class Query>;
 
-class Query
-{
+class Query {
 public:
   virtual ~Query() {}
 

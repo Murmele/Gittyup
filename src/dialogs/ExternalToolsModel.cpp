@@ -13,27 +13,21 @@
 #include <QDirIterator>
 #include <QSet>
 
-ExternalToolsModel::ExternalToolsModel(
-  const QString &type,
-  bool detected,
-  QObject *parent)
-  : QAbstractTableModel(parent), mType(type), mDetected(detected)
-{
+ExternalToolsModel::ExternalToolsModel(const QString &type, bool detected,
+                                       QObject *parent)
+    : QAbstractTableModel(parent), mType(type), mDetected(detected) {
   refresh();
 }
 
-int ExternalToolsModel::rowCount(const QModelIndex &parent) const
-{
+int ExternalToolsModel::rowCount(const QModelIndex &parent) const {
   return mEntries.size();
 }
 
-int ExternalToolsModel::columnCount(const QModelIndex &parent) const
-{
+int ExternalToolsModel::columnCount(const QModelIndex &parent) const {
   return 3;
 }
 
-QVariant ExternalToolsModel::data(const QModelIndex &index, int role) const
-{
+QVariant ExternalToolsModel::data(const QModelIndex &index, int role) const {
   switch (role) {
     case Qt::DisplayRole:
     case Qt::EditRole:
@@ -51,25 +45,25 @@ QVariant ExternalToolsModel::data(const QModelIndex &index, int role) const
   return QVariant();
 }
 
-QVariant ExternalToolsModel::headerData(
-  int section,
-  Qt::Orientation orientation,
-  int role) const
-{
+QVariant ExternalToolsModel::headerData(int section,
+                                        Qt::Orientation orientation,
+                                        int role) const {
   if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
     return QVariant();
 
   switch (section) {
-    case Name: return tr("Name");
-    case Command: return tr("Command");
-    case Arguments: return tr("Arguments");
+    case Name:
+      return tr("Name");
+    case Command:
+      return tr("Command");
+    case Arguments:
+      return tr("Arguments");
   }
 
   return QVariant();
 }
 
-Qt::ItemFlags ExternalToolsModel::flags(const QModelIndex &index) const
-{
+Qt::ItemFlags ExternalToolsModel::flags(const QModelIndex &index) const {
   if (!mDetected)
     return Qt::ItemIsEnabled | Qt::ItemIsEditable | Qt::ItemIsSelectable;
 
@@ -79,11 +73,8 @@ Qt::ItemFlags ExternalToolsModel::flags(const QModelIndex &index) const
   return Qt::ItemFlags();
 }
 
-bool ExternalToolsModel::setData(
-  const QModelIndex &index,
-  const QVariant &value,
-  int role)
-{
+bool ExternalToolsModel::setData(const QModelIndex &index,
+                                 const QVariant &value, int role) {
   if (!index.isValid())
     return false;
 
@@ -114,13 +105,11 @@ bool ExternalToolsModel::setData(
   return true;
 }
 
-void ExternalToolsModel::refresh()
-{
+void ExternalToolsModel::refresh() {
   beginResetModel();
 
-  mEntries = mDetected ?
-    ExternalTool::readBuiltInTools(mType) :
-    ExternalTool::readGlobalTools(mType);
+  mEntries = mDetected ? ExternalTool::readBuiltInTools(mType)
+                       : ExternalTool::readGlobalTools(mType);
 
   // Sort enabled items first.
   std::sort(mEntries.begin(), mEntries.end());
@@ -128,8 +117,7 @@ void ExternalToolsModel::refresh()
   endResetModel();
 }
 
-void ExternalToolsModel::add(const QString &path)
-{
+void ExternalToolsModel::add(const QString &path) {
   if (path.isEmpty())
     return;
 
@@ -139,8 +127,7 @@ void ExternalToolsModel::add(const QString &path)
   git::Config::global().setValue(key, cmd);
 }
 
-void ExternalToolsModel::remove(const QString &name)
-{
+void ExternalToolsModel::remove(const QString &name) {
   QString regex = QString("%1tool\\.%2\\.cmd").arg(mType, name);
   git::Config config = git::Config::global();
   git::Config::Iterator it = config.glob(regex);

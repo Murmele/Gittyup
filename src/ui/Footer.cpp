@@ -21,24 +21,17 @@
 
 namespace {
 
-class FooterButton : public QToolButton
-{
+class FooterButton : public QToolButton {
 public:
-  enum Kind {
-    Plus,
-    Minus,
-    Gear
-  };
+  enum Kind { Plus, Minus, Gear };
 
   FooterButton(Kind kind, QWidget *parent = nullptr)
-    : QToolButton(parent), mKind(kind)
-  {}
+      : QToolButton(parent), mKind(kind) {}
 
-  QSize sizeHint() const override { return QSize(24,20); }
+  QSize sizeHint() const override { return QSize(24, 20); }
 
 protected:
-  void paintEvent(QPaintEvent *event) override
-  {
+  void paintEvent(QPaintEvent *event) override {
     // Turn off menu arrow.
     QStylePainter sp(this);
     QStyleOptionToolButton opt;
@@ -89,11 +82,9 @@ private:
   Kind mKind;
 };
 
-} // anon. namespace
+} // namespace
 
-Footer::Footer(QWidget *parent)
-  : QWidget(parent)
-{
+Footer::Footer(QWidget *parent) : QWidget(parent) {
   mPlus = new FooterButton(FooterButton::Plus, this);
   connect(mPlus, &FooterButton::clicked, this, &Footer::plusClicked);
 
@@ -106,7 +97,7 @@ Footer::Footer(QWidget *parent)
   mGear->setVisible(false);
 
   QHBoxLayout *layout = new QHBoxLayout(this);
-  layout->setContentsMargins(0,0,0,0);
+  layout->setContentsMargins(0, 0, 0, 0);
   layout->setSpacing(0);
   layout->addWidget(mPlus);
   layout->addWidget(mMinus);
@@ -114,32 +105,23 @@ Footer::Footer(QWidget *parent)
   layout->addStretch();
 }
 
-void Footer::setPlusMenu(QMenu *menu)
-{
+void Footer::setPlusMenu(QMenu *menu) {
   delete mPlus->menu();
   mPlus->setMenu(menu);
   mPlus->setPopupMode(QToolButton::InstantPopup);
 }
 
-void Footer::setContextMenu(QMenu *menu)
-{
+void Footer::setContextMenu(QMenu *menu) {
   delete mGear->menu();
   mGear->setMenu(menu);
   mGear->setVisible(menu);
 }
 
-void Footer::setPlusEnabled(bool enabled)
-{
-  mPlus->setEnabled(enabled);
-}
+void Footer::setPlusEnabled(bool enabled) { mPlus->setEnabled(enabled); }
 
-void Footer::setMinusEnabled(bool enabled)
-{
-  mMinus->setEnabled(enabled);
-}
+void Footer::setMinusEnabled(bool enabled) { mMinus->setEnabled(enabled); }
 
-void Footer::paintEvent(QPaintEvent *event)
-{
+void Footer::paintEvent(QPaintEvent *event) {
   QStyleOption option;
   option.initFrom(this);
   QPainter painter(this);

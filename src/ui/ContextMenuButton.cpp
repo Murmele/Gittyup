@@ -17,29 +17,22 @@
 
 namespace {
 
-const QString kStyleSheet =
-  "QToolButton {"
-  "  border: none;"
-  "  border-radius: 4px;"
-  "  padding: 0px 4px 0px 4px"
-  "}";
+const QString kStyleSheet = "QToolButton {"
+                            "  border: none;"
+                            "  border-radius: 4px;"
+                            "  padding: 0px 4px 0px 4px"
+                            "}";
 
-} // anon. namespace
+} // namespace
 
-ContextMenuButton::ContextMenuButton(QWidget *parent)
-  : QToolButton(parent)
-{
+ContextMenuButton::ContextMenuButton(QWidget *parent) : QToolButton(parent) {
   setStyleSheet(kStyleSheet);
   setPopupMode(QToolButton::InstantPopup);
 }
 
-QSize ContextMenuButton::sizeHint() const
-{
-  return QSize(24, 18);
-}
+QSize ContextMenuButton::sizeHint() const { return QSize(24, 18); }
 
-void ContextMenuButton::paintEvent(QPaintEvent *event)
-{
+void ContextMenuButton::paintEvent(QPaintEvent *event) {
   QStylePainter sp(this);
   QStyleOptionToolButton opt;
   initStyleOption(&opt);

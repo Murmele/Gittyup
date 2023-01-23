@@ -8,8 +8,7 @@
 
 SpellChecker::SpellChecker(const QString &dictionaryPath,
                            const QString &userDictionary)
-  : mUserDictionary(userDictionary)
-{
+    : mUserDictionary(userDictionary) {
   QString dictFileName = dictionaryPath + ".dic";
   QString affixFileName = dictionaryPath + ".aff";
   QByteArray dictFilePath = dictFileName.toLocal8Bit();
@@ -19,14 +18,16 @@ SpellChecker::SpellChecker(const QString &dictionaryPath,
 
   QFile dictFile(dictFileName);
   if (dictFile.exists()) {
-    mHunspell = new Hunspell(affixFilePath.constData(), dictFilePath.constData());
+    mHunspell =
+        new Hunspell(affixFilePath.constData(), dictFilePath.constData());
 
     // Detect encoding analyzing the SET option in the affix file.
     QString encoding = "ISO8859-15";
     QFile affixFile(affixFileName);
     if (affixFile.open(QIODevice::ReadOnly)) {
       QTextStream stream(&affixFile);
-      QRegExp enc_detector("^\\s*SET\\s+([A-Z0-9\\-]+)\\s*", Qt::CaseInsensitive);
+      QRegExp enc_detector("^\\s*SET\\s+([A-Z0-9\\-]+)\\s*",
+                           Qt::CaseInsensitive);
       QString line = stream.readLine();
       while (!line.isEmpty()) {
         if (enc_detector.indexIn(line) >= 0) {
@@ -57,23 +58,19 @@ SpellChecker::SpellChecker(const QString &dictionaryPath,
   }
 }
 
-SpellChecker::~SpellChecker()
-{
-  delete mHunspell;
-}
+SpellChecker::~SpellChecker() { delete mHunspell; }
 
-bool SpellChecker::spell(const QString &word)
-{
+bool SpellChecker::spell(const QString &word) {
   // Encode from Unicode to the encoding used by current dictionary.
   return mHunspell->spell(mCodec->fromUnicode(word).toStdString());
 }
 
-QStringList SpellChecker::suggest(const QString &word)
-{
+QStringList SpellChecker::suggest(const QString &word) {
   QStringList suggestions;
 
   // Retrive suggestions for word.
-  std::vector<std::string> suggestion = mHunspell->suggest(mCodec->fromUnicode(word).toStdString());
+  std::vector<std::string> suggestion =
+      mHunspell->suggest(mCodec->fromUnicode(word).toStdString());
 
   // Decode from the encoding used by current dictionary to Unicode.
   foreach (const std::string &str, suggestion)
@@ -82,13 +79,11 @@ QStringList SpellChecker::suggest(const QString &word)
   return suggestions;
 }
 
-void SpellChecker::ignoreWord(const QString &word)
-{
+void SpellChecker::ignoreWord(const QString &word) {
   mHunspell->add(mCodec->fromUnicode(word).constData());
 }
 
-void SpellChecker::addToUserDict(const QString &word)
-{
+void SpellChecker::addToUserDict(const QString &word) {
   mHunspell->add(mCodec->fromUnicode(word).constData());
 
   if (!mUserDictionary.isEmpty()) {
@@ -101,8 +96,7 @@ void SpellChecker::addToUserDict(const QString &word)
   }
 }
 
-void SpellChecker::removeUserDict(void)
-{
+void SpellChecker::removeUserDict(void) {
   if (!mUserDictionary.isEmpty()) {
     QFile userDictonaryFile(mUserDictionary);
     userDictonaryFile.resize(0);

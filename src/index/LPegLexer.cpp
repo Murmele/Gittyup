@@ -19,12 +19,9 @@ extern "C" {
 LUALIB_API int luaopen_lpeg(lua_State *L);
 }
 
-LPegLexer::LPegLexer(
-  const QByteArray &home,
-  const QByteArray &lexer,
-  QObject *parent)
-  : Lexer(parent), mL(luaL_newstate(), lua_close), mName(lexer)
-{
+LPegLexer::LPegLexer(const QByteArray &home, const QByteArray &lexer,
+                     QObject *parent)
+    : Lexer(parent), mL(luaL_newstate(), lua_close), mName(lexer) {
   Q_ASSERT(!home.isEmpty() && !lexer.isEmpty());
 
   // Load lexer from absolute path.
@@ -59,8 +56,7 @@ LPegLexer::LPegLexer(
   lua_remove(L, -2); // lexer module
 }
 
-bool LPegLexer::lex(const QByteArray &buffer)
-{
+bool LPegLexer::lex(const QByteArray &buffer) {
   // Initialize lex data.
   mIndex = 1;
   mLength = 0;
@@ -85,13 +81,9 @@ bool LPegLexer::lex(const QByteArray &buffer)
   return true;
 }
 
-bool LPegLexer::hasNext()
-{
-  return (mIndex < mLength);
-}
+bool LPegLexer::hasNext() { return (mIndex < mLength); }
 
-Lexer::Lexeme LPegLexer::next()
-{
+Lexer::Lexeme LPegLexer::next() {
   lua_State *L = mL.data();
 
   lua_rawgeti(L, -2, mIndex), lua_rawget(L, -2); // _TOKENSTYLES[token]

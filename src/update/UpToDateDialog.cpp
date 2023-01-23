@@ -15,9 +15,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 
-UpToDateDialog::UpToDateDialog(QWidget *parent)
-  : QDialog(parent)
-{
+UpToDateDialog::UpToDateDialog(QWidget *parent) : QDialog(parent) {
   setWindowTitle(tr("Already Up-to-date"));
 
   QIcon icon(":/Gittyup.iconset/icon_128x128.png");
@@ -34,8 +32,7 @@ UpToDateDialog::UpToDateDialog(QWidget *parent)
   label->setWordWrap(true);
 
   QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok, this);
-  connect(buttons, &QDialogButtonBox::accepted,
-          this, &UpToDateDialog::accept);
+  connect(buttons, &QDialogButtonBox::accepted, this, &UpToDateDialog::accept);
 
   QVBoxLayout *content = new QVBoxLayout;
   content->addWidget(label);

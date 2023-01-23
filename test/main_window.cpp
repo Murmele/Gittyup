@@ -13,8 +13,7 @@
 using namespace Test;
 using namespace QTest;
 
-class TestMainWindow : public QObject
-{
+class TestMainWindow : public QObject {
   Q_OBJECT
 
 private slots:
@@ -27,21 +26,14 @@ private:
   MainWindow *mWindow = nullptr;
 };
 
-void TestMainWindow::initTestCase()
-{
-  mWindow = new MainWindow(mRepo);
-}
+void TestMainWindow::initTestCase() { mWindow = new MainWindow(mRepo); }
 
-void TestMainWindow::show()
-{
+void TestMainWindow::show() {
   mWindow->show();
   QVERIFY(qWaitForWindowActive(mWindow));
 }
 
-void TestMainWindow::cleanupTestCase()
-{
-  mWindow->close();
-}
+void TestMainWindow::cleanupTestCase() { mWindow->close(); }
 
 TEST_MAIN(TestMainWindow)
 

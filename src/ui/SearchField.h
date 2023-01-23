@@ -15,8 +15,7 @@
 class QResizeEvent;
 class QToolButton;
 
-class SearchField : public QLineEdit
-{
+class SearchField : public QLineEdit {
   Q_OBJECT
 
 public:

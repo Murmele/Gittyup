@@ -13,8 +13,7 @@
 #include "Account.h"
 #include <QJsonDocument>
 
-class GitHub : public Account
-{
+class GitHub : public Account {
   Q_OBJECT
 
 public:
@@ -26,14 +25,10 @@ public:
   void connect(const QString &password = QString()) override;
 
   void requestForkParents(Repository *repo) override;
-  virtual void createPullRequest(
-    Repository *repo,
-    const QString &ownerRepo,
-    const QString &title,
-    const QString &body,
-    const QString &head,
-    const QString &base,
-    bool canModify) override;
+  virtual void createPullRequest(Repository *repo, const QString &ownerRepo,
+                                 const QString &title, const QString &body,
+                                 const QString &head, const QString &base,
+                                 bool canModify) override;
 
   void requestComments(Repository *repo, const QString &oid) override;
 
@@ -43,16 +38,12 @@ public:
   static QString defaultUrl();
 
 private:
-  using Callback = std::function<void (const QJsonObject &)>;
+  using Callback = std::function<void(const QJsonObject &)>;
 
-  void graphql(
-    const QString &query,
-    const Callback &callback);
+  void graphql(const QString &query, const Callback &callback);
 
-  void rest(
-    const QUrl &url,
-    const QJsonDocument &doc = QJsonDocument(),
-    const Callback &callback = Callback());
+  void rest(const QUrl &url, const QJsonDocument &doc = QJsonDocument(),
+            const Callback &callback = Callback());
 
   QString mState;
 };

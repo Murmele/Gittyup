@@ -12,14 +12,11 @@
 #include "ui/ReferenceList.h"
 
 BranchDelegate::BranchDelegate(const git::Repository &repo, QObject *parent)
-  : QStyledItemDelegate(parent), mRepo(repo)
-{}
+    : QStyledItemDelegate(parent), mRepo(repo) {}
 
-QWidget *BranchDelegate::createEditor(
-  QWidget *parent,
-  const QStyleOptionViewItem &option,
-  const QModelIndex &index) const
-{
+QWidget *BranchDelegate::createEditor(QWidget *parent,
+                                      const QStyleOptionViewItem &option,
+                                      const QModelIndex &index) const {
   // Create a reference list in the upstream column.
   if (index.column() != BranchTableModel::Upstream)
     return QStyledItemDelegate::createEditor(parent, option, index);
@@ -29,10 +26,8 @@ QWidget *BranchDelegate::createEditor(
   return refs;
 }
 
-void BranchDelegate::setEditorData(
-  QWidget *editor,
-  const QModelIndex &index) const
-{
+void BranchDelegate::setEditorData(QWidget *editor,
+                                   const QModelIndex &index) const {
   ReferenceList *refs = qobject_cast<ReferenceList *>(editor);
   if (!refs) {
     QStyledItemDelegate::setEditorData(editor, index);
@@ -45,11 +40,8 @@ void BranchDelegate::setEditorData(
     refs->setCurrentIndex(idx);
 }
 
-void BranchDelegate::setModelData(
-  QWidget *editor,
-  QAbstractItemModel *model,
-  const QModelIndex &index) const
-{
+void BranchDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
+                                  const QModelIndex &index) const {
   ReferenceList *refs = qobject_cast<ReferenceList *>(editor);
   if (!refs) {
     QStyledItemDelegate::setModelData(editor, model, index);

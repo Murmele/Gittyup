@@ -20,8 +20,7 @@ namespace git {
 class Commit;
 }
 
-class PullRequestDialog : public QDialog
-{
+class PullRequestDialog : public QDialog {
   Q_OBJECT
 
 public:

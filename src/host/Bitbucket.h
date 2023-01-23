@@ -12,8 +12,7 @@
 
 #include "Account.h"
 
-class Bitbucket : public Account
-{
+class Bitbucket : public Account {
   Q_OBJECT
 
 public:

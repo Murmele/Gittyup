@@ -16,35 +16,23 @@
 namespace git {
 class Diff;
 class Repository;
-}
+} // namespace git
 
-class ExternalTool : public QObject
-{
+class ExternalTool : public QObject {
   Q_OBJECT
 
 public:
-  enum Kind
-  {
-    Show,
-    Edit,
-    Diff,
-    Merge
-  };
+  enum Kind { Show, Edit, Diff, Merge };
 
-  enum Error
-  {
-    BashNotFound
-  };
+  enum Error { BashNotFound };
 
-  struct Info
-  {
+  struct Info {
     QString name;
     QString command;
     QString arguments;
     bool found;
 
-    bool operator<(const Info &rhs) const
-    {
+    bool operator<(const Info &rhs) const {
       if (found != rhs.found)
         return found;
 
@@ -65,11 +53,9 @@ public:
   static QList<Info> readGlobalTools(const QString &key);
   static QList<Info> readBuiltInTools(const QString &key);
 
-  static ExternalTool *create(
-    const QString &file,
-    const git::Diff &diff,
-    const git::Repository &repo,
-    QObject *parent = nullptr);
+  static ExternalTool *create(const QString &file, const git::Diff &diff,
+                              const git::Repository &repo,
+                              QObject *parent = nullptr);
 
 signals:
   void error(Error error);

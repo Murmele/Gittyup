@@ -22,9 +22,7 @@
 #define ADJUSTMENT_SIZE QSize(0, 0)
 #endif
 
-LogDelegate::LogDelegate(QObject *parent)
-  : QStyledItemDelegate(parent)
-{
+LogDelegate::LogDelegate(QObject *parent) : QStyledItemDelegate(parent) {
   mCacheDate = QDate::currentDate();
   mCacheTimer.setTimerType(Qt::VeryCoarseTimer);
   connect(&mCacheTimer, &QTimer::timeout, [this] {
@@ -39,15 +37,10 @@ LogDelegate::LogDelegate(QObject *parent)
   mCacheTimer.start(60 * 1000);
 }
 
-LogDelegate::~LogDelegate()
-{
-  qDeleteAll(mDocumentCache);
-}
+LogDelegate::~LogDelegate() { qDeleteAll(mDocumentCache); }
 
-QSize LogDelegate::sizeHint(
-  const QStyleOptionViewItem &option,
-  const QModelIndex &index) const
-{
+QSize LogDelegate::sizeHint(const QStyleOptionViewItem &option,
+                            const QModelIndex &index) const {
   QStyleOptionViewItem opt = option;
   initStyleOption(&opt, index);
 
@@ -64,11 +57,8 @@ QSize LogDelegate::sizeHint(
   return QSize(decWidth + docWidth, qMax(docHeight, decHeight));
 }
 
-void LogDelegate::paint(
-  QPainter *painter,
-  const QStyleOptionViewItem &option,
-  const QModelIndex &index) const
-{
+void LogDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
+                        const QModelIndex &index) const {
   QStyleOptionViewItem opt = option;
   initStyleOption(&opt, index);
 
@@ -96,13 +86,11 @@ void LogDelegate::paint(
   }
 }
 
-void LogDelegate::invalidateCache(const QModelIndex &index)
-{
+void LogDelegate::invalidateCache(const QModelIndex &index) {
   delete mDocumentCache.take(index);
 }
 
-QTextDocument *LogDelegate::document(const QModelIndex &index) const
-{
+QTextDocument *LogDelegate::document(const QModelIndex &index) const {
   auto it = mDocumentCache.find(index);
   if (it != mDocumentCache.end())
     return it.value();
@@ -114,10 +102,8 @@ QTextDocument *LogDelegate::document(const QModelIndex &index) const
   return doc;
 }
 
-QPoint LogDelegate::documentPosition(
-  const QStyleOptionViewItem &option,
-  const QModelIndex &index) const
-{
+QPoint LogDelegate::documentPosition(const QStyleOptionViewItem &option,
+                                     const QModelIndex &index) const {
   QStyleOptionViewItem opt = option;
   initStyleOption(&opt, index);
 
@@ -126,10 +112,8 @@ QPoint LogDelegate::documentPosition(
   return rect.topLeft() + QPoint(horizontalMargin(opt), y);
 }
 
-QRect LogDelegate::decorationRect(
-  const QStyleOptionViewItem &option,
-  const QModelIndex &index) const
-{
+QRect LogDelegate::decorationRect(const QStyleOptionViewItem &option,
+                                  const QModelIndex &index) const {
   QStyleOptionViewItem opt = option;
   initStyleOption(&opt, index);
 
@@ -137,10 +121,8 @@ QRect LogDelegate::decorationRect(
   return style(opt)->subElementRect(se, &opt, opt.widget);
 }
 
-void LogDelegate::initStyleOption(
-  QStyleOptionViewItem *option,
-  const QModelIndex &index) const
-{
+void LogDelegate::initStyleOption(QStyleOptionViewItem *option,
+                                  const QModelIndex &index) const {
   QStyledItemDelegate::initStyleOption(option, index);
   QVariant variant = index.data(Qt::DecorationRole);
   if (static_cast<QMetaType::Type>(variant.type()) == QMetaType::QChar) {
@@ -150,17 +132,15 @@ void LogDelegate::initStyleOption(
   }
 }
 
-QStyle *LogDelegate::style(const QStyleOptionViewItem &opt) const
-{
+QStyle *LogDelegate::style(const QStyleOptionViewItem &opt) const {
   return opt.widget ? opt.widget->style() : QApplication::style();
 }
 
-int LogDelegate::verticalMargin(const QStyleOptionViewItem &opt) const
-{
+int LogDelegate::verticalMargin(const QStyleOptionViewItem &opt) const {
   return VERTICAL_MARGIN;
 }
 
-int LogDelegate::horizontalMargin(const QStyleOptionViewItem &opt) const
-{
-  return style(opt)->pixelMetric(QStyle::PM_FocusFrameHMargin, 0, opt.widget) + 1;
+int LogDelegate::horizontalMargin(const QStyleOptionViewItem &opt) const {
+  return style(opt)->pixelMetric(QStyle::PM_FocusFrameHMargin, 0, opt.widget) +
+         1;
 }

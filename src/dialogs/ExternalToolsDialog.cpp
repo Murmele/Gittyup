@@ -19,15 +19,13 @@
 #include <QVBoxLayout>
 
 ExternalToolsDialog::ExternalToolsDialog(const QString &type, QWidget *parent)
-  : QDialog(parent)
-{
+    : QDialog(parent) {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowTitle(tr("Configure External Tools"));
   setModal(false);
   resize(700, 600);
 
-  QDialogButtonBox *buttons =
-    new QDialogButtonBox(QDialogButtonBox::Ok, this);
+  QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok, this);
   connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::close);
   connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::close);
 
@@ -38,8 +36,7 @@ ExternalToolsDialog::ExternalToolsDialog(const QString &type, QWidget *parent)
   externalToolsLayout->addWidget(buttons);
 }
 
-QVBoxLayout *ExternalToolsDialog::createDetectedLayout(const QString &type)
-{
+QVBoxLayout *ExternalToolsDialog::createDetectedLayout(const QString &type) {
   QLabel *title = new QLabel(tr("Detected Tools"));
   title->setStyleSheet("QLabel {padding: 0px 0px 5px 0px;}");
 
@@ -50,8 +47,8 @@ QVBoxLayout *ExternalToolsDialog::createDetectedLayout(const QString &type)
   table->setSelectionMode(QAbstractItemView::ExtendedSelection);
   table->setShowGrid(false);
   table->setModel(new ExternalToolsModel(type, true, this));
-  table->horizontalHeader()->setSectionResizeMode(
-    ExternalToolsModel::Arguments, QHeaderView::Stretch);
+  table->horizontalHeader()->setSectionResizeMode(ExternalToolsModel::Arguments,
+                                                  QHeaderView::Stretch);
   table->resizeColumnsToContents();
   table->selectRow(0);
 
@@ -63,8 +60,7 @@ QVBoxLayout *ExternalToolsDialog::createDetectedLayout(const QString &type)
   return layout;
 }
 
-QVBoxLayout *ExternalToolsDialog::createUserDefinedLayout(const QString &type)
-{
+QVBoxLayout *ExternalToolsDialog::createUserDefinedLayout(const QString &type) {
   QLabel *title = new QLabel(tr("User Defined Tools"));
   title->setStyleSheet("QLabel {padding: 0px 0px 5px 0px;}");
 
@@ -78,8 +74,8 @@ QVBoxLayout *ExternalToolsDialog::createUserDefinedLayout(const QString &type)
   table->setShowGrid(false);
   table->setModel(model);
   table->sortByColumn(1, Qt::AscendingOrder);
-  table->horizontalHeader()->setSectionResizeMode(
-    ExternalToolsModel::Arguments, QHeaderView::Stretch);
+  table->horizontalHeader()->setSectionResizeMode(ExternalToolsModel::Arguments,
+                                                  QHeaderView::Stretch);
   table->resizeColumnsToContents();
 
   Footer *footer = new Footer(table);
@@ -102,10 +98,10 @@ QVBoxLayout *ExternalToolsDialog::createUserDefinedLayout(const QString &type)
     footer->setMinusEnabled(table->selectionModel()->hasSelection());
   };
 
-  connect(table->selectionModel(), &QItemSelectionModel::selectionChanged,
-          this, updateMinusButton);
-  connect(table->model(), &QAbstractItemModel::modelReset,
-          this, updateMinusButton);
+  connect(table->selectionModel(), &QItemSelectionModel::selectionChanged, this,
+          updateMinusButton);
+  connect(table->model(), &QAbstractItemModel::modelReset, this,
+          updateMinusButton);
 
   QVBoxLayout *layout = new QVBoxLayout;
   layout->setSpacing(0);

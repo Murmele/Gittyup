@@ -22,19 +22,13 @@ class QLineEdit;
 namespace git {
 class Reference;
 class Remote;
-}
+} // namespace git
 
-class RemoteDialog : public QDialog
-{
+class RemoteDialog : public QDialog {
   Q_OBJECT
 
 public:
-  enum Kind
-  {
-    Fetch,
-    Pull,
-    Push
-  };
+  enum Kind { Fetch, Pull, Push };
 
   RemoteDialog(Kind kind, RepoView *parent);
 

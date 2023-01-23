@@ -4,19 +4,15 @@
 #include "Button.h"
 #include <QPainterPath>
 
-class DisclosureButton : public Button
-{
+class DisclosureButton : public Button {
 public:
-  DisclosureButton(QWidget *parent = nullptr)
-    : Button(parent)
-  {
+  DisclosureButton(QWidget *parent = nullptr) : Button(parent) {
     setCheckable(true);
     setChecked(true);
   }
 
 protected:
-  void paintEvent(QPaintEvent *event) override
-  {
+  void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
     initButtonPainter(&painter);
 
@@ -39,4 +35,3 @@ protected:
 };
 
 #endif // BUTTON_H
-

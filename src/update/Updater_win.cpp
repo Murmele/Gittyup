@@ -4,8 +4,7 @@
 #include <QTemporaryFile>
 #include <windows.h>
 
-bool Updater::install(const DownloadRef &download, QString &error)
-{
+bool Updater::install(const DownloadRef &download, QString &error) {
   // Destroy the temporary file object to release the file handle.
   QString file = download->file()->fileName();
   download->file()->setAutoRemove(false);

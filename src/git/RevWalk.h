@@ -19,8 +19,7 @@ namespace git {
 class Commit;
 class Reference;
 
-class RevWalk
-{
+class RevWalk {
 public:
   RevWalk();
 

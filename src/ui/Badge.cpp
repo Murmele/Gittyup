@@ -21,45 +21,38 @@ const int kIconWidth = 14;
 const QString kEllipsis = "...";
 Qt::Alignment kLabelAlignment = Qt::AlignHCenter | Qt::AlignVCenter;
 
-bool isEmpty(QList<Badge::Label> &labels)
-{
+bool isEmpty(QList<Badge::Label> &labels) {
   if (!labels.isEmpty() && labels.last().text == kEllipsis)
     labels.removeLast();
   return labels.isEmpty();
 }
 
-} // anon. namespace
+} // namespace
 
 Badge::Badge(const QList<Label> &labels, QWidget *parent)
-  : QWidget(parent), mLabels(labels)
-{
+    : QWidget(parent), mLabels(labels) {
   setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
 }
 
-void Badge::appendLabel(const Label &label)
-{
+void Badge::appendLabel(const Label &label) {
   mLabels.append(label);
   updateGeometry();
 }
 
-void Badge::setLabels(const QList<Label> &labels)
-{
+void Badge::setLabels(const QList<Label> &labels) {
   mLabels = labels;
   updateGeometry();
 }
 
-QSize Badge::sizeHint() const
-{
+QSize Badge::sizeHint() const {
   return !mLabels.isEmpty() ? size(font(), mLabels) : QSize();
 }
 
-QSize Badge::minimumSizeHint() const
-{
+QSize Badge::minimumSizeHint() const {
   return !mLabels.isEmpty() ? size(font(), kEllipsis) : QSize();
 }
 
-QSize Badge::size(const QFont &font, const QList<Label> &labels)
-{
+QSize Badge::size(const QFont &font, const QList<Label> &labels) {
   Q_ASSERT(!labels.isEmpty());
 
   int width = 0;
@@ -69,27 +62,21 @@ QSize Badge::size(const QFont &font, const QList<Label> &labels)
   return QSize(width + ((labels.size() - 1) * kSpacing), fm.lineSpacing() + 2);
 }
 
-QSize Badge::size(const QFont &font, const Label &label)
-{
+QSize Badge::size(const QFont &font, const Label &label) {
   QFont copy = font;
   copy.setBold(label.bold);
 
   QFontMetrics fm(copy);
   int icon = label.tag ? kIconWidth : 0;
-  int width = (label.text.length() > 1) ?
-    fm.horizontalAdvance(label.text) : fm.averageCharWidth();
+  int width = (label.text.length() > 1) ? fm.horizontalAdvance(label.text)
+                                        : fm.averageCharWidth();
   return QSize(icon + width + kPadding, fm.lineSpacing() + 2);
 }
 
 // Draws the badges in all available space, right-aligned by default.
 // Returns the final width occupied by the badges.
-int Badge::paint(
-  QPainter *painter,
-  const QList<Label> &list,
-  const QRect &rect,
-  QStyleOption *opt,
-  Qt::Alignment alignment)
-{
+int Badge::paint(QPainter *painter, const QList<Label> &list, const QRect &rect,
+                 QStyleOption *opt, Qt::Alignment alignment) {
   bool active = (opt && (opt->state & QStyle::State_Active));
   bool selected = (opt && (opt->state & QStyle::State_Selected));
 
@@ -139,8 +126,7 @@ int Badge::paint(
   return x;
 }
 
-void Badge::paintEvent(QPaintEvent *event)
-{
+void Badge::paintEvent(QPaintEvent *event) {
   if (mLabels.isEmpty())
     return;
 
@@ -148,13 +134,8 @@ void Badge::paintEvent(QPaintEvent *event)
   paint(&painter, mLabels, rect());
 }
 
-void Badge::paint(
-  QPainter *painter,
-  const Label &label,
-  const QRect &rect,
-  bool selected,
-  bool active)
-{
+void Badge::paint(QPainter *painter, const Label &label, const QRect &rect,
+                  bool selected, bool active) {
   Theme *theme = Application::theme();
   Theme::BadgeState state = Theme::BadgeState::Normal;
   if (selected && active) {

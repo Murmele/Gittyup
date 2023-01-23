@@ -15,26 +15,17 @@
 #include <QUrl>
 
 EditTool::EditTool(const QString &file, QObject *parent)
-  : ExternalTool(file, parent)
-{}
+    : ExternalTool(file, parent) {}
 
-bool EditTool::isValid() const
-{
+bool EditTool::isValid() const {
   return (ExternalTool::isValid() && QFileInfo(mFile).isFile());
 }
 
-ExternalTool::Kind EditTool::kind() const
-{
-  return Edit;
-}
+ExternalTool::Kind EditTool::kind() const { return Edit; }
 
-QString EditTool::name() const
-{
-  return tr("Edit in External Editor");
-}
+QString EditTool::name() const { return tr("Edit in External Editor"); }
 
-bool EditTool::start()
-{
+bool EditTool::start() {
   git::Config config = git::Config::global();
   QString editor = config.value<QString>("gui.editor");
 
@@ -85,7 +76,14 @@ bool EditTool::start()
   auto signal = QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished);
   QObject::connect(process, signal, this, &ExternalTool::deleteLater);
 
+#if defined(FLATPAK)
+  args.prepend(editor);
+  args.prepend("--host");
+  process->start("flatpak-spawn", args);
+#else
   process->start(editor, args);
+#endif
+
   if (!process->waitForStarted())
     return false;
 

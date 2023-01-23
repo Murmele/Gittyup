@@ -1,12 +1,11 @@
 #ifndef LINE_H
 #define LINE_H
 
-class Line
-{
+#include <QString>
+
+class Line {
 public:
-  Line(char origin, int oldLine, int newLine)
-    : mOrigin(origin)
-  {
+  Line(char origin, int oldLine, int newLine) : mOrigin(origin) {
     mOldLine = (oldLine >= 0) ? QByteArray::number(oldLine) : QByteArray();
     mNewLine = (newLine >= 0) ? QByteArray::number(newLine) : QByteArray();
   }
@@ -20,6 +19,11 @@ public:
 
   int matchingLine() const { return mMatchingLine; }
   void setMatchingLine(int line) { mMatchingLine = line; }
+
+  QString print() {
+    return QString("Origin: ") + mOrigin + QString("; OldLine: ") +
+           QString(mOldLine) + QString("; NewLine: ") + QString(mNewLine);
+  }
 
 private:
   char mOrigin = -1;

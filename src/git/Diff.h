@@ -18,52 +18,37 @@
 
 /*!
  * \brief containsPath
- * Checks if \p str contains \p occurence from start (if it is a subfile/subfolder of \p occurence)
- * Testcases:
- * /src/testfile.txt, /src/testfile.txt1 - path: /src/testfile.txt --> only /src/testfile.txt1 is shown
- * /src/testfile.txt, /src/testfile.txt1 - path: /src --> testfile.txt and testfile.txt is shown
- * /src/test/test.txt11, /src/testfile.txt, /src/testfile.txt1 - path: /src/test --> only /src/test/testtest.txt11 is shown
- * \param str String in which should be searched
- * \param occurence Search this string in \p str
- * \param cs Case sensitive or not
- * \return True when contains, otherwise false
+ * Checks if \p str contains \p occurence from start (if it is a
+ * subfile/subfolder of \p occurence) Testcases: /src/testfile.txt,
+ * /src/testfile.txt1 - path: /src/testfile.txt --> only /src/testfile.txt1 is
+ * shown /src/testfile.txt, /src/testfile.txt1 - path: /src --> testfile.txt and
+ * testfile.txt is shown /src/test/test.txt11, /src/testfile.txt,
+ * /src/testfile.txt1 - path: /src/test --> only /src/test/testtest.txt11 is
+ * shown \param str String in which should be searched \param occurence Search
+ * this string in \p str \param cs Case sensitive or not \return True when
+ * contains, otherwise false
  */
-bool containsPath(QString &str, QString &occurence, Qt::CaseSensitivity cs = Qt::CaseSensitive);
-
+bool containsPath(QString &str, QString &occurence,
+                  Qt::CaseSensitivity cs = Qt::CaseSensitive);
 
 namespace git {
 
 class Patch;
 
-class Diff
-{
+class Diff {
 public:
-  enum File
-  {
-    NewFile,
-    OldFile
-  };
+  enum File { NewFile, OldFile };
 
-  enum SortRole
-  {
-    NameRole,
-    StatusRole
-  };
+  enum SortRole { NameRole, StatusRole };
 
   class Callbacks {
   public:
-    virtual bool progress(
-      const QString &oldPath,
-      const QString &newPath)
-    {
+    virtual bool progress(const QString &oldPath, const QString &newPath) {
       return false;
     }
 
-    static int progress(
-      const git_diff *diff,
-      const char *oldPath,
-      const char *newPath,
-      void *payload);
+    static int progress(const git_diff *diff, const char *oldPath,
+                        const char *newPath, void *payload);
   };
 
   Diff();
@@ -103,8 +88,7 @@ public:
   static char statusChar(git_delta_t status);
 
 private:
-  struct Data
-  {
+  struct Data {
     Data(git_diff *diff);
     ~Data();
 

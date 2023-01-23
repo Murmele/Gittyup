@@ -22,15 +22,12 @@ namespace git {
 class Submodule;
 }
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
   Q_OBJECT
 
 public:
-  MainWindow(
-    const git::Repository &repo,
-    QWidget *parent = nullptr,
-    Qt::WindowFlags flags = Qt::WindowFlags());
+  MainWindow(const git::Repository &repo, QWidget *parent = nullptr,
+             Qt::WindowFlags flags = Qt::WindowFlags());
 
   ToolBar *toolBar() const { return mToolBar; }
 
@@ -76,11 +73,8 @@ private:
   QStringList paths() const;
   QString windowGroup() const;
 
-  void installTouchBar();
-  void updateTouchBar(int ahead = -1, int behind = -1);
-
   ToolBar *mToolBar;
-  MenuBar* mMenuBar;
+  MenuBar *mMenuBar;
 
   bool mFullPath = false;
   bool mIsSideBarVisible = true;

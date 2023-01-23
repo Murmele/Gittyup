@@ -16,19 +16,18 @@ namespace {
 const QString kTitleFmt = "<b>%1</b> - %2";
 const QString kTimeFmt = "<span style='color: #808080'>%1</span> - %2";
 
-} // anon. namespace
+} // namespace
 
 LogModel::LogModel(LogEntry *root, QStyle *style, QObject *parent)
-  : QAbstractItemModel(parent), mRoot(root),
-    mHintIcon(style->standardIcon(QStyle::SP_MessageBoxInformation)),
-    mWarningIcon(style->standardIcon(QStyle::SP_MessageBoxWarning)),
-    mErrorIcon(style->standardIcon(QStyle::SP_MessageBoxCritical))
-{
+    : QAbstractItemModel(parent), mRoot(root),
+      mHintIcon(style->standardIcon(QStyle::SP_MessageBoxInformation)),
+      mWarningIcon(style->standardIcon(QStyle::SP_MessageBoxWarning)),
+      mErrorIcon(style->standardIcon(QStyle::SP_MessageBoxCritical)) {
   mRoot->setParent(this);
   connect(root, &LogEntry::entriesAboutToBeInserted,
-  [this](LogEntry *entry, int row, int count) {
-    beginInsertRows(index(entry), row, row + count - 1);
-  });
+          [this](LogEntry *entry, int row, int count) {
+            beginInsertRows(index(entry), row, row + count - 1);
+          });
 
   connect(root, &LogEntry::entriesInserted, this, &LogModel::endInsertRows);
 
@@ -38,18 +37,14 @@ LogModel::LogModel(LogEntry *root, QStyle *style, QObject *parent)
   });
 }
 
-QModelIndex LogModel::index(
-  int row,
-  int column,
-  const QModelIndex &parent) const
-{
+QModelIndex LogModel::index(int row, int column,
+                            const QModelIndex &parent) const {
   QList<LogEntry *> entries = entry(parent)->entries();
   bool invalid = (row < 0 || row >= entries.size());
   return invalid ? QModelIndex() : createIndex(row, column, entries.at(row));
 }
 
-QModelIndex LogModel::parent(const QModelIndex &index) const
-{
+QModelIndex LogModel::parent(const QModelIndex &index) const {
   LogEntry *entry = this->entry(index)->parentEntry();
   if (entry == mRoot)
     return QModelIndex();
@@ -58,18 +53,13 @@ QModelIndex LogModel::parent(const QModelIndex &index) const
   return createIndex(parent->entries().indexOf(entry), 0, entry);
 }
 
-int LogModel::rowCount(const QModelIndex &parent) const
-{
+int LogModel::rowCount(const QModelIndex &parent) const {
   return entry(parent)->entries().size();
 }
 
-int LogModel::columnCount(const QModelIndex &parent) const
-{
-  return 1;
-}
+int LogModel::columnCount(const QModelIndex &parent) const { return 1; }
 
-QVariant LogModel::data(const QModelIndex &index, int role) const
-{
+QVariant LogModel::data(const QModelIndex &index, int role) const {
   LogEntry *entry = this->entry(index);
   switch (role) {
     case Qt::DisplayRole:
@@ -82,9 +72,10 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
 
             if (!index.parent().isValid()) {
               QDateTime date = entry->timestamp();
-              QString timestamp = (date.date() == QDate::currentDate()) ?
-                date.time().toString(Qt::DefaultLocaleShortDate) :
-                date.toString(Qt::DefaultLocaleShortDate);
+              QString timestamp =
+                  (date.date() == QDate::currentDate())
+                      ? date.time().toString(Qt::DefaultLocaleShortDate)
+                      : date.toString(Qt::DefaultLocaleShortDate);
               text = kTimeFmt.arg(timestamp, text);
             }
           }
@@ -126,15 +117,13 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
   return QVariant();
 }
 
-QModelIndex LogModel::index(LogEntry *entry) const
-{
+QModelIndex LogModel::index(LogEntry *entry) const {
   LogEntry *parent = entry->parentEntry();
-  return parent ?
-    createIndex(parent->entries().indexOf(entry), 0, entry) : QModelIndex();
+  return parent ? createIndex(parent->entries().indexOf(entry), 0, entry)
+                : QModelIndex();
 }
 
-LogEntry *LogModel::entry(const QModelIndex &index) const
-{
+LogEntry *LogModel::entry(const QModelIndex &index) const {
   void *ptr = index.internalPointer();
   return index.isValid() ? static_cast<LogEntry *>(ptr) : mRoot;
 }

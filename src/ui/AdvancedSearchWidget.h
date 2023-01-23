@@ -17,8 +17,7 @@ class Index;
 class QFormLayout;
 class QLineEdit;
 
-class AdvancedSearchWidget : public QWidget
-{
+class AdvancedSearchWidget : public QWidget {
   Q_OBJECT
 
 public:
@@ -36,20 +35,10 @@ private:
   void accept();
 
   void addLine(QFormLayout *layout);
-  void addField(
-    int field,
-    const QString &text,
-    const QString &tooltip);
-  void addDateField(
-    int field,
-    const QString &text,
-    const QString &tooltip);
-  void addField(
-    QWidget *widget,
-    QLineEdit *lineEdit,
-    int field,
-    const QString &text,
-    const QString &tooltip);
+  void addField(int field, const QString &text, const QString &tooltip);
+  void addDateField(int field, const QString &text, const QString &tooltip);
+  void addField(QWidget *widget, QLineEdit *lineEdit, int field,
+                const QString &text, const QString &tooltip);
 
   QList<QLineEdit *> mLineEdits;
 };

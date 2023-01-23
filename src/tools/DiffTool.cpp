@@ -13,31 +13,20 @@
 #include <QProcess>
 #include <QTemporaryFile>
 
-DiffTool::DiffTool(
-  const QString &file,
-  const git::Blob &localBlob,
-  const git::Blob &remoteBlob,
-  QObject *parent)
-  : ExternalTool(file, parent), mLocalBlob(localBlob), mRemoteBlob(remoteBlob)
-{}
+DiffTool::DiffTool(const QString &file, const git::Blob &localBlob,
+                   const git::Blob &remoteBlob, QObject *parent)
+    : ExternalTool(file, parent), mLocalBlob(localBlob),
+      mRemoteBlob(remoteBlob) {}
 
-bool DiffTool::isValid() const
-{
+bool DiffTool::isValid() const {
   return (ExternalTool::isValid() && mLocalBlob.isValid());
 }
 
-ExternalTool::Kind DiffTool::kind() const
-{
-  return Diff;
-}
+ExternalTool::Kind DiffTool::kind() const { return Diff; }
 
-QString DiffTool::name() const
-{
-  return tr("External Diff");
-}
+QString DiffTool::name() const { return tr("External Diff"); }
 
-bool DiffTool::start()
-{
+bool DiffTool::start() {
   Q_ASSERT(isValid());
 
   bool shell = false;

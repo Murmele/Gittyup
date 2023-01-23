@@ -10,14 +10,10 @@
 #include "Repository.h"
 #include "Account.h"
 
-Repository::Repository(
-  const QString &name,
-  const QString &fullName,
-  Account *parent)
-  : QObject(parent), mName(name), mFullName(fullName)
-{}
+Repository::Repository(const QString &name, const QString &fullName,
+                       Account *parent)
+    : QObject(parent), mName(name), mFullName(fullName) {}
 
-Account *Repository::account() const
-{
+Account *Repository::account() const {
   return static_cast<Account *>(parent());
 }

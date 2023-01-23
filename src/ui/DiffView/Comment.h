@@ -5,13 +5,10 @@
 
 #include "host/Account.h"
 
-class Comment : public QTextEdit
-{
+class Comment : public QTextEdit {
 public:
-  Comment(
-    const QDateTime &date,
-    const Account::Comment &comment,
-    QWidget *parent = nullptr);
+  Comment(const QDateTime &date, const Account::Comment &comment,
+          QWidget *parent = nullptr);
 
   QSize minimumSizeHint() const override;
   QSize viewportSizeHint() const override;

@@ -18,17 +18,13 @@ namespace git {
 class Repository;
 }
 
-class Location
-{
+class Location {
   Q_DECLARE_TR_FUNCTIONS(Location)
 
 public:
   Location();
-  Location(
-    RepoView::ViewMode mode,
-    const QString &ref,
-    const QString &id,
-    const QString &file);
+  Location(RepoView::ViewMode mode, const QString &ref, const QString &id,
+           const QString &file);
 
   bool isValid() const { return mValid; }
   bool isUncommitted() const { return mId.isEmpty(); }

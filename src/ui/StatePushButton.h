@@ -14,20 +14,19 @@
 
 /*!
  */
-class StatePushButton : public QPushButton
-{
+class StatePushButton : public QPushButton {
   Q_OBJECT
-  
+
 public:
-  StatePushButton(QString textChecked, QString textUnchecked, QWidget *parent = nullptr);
+  StatePushButton(QString textChecked, QString textUnchecked,
+                  QWidget *parent = nullptr);
   void setState(bool checked);
   bool toggleState();
   bool checked();
-  
+
 private:
   bool m_checked{false};
   QString m_textChecked{""};
   QString m_textUnchecked{""};
-
 };
 #endif // STATEPUSHBUTTON_H

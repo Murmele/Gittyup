@@ -13,16 +13,14 @@
 
 using namespace QTest;
 
-class TestConfig : public QObject
-{
+class TestConfig : public QObject {
   Q_OBJECT
 
 private slots:
   void mergetools();
 };
 
-void TestConfig::mergetools()
-{
+void TestConfig::mergetools() {
   git::Config config = git::Config::global();
 
   // Add mergetools config file for default external merge tools.

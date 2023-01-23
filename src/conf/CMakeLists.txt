@@ -1,21 +1,18 @@
-add_library(conf
-  ConfFile.cpp
-  Settings.cpp
-  RecentRepositories.cpp
-  RecentRepository.cpp
-)
+add_library(conf ConfFile.cpp Settings.cpp Setting.cpp RecentRepositories.cpp
+                 RecentRepository.cpp)
 
-target_link_libraries(conf
-  lua
-  Qt5::Core
-)
+target_link_libraries(conf lua Qt5::Core util)
 
-target_compile_definitions(conf PRIVATE
-  CONF_DIR="${CMAKE_SOURCE_DIR}/conf"
-  L10N_DIR="${CMAKE_BINARY_DIR}/l10n"
-  SCINTILLUA_LEXERS_DIR="${SCINTILLUA_LEXERS_DIR}"
-)
+target_compile_definitions(
+  conf PRIVATE SCINTILLUA_LEXERS_DIR="${SCINTILLUA_LEXERS_DIR}")
 
-set_target_properties(conf PROPERTIES
-  AUTOMOC ON
-)
+if(UNIX)
+  target_compile_definitions(
+    conf
+    PRIVATE CONF_DIR="${CMAKE_INSTALL_FULL_DATADIR}/gittyup/Resources"
+            L10N_DIR="${CMAKE_INSTALL_FULL_DATADIR}/gittyup/Resources/l10n")
+else()
+
+  target_compile_definitions(conf PRIVATE CONF_DIR="" L10N_DIR="")
+endif()
+set_target_properties(conf PROPERTIES AUTOMOC ON)

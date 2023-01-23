@@ -10,20 +10,12 @@
 #include "RecentRepository.h"
 
 RecentRepository::RecentRepository(const QString &path, QObject *parent)
-  : QObject(parent), mPath(path)
-{}
+    : QObject(parent), mPath(path) {}
 
-QString RecentRepository::path() const
-{
-  return mPath;
-}
+QString RecentRepository::path() const { return mPath; }
 
-QString RecentRepository::name() const
-{
+QString RecentRepository::name() const {
   return mPath.section('/', -mSections);
 }
 
-void RecentRepository::increment()
-{
-  ++mSections;
-}
+void RecentRepository::increment() { ++mSections; }

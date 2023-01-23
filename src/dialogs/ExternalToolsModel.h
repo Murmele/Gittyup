@@ -13,29 +13,22 @@
 #include "tools/ExternalTool.h"
 #include <QAbstractTableModel>
 
-class ExternalToolsModel : public QAbstractTableModel
-{
+class ExternalToolsModel : public QAbstractTableModel {
   Q_OBJECT
 
 public:
-  enum Column
-  {
-    Name,
-    Command,
-    Arguments
-  };
+  enum Column { Name, Command, Arguments };
 
-  ExternalToolsModel(
-    const QString &type,
-    bool detected,
-    QObject *parent = nullptr);
+  ExternalToolsModel(const QString &type, bool detected,
+                     QObject *parent = nullptr);
 
-  int rowCount(const QModelIndex &parent = QModelIndex()) const ;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const;
   int columnCount(const QModelIndex &parent = QModelIndex()) const;
   QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
   Qt::ItemFlags flags(const QModelIndex &index) const;
-  bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+  bool setData(const QModelIndex &index, const QVariant &value,
+               int role = Qt::EditRole);
 
   void refresh();
   void add(const QString &path);

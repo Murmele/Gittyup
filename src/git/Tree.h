@@ -15,8 +15,7 @@
 
 namespace git {
 
-class Tree : public Object
-{
+class Tree : public Object {
 public:
   Tree();
   Tree(const Object &rhs);

@@ -20,11 +20,9 @@ namespace git {
 
 class Tree;
 
-class Index
-{
+class Index {
 public:
-  enum StagedState
-  {
+  enum StagedState {
     Disabled = -1,
     Unstaged,
     PartiallyStaged,
@@ -32,8 +30,7 @@ public:
     Conflicted
   };
 
-  struct Conflict
-  {
+  struct Conflict {
     Id ancestor;
     Id ours;
     Id theirs;
@@ -66,14 +63,13 @@ public:
   static Index create();
 
 private:
-  struct Data
-  {
+  struct Data {
     Data(git_index *index);
     ~Data();
 
     git_index *index;
 
-    QMap<QString,StagedState> stagedCache;
+    QMap<QString, StagedState> stagedCache;
   };
 
   Index(git_index *index);

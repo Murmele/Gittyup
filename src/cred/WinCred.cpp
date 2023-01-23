@@ -21,13 +21,11 @@ namespace {
 const QString kNameFmt = "%1@%2";
 const QString kTargetFmt = "git:https://%1";
 
-QString buildTarget(const QString &host, const QString &name)
-{
+QString buildTarget(const QString &host, const QString &name) {
   return kTargetFmt.arg(name.isEmpty() ? host : kNameFmt.arg(name, host));
 }
 
-QString host(const QString &url)
-{
+QString host(const QString &url) {
   QString host = QUrl(url).host();
   if (!host.isEmpty())
     return host;
@@ -38,15 +36,11 @@ QString host(const QString &url)
   return url.mid(begin, end - begin);
 }
 
-} // anon. namespace
+} // namespace
 
 WinCred::WinCred() {}
 
-bool WinCred::get(
-  const QString &url,
-  QString &username,
-  QString &password)
-{
+bool WinCred::get(const QString &url, QString &username, QString &password) {
   log(QString("get: %1 %2").arg(url, username));
 
   PCREDENTIAL cred;
@@ -75,18 +69,15 @@ bool WinCred::get(
 
   username = cred->UserName;
   int size = cred->CredentialBlobSize / sizeof(ushort);
-  password = QString::fromUtf16((ushort *) cred->CredentialBlob, size);
+  password = QString::fromUtf16((ushort *)cred->CredentialBlob, size);
 
   CredFree(cred);
 
   return true;
 }
 
-bool WinCred::store(
-  const QString &url,
-  const QString &username,
-  const QString &password)
-{
+bool WinCred::store(const QString &url, const QString &username,
+                    const QString &password) {
   log(QString("store: %1 %2").arg(url, username));
 
   bool result = false;
@@ -101,7 +92,7 @@ bool WinCred::store(
     cred.TargetName = target.data();
     cred.Comment = "Written by GitAhead";
     cred.CredentialBlobSize = password.length() * sizeof(ushort);
-    cred.CredentialBlob = (LPBYTE) password.utf16();
+    cred.CredentialBlob = (LPBYTE)password.utf16();
     cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
     cred.AttributeCount = 0;
     cred.Attributes = nullptr;

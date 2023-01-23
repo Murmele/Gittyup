@@ -19,17 +19,14 @@ class QPushButton;
 namespace git {
 class Reference;
 class Repository;
-}
+} // namespace git
 
-class CheckoutDialog : public QDialog
-{
+class CheckoutDialog : public QDialog {
   Q_OBJECT
 
 public:
-  CheckoutDialog(
-    const git::Repository &repo,
-    const git::Reference &ref,
-    QWidget *parent = nullptr);
+  CheckoutDialog(const git::Repository &repo, const git::Reference &ref,
+                 QWidget *parent = nullptr);
 
   git::Reference reference() const;
   bool detach() const { return mDetach; }

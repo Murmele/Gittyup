@@ -15,8 +15,7 @@
 class MainWindow;
 class QLineEdit;
 
-class IndexCompleter : public QCompleter
-{
+class IndexCompleter : public QCompleter {
 public:
   IndexCompleter(MainWindow *window, QLineEdit *parent);
   IndexCompleter(QAbstractItemModel *model, QLineEdit *parent);
@@ -28,6 +27,5 @@ public:
 private:
   mutable int mPos = -1;
 };
-
 
 #endif

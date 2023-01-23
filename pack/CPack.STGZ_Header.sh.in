@@ -116,24 +116,24 @@ echo "Unpacking finished successfully"
 echo "Installing icon files..."
 local_install_path="$HOME/.local/share"
 icon_install_path="${local_install_path}/icons/hicolor"
-icon_source_path="${toplevel}/Resources/GitAhead.iconset"
-mkdir -p "${icon_install_path}/16x16/apps" && cp -f "${icon_source_path}/icon_16x16.png" "${icon_install_path}/16x16/apps/gitahead.png"
-mkdir -p "${icon_install_path}/32x32/apps" && cp -f "${icon_source_path}/icon_32x32.png" "${icon_install_path}/32x32/apps/gitahead.png"
-mkdir -p "${icon_install_path}/64x64/apps" && cp -f "${icon_source_path}/icon_64x64.png" "${icon_install_path}/64x64/apps/gitahead.png"
-mkdir -p "${icon_install_path}/128x128/apps" && cp -f "${icon_source_path}/icon_128x128.png" "${icon_install_path}/128x128/apps/gitahead.png"
-mkdir -p "${icon_install_path}/256x256/apps" && cp -f "${icon_source_path}/icon_256x256.png" "${icon_install_path}/256x256/apps/gitahead.png"
-mkdir -p "${icon_install_path}/512x512/apps" && cp -f "${icon_source_path}/icon_512x512.png" "${icon_install_path}/512x512/apps/gitahead.png"
+icon_source_path="${toplevel}/Resources/Gittyup.iconset"
+mkdir -p "${icon_install_path}/16x16/apps" && cp -f "${icon_source_path}/icon_16x16.png" "${icon_install_path}/16x16/apps/gittyup.png"
+mkdir -p "${icon_install_path}/32x32/apps" && cp -f "${icon_source_path}/icon_32x32.png" "${icon_install_path}/32x32/apps/gittyup.png"
+mkdir -p "${icon_install_path}/64x64/apps" && cp -f "${icon_source_path}/icon_64x64.png" "${icon_install_path}/64x64/apps/gittyup.png"
+mkdir -p "${icon_install_path}/128x128/apps" && cp -f "${icon_source_path}/icon_128x128.png" "${icon_install_path}/128x128/apps/gittyup.png"
+mkdir -p "${icon_install_path}/256x256/apps" && cp -f "${icon_source_path}/icon_256x256.png" "${icon_install_path}/256x256/apps/gittyup.png"
+mkdir -p "${icon_install_path}/512x512/apps" && cp -f "${icon_source_path}/icon_512x512.png" "${icon_install_path}/512x512/apps/gittyup.png"
 
 echo "Writing desktop file..."
 desktop_install_path="${local_install_path}/applications"
-mkdir -p "${desktop_install_path}" && cat <<EOF > "${desktop_install_path}/gitahead.desktop"
+mkdir -p "${desktop_install_path}" && cat <<EOF > "${desktop_install_path}/gittyup.desktop"
 [Desktop Entry]
 Type=Application
 Encoding=UTF-8
-Name=GitAhead
-Icon=gitahead
+Name=Gittyup
+Icon=gittyup
 Terminal=false
-Exec=$SHELL -c ${toplevel}/GitAhead
+Exec=$SHELL -c ${toplevel}/Gittyup
 Categories=Development;RevisionControl;
 EOF
 

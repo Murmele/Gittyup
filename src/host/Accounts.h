@@ -13,8 +13,7 @@
 #include "Account.h"
 #include <QObject>
 
-class Accounts : public QObject
-{
+class Accounts : public QObject {
   Q_OBJECT
 
 public:
@@ -24,10 +23,8 @@ public:
   Repository *lookup(const QString &url) const;
   Account *lookup(const QString &username, Account::Kind kind) const;
 
-  Account *createAccount(
-    Account::Kind kind,
-    const QString &username,
-    const QString &url = QString());
+  Account *createAccount(Account::Kind kind, const QString &username,
+                         const QString &url = QString());
   void removeAccount(int index);
   void removeAccount(Account *account);
 

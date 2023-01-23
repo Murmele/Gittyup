@@ -3,33 +3,25 @@ import sys
 import os
 import iface
 
-def Contains(s,sub):
-	return string.find(s, sub) != -1
+ptype_lookup = {
+	"bool": "bool",
+	"cells": "const QString &",
+	"colour": "QColor",
+	"findtext": "Sci_TextToFind *",
+	"formatrange": "Sci_RangeToFormat *",
+	"int": "int",
+	"keymod": "int",
+	"position": "int",
+	"string": "const QString &",
+	"stringresult": "char *",
+	"textrange": "Sci_TextRange *",
+}
+
+def Contains(s, sub):
+	return sub in s
 
 def pType(s):
-	if s == "bool":
-		return "bool"
-	elif s == "position":
-		return "int"
-	elif s == "colour":
-		return "QColor"
-	elif s == "string":
-		return "const QString &"
-	elif s == "stringresult":
-		return "char *"
-	elif s == "cells":
-		return "const QString &"
-	elif s == "textrange":
-		return "Sci_TextRange *"
-	elif s == "findtext":
-		return "Sci_TextToFind *"
-	elif s == "keymod":
-		return "int"
-	elif s == "formatrange":
-		return "Sci_RangeToFormat *"
-	elif s == "int":
-		return "int"
-	return ""
+	return ptype_lookup.get(s, "")
 
 def printDefines(f, out):
 	for name in f.order:

@@ -13,8 +13,7 @@
 #include <QString>
 #include <QVariant>
 
-class ConfFile
-{
+class ConfFile {
 public:
   ConfFile(const QString &filename);
   virtual ~ConfFile();

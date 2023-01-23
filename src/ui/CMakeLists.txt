@@ -1,8 +1,5 @@
-if(APPLE)
-  set(IMPL_FILES MainWindow_mac.mm)
-endif()
-
-add_library(ui
+add_library(
+  ui
   AdvancedSearchWidget.cpp
   Badge.cpp
   BlameEditor.cpp
@@ -19,16 +16,15 @@ add_library(ui
   DiffView/Images.cpp
   DiffView/Comment.cpp
   DiffView/EditButton.cpp
-  DiffWidget.cpp
   DoubleTreeWidget.cpp
   EditorWindow.cpp
   ExpandButton.cpp
   FileContextMenu.cpp
-  FileList.cpp
   FindWidget.cpp
   Footer.cpp
   History.cpp
   IgnoreDialog.cpp
+  HotkeyManager.cpp
   IndexCompleter.cpp
   Location.cpp
   MainWindow.cpp
@@ -37,6 +33,7 @@ add_library(ui
   ProgressIndicator.cpp
   ReferenceList.cpp
   ReferenceView.cpp
+  ReferenceModel.cpp
   ReferenceWidget.cpp
   RepoView.cpp
   RemoteCallbacks.cpp
@@ -55,15 +52,14 @@ add_library(ui
   TreeProxy.cpp
   TreeView.cpp
   TreeWidget.cpp
-  ViewDelegate.cpp
-  ${IMPL_FILES}
-)
+  ViewDelegate.cpp)
 
-target_include_directories(ui PRIVATE
-  ${CMAKE_CURRENT_BINARY_DIR}
-)
+target_compile_definitions(ui PRIVATE BUILD_DESCRIPTION="${BUILD_DESCRIPTION}")
 
-target_link_libraries(ui
+target_include_directories(ui PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+target_link_libraries(
+  ui
   conf
   cred
   dialogs
@@ -79,9 +75,6 @@ target_link_libraries(ui
   watcher
   Qt5::Concurrent
   Qt5::Network
-  Qt5::Widgets
-)
+  Qt5::Widgets)
 
-set_target_properties(ui PROPERTIES
-  AUTOMOC ON
-)
+set_target_properties(ui PROPERTIES AUTOMOC ON)

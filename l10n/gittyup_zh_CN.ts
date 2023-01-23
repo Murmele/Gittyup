@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="zh-CN" sourcelanguage="en_US">
+<TS version="2.1" language="zh_CN" sourcelanguage="en_US">
 <context>
     <name>AboutDialog</name>
     <message>
         <location filename="../src/dialogs/AboutDialog.cpp" line="68"/>
         <source>About %1</source>
-        <translation>关于%1</translation>
+        <translation>关于 %1</translation>
     </message>
     <message>
         <location filename="../src/dialogs/AboutDialog.cpp" line="76"/>
@@ -31,7 +31,7 @@
     <message>
         <location filename="../src/dialogs/AboutDialog.cpp" line="109"/>
         <source>Usage reporting has been disabled. Restart the application for changes to take effect.</source>
-        <translation>使用情况报告已被禁用。请重新启动应用程序以使更改生效。</translation>
+        <translation>使用情况报告已被禁用。请重启应用程序以使更改生效。</translation>
     </message>
     <message>
         <location filename="../src/dialogs/AboutDialog.cpp" line="111"/>
@@ -516,7 +516,7 @@
     <message>
         <location filename="../src/ui/DetailView.cpp" line="395"/>
         <source>Parents:</source>
-        <translation type="unfinished"></translation>
+        <translation>父：</translation>
     </message>
 </context>
 <context>
@@ -580,33 +580,33 @@
         <location filename="../src/ui/DetailView.cpp" line="828"/>
         <location filename="../src/ui/DetailView.cpp" line="853"/>
         <source>Spell Check Language</source>
-        <translation type="unfinished"></translation>
+        <translation>拼写检查语言</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="829"/>
         <source>The dictionary &apos;%1&apos; is invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>字典 &apos;%1&apos; 无效</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="830"/>
         <source>Spell checking is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>拼写检查被禁用。</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="831"/>
         <source>The choosen dictionary &apos;%1.dic&apos; is not a valid hunspell dictionary.</source>
-        <translation type="unfinished"></translation>
+        <translation>选定的字典 &apos;%1.dic&apos; 不是有效的 hunspell 字典。</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="837"/>
         <location filename="../src/ui/DetailView.cpp" line="894"/>
         <source>Invalid dictionary &apos;%1.dic&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>无效的字典 &apos;%1.dic&apos;</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="859"/>
         <source>Edit User Dictionary</source>
-        <translation type="unfinished"></translation>
+        <translation>编辑用户字典</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="916"/>
@@ -1137,7 +1137,7 @@
     <message>
         <location filename="../src/update/DownloadDialog.cpp" line="66"/>
         <source>Install and Restart</source>
-        <translation>安装并重新启动</translation>
+        <translation>安装并重启</translation>
     </message>
 </context>
 <context>
@@ -1145,17 +1145,17 @@
     <message>
         <location filename="../src/ui/DiffView.cpp" line="297"/>
         <source>Edit Working Copy</source>
-        <translation type="unfinished"></translation>
+        <translation>编辑工作副本</translation>
     </message>
     <message>
         <location filename="../src/ui/DiffView.cpp" line="308"/>
         <source>Edit New Revision</source>
-        <translation type="unfinished"></translation>
+        <translation>编辑新修订</translation>
     </message>
     <message>
         <location filename="../src/ui/DiffView.cpp" line="323"/>
         <source>Edit Old Revision</source>
-        <translation type="unfinished"></translation>
+        <translation>编辑旧修订</translation>
     </message>
 </context>
 <context>
@@ -1911,13 +1911,14 @@ Examples
         <translation>指定用于跟踪大文件的全局模式。
 
 通常，大文件大于500kB，经常更改，
-并且不要用git很好地压缩。这包括二进制或视频
+并且用 git 不能很好地压缩。这包括二进制或视频
 已经高度压缩的文件。
 
 例：
 * .png
-*。[pP] [nN] [gG]
-/images/*</translation>
+*.[pP] [nN] [gG]
+/images/*
+</translation>
     </message>
     <message>
         <location filename="../src/dialogs/ConfigDialog.cpp" line="542"/>
@@ -3426,7 +3427,7 @@ Examples
     <message>
         <location filename="../src/ui/RepoView.cpp" line="408"/>
         <source>stage</source>
-        <translation type="unfinished"></translation>
+        <translation>暂存</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="415"/>
@@ -3451,7 +3452,7 @@ Examples
     <message>
         <location filename="../src/ui/RepoView.cpp" line="462"/>
         <source>Remove %1 %2?</source>
-        <translation>删除%1%2？</translation>
+        <translation>移除 %1 %2?</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="464"/>
@@ -3493,7 +3494,7 @@ Examples
     <message>
         <location filename="../src/ui/RepoView.cpp" line="764"/>
         <source>initialize</source>
-        <translation type="unfinished"></translation>
+        <translation>初始化</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="768"/>
@@ -3508,7 +3509,7 @@ Examples
     <message>
         <location filename="../src/ui/RepoView.cpp" line="775"/>
         <source>deinitialize</source>
-        <translation type="unfinished"></translation>
+        <translation>取消初始化</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="779"/>
@@ -3636,7 +3637,7 @@ Examples
     <message>
         <location filename="../src/ui/RepoView.cpp" line="1211"/>
         <source>The repository is empty.</source>
-        <translation type="unfinished"></translation>
+        <translation>该库为空。</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="1218"/>
@@ -3744,7 +3745,7 @@ Examples
     <message>
         <location filename="../src/ui/RepoView.cpp" line="1478"/>
         <source>There was a merge conflict. The rebase has been aborted</source>
-        <translation>发生合并冲突。变基已中止。</translation>
+        <translation>有合并冲突。 变基已中止</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="1484"/>
@@ -4040,7 +4041,7 @@ This reverts commit %2.</source>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="2084"/>
         <source>WIP on %1: %2 %3</source>
-        <translation>WIP在%1：%2%3</translation>
+        <translation>WIP 在 %1：%2 %3</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="2096"/>
@@ -4388,17 +4389,17 @@ This reverts commit %2.</source>
     <message>
         <location filename="../src/tools/ShowTool.cpp" line="19"/>
         <source>Finder</source>
-        <translation type="unfinished"></translation>
+        <translation>Finder</translation>
     </message>
     <message>
         <location filename="../src/tools/ShowTool.cpp" line="21"/>
         <source>Explorer</source>
-        <translation type="unfinished"></translation>
+        <translation>资源管理器</translation>
     </message>
     <message>
         <location filename="../src/tools/ShowTool.cpp" line="23"/>
         <source>Default File Browser</source>
-        <translation type="unfinished"></translation>
+        <translation>默认文件浏览器</translation>
     </message>
     <message>
         <location filename="../src/tools/ShowTool.cpp" line="37"/>
@@ -4711,32 +4712,32 @@ This reverts commit %2.</source>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="529"/>
         <source>Replace...</source>
-        <translation type="unfinished"></translation>
+        <translation>替换...</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="530"/>
         <source>Replace All...</source>
-        <translation type="unfinished"></translation>
+        <translation>替换全部...</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="560"/>
         <source>Ignore</source>
-        <translation type="unfinished">忽略</translation>
+        <translation>忽略</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="579"/>
         <source>Ignore All</source>
-        <translation type="unfinished"></translation>
+        <translation>忽略全部</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="585"/>
         <source>Add to User Dictionary</source>
-        <translation type="unfinished"></translation>
+        <translation>添加到用户字典</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="599"/>
         <source>Do not Ignore</source>
-        <translation type="unfinished"></translation>
+        <translation>不忽略</translation>
     </message>
 </context>
 <context>
@@ -4792,12 +4793,12 @@ This reverts commit %2.</source>
     <message>
         <location filename="../src/ui/ToolBar.cpp" line="806"/>
         <source>Merge</source>
-        <translation type="unfinished">合并</translation>
+        <translation>合并</translation>
     </message>
     <message>
         <location filename="../src/ui/ToolBar.cpp" line="811"/>
         <source>Rebase</source>
-        <translation type="unfinished"></translation>
+        <translation>变基</translation>
     </message>
     <message>
         <location filename="../src/ui/ToolBar.cpp" line="821"/>
@@ -5073,22 +5074,22 @@ This reverts commit %2.</source>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="426"/>
         <source>Restart?</source>
-        <translation>重新启动？</translation>
+        <translation>重启？</translation>
     </message>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="427"/>
         <source>The application must be restarted for the theme change to take effect.</source>
-        <translation>必须重新启动应用程序，主题更改才能生效。</translation>
+        <translation>必须重启应用程序，主题更改才能生效。</translation>
     </message>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="429"/>
         <source>Do you want to restart now?</source>
-        <translation>您要立即重新启动吗？</translation>
+        <translation>您要立即重启吗？</translation>
     </message>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="431"/>
         <source>Restart</source>
-        <translation>重新启动</translation>
+        <translation>重启</translation>
     </message>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="432"/>

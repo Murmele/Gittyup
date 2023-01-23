@@ -15,47 +15,36 @@
 
 namespace {
 
-const QString kSearchFieldStyle =
-  "QToolButton {"
-  "  border: none"
-  "}"
-  "QToolButton:!pressed {"
-  "  background: none"
-  "}"
-  "QLineEdit {"
-  "  border-radius: 4px;"
-  "  padding: 0px %1px 0px 4px"
-  "}";
+const QString kSearchFieldStyle = "QToolButton {"
+                                  "  border: none"
+                                  "}"
+                                  "QToolButton:!pressed {"
+                                  "  background: none"
+                                  "}"
+                                  "QLineEdit {"
+                                  "  border-radius: 4px;"
+                                  "  padding: 0px %1px 0px 4px"
+                                  "}";
 
-class Button : public QToolButton
-{
+class Button : public QToolButton {
 public:
-  Button(QWidget *parent = nullptr)
-    : QToolButton(parent)
-  {
+  Button(QWidget *parent = nullptr) : QToolButton(parent) {
     setCursor(Qt::ArrowCursor);
   }
 
-  QSize sizeHint() const override
-  {
-    return QSize(16, 16);
-  }
+  QSize sizeHint() const override { return QSize(16, 16); }
 };
 
-class AdvancedButton : public Button
-{
+class AdvancedButton : public Button {
   Q_OBJECT
 
 public:
-  AdvancedButton(QWidget *parent = nullptr)
-    : Button(parent)
-  {
+  AdvancedButton(QWidget *parent = nullptr) : Button(parent) {
     setToolTip(tr("Advanced Search"));
   }
 
 protected:
-  void paintEvent(QPaintEvent *event) override
-  {
+  void paintEvent(QPaintEvent *event) override {
     QToolButton::paintEvent(event);
 
     QPainter painter(this);
@@ -71,20 +60,16 @@ protected:
   }
 };
 
-class ClearButton : public Button
-{
+class ClearButton : public Button {
   Q_OBJECT
 
 public:
-  ClearButton(QWidget *parent = nullptr)
-    : Button(parent)
-  {
+  ClearButton(QWidget *parent = nullptr) : Button(parent) {
     setToolTip(tr("Clear"));
   }
 
 protected:
-  void paintEvent(QPaintEvent *event) override
-  {
+  void paintEvent(QPaintEvent *event) override {
     QToolButton::paintEvent(event);
 
     QPainter painter(this);
@@ -101,11 +86,9 @@ protected:
   }
 };
 
-} // anon. namespace
+} // namespace
 
-SearchField::SearchField(QWidget *parent)
-  : QLineEdit(parent)
-{
+SearchField::SearchField(QWidget *parent) : QLineEdit(parent) {
   setPlaceholderText(tr("Search"));
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
@@ -125,13 +108,11 @@ SearchField::SearchField(QWidget *parent)
   setStyleSheet(kSearchFieldStyle.arg(cbw + abw + frame + 2));
 }
 
-QSize SearchField::sizeHint() const
-{
+QSize SearchField::sizeHint() const {
   return QSize(1.5 * QLineEdit::sizeHint().width(), 24);
 }
 
-void SearchField::resizeEvent(QResizeEvent *event)
-{
+void SearchField::resizeEvent(QResizeEvent *event) {
   // This assumes that both buttons have the same size.
   int frame = style()->pixelMetric(QStyle::PM_DefaultFrameWidth);
   QSize size = mAdvancedButton->sizeHint();

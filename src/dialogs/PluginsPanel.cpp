@@ -21,8 +21,7 @@
 #include <QSpinBox>
 
 PluginsPanel::PluginsPanel(const git::Repository &repo, QWidget *parent)
-  : QTreeWidget(parent), mRepo(repo)
-{
+    : QTreeWidget(parent), mRepo(repo) {
   QStringList names = {tr("Name"), tr("Kind"), tr("Description")};
 
   setIndentation(4);
@@ -35,13 +34,9 @@ PluginsPanel::PluginsPanel(const git::Repository &repo, QWidget *parent)
   refresh();
 }
 
-QSize PluginsPanel::sizeHint() const
-{
-  return QSize(600, 320);
-}
+QSize PluginsPanel::sizeHint() const { return QSize(600, 320); }
 
-void PluginsPanel::refresh()
-{
+void PluginsPanel::refresh() {
   clear();
 
   QFont bold = font();
@@ -64,7 +59,7 @@ void PluginsPanel::refresh()
     QWidget *widget = new QWidget;
     QPushButton *button = new QPushButton(tr("Options"), widget);
     QHBoxLayout *layout = new QHBoxLayout(widget);
-    layout->setContentsMargins(0,0,0,0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->addStretch();
     layout->addWidget(button);
     setItemWidget(root, Description, widget);
@@ -83,8 +78,7 @@ void PluginsPanel::refresh()
           case Plugin::Boolean: {
             QCheckBox *checkBox = new QCheckBox(&dialog);
             checkBox->setChecked(value.toBool());
-            connect(checkBox, &QCheckBox::toggled,
-            [plugin, key](bool checked) {
+            connect(checkBox, &QCheckBox::toggled, [plugin, key](bool checked) {
               plugin->setOptionValue(key, checked);
             });
 
@@ -108,9 +102,9 @@ void PluginsPanel::refresh()
           case Plugin::String: {
             QLineEdit *field = new QLineEdit(value.toString(), &dialog);
             connect(field, &QLineEdit::textChanged,
-            [plugin, key](const QString &text) {
-              plugin->setOptionValue(key, text);
-            });
+                    [plugin, key](const QString &text) {
+                      plugin->setOptionValue(key, text);
+                    });
 
             widget = field;
             break;
@@ -164,7 +158,8 @@ void PluginsPanel::refresh()
       auto signal = QOverload<int>::of(&QComboBox::currentIndexChanged);
       connect(cb, signal, [plugin, key, cb](int index) {
         int kind = cb->itemData(index).toInt();
-        plugin->setDiagnosticKind(key, static_cast<Plugin::DiagnosticKind>(kind));
+        plugin->setDiagnosticKind(key,
+                                  static_cast<Plugin::DiagnosticKind>(kind));
       });
     }
   }

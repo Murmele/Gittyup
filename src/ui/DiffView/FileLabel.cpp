@@ -6,8 +6,7 @@
 #include <QPainterPath>
 
 FileLabel::FileLabel(const QString &name, bool submodule, QWidget *parent)
-  : QWidget(parent), mName(name)
-{
+    : QWidget(parent), mName(name) {
   setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
   QFont font = this->font();
@@ -21,17 +20,11 @@ FileLabel::FileLabel(const QString &name, bool submodule, QWidget *parent)
   setFont(font);
 }
 
-void FileLabel::setName(const QString& name) {
-    mName = name;
-}
+void FileLabel::setName(const QString &name) { mName = name; }
 
-void FileLabel::setOldName(const QString &oldName)
-{
-  mOldName = oldName;
-}
+void FileLabel::setOldName(const QString &oldName) { mOldName = oldName; }
 
-QSize FileLabel::sizeHint() const
-{
+QSize FileLabel::sizeHint() const {
   QFontMetrics fm = fontMetrics();
   int width = fm.boundingRect(mName).width() + 2;
   if (!mOldName.isEmpty())
@@ -39,8 +32,7 @@ QSize FileLabel::sizeHint() const
   return QSize(width, fm.lineSpacing());
 }
 
-void FileLabel::paintEvent(QPaintEvent *event)
-{
+void FileLabel::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
 
@@ -56,7 +48,8 @@ void FileLabel::paintEvent(QPaintEvent *event)
 
     // Draw arrow.
     int x1 = rect.x() + DiffViewStyle::kArrowMargin;
-    int x2 = rect.x() + DiffViewStyle::kArrowWidth - DiffViewStyle::kArrowMargin;
+    int x2 =
+        rect.x() + DiffViewStyle::kArrowWidth - DiffViewStyle::kArrowMargin;
     int y = rect.height() / 2;
     QPainterPath path;
     path.moveTo(x1, y);
@@ -75,8 +68,7 @@ void FileLabel::paintEvent(QPaintEvent *event)
   painter.drawText(rect, Qt::AlignLeft | Qt::AlignVCenter, name);
 }
 
-void FileLabel::mouseReleaseEvent(QMouseEvent *event)
-{
+void FileLabel::mouseReleaseEvent(QMouseEvent *event) {
   if (!rect().contains(event->pos()))
     return;
 

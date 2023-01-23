@@ -33,14 +33,11 @@ const char *kFieldProp = "field";
 const QString kParenFmt = "(%1)";
 const QString kFieldFmt = "%1:%2";
 
-} // anon. namespace
+} // namespace
 
-class DateEdit : public QComboBox
-{
+class DateEdit : public QComboBox {
 public:
-  DateEdit(QWidget *parent)
-    : QComboBox(parent)
-  {
+  DateEdit(QWidget *parent) : QComboBox(parent) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     setEditable(true);
 
@@ -48,14 +45,14 @@ public:
     mCalendar->setWindowFlags(Qt::Popup);
     mCalendar->setVisible(false);
 
-    connect(mCalendar, &QCalendarWidget::clicked, [this](const QDate &date) {
-      setCurrentText(date.toString(Index::dateFormat()));
-      hidePopup();
-    });
+    connect(mCalendar, &QCalendarWidget::clicked, this,
+            [this](const QDate &date) {
+              setCurrentText(date.toString(Index::dateFormat()));
+              hidePopup();
+            });
   }
 
-  void showPopup() override
-  {
+  void showPopup() override {
     mCalendar->setVisible(true);
 
     QPoint pos = mapToGlobal(rect().bottomLeft());
@@ -68,8 +65,7 @@ public:
     mCalendar->move(pos);
   }
 
-  void hidePopup() override
-  {
+  void hidePopup() override {
     mCalendar->setVisible(false);
     mCalendar->setSelectedDate(QDate::currentDate());
   }
@@ -79,8 +75,7 @@ private:
 };
 
 AdvancedSearchWidget::AdvancedSearchWidget(QWidget *parent)
-  : QWidget(parent, Qt::Popup)
-{
+    : QWidget(parent, Qt::Popup) {
   setStyleSheet("QLabel { color: palette(bright-text) }");
 
   QFormLayout *layout = new QFormLayout(this);
@@ -122,22 +117,20 @@ AdvancedSearchWidget::AdvancedSearchWidget(QWidget *parent)
   buttonLayout->addStretch();
   buttonLayout->addWidget(searchButton);
   layout->addRow(buttonLayout);
-  connect(searchButton, &QPushButton::clicked,
-          this, &AdvancedSearchWidget::accept);
+  connect(searchButton, &QPushButton::clicked, this,
+          &AdvancedSearchWidget::accept);
 
   QShortcut *accept = new QShortcut(tr("Return"), this);
-  connect(accept, &QShortcut::activated,
-          this, &AdvancedSearchWidget::accept);
+  connect(accept, &QShortcut::activated, this, &AdvancedSearchWidget::accept);
 }
 
-void AdvancedSearchWidget::exec(QLineEdit *parent, Index *index)
-{
+void AdvancedSearchWidget::exec(QLineEdit *parent, Index *index) {
   resize(parent->width(), sizeHint().height());
   move(parent->mapToGlobal(QPoint(0, parent->height() + 2)));
 
   // Load initial values from query.
   // FIXME: Phrase queries are lossy.
-  QMap<Index::Field,QStringList> map;
+  QMap<Index::Field, QStringList> map;
   if (QueryRef query = Query::parseQuery(parent->text())) {
     foreach (const Index::Term &term, query->terms())
       map[term.field].append(term.text);
@@ -152,7 +145,7 @@ void AdvancedSearchWidget::exec(QLineEdit *parent, Index *index)
 
   // Load completion data in the background.
   QtConcurrent::run([this, index] {
-    QMap<Index::Field,QStringList> fields = index->fieldMap();
+    QMap<Index::Field, QStringList> fields = index->fieldMap();
     foreach (QLineEdit *lineEdit, mLineEdits) {
       QVariant var = lineEdit->property(kFieldProp);
       Index::Field field = static_cast<Index::Field>(var.toInt());
@@ -165,8 +158,7 @@ void AdvancedSearchWidget::exec(QLineEdit *parent, Index *index)
   show();
 }
 
-void AdvancedSearchWidget::hideEvent(QHideEvent *event)
-{
+void AdvancedSearchWidget::hideEvent(QHideEvent *event) {
   // Clear completion data.
   foreach (QLineEdit *lineEdit, mLineEdits) {
     QAbstractItemModel *model = lineEdit->completer()->model();
@@ -177,8 +169,7 @@ void AdvancedSearchWidget::hideEvent(QHideEvent *event)
   QWidget::hideEvent(event);
 }
 
-void AdvancedSearchWidget::accept()
-{
+void AdvancedSearchWidget::accept() {
   QStringList fields;
   foreach (QLineEdit *lineEdit, mLineEdits) {
     QString text = lineEdit->text();
@@ -195,53 +186,41 @@ void AdvancedSearchWidget::accept()
   }
 
   emit accepted(fields.join(' '));
-  Application::track("search", "search", "advanced", fields.size());
 
   hide();
 }
 
-void AdvancedSearchWidget::addLine(QFormLayout *layout)
-{
+void AdvancedSearchWidget::addLine(QFormLayout *layout) {
   QFrame *line = new QFrame(this);
   line->setFrameShape(QFrame::HLine);
   line->setFrameShadow(QFrame::Sunken);
   layout->addRow(line);
 }
 
-void AdvancedSearchWidget::addField(
-  int field,
-  const QString &text,
-  const QString &tooltip)
-{
+void AdvancedSearchWidget::addField(int field, const QString &text,
+                                    const QString &tooltip) {
   QLineEdit *lineEdit = new QLineEdit(this);
   QStringListModel *model = new QStringListModel(lineEdit);
   lineEdit->setCompleter(new IndexCompleter(model, lineEdit));
   addField(lineEdit, lineEdit, field, text, tooltip);
 }
 
-void AdvancedSearchWidget::addDateField(
-  int field,
-  const QString &text,
-  const QString &tooltip)
-{
+void AdvancedSearchWidget::addDateField(int field, const QString &text,
+                                        const QString &tooltip) {
   DateEdit *dateEdit = new DateEdit(this);
   addField(dateEdit, dateEdit->lineEdit(), field, text, tooltip);
 }
 
-void AdvancedSearchWidget::addField(
-  QWidget *widget,
-  QLineEdit *lineEdit,
-  int field,
-  const QString &text,
-  const QString &tooltip)
-{
+void AdvancedSearchWidget::addField(QWidget *widget, QLineEdit *lineEdit,
+                                    int field, const QString &text,
+                                    const QString &tooltip) {
   lineEdit->setProperty(kFieldProp, field);
   lineEdit->setClearButtonEnabled(true);
   mLineEdits.append(lineEdit);
 
   QLabel *label = new QLabel(text, this);
   label->setToolTip(tooltip);
-  label->setCursor(Qt::WhatsThisCursor);  
+  label->setCursor(Qt::WhatsThisCursor);
 
   static_cast<QFormLayout *>(layout())->addRow(label, widget);
 }

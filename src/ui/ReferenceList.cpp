@@ -18,50 +18,43 @@
 
 namespace {
 
-const QString kStyleSheet =
-  "ReferenceList {"
-  "  combobox-popup: 0"
-  "}";
+const QString kStyleSheet = "ReferenceList {"
+                            "  combobox-popup: 0"
+                            "}";
 
-QModelIndex findReference(QAbstractItemModel *model, const git::Reference &ref)
-{
+QModelIndex findReference(QAbstractItemModel *model,
+                          const git::Reference &ref) {
   // Match by name.
   QModelIndexList indexes = model->match(
-    model->index(0, 0), Qt::DisplayRole, ref.name(), 1,
-    Qt::MatchFixedString | Qt::MatchCaseSensitive | Qt::MatchRecursive);
+      model->index(0, 0), Qt::DisplayRole, ref.name(), 1,
+      Qt::MatchFixedString | Qt::MatchCaseSensitive | Qt::MatchRecursive);
   return !indexes.isEmpty() ? indexes.first() : QModelIndex();
 }
 
-} // anon. namespace
+} // namespace
 
-ReferenceList::ReferenceList(
-  const git::Repository &repo,
-  ReferenceView::Kinds kinds,
-  QWidget *parent)
-  : QComboBox(parent), mRepo(repo)
-{
+ReferenceList::ReferenceList(const git::Repository &repo,
+                             ReferenceView::Kinds kinds, QWidget *parent)
+    : QComboBox(parent), mRepo(repo) {
   setStyleSheet(kStyleSheet);
   setMaxVisibleItems(0); // disable
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
-  ReferenceView *view = new ReferenceView(repo, kinds, true, this);
-  QAbstractItemModel *model = view->model();
+  mView = new ReferenceView(repo, kinds, true, this);
+  QAbstractItemModel *model = mView->model();
   setModel(model);
-  setView(view);
+  setView(mView);
 
-  // Select the first valid index.
-  setRootModelIndex(model->index(0, 0));
-  setCurrentIndex(0);
+  initIndex();
 
   connect(this, QOverload<int>::of(&QComboBox::currentIndexChanged),
-  [this](int index) {
-    if (index >= 0)
-      emit referenceSelected(currentReference());
-  });
+          [this](int index) {
+            if (index >= 0)
+              emit referenceSelected(currentReference());
+          });
 
-  connect(model, &QAbstractItemModel::modelAboutToBeReset, [this] {
-    mStoredRef = currentReference();
-  });
+  connect(model, &QAbstractItemModel::modelAboutToBeReset,
+          [this] { mStoredRef = currentReference(); });
 
   connect(model, &QAbstractItemModel::modelReset, [this] {
     // Try to restore the previous selection.
@@ -73,29 +66,38 @@ ReferenceList::ReferenceList(
   });
 }
 
-git::Commit ReferenceList::target() const
-{
-  if (currentIndex() == -1 && mCommit.isValid())
-    return mCommit;
-
+git::Commit ReferenceList::target() const {
   git::Reference ref = currentReference();
-  return ref.isValid() ? ref.target() : git::Commit();
+  return ref.isValid() ? ref.target() : mCommit;
 }
 
-git::Reference ReferenceList::currentReference() const
-{
+git::Reference ReferenceList::currentReference() const {
   return currentData(Qt::UserRole).value<git::Reference>();
 }
 
-void ReferenceList::setCommit(const git::Commit &commit)
-{
-  mCommit = commit;
-  if (commit.isValid())
-    setCurrentIndex(-1);
+void ReferenceList::initIndex() {
+  // Select index. Priority: Branch --> Tag --> Remote --> Commit ID
+  QModelIndex idx;
+  if ((idx = mView->firstBranch()).isValid())
+    setRootModelIndex(model()->index(0, 0));
+  else if ((idx = mView->firstTag()).isValid())
+    setRootModelIndex(model()->index(2, 0));
+  else if ((idx = mView->firstRemote()).isValid())
+    setRootModelIndex(model()->index(1, 0));
+  else {
+    setRootModelIndex(model()->index(0, 0));
+    idx = model()->index(0, 0);
+  }
+  setCurrentIndex(idx.row());
 }
 
-void ReferenceList::select(const git::Reference &ref, bool spontaneous)
-{
+void ReferenceList::setCommit(const git::Commit &commit) {
+  mCommit = commit;
+  mView->setCommit(commit);
+  initIndex();
+}
+
+void ReferenceList::select(const git::Reference &ref, bool spontaneous) {
   if (!ref.isValid()) {
     emit referenceSelected(git::Reference());
     return;
@@ -115,8 +117,7 @@ void ReferenceList::select(const git::Reference &ref, bool spontaneous)
   }
 }
 
-QSize ReferenceList::sizeHint() const
-{
+QSize ReferenceList::sizeHint() const {
   QComboBox::SizeAdjustPolicy policy = sizeAdjustPolicy();
   if (policy != QComboBox::AdjustToContents &&
       policy != QComboBox::AdjustToContentsOnFirstShow)
@@ -125,8 +126,7 @@ QSize ReferenceList::sizeHint() const
   return calculateSizeHint();
 }
 
-QSize ReferenceList::minimumSizeHint() const
-{
+QSize ReferenceList::minimumSizeHint() const {
   QComboBox::SizeAdjustPolicy policy = sizeAdjustPolicy();
   if (policy != QComboBox::AdjustToContents &&
       policy != QComboBox::AdjustToContentsOnFirstShow)
@@ -135,13 +135,9 @@ QSize ReferenceList::minimumSizeHint() const
   return calculateSizeHint();
 }
 
-void ReferenceList::wheelEvent(QWheelEvent *event)
-{
-  event->ignore();
-}
+void ReferenceList::wheelEvent(QWheelEvent *event) { event->ignore(); }
 
-void ReferenceList::paintEvent(QPaintEvent *event)
-{
+void ReferenceList::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   painter.setPen(palette().color(QPalette::Text));
 
@@ -157,8 +153,8 @@ void ReferenceList::paintEvent(QPaintEvent *event)
     opt.currentText = mCommit.shortId();
   }
 
-  QRect rect = style()->subControlRect(
-    QStyle::CC_ComboBox, &opt, QStyle::SC_ComboBoxEditField, this);
+  QRect rect = style()->subControlRect(QStyle::CC_ComboBox, &opt,
+                                       QStyle::SC_ComboBoxEditField, this);
   painter.save();
   painter.setClipRect(rect);
 
@@ -169,10 +165,10 @@ void ReferenceList::paintEvent(QPaintEvent *event)
     painter.save();
     painter.setPen(palette().color(QPalette::Disabled, QPalette::Text));
     QString text = QString("%1: ").arg(kind);
-    style()->drawItemText(
-      &painter, rect.adjusted(1, 0, -1, 0),
-      QStyle::visualAlignment(opt.direction, Qt::AlignLeft | Qt::AlignVCenter),
-      opt.palette, opt.state & QStyle::State_Enabled, text);
+    style()->drawItemText(&painter, rect.adjusted(1, 0, -1, 0),
+                          QStyle::visualAlignment(
+                              opt.direction, Qt::AlignLeft | Qt::AlignVCenter),
+                          opt.palette, opt.state & QStyle::State_Enabled, text);
     rect.setX(rect.x() + opt.fontMetrics.horizontalAdvance(text));
     painter.restore();
   }
@@ -185,15 +181,14 @@ void ReferenceList::paintEvent(QPaintEvent *event)
   }
 
   style()->drawItemText(
-    &painter, rect.adjusted(1, 0, -1, 0),
-    QStyle::visualAlignment(opt.direction, Qt::AlignLeft | Qt::AlignVCenter),
-    opt.palette, opt.state & QStyle::State_Enabled, opt.currentText);
+      &painter, rect.adjusted(1, 0, -1, 0),
+      QStyle::visualAlignment(opt.direction, Qt::AlignLeft | Qt::AlignVCenter),
+      opt.palette, opt.state & QStyle::State_Enabled, opt.currentText);
 
   painter.restore();
 }
 
-QSize ReferenceList::calculateSizeHint() const
-{
+QSize ReferenceList::calculateSizeHint() const {
   const QFontMetrics &fm = fontMetrics();
   int width = 24 * fm.horizontalAdvance(QLatin1Char('x'));
   int height = qMax(qCeil(QFontMetricsF(fm).height()), 14) + 2;

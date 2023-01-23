@@ -15,15 +15,13 @@
 #include "git/Repository.h"
 #include <QComboBox>
 
-class ReferenceList : public QComboBox
-{
+class ReferenceList : public QComboBox {
   Q_OBJECT
 
 public:
-  ReferenceList(
-    const git::Repository &repo,
-    ReferenceView::Kinds kinds = ReferenceView::AllRefs,
-    QWidget *parent = nullptr);
+  ReferenceList(const git::Repository &repo,
+                ReferenceView::Kinds kinds = ReferenceView::AllRefs,
+                QWidget *parent = nullptr);
 
   git::Commit target() const;
   git::Reference currentReference() const;
@@ -43,12 +41,15 @@ protected:
 
 private:
   QSize calculateSizeHint() const;
+  void initIndex();
 
   git::Repository mRepo;
   git::Reference mStoredRef;
 
   // direct commit
   git::Commit mCommit;
+
+  ReferenceView *mView;
 };
 
 #endif

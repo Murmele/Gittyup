@@ -23,8 +23,7 @@
 using namespace Test;
 using namespace QTest;
 
-class TestBranchesPanel : public QObject
-{
+class TestBranchesPanel : public QObject {
   Q_OBJECT
 
 private slots:
@@ -41,61 +40,68 @@ private:
   ConfigDialog *mConfigDialog = nullptr;
 };
 
-void TestBranchesPanel::initTestCase()
-{
+void TestBranchesPanel::initTestCase() {
   mWindow = new MainWindow(mRepo);
   RepoView *view = mWindow->currentView();
 
-  git::Remote remote =
-    mRepo->addRemote("origin", "git@github.com:stinb/gitahead-test.git");
+  git::Remote remote = mRepo->addRemote(
+      "origin", "https://github.com/Murmele/GittyupTestRepo.git");
   fetch(view, remote);
 
   git::Branch upstream =
-    mRepo->lookupBranch("origin/master", GIT_BRANCH_REMOTE);
+      mRepo->lookupBranch("origin/master", GIT_BRANCH_REMOTE);
   QVERIFY(upstream.isValid());
 
   git::Branch branch =
-    view->createBranch("master", upstream.target(), upstream, true);
+      view->createBranch("master", upstream.target(), upstream, true);
   QVERIFY(branch.isValid());
 
   mWindow->show();
   mConfigDialog = view->configureSettings(ConfigDialog::Branches);
-  QVERIFY(qWaitForWindowActive(mConfigDialog));
+  QVERIFY(qWaitForWindowExposed(mConfigDialog));
 }
 
-void TestBranchesPanel::createBranch()
-{
+void TestBranchesPanel::createBranch() {
   QStackedWidget *stack = mConfigDialog->findChild<QStackedWidget *>();
   QVERIFY(stack);
 
-  //Click add branch icon
+  // Click add branch icon
   QWidget *panel = stack->currentWidget();
   Footer *remotesFooter = panel->findChild<Footer *>();
   QToolButton *addRemote = remotesFooter->findChild<QToolButton *>();
-  mouseClick(addRemote, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(), inputDelay);
-  
-  //Click upstream combobox
+  QVERIFY(addRemote);
+  mouseClick(addRemote, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(),
+             inputDelay);
+
+  // Click upstream combobox
   QComboBox *referenceList = panel->findChild<QComboBox *>();
-  mouseClick(referenceList, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(), inputDelay);
-  
-  //Select upstream test_remote/master
-  QMenu *menu = qobject_cast<QMenu *>(QApplication::activePopupWidget());
+  QVERIFY(referenceList);
+  mouseClick(referenceList, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(),
+             inputDelay);
+
+  // Select upstream test_remote/master
+  auto *menu = qobject_cast<QFrame *>(QApplication::activePopupWidget());
+  QVERIFY(menu);
   keyClick(menu, Qt::Key_Down, Qt::NoModifier, inputDelay);
   keyClick(menu, Qt::Key_Return, Qt::NoModifier, inputDelay);
 
-  //Click Accept
+  // Click Accept
   QDialog *newBranchDialog = panel->findChild<QDialog *>();
+  QVERIFY(newBranchDialog);
   QList<QPushButton *> buttons = newBranchDialog->findChildren<QPushButton *>();
+  QVERIFY(buttons.count() >= 2);
   QPushButton *createBranch = buttons.at(1);
-  mouseClick(createBranch, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(), inputDelay);
+  QVERIFY(createBranch);
+  mouseClick(createBranch, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(),
+             inputDelay);
 
-  //Verify branch created
+  // Verify branch created
   QTableView *branchTable = panel->findChild<QTableView *>();
+  QVERIFY(branchTable);
   QVERIFY(branchTable->rowAt(0) != -1);
 }
 
-void TestBranchesPanel::cleanupTestCase()
-{
+void TestBranchesPanel::cleanupTestCase() {
   qWait(closeDelay);
   mWindow->close();
 }

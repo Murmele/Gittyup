@@ -26,12 +26,10 @@ namespace {
 
 const int kHeight = 200;
 
-class TreeView : public QTreeView
-{
+class TreeView : public QTreeView {
 public:
   TreeView(const git::Repository &repo, QWidget *parent = nullptr)
-    : QTreeView(parent)
-  {
+      : QTreeView(parent) {
     setHeaderHidden(true);
 
     // Constrain height.
@@ -47,15 +45,14 @@ public:
 
     // Reset tree when HEAD changes.
     connect(repo.notifier(), &git::RepositoryNotifier::referenceUpdated, this,
-    [model](const git::Reference &ref) {
-      if (ref.isValid() && ref.isHead())
-        model->setTree(ref.target().tree());
-    });
+            [model](const git::Reference &ref) {
+              if (ref.isValid() && ref.isHead())
+                model->setTree(ref.target().tree());
+            });
   }
 
 protected:
-  void contextMenuEvent(QContextMenuEvent *event) override
-  {
+  void contextMenuEvent(QContextMenuEvent *event) override {
     QStringList files;
     foreach (const QModelIndex &index, selectionModel()->selectedIndexes())
       files.append(index.data(Qt::EditRole).toString());
@@ -65,50 +62,43 @@ protected:
   }
 };
 
-class Completer : public QCompleter
-{
+class Completer : public QCompleter {
 public:
   Completer(QAbstractItemModel *model, QObject *parent = nullptr)
-    : QCompleter(model, parent)
-  {
+      : QCompleter(model, parent) {
     setCompletionRole(Qt::DisplayRole);
     setCompletionMode(QCompleter::InlineCompletion);
     setModelSorting(QCompleter::CaseSensitivelySortedModel);
   }
 
-  QString pathFromIndex(const QModelIndex &index) const override
-  {
+  QString pathFromIndex(const QModelIndex &index) const override {
     return index.data(Qt::EditRole).toString();
   }
 
-  QStringList splitPath(const QString &path) const override
-  {
+  QStringList splitPath(const QString &path) const override {
     return path.split('/');
   }
 };
 
-} // anon. namespace
+} // namespace
 
 PathspecWidget::PathspecWidget(const git::Repository &repo, QWidget *parent)
-  : QFrame(parent)
-{
-  setStyleSheet(
-    "PathspecWidget {"
-    "  border: 1px solid palette(shadow)"
-    "}"
-    "PathspecWidget QLineEdit {"
-    "  border: 1px solid palette(base);"
-    "  padding-left: 4px"
-    "}"
-    "PathspecWidget QToolButton {"
-    "  border: none;"
-    "  border-left: 1px solid palette(shadow)"
-    "}"
-    "PathspecWidget QTreeView {"
-    "  border: none;"
-    "  border-top: 1px solid palette(mid)"
-    "}"
-  );
+    : QFrame(parent) {
+  setStyleSheet("PathspecWidget {"
+                "  border: 1px solid palette(shadow)"
+                "}"
+                "PathspecWidget QLineEdit {"
+                "  border: 1px solid palette(base);"
+                "  padding-left: 4px"
+                "}"
+                "PathspecWidget QToolButton {"
+                "  border: none;"
+                "  border-left: 1px solid palette(shadow)"
+                "}"
+                "PathspecWidget QTreeView {"
+                "  border: none;"
+                "  border-top: 1px solid palette(mid)"
+                "}");
 
   mField = new QLineEdit(this);
   mField->setClearButtonEnabled(true);
@@ -123,7 +113,7 @@ PathspecWidget::PathspecWidget(const git::Repository &repo, QWidget *parent)
   mView = new TreeView(repo, this);
 
   QVBoxLayout *layout = new QVBoxLayout(this);
-  layout->setContentsMargins(0,0,0,0);
+  layout->setContentsMargins(0, 0, 0, 0);
   layout->setSpacing(0);
   layout->addLayout(header);
   layout->addWidget(mView);
@@ -141,26 +131,29 @@ PathspecWidget::PathspecWidget(const git::Repository &repo, QWidget *parent)
 
     mField->removeAction(mIcon);
     QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
-    mIcon = icon.isNull() ? nullptr :
-      mField->addAction(icon, QLineEdit::LeadingPosition);
+    mIcon = icon.isNull() ? nullptr
+                          : mField->addAction(icon, QLineEdit::LeadingPosition);
   });
 
   // Handle text change.
-  connect(mField, &QLineEdit::textChanged, this, [this] {
-    // Use the current text. It may be different from
-    // the argument because this connection is queued.
-    QString text = mField->text();
-    emit pathspecChanged(text);
-    if (text.isEmpty())
-      mView->setCurrentIndex(QModelIndex());
-  }, Qt::QueuedConnection);
+  connect(
+      mField, &QLineEdit::textChanged, this,
+      [this] {
+        // Use the current text. It may be different from
+        // the argument because this connection is queued.
+        QString text = mField->text();
+        emit pathspecChanged(text);
+        if (text.isEmpty())
+          mView->setCurrentIndex(QModelIndex());
+      },
+      Qt::QueuedConnection);
 
   // Set the completer after the view creates the model.
   mField->setCompleter(new Completer(mView->model(), mView));
 
-  using Signal = void(QCompleter::*)(const QModelIndex &);
+  using Signal = void (QCompleter::*)(const QModelIndex &);
   auto signal = static_cast<Signal>(&QCompleter::highlighted);
-  connect(mField->completer(), signal, [this](const QModelIndex &index) { 
+  connect(mField->completer(), signal, [this](const QModelIndex &index) {
     QAbstractItemModel *model = mField->completer()->completionModel();
     QAbstractProxyModel *proxy = qobject_cast<QAbstractProxyModel *>(model);
     Q_ASSERT(proxy);
@@ -173,12 +166,8 @@ PathspecWidget::PathspecWidget(const git::Repository &repo, QWidget *parent)
   });
 }
 
-QString PathspecWidget::pathspec() const
-{
-  return mField->text();
-}
+QString PathspecWidget::pathspec() const { return mField->text(); }
 
-void PathspecWidget::setPathspec(const QString &pathspec)
-{
+void PathspecWidget::setPathspec(const QString &pathspec) {
   mField->setText(pathspec);
 }

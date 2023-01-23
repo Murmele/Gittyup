@@ -3,11 +3,10 @@
 
 #include <QWidget>
 
-class FileLabel : public QWidget
-{
+class FileLabel : public QWidget {
 public:
   FileLabel(const QString &name, bool submodule, QWidget *parent = nullptr);
-  void setName(const QString& name);
+  void setName(const QString &name);
   void setOldName(const QString &oldName);
   QSize sizeHint() const override;
 
@@ -19,6 +18,5 @@ private:
   QString mName;
   QString mOldName;
 };
-
 
 #endif // FILELABEL_H

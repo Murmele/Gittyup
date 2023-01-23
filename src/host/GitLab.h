@@ -12,8 +12,7 @@
 
 #include "Account.h"
 
-class GitLab : public Account
-{
+class GitLab : public Account {
   Q_OBJECT
 
 public:

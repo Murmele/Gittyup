@@ -13,19 +13,25 @@
 #include <QTreeView>
 
 class QItemDelegate;
+class DiffTreeModel;
 
-class TreeView : public QTreeView
-{
+class TreeView : public QTreeView {
   Q_OBJECT
 
 public:
-  TreeView(QWidget *parent = nullptr, const QString& name=QString());
+  TreeView(QWidget *parent = nullptr, const QString &name = QString());
 
-  void discard(const QModelIndex& index);
+  void discard(const QModelIndex &index, const bool force = false);
+  void discard(DiffTreeModel *model, const QModelIndex &index);
   void setModel(QAbstractItemModel *model) override;
-  void onCustomContextMenu(const QPointF& point);
   bool eventFilter(QObject *obj, QEvent *event) override;
+  void keyPressEvent(QKeyEvent *event) override;
   void deselectAll();
+  /*!
+   * Get the rectangle occupied by the item's checkboy.
+   * Used in the UI tests
+   */
+  QRect checkRect(const QModelIndex &index);
   /*!
    * \brief countCollapsed
    * Counts the number of collapsed items. In \sa DoubleTreeWidget it is used to
@@ -52,17 +58,17 @@ public slots:
    * Triggered when the expansion of an item changed
    * \param index Item with the changed expansion state
    */
-  void itemExpanded(const QModelIndex& index);
+  void itemExpanded(const QModelIndex &index);
   /*!
    * \brief itemCollapsed
    * Triggered when the expansion of an item changed
    * \param index Item with the changed expansion state
    */
-  void itemCollapsed(const QModelIndex& index);
+  void itemCollapsed(const QModelIndex &index);
 
 signals:
   void linkActivated(const QString &link);
-  void fileSelected(const QModelIndex &index);
+  void filesSelected(const QModelIndexList &indexes);
   void collapseCountChanged(int count);
 
 private:
@@ -74,20 +80,21 @@ private:
   void setCollapseCount(int value);
   /*!
    * \brief updateCollapseCount
-   * update collapse count when item data is changed. In \sa DoubleTreeWidget two of these Treeviews
-   * are used. One shows the staged and one the unstaged files. When a file is staged, it might appear
-   * in the other TreeView. So it must be checked and the collapse count must be recalculated
-   * \param topLeft
+   * update collapse count when item data is changed. In \sa DoubleTreeWidget
+   * two of these Treeviews are used. One shows the staged and one the unstaged
+   * files. When a file is staged, it might appear in the other TreeView. So it
+   * must be checked and the collapse count must be recalculated \param topLeft
    * \param bottomRight
    * \param roles
    */
-  void updateCollapseCount(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
+  void updateCollapseCount(const QModelIndex &topLeft,
+                           const QModelIndex &bottomRight,
+                           const QVector<int> &roles = QVector<int>());
   void updateCollapseCount(const QModelIndex &parent, int first, int last);
-  void handleSelectionChange(
-    const QItemSelection &selected,
-	const QItemSelection &deselected);
+  void handleSelectionChange(const QItemSelection &selected,
+                             const QItemSelection &deselected);
   bool suppressDeselectionHandling{false};
-  int mCollapseCount;
+  int mCollapseCount; // Counts the number of collapsed folders.
   bool mSupressItemExpandStateChanged{false};
 
   QItemDelegate *mSharedDelegate;

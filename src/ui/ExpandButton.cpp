@@ -11,19 +11,13 @@
 #include <QPainter>
 #include <QPainterPath>
 
-ExpandButton::ExpandButton(QWidget *parent)
-  : QToolButton(parent)
-{
+ExpandButton::ExpandButton(QWidget *parent) : QToolButton(parent) {
   setCheckable(true);
 }
 
-QSize ExpandButton::sizeHint() const
-{
-  return QSize(20, 20);
-}
+QSize ExpandButton::sizeHint() const { return QSize(20, 20); }
 
-void ExpandButton::paintEvent(QPaintEvent *event)
-{
+void ExpandButton::paintEvent(QPaintEvent *event) {
   QToolButton::paintEvent(event);
 
   qreal x = width() / 2.0;

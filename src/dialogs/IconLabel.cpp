@@ -11,31 +11,19 @@
 #include <QPainter>
 #include <QStyle>
 
-IconLabel::IconLabel(
-  const QIcon &icon,
-  int width,
-  int height,
-  QWidget *parent)
-  : QWidget(parent), mIcon(icon), mWidth(width), mHeight(height)
-{
+IconLabel::IconLabel(const QIcon &icon, int width, int height, QWidget *parent)
+    : QWidget(parent), mIcon(icon), mWidth(width), mHeight(height) {
   setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
 }
 
-QSize IconLabel::sizeHint() const
-{
-  return QSize(mWidth, mHeight);
-}
+QSize IconLabel::sizeHint() const { return QSize(mWidth, mHeight); }
 
-QSize IconLabel::minimumSizeHint() const
-{
-  return sizeHint();
-}
+QSize IconLabel::minimumSizeHint() const { return sizeHint(); }
 
-void IconLabel::paintEvent(QPaintEvent *event)
-{
+void IconLabel::paintEvent(QPaintEvent *event) {
   QSize size = sizeHint();
   QWidget *win = window();
   QPainter(this).drawPixmap(
-    QStyle::alignedRect(Qt::LeftToRight, Qt::AlignHCenter, size, rect()),
-    mIcon.pixmap(win ? win->windowHandle() : nullptr, size));
+      QStyle::alignedRect(Qt::LeftToRight, Qt::AlignHCenter, size, rect()),
+      mIcon.pixmap(win ? win->windowHandle() : nullptr, size));
 }

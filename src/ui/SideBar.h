@@ -15,8 +15,7 @@
 class Account;
 class TabWidget;
 
-class SideBar : public QWidget
-{
+class SideBar : public QWidget {
   Q_OBJECT
 
 public:

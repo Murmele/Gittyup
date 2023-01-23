@@ -18,11 +18,9 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-DownloadDialog::DownloadDialog(
-  const Updater::DownloadRef &download,
-  QWidget *parent)
-  : QDialog(parent)
-{
+DownloadDialog::DownloadDialog(const Updater::DownloadRef &download,
+                               QWidget *parent)
+    : QDialog(parent) {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowTitle(tr("Update %1").arg(QCoreApplication::applicationName()));
 
@@ -37,11 +35,9 @@ DownloadDialog::DownloadDialog(
   QProgressBar *progress = new QProgressBar(this);
 
   QDialogButtonBox *buttons =
-    new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-  connect(buttons, &QDialogButtonBox::rejected,
-          this, &DownloadDialog::reject);
-  connect(buttons, &QDialogButtonBox::accepted,
-          this, &DownloadDialog::accept);
+      new QDialogButtonBox(QDialogButtonBox::Cancel, this);
+  connect(buttons, &QDialogButtonBox::rejected, this, &DownloadDialog::reject);
+  connect(buttons, &QDialogButtonBox::accepted, this, &DownloadDialog::accept);
 
   QVBoxLayout *content = new QVBoxLayout;
   content->addWidget(label);
@@ -62,25 +58,24 @@ DownloadDialog::DownloadDialog(
 
     // Adjust interface for installation.
     label->setText(tr("Download Complete!"));
-    QPushButton *install = buttons->addButton(
-      tr("Install and Restart"), QDialogButtonBox::AcceptRole);
+    QPushButton *install = buttons->addButton(tr("Install and Restart"),
+                                              QDialogButtonBox::AcceptRole);
     install->setDefault(true);
 
     // Now connect reject to the cancel signal.
-    connect(this, &DownloadDialog::rejected,
-            Updater::instance(), &Updater::updateCanceled);
+    connect(this, &DownloadDialog::rejected, Updater::instance(),
+            &Updater::updateCanceled);
   });
 
   // Handle reject and accept.
   connect(this, &DownloadDialog::rejected, reply, &QNetworkReply::abort);
-  connect(this, &DownloadDialog::accepted, [download] {
-    Updater::instance()->install(download);
-  });
+  connect(this, &DownloadDialog::accepted,
+          [download] { Updater::instance()->install(download); });
 
   // Show download progress.
   connect(reply, &QNetworkReply::downloadProgress,
-  [progress](int current, int total) {
-    progress->setMaximum(total);
-    progress->setValue(current);
-  });
+          [progress](int current, int total) {
+            progress->setMaximum(total);
+            progress->setValue(current);
+          });
 }

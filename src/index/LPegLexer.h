@@ -15,15 +15,12 @@
 
 struct lua_State;
 
-class LPegLexer : public Lexer
-{
+class LPegLexer : public Lexer {
 public:
   // Default values are provided to play nicely with map accessor functions.
   // It is an error to construct a Lexer with an empty home or lexer kind.
-  LPegLexer(
-    const QByteArray &home = QByteArray(),
-    const QByteArray &lexer = QByteArray(),
-    QObject *parent = nullptr);
+  LPegLexer(const QByteArray &home = QByteArray(),
+            const QByteArray &lexer = QByteArray(), QObject *parent = nullptr);
 
   QByteArray name() const override { return mName; }
   bool lex(const QByteArray &buffer) override;

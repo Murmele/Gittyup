@@ -12,8 +12,7 @@
 
 #include <QToolBar>
 
-class CommitToolBar : public QToolBar
-{
+class CommitToolBar : public QToolBar {
   Q_OBJECT
 
 public:

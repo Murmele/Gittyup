@@ -1,0 +1,13 @@
+Host testhost
+	Hostname resolvedhost
+	Port 12345
+	User anotheruser
+
+Host diffport
+	Port 4321
+
+Host diffuser
+	User seconduser
+
+Host diffhost
+	Hostname secondhost

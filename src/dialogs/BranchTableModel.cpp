@@ -12,31 +12,25 @@
 #include <QWidget>
 
 BranchTableModel::BranchTableModel(const git::Repository &repo, QObject *parent)
-  : QAbstractTableModel(parent), mRepo(repo)
-{
+    : QAbstractTableModel(parent), mRepo(repo) {
   git::RepositoryNotifier *notifier = repo.notifier();
-  connect(notifier, &git::RepositoryNotifier::referenceAboutToBeAdded,
-          this, &BranchTableModel::beginResetModel);
-  connect(notifier, &git::RepositoryNotifier::referenceAdded,
-          this, &BranchTableModel::endResetModel);
-  connect(notifier, &git::RepositoryNotifier::referenceAboutToBeRemoved,
-          this, &BranchTableModel::beginResetModel);
-  connect(notifier, &git::RepositoryNotifier::referenceRemoved,
-          this, &BranchTableModel::endResetModel);
+  connect(notifier, &git::RepositoryNotifier::referenceAboutToBeAdded, this,
+          &BranchTableModel::beginResetModel);
+  connect(notifier, &git::RepositoryNotifier::referenceAdded, this,
+          &BranchTableModel::endResetModel);
+  connect(notifier, &git::RepositoryNotifier::referenceAboutToBeRemoved, this,
+          &BranchTableModel::beginResetModel);
+  connect(notifier, &git::RepositoryNotifier::referenceRemoved, this,
+          &BranchTableModel::endResetModel);
 }
 
-int BranchTableModel::rowCount(const QModelIndex &parent) const
-{
+int BranchTableModel::rowCount(const QModelIndex &parent) const {
   return branches().count();
 }
 
-int BranchTableModel::columnCount(const QModelIndex &parent) const
-{
-  return 3;
-}
+int BranchTableModel::columnCount(const QModelIndex &parent) const { return 3; }
 
-QVariant BranchTableModel::data(const QModelIndex &index, int role) const
-{
+QVariant BranchTableModel::data(const QModelIndex &index, int role) const {
   git::Branch branch = branches().at(index.row());
   switch (role) {
     case Qt::DisplayRole:
@@ -72,25 +66,24 @@ QVariant BranchTableModel::data(const QModelIndex &index, int role) const
   return QVariant();
 }
 
-QVariant BranchTableModel::headerData(
-  int section,
-  Qt::Orientation orientation,
-  int role) const
-{
+QVariant BranchTableModel::headerData(int section, Qt::Orientation orientation,
+                                      int role) const {
   if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
     return QVariant();
 
   switch (section) {
-    case Name: return tr("Name");
-    case Upstream: return tr("Upstream");
-    case Rebase: return tr("Rebase");
+    case Name:
+      return tr("Name");
+    case Upstream:
+      return tr("Upstream");
+    case Rebase:
+      return tr("Rebase");
   }
 
   return QVariant();
 }
 
-Qt::ItemFlags BranchTableModel::flags(const QModelIndex &index) const
-{
+Qt::ItemFlags BranchTableModel::flags(const QModelIndex &index) const {
   Qt::ItemFlags flags = QAbstractTableModel::flags(index);
 
   switch (index.column()) {
@@ -113,11 +106,8 @@ Qt::ItemFlags BranchTableModel::flags(const QModelIndex &index) const
   return flags;
 }
 
-bool BranchTableModel::setData(
-  const QModelIndex &index,
-  const QVariant &value,
-  int role)
-{
+bool BranchTableModel::setData(const QModelIndex &index, const QVariant &value,
+                               int role) {
   if (!index.isValid())
     return false;
 
@@ -140,7 +130,6 @@ bool BranchTableModel::setData(
   return true;
 }
 
-QList<git::Branch> BranchTableModel::branches() const
-{
+QList<git::Branch> BranchTableModel::branches() const {
   return mRepo.branches(GIT_BRANCH_LOCAL);
 }

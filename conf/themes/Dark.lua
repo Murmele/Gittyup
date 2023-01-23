@@ -34,6 +34,7 @@ theme['widget']    = {
   text             = { default = '#E1E5F2', disabled = '#555B65' },
   bright_text      = '#AAB2BE',
   background       = '#212226',
+  alternate        = '#2D2E34', -- an alternate background color for list rows
   highlight        = { active = '#2A82DA', inactive = '#1B5B9B' },
   highlighted_text = { active = '#E1E5F2', inactive = '#E1E5F2' },
 }
@@ -58,19 +59,10 @@ theme['commits']   = {
   text             = '#E1E5F2',
   bright_text      = '#AAB2BE',
   background       = '#2D2E34',
-  highlight        = { active = '#2A82DA', inactive = '#1B5B9B' },
-  highlighted_text = { active = '#E1E5F2', inactive = '#E1E5F2' },
-  highlighted_bright_text = { active = '#A6CBF0', inactive = '#9090A5' }
-}
-
--- file list colors
--- { default, active, inactive, disabled }
-theme['files']     = {
-  text             = '#E1E5F2',
-  background       = '#36373E',
   alternate        = '#2D2E34', -- an alternate background color for list rows
   highlight        = { active = '#2A82DA', inactive = '#1B5B9B' },
   highlighted_text = { active = '#E1E5F2', inactive = '#E1E5F2' },
+  highlighted_bright_text = { active = '#A6CBF0', inactive = '#9090A5' }
 }
 
 -- status badge colors
@@ -153,8 +145,8 @@ theme['link']      = {
 
 -- menubar background color
 theme['menubar']   = {
-  text             = '#212226',
-  background       = '#F0F0F0'
+  text             = '#E1E5F2',
+  background       = '#212226'
 }
 
 -- tabbar background color (uncomment lines to customize)
@@ -219,7 +211,7 @@ theme.property['style.controlchar']  = '$(style.nothing)'
 theme.property['style.default']      = 'fore:#AAB2BE,back:#212228'
 theme.property['style.definition']   = 'fore:#F6E9D0'
 theme.property['style.embedded']     = '$(style.tag),back:#333333'
-theme.property['style.error']        = 'fore:#994D4D,italics'
+theme.property['style.error']        = 'fore:#994D4D'
 theme.property['style.function']     = 'fore:#4D99E6'
 theme.property['style.identifier']   = '$(style.nothing)'
 theme.property['style.indentguide']  = 'fore:#333333,back:#333333'
@@ -235,4 +227,4 @@ theme.property['style.string']       = 'fore:#93C37E'
 theme.property['style.tag']          = 'fore:#CCCCCC'
 theme.property['style.type']         = 'fore:#CC77DA'
 theme.property['style.variable']     = 'fore:#80CCFF'
-theme.property['style.whitespace']   = ''
+theme.property['style.whitespace']   = '$(style.nothing)'

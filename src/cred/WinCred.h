@@ -12,20 +12,14 @@
 
 #include "CredentialHelper.h"
 
-class WinCred : public CredentialHelper
-{
+class WinCred : public CredentialHelper {
 public:
   WinCred();
 
-  bool get(
-    const QString &url,
-    QString &username,
-    QString &password) override;
+  bool get(const QString &url, QString &username, QString &password) override;
 
-  bool store(
-    const QString &url,
-    const QString &username,
-    const QString &password) override;
+  bool store(const QString &url, const QString &username,
+             const QString &password) override;
 };
 
 #endif

@@ -19,9 +19,7 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-PullRequestDialog::PullRequestDialog(RepoView *view)
-  : QDialog(view)
-{
+PullRequestDialog::PullRequestDialog(RepoView *view) : QDialog(view) {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowTitle(tr("Create Pull Request"));
   setMinimumWidth(400);
@@ -64,11 +62,11 @@ PullRequestDialog::PullRequestDialog(RepoView *view)
 
   remoteRepo->account()->requestForkParents(remoteRepo);
   connect(remoteRepo->account(), &Account::forkParentsReady, this,
-  [toRepo](const QMap<QString,QString> &parents) {
-    foreach (const QString parent, parents.keys()) {
-      toRepo->addItem(parent, parents.value(parent));
-    }
-  });
+          [toRepo](const QMap<QString, QString> &parents) {
+            foreach (const QString parent, parents.keys()) {
+              toRepo->addItem(parent, parents.value(parent));
+            }
+          });
   connect(toRepo, indexChanged, this, [toRepo, toBranch](int index) {
     toBranch->clear();
     toBranch->addItem(toRepo->itemData(index).toString());
@@ -86,35 +84,31 @@ PullRequestDialog::PullRequestDialog(RepoView *view)
   QDialogButtonBox *buttons = new QDialogButtonBox(this);
   buttons->addButton(QDialogButtonBox::Cancel);
   QPushButton *create =
-    buttons->addButton(tr("Create"), QDialogButtonBox::AcceptRole);
+      buttons->addButton(tr("Create"), QDialogButtonBox::AcceptRole);
   create->setDefault(true);
   create->setEnabled(false);
 
   auto signal = QOverload<const QString &>::of(&QComboBox::currentTextChanged);
   connect(toRepo, signal, [toRepo, toBranch, create]() {
-    bool valid = !toRepo->currentText().isEmpty()
-              && !toBranch->currentText().isEmpty();
-      create->setEnabled(valid);
+    bool valid =
+        !toRepo->currentText().isEmpty() && !toBranch->currentText().isEmpty();
+    create->setEnabled(valid);
   });
   connect(toBranch, signal, [toRepo, toBranch, create]() {
-    bool valid = !toRepo->currentText().isEmpty()
-              && !toBranch->currentText().isEmpty();
+    bool valid =
+        !toRepo->currentText().isEmpty() && !toBranch->currentText().isEmpty();
     create->setEnabled(valid);
   });
 
   connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::close);
   connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::close);
   connect(create, &QPushButton::clicked,
-  [this, remoteRepo, maintainerEdit, fromRepo, toRepo, toBranch] {
-    remoteRepo->account()->createPullRequest(
-      remoteRepo,
-      toRepo->currentText(),
-      mTitle->text(),
-      mBody->toPlainText(),
-      fromRepo->currentText(),
-      toBranch->currentText(),
-      maintainerEdit->isChecked());
-  });
+          [this, remoteRepo, maintainerEdit, fromRepo, toRepo, toBranch] {
+            remoteRepo->account()->createPullRequest(
+                remoteRepo, toRepo->currentText(), mTitle->text(),
+                mBody->toPlainText(), fromRepo->currentText(),
+                toBranch->currentText(), maintainerEdit->isChecked());
+          });
 
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setSpacing(10);
@@ -125,8 +119,7 @@ PullRequestDialog::PullRequestDialog(RepoView *view)
   layout->addWidget(buttons);
 }
 
-void PullRequestDialog::setCommit(const git::Commit &commit)
-{
+void PullRequestDialog::setCommit(const git::Commit &commit) {
   mTitle->setText(commit.summary());
 
   QString body;

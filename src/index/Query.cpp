@@ -16,44 +16,28 @@
 
 namespace {
 
-class StarredQuery : public Query
-{
+class StarredQuery : public Query {
 public:
-  QString toString() const override
-  {
-    return "is:starred";
-  }
+  QString toString() const override { return "is:starred"; }
 
-  QList<Index::Term> terms() const override
-  {
-    return QList<Index::Term>();
-  }
+  QList<Index::Term> terms() const override { return QList<Index::Term>(); }
 
-  QList<git::Commit> commits(const Index *index) const override
-  {
+  QList<git::Commit> commits(const Index *index) const override {
     return index->repo().starredCommits();
   }
 };
 
-class TermQuery : public Query
-{
+class TermQuery : public Query {
 public:
-  TermQuery(const Index::Term &term)
-    : mTerm(term)
-  {}
+  TermQuery(const Index::Term &term) : mTerm(term) {}
 
-  QString toString() const override
-  {
+  QString toString() const override {
     return QString("%1:%2").arg(Index::fieldName(mTerm.field), mTerm.text);
   }
 
-  QList<Index::Term> terms() const override
-  {
-    return {mTerm};
-  }
+  QList<Index::Term> terms() const override { return {mTerm}; }
 
-  QList<git::Commit> commits(const Index *index) const override
-  {
+  QList<git::Commit> commits(const Index *index) const override {
     return index->commits(index->postings(mTerm));
   }
 
@@ -61,15 +45,11 @@ protected:
   Index::Term mTerm;
 };
 
-class DateRangeQuery : public TermQuery
-{
+class DateRangeQuery : public TermQuery {
 public:
-  DateRangeQuery(const Index::Term &term)
-    : TermQuery(term)
-  {}
+  DateRangeQuery(const Index::Term &term) : TermQuery(term) {}
 
-  QList<git::Commit> commits(const Index *index) const override
-  {
+  QList<git::Commit> commits(const Index *index) const override {
     Index::Field field = mTerm.field;
     if (field != Index::Before && field != Index::After)
       return QList<git::Commit>();
@@ -90,9 +70,13 @@ public:
 
       // Compare dates.
       switch (field) {
-        case Index::Before: return (tmp < date);
-        case Index::After: return (tmp > date);
-        default: Q_ASSERT(false); return false;
+        case Index::Before:
+          return (tmp < date);
+        case Index::After:
+          return (tmp > date);
+        default:
+          Q_ASSERT(false);
+          return false;
       }
     };
 
@@ -100,15 +84,11 @@ public:
   }
 };
 
-class WildcardQuery : public TermQuery
-{
+class WildcardQuery : public TermQuery {
 public:
-  WildcardQuery(const Index::Term &term)
-    : TermQuery(term)
-  {}
+  WildcardQuery(const Index::Term &term) : TermQuery(term) {}
 
-  QList<git::Commit> commits(const Index *index) const override
-  {
+  QList<git::Commit> commits(const Index *index) const override {
     QRegExp re(mTerm.text, Qt::CaseInsensitive, QRegExp::Wildcard);
     Index::Predicate pred = [re](const QByteArray &word) {
       return re.exactMatch(word);
@@ -118,15 +98,11 @@ public:
   }
 };
 
-class PhraseQuery : public Query
-{
+class PhraseQuery : public Query {
 public:
-  PhraseQuery(const QList<Index::Term> &terms)
-    : mTerms(terms)
-  {}
+  PhraseQuery(const QList<Index::Term> &terms) : mTerms(terms) {}
 
-  QString toString() const override
-  {
+  QString toString() const override {
     QStringList terms;
     foreach (const Index::Term &term, mTerms)
       terms.append(term.text);
@@ -134,13 +110,9 @@ public:
     return QString("%1:\"%2\"").arg(Index::fieldName(field), terms.join(" "));
   }
 
-  QList<Index::Term> terms() const override
-  {
-    return mTerms;
-  }
+  QList<Index::Term> terms() const override { return mTerms; }
 
-  QList<git::Commit> commits(const Index *index) const override
-  {
+  QList<git::Commit> commits(const Index *index) const override {
     if (mTerms.isEmpty())
       return QList<git::Commit>();
 
@@ -154,7 +126,7 @@ public:
     int offset = 1;
     for (int i = 1; i < mTerms.size(); ++i) {
       const Index::Term &term = mTerms.at(i);
-      QMap<quint32,QMap<quint8,QSet<quint32>>> ids;
+      QMap<quint32, QMap<quint8, QSet<quint32>>> ids;
       foreach (const Index::Posting &posting, index->postings(term, true)) {
         foreach (quint32 pos, posting.positions)
           ids[posting.id][posting.field].insert(pos);
@@ -189,31 +161,23 @@ private:
   QList<Index::Term> mTerms;
 };
 
-class BooleanQuery : public Query
-{
+class BooleanQuery : public Query {
 public:
-  enum Kind {
-    And,
-    Or
-  };
+  enum Kind { And, Or };
 
   BooleanQuery(Kind kind, const QueryRef &lhs, const QueryRef &rhs)
-    : mKind(kind), mLhs(lhs), mRhs(rhs)
-  {}
+      : mKind(kind), mLhs(lhs), mRhs(rhs) {}
 
-  QString toString() const override
-  {
+  QString toString() const override {
     QString kind = (mKind == And) ? "AND" : "OR";
     return QString("%1 %2 %3").arg(mLhs->toString(), kind, mRhs->toString());
   }
 
-  QList<Index::Term> terms() const override
-  {
+  QList<Index::Term> terms() const override {
     return mLhs->terms() + mRhs->terms();
   }
 
-  QList<git::Commit> commits(const Index *index) const override
-  {
+  QList<git::Commit> commits(const Index *index) const override {
     // Start with the commits that match the left hand side.
     QList<git::Commit> rhs = mRhs->commits(index);
     QList<git::Commit> commits = mLhs->commits(index);
@@ -243,15 +207,11 @@ private:
   QueryRef mRhs;
 };
 
-class PathspecQuery : public TermQuery
-{
+class PathspecQuery : public TermQuery {
 public:
-  PathspecQuery(const Index::Term &term)
-    : TermQuery(term)
-  {}
+  PathspecQuery(const Index::Term &term) : TermQuery(term) {}
 
-  QList<git::Commit> commits(const Index *index) const override
-  {
+  QList<git::Commit> commits(const Index *index) const override {
     QByteArray term = mTerm.text.toUtf8();
     QByteArray prefix = term.endsWith('/') ? term : term + '/';
     QRegExp re(mTerm.text, Qt::CaseInsensitive, QRegExp::Wildcard);
@@ -263,13 +223,11 @@ public:
   }
 };
 
-bool isOperator(const Lexer::Lexeme &lexeme, const QByteArray &chars)
-{
+bool isOperator(const Lexer::Lexeme &lexeme, const QByteArray &chars) {
   return (lexeme.token == Lexer::Operator && chars.contains(lexeme.text));
 }
 
-QueryRef parse(QList<Lexer::Lexeme> &lexemes, Index::Field start = Index::Any)
-{
+QueryRef parse(QList<Lexer::Lexeme> &lexemes, Index::Field start = Index::Any) {
   QueryRef result;
   while (!lexemes.isEmpty()) {
     QueryRef query;
@@ -279,7 +237,8 @@ QueryRef parse(QList<Lexer::Lexeme> &lexemes, Index::Field start = Index::Any)
     BooleanQuery::Kind kind = BooleanQuery::And;
     if (lexeme.token == Lexer::Identifier && lexeme.text == "OR") {
       // Advance to next token.
-      if (lexemes.isEmpty()) break;
+      if (lexemes.isEmpty())
+        break;
       lexeme = lexemes.takeFirst();
 
       // Set kind.
@@ -293,7 +252,8 @@ QueryRef parse(QList<Lexer::Lexeme> &lexemes, Index::Field start = Index::Any)
 
       // Discard : and advance to next token.
       lexemes.removeFirst();
-      if (lexemes.isEmpty()) break;
+      if (lexemes.isEmpty())
+        break;
       lexeme = lexemes.takeFirst();
 
       // Set field.
@@ -402,17 +362,17 @@ QueryRef parse(QList<Lexer::Lexeme> &lexemes, Index::Field start = Index::Any)
 
     // Form boolean query.
     if (query)
-      result = !result ? query :
-        QueryRef(QSharedPointer<BooleanQuery>::create(kind, result, query));
+      result = !result ? query
+                       : QueryRef(QSharedPointer<BooleanQuery>::create(
+                             kind, result, query));
   }
 
   return result;
 }
 
-} // anon. namespace
+} // namespace
 
-QueryRef Query::parseQuery(const QString &query)
-{
+QueryRef Query::parseQuery(const QString &query) {
   // Parse into list of terms.
   // Handle key:() and key:"" with embedded spaces.
   GenericLexer lexer;

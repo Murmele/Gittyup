@@ -14,6 +14,8 @@
 #include <QSettings>
 #include <QStandardPaths>
 
+#include <QDebug>
+
 #ifdef Q_OS_WIN
 #define CS Qt::CaseInsensitive
 #else
@@ -26,8 +28,7 @@ const QString kIgnoreWsKey = "diff/whitespace/ignore";
 const QString kLastPathKey = "lastpath";
 
 // Look up variant at key relative to root.
-QVariant lookup(const QVariantMap &root, const QString &key)
-{
+QVariant lookup(const QVariantMap &root, const QString &key) {
   QStringList list = key.split("/", QString::SkipEmptyParts);
   if (list.isEmpty())
     return root;
@@ -43,93 +44,49 @@ QVariant lookup(const QVariantMap &root, const QString &key)
   return QVariant();
 }
 
-QString promptKey(Settings::PromptKind kind)
-{
-  QString key;
-  switch (kind) {
-    case Settings::PromptMerge:
-      key = "merge";
-      break;
+QString promptKey(Prompt::Kind kind) { return Prompt::key(kind); }
 
-    case Settings::PromptStash:
-      key = "stash";
-      break;
-
-    case Settings::PromptRevert:
-      key = "revert";
-      break;
-
-    case Settings::PromptCherryPick:
-      key = "cherrypick";
-      break;
-
-    case Settings::PromptDirectories:
-      key = "directories";
-      break;
-
-    case Settings::PromptLargeFiles:
-      key = "largeFiles";
-      break;
-  }
-
-  return QString("window/prompt/%1").arg(key);
-}
-
-QDir rootDir()
-{
+QDir rootDir() {
   QDir dir(QCoreApplication::applicationDirPath());
 
 #ifdef Q_OS_MAC
   dir.cdUp(); // Contents
 #endif
+  qDebug() << "Root dir: " << dir;
 
   return dir;
 }
 
-} // anon. namespace
+} // namespace
 
-Settings::Settings(QObject *parent)
-  : QObject(parent)
-{
+Settings::Settings(QObject *parent) : QObject(parent) {
   foreach (const QFileInfo &file, confDir().entryInfoList(QStringList("*.lua")))
     mDefaults[file.baseName()] = ConfFile(file.absoluteFilePath()).parse();
   mDefaults[kLastPathKey] = QDir::homePath();
   mCurrentMap = mDefaults;
 }
 
-QString Settings::group() const
-{
-  return mGroup.join("/");
+QString Settings::group() const { return mGroup.join("/"); }
+
+QVariant Settings::value(const QString &key) const {
+  return value(key, defaultValue(key));
 }
 
-void Settings::beginGroup(const QString &prefix)
-{
-  mGroup.append(prefix);
-  mCurrentMap = lookup(mDefaults, group()).toMap();
-}
-
-void Settings::endGroup()
-{
-  mGroup.removeLast();
-  mCurrentMap = lookup(mDefaults, group()).toMap();
-}
-
-QVariant Settings::value(const QString &key) const
-{
+QVariant Settings::value(const QString &key,
+                         const QVariant &defaultValue) const {
   QSettings settings;
   settings.beginGroup(group());
-  QVariant result = settings.value(key, defaultValue(key));
+  QVariant result = settings.value(key, defaultValue);
   settings.endGroup();
   return result;
 }
 
-QVariant Settings::defaultValue(const QString &key) const
-{
+QVariant Settings::defaultValue(const QString &key) const {
   return lookup(mCurrentMap, key);
 }
 
-void Settings::setValue(const QString &key, const QVariant &value, bool refresh)
-{
+void Settings::setValue(const QString &key, const QVariant &value,
+                        bool refresh) {
   QSettings settings;
   settings.beginGroup(group());
   if (value == defaultValue(key)) {
@@ -146,8 +103,19 @@ void Settings::setValue(const QString &key, const QVariant &value, bool refresh)
   settings.endGroup();
 }
 
-QString Settings::lexer(const QString &filename)
-{
+QVariant Settings::value(Setting::Id id) const {
+  return value(Setting::key(id));
+}
+
+QVariant Settings::value(Setting::Id id, const QVariant &defaultValue) const {
+  return value(Setting::key(id), defaultValue);
+}
+
+void Settings::setValue(Setting::Id id, const QVariant &value) {
+  setValue(Setting::key(id), value);
+}
+
+QString Settings::lexer(const QString &filename) {
   if (filename.isEmpty())
     return "null";
 
@@ -182,68 +150,65 @@ QString Settings::lexer(const QString &filename)
   return "null";
 }
 
-QString Settings::kind(const QString &filename)
-{
+QString Settings::kind(const QString &filename) {
   QString key = lexer(filename);
   QVariantMap lexers = mDefaults.value("lexers").toMap();
   return lexers.value(key).toMap().value("name").toString();
 }
 
-bool Settings::prompt(PromptKind kind) const
-{
+bool Settings::prompt(Prompt::Kind kind) const {
   return value(promptKey(kind)).toBool();
 }
 
-void Settings::setPrompt(PromptKind kind, bool prompt)
-{
+void Settings::setPrompt(Prompt::Kind kind, bool prompt) {
   setValue(promptKey(kind), prompt);
 }
 
-QString Settings::promptDescription(PromptKind kind) const
-{
+QString Settings::promptDescription(Prompt::Kind kind) const {
   switch (kind) {
-    case PromptStash:
+    case Prompt::Kind::Stash:
       return tr("Prompt to edit stash message before stashing");
 
-    case PromptMerge:
+    case Prompt::Kind::Merge:
       return tr("Prompt to edit commit message before merging");
 
-    case PromptRevert:
+    case Prompt::Kind::Revert:
       return tr("Prompt to edit commit message before reverting");
 
-    case PromptCherryPick:
+    case Prompt::Kind::CherryPick:
       return tr("Prompt to edit commit message before cherry-picking");
 
-    case PromptDirectories:
+    case Prompt::Kind::Directories:
       return tr("Prompt to stage directories");
 
-    case PromptLargeFiles:
+    case Prompt::Kind::LargeFiles:
       return tr("Prompt to stage large files");
   }
 }
 
-bool Settings::isWhitespaceIgnored() const
-{
+void Settings::setHotkey(const QString &action, const QString &hotkey) {
+  setValue("hotkeys/" + action, hotkey);
+}
+
+QString Settings::hotkey(const QString &action) const {
+  return value("hotkeys/" + action, "").toString();
+}
+
+bool Settings::isWhitespaceIgnored() const {
   return value(kIgnoreWsKey).toBool();
 }
 
-void Settings::setWhitespaceIgnored(bool ignored)
-{
+void Settings::setWhitespaceIgnored(bool ignored) {
   setValue(kIgnoreWsKey, ignored, true);
 }
 
-QString Settings::lastPath() const
-{
-  return value(kLastPathKey).toString();
-}
+QString Settings::lastPath() const { return value(kLastPathKey).toString(); }
 
-void Settings::setLastPath(const QString &lastPath)
-{
+void Settings::setLastPath(const QString &lastPath) {
   setValue(kLastPathKey, lastPath);
 }
 
-QDir Settings::appDir()
-{
+QDir Settings::appDir() {
   QDir dir(QCoreApplication::applicationDirPath());
 
 #ifdef Q_OS_MAC
@@ -255,67 +220,59 @@ QDir Settings::appDir()
   return dir;
 }
 
-QDir Settings::docDir()
-{
-  QDir dir(QCoreApplication::applicationDirPath());
-  if (!dir.cd("doc"))
-    dir = confDir();
-  return dir;
-}
+QDir Settings::docDir() { return confDir(); }
 
-QDir Settings::confDir()
-{
+QDir Settings::confDir() {
   QDir dir = rootDir();
   if (!dir.cd("Resources"))
     dir = QDir(CONF_DIR);
+  qDebug() << "Conf dir: " << dir;
   return dir;
 }
 
-QDir Settings::l10nDir()
-{
-  QDir dir = rootDir();
-  if (!dir.cd("Resources/l10n"))
+QDir Settings::l10nDir() {
+  QDir dir = confDir();
+  if (!dir.cd("l10n"))
     dir = QDir(L10N_DIR);
+
+  qDebug() << "l10n dir: " << dir;
   return dir;
 }
 
-QDir Settings::dictionariesDir()
-{
+QDir Settings::dictionariesDir() {
   QDir dir = confDir();
   dir.cd("dictionaries");
+  qDebug() << "Dictionaries dir: " << dir;
   return dir;
 }
 
-QDir Settings::lexerDir()
-{
+QDir Settings::lexerDir() {
   QDir dir = confDir();
   if (!dir.cd("lexers"))
     dir = QDir(SCINTILLUA_LEXERS_DIR);
+  qDebug() << "Lexers dir: " << dir;
   return dir;
 }
 
-QDir Settings::themesDir()
-{
+QDir Settings::themesDir() {
   QDir dir = confDir();
   dir.cd("themes");
+  qDebug() << "Theme dir: " << dir;
   return dir;
 }
 
-QDir Settings::pluginsDir()
-{
+QDir Settings::pluginsDir() {
   QDir dir = confDir();
   dir.cd("plugins");
+  qDebug() << "Plugins dir: " << dir;
   return dir;
 }
 
-QDir Settings::userDir()
-{
-  return QStandardPaths::writableLocation(
-           QStandardPaths::AppLocalDataLocation);
+QDir Settings::userDir() {
+  return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
 }
 
-QDir Settings::tempDir()
-{
+QDir Settings::tempDir() {
   QString name = QCoreApplication::applicationName();
   QDir dir = QDir::temp();
   dir.mkpath(name);
@@ -323,8 +280,7 @@ QDir Settings::tempDir()
   return dir;
 }
 
-Settings *Settings::instance()
-{
+Settings *Settings::instance() {
   static Settings *instance = nullptr;
   if (!instance)
     instance = new Settings(qApp);

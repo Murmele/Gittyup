@@ -18,8 +18,7 @@ class Commit;
 class AnnotatedCommit;
 class Remote;
 
-class Branch : public Reference
-{
+class Branch : public Reference {
 public:
   Branch();
   Branch(const Reference &rhs);

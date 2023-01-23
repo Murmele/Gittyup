@@ -12,20 +12,14 @@
 
 #include "CredentialHelper.h"
 
-class GitCredential : public CredentialHelper
-{
+class GitCredential : public CredentialHelper {
 public:
   GitCredential(const QString &name);
 
-  bool get(
-    const QString &url,
-    QString &username,
-    QString &password) override;
+  bool get(const QString &url, QString &username, QString &password) override;
 
-  bool store(
-    const QString &url,
-    const QString &username,
-    const QString &password) override;
+  bool store(const QString &url, const QString &username,
+             const QString &password) override;
 
 private:
   QString command() const;

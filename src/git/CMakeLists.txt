@@ -1,4 +1,5 @@
-add_library(git
+add_library(
+  git
   AnnotatedCommit.cpp
   Blame.cpp
   Blob.cpp
@@ -24,15 +25,8 @@ add_library(git
   Submodule.cpp
   Tag.cpp
   TagRef.cpp
-  Tree.cpp
-)
+  Tree.cpp)
 
-target_link_libraries(git
-  git2
-  Qt5::Core
-  Qt5::Network
-)
+target_link_libraries(git git2 Qt5::Core Qt5::Network util)
 
-set_target_properties(git PROPERTIES
-  AUTOMOC ON
-)
+set_target_properties(git PROPERTIES AUTOMOC ON)

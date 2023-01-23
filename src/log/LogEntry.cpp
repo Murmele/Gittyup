@@ -9,17 +9,11 @@
 
 #include "LogEntry.h"
 
-LogEntry::LogEntry(QObject *parent)
-  : QObject(parent)
-{}
+LogEntry::LogEntry(QObject *parent) : QObject(parent) {}
 
-LogEntry::LogEntry(
-  Kind kind,
-  const QString &text,
-  const QString &title,
-  LogEntry *parent)
-  : QObject(parent), mKind(kind), mText(text), mTitle(title)
-{
+LogEntry::LogEntry(Kind kind, const QString &text, const QString &title,
+                   LogEntry *parent)
+    : QObject(parent), mKind(kind), mText(text), mTitle(title) {
   mTimestamp = QDateTime::currentDateTime();
 
   // Connect progress timer.
@@ -30,41 +24,34 @@ LogEntry::LogEntry(
   });
 }
 
-void LogEntry::setText(const QString &text)
-{
+void LogEntry::setText(const QString &text) {
   mText = text;
   if (LogEntry *root = rootEntry())
     emit root->dataChanged(this);
 }
 
-LogEntry *LogEntry::rootEntry() const
-{
+LogEntry *LogEntry::rootEntry() const {
   LogEntry *parent = parentEntry();
   return parent ? parent->rootEntry() : const_cast<LogEntry *>(this);
 }
 
-LogEntry *LogEntry::parentEntry() const
-{
+LogEntry *LogEntry::parentEntry() const {
   return qobject_cast<LogEntry *>(parent());
 }
 
-void LogEntry::addEntries(const QList<LogEntry *> &entries)
-{
+void LogEntry::addEntries(const QList<LogEntry *> &entries) {
   insertEntries(mEntries.size(), entries);
 }
 
-LogEntry *LogEntry::addEntry(Kind kind, const QString &text)
-{
+LogEntry *LogEntry::addEntry(Kind kind, const QString &text) {
   return insertEntry(mEntries.size(), kind, text);
 }
 
-LogEntry *LogEntry::addEntry(const QString &text, const QString &title)
-{
+LogEntry *LogEntry::addEntry(const QString &text, const QString &title) {
   return insertEntry(mEntries.size(), Entry, text, title);
 }
 
-void LogEntry::insertEntries(int row, const QList<LogEntry *> &entries)
-{
+void LogEntry::insertEntries(int row, const QList<LogEntry *> &entries) {
   LogEntry *root = rootEntry();
   emit root->entriesAboutToBeInserted(this, row, entries.size());
   for (int i = 0; i < entries.size(); ++i) {
@@ -77,19 +64,20 @@ void LogEntry::insertEntries(int row, const QList<LogEntry *> &entries)
   emit root->entriesInserted();
 }
 
-LogEntry *LogEntry::insertEntry(
-  int row,
-  Kind kind,
-  const QString &text,
-  const QString &title)
-{
+LogEntry *LogEntry::insertEntry(int row, Kind kind, const QString &text,
+                                const QString &title) {
   LogEntry *entry = new LogEntry(kind, text, title, this);
   insertEntries(row, {entry});
   return entry;
 }
 
-void LogEntry::setBusy(bool busy)
-{
+LogEntry *LogEntry::lastEntry() const {
+  if (mEntries.isEmpty())
+    return nullptr;
+  return mEntries.last();
+}
+
+void LogEntry::setBusy(bool busy) {
   if (!busy) {
     mTimer.stop();
     mProgress = -1;

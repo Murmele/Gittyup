@@ -18,13 +18,14 @@ class Index;
 namespace git {
 class Commit;
 class Diff;
-}
+} // namespace git
 
-class CommitList : public QListView
-{
+class CommitList : public QListView {
   Q_OBJECT
 
 public:
+  enum Role { DiffRole = Qt::UserRole, CommitRole, GraphRole, GraphColorRole };
+
   CommitList(Index *index, QWidget *parent = nullptr);
 
   // Get the status diff item.
@@ -46,10 +47,8 @@ public:
   void selectReference(const git::Reference &ref);
   void resetSelection(bool spontaneous = false);
   void selectFirstCommit(bool spontaneous = false);
-  bool selectRange(
-    const QString &range,
-    const QString &file = QString(),
-    bool spontaneous = false);
+  bool selectRange(const QString &range, const QString &file = QString(),
+                   bool spontaneous = false);
 
   void resetSettings();
 
@@ -57,10 +56,8 @@ public:
 
 signals:
   void statusChanged(bool dirty);
-  void diffSelected(
-    const git::Diff diff,
-    const QString &file = QString(),
-    bool spontaneous = false);
+  void diffSelected(const git::Diff diff, const QString &file = QString(),
+                    bool spontaneous = false);
 
 protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
@@ -77,10 +74,8 @@ private:
   QModelIndexList sortedIndexes() const;
 
   QModelIndex findCommit(const git::Commit &commit);
-  void selectIndexes(
-    const QItemSelection &selection,
-    const QString &file = QString(),
-    bool spontaneous = false);
+  void selectIndexes(const QItemSelection &selection,
+                     const QString &file = QString(), bool spontaneous = false);
 
   void notifySelectionChanged();
 

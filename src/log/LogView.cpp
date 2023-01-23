@@ -21,10 +21,8 @@
 
 namespace {
 
-QModelIndexList collectSelectedIndexes(
-  QTreeView *view,
-  const QModelIndex &parent)
-{
+QModelIndexList collectSelectedIndexes(QTreeView *view,
+                                       const QModelIndex &parent) {
   QModelIndexList selection;
   QAbstractItemModel *model = view->model();
   for (int i = 0; i < model->rowCount(parent); ++i) {
@@ -37,11 +35,9 @@ QModelIndexList collectSelectedIndexes(
   return selection;
 }
 
-} // anon. namespace
+} // namespace
 
-LogView::LogView(LogEntry *root, QWidget *parent)
-  : QTreeView(parent)
-{
+LogView::LogView(LogEntry *root, QWidget *parent) : QTreeView(parent) {
   setMouseTracking(true);
   setHeaderHidden(true);
   setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -58,51 +54,47 @@ LogView::LogView(LogEntry *root, QWidget *parent)
 
   LogModel *model = new LogModel(root, style(), this);
   LogDelegate *delegate = new LogDelegate(this);
-  connect(model, &LogModel::dataChanged,
-          delegate, &LogDelegate::invalidateCache);
+  connect(model, &LogModel::dataChanged, delegate,
+          &LogDelegate::invalidateCache);
 
   setModel(model);
   setItemDelegate(delegate);
 
   connect(model, &QAbstractItemModel::rowsInserted,
-  [this](const QModelIndex &parent, int first, int last) {
-    if (!parent.isValid() && mCollapse)
-      collapse(this->model()->index(last - 1, 0, parent));
-    scrollTo(this->model()->index(last, 0, parent)); 
-  });
+          [this](const QModelIndex &parent, int first, int last) {
+            if (!parent.isValid() && mCollapse)
+              collapse(this->model()->index(last - 1, 0, parent));
+            scrollTo(this->model()->index(last, 0, parent));
+          });
 }
 
-void LogView::setCollapseEnabled(bool collapse) 
-{
-  mCollapse = collapse;
-}
+void LogView::setCollapseEnabled(bool collapse) { mCollapse = collapse; }
 
-void LogView::setEntryExpanded(LogEntry *entry, bool expanded)
-{
+void LogView::setEntryExpanded(LogEntry *entry, bool expanded) {
   setExpanded(static_cast<LogModel *>(model())->index(entry), expanded);
 }
 
-void LogView::copy() 
-{
+void LogView::copy() {
   QString plainText;
   QString richText;
   QModelIndexList indexes = collectSelectedIndexes(this, QModelIndex());
   foreach (const QModelIndex &index, indexes) {
     QString prefix;
 
-    //Indent child indices
+    // Indent child indices
     QModelIndex currentParent = index.parent();
-    while (currentParent.isValid()){
+    while (currentParent.isValid()) {
       prefix += QString(4, ' ');
       currentParent = currentParent.parent();
     }
 
-    //Add expansion indicator
+    // Add expansion indicator
     if (this->model()->hasChildren(index))
       prefix += isExpanded(index) ? "[-]" : "[+]";
 
     QString text = index.data().toString();
-    plainText += QString("%1 %2\n").arg(prefix, text.remove(QRegExp("<[^>]*>")));
+    plainText +=
+        QString("%1 %2\n").arg(prefix, text.remove(QRegExp("<[^>]*>")));
     richText += QString("%1 %2<br>").arg(prefix, text);
   }
 
@@ -114,13 +106,11 @@ void LogView::copy()
   QApplication::clipboard()->setMimeData(mimeDate);
 }
 
-QSize LogView::minimumSizeHint() const
-{
+QSize LogView::minimumSizeHint() const {
   return QSize(QTreeView::minimumSizeHint().width(), 0);
 }
 
-void LogView::mouseMoveEvent(QMouseEvent *event)
-{
+void LogView::mouseMoveEvent(QMouseEvent *event) {
   QPoint pos = event->pos();
   QModelIndex index = indexAt(pos);
 
@@ -133,8 +123,7 @@ void LogView::mouseMoveEvent(QMouseEvent *event)
   QTreeView::mouseMoveEvent(event);
 }
 
-void LogView::mousePressEvent(QMouseEvent *event)
-{
+void LogView::mousePressEvent(QMouseEvent *event) {
   QPoint pos = event->pos();
   QModelIndex index = indexAt(pos);
 
@@ -151,8 +140,7 @@ void LogView::mousePressEvent(QMouseEvent *event)
   QTreeView::mousePressEvent(event);
 }
 
-void LogView::mouseReleaseEvent(QMouseEvent *event)
-{
+void LogView::mouseReleaseEvent(QMouseEvent *event) {
   QPoint pos = event->pos();
   QModelIndex index = indexAt(pos);
 
@@ -176,8 +164,7 @@ void LogView::mouseReleaseEvent(QMouseEvent *event)
   QTreeView::mouseReleaseEvent(event);
 }
 
-QString LogView::linkAt(const QModelIndex &index, const QPoint &pos)
-{
+QString LogView::linkAt(const QModelIndex &index, const QPoint &pos) {
   if (!index.isValid())
     return QString();
 
@@ -188,8 +175,7 @@ QString LogView::linkAt(const QModelIndex &index, const QPoint &pos)
   return delegate->document(index)->documentLayout()->anchorAt(docPos);
 }
 
-bool LogView::isDecoration(const QModelIndex &index, const QPoint &pos)
-{
+bool LogView::isDecoration(const QModelIndex &index, const QPoint &pos) {
   if (!index.isValid())
     return false;
 

@@ -13,35 +13,22 @@
 
 namespace {
 
-void addAction(
-  QMenu *menu,
-  const git::Repository &repo,
-  const Location &loc,
-  int index)
-{
+void addAction(QMenu *menu, const git::Repository &repo, const Location &loc,
+               int index) {
   QFontMetrics fm = menu->fontMetrics();
   QString text = fm.elidedText(loc.toString(repo), Qt::ElideRight, 256);
   menu->addAction(text)->setData(index);
 }
 
-}
+} // namespace
 
-History::History(RepoView *view)
-  : QObject(view), mView(view), mIndex(0)
-{}
+History::History(RepoView *view) : QObject(view), mView(view), mIndex(0) {}
 
-bool History::hasNext() const
-{
-  return (mIndex < mLocs.size());
-}
+bool History::hasNext() const { return (mIndex < mLocs.size()); }
 
-bool History::hasPrev() const
-{
-  return (mIndex > 0);
-}
+bool History::hasPrev() const { return (mIndex > 0); }
 
-void History::next()
-{
+void History::next() {
   Q_ASSERT(hasNext());
 
   ++mIndex;
@@ -50,8 +37,7 @@ void History::next()
   emit changed();
 }
 
-void History::prev()
-{
+void History::prev() {
   Q_ASSERT(hasPrev());
 
   mView->setLocation(mLocs.at(--mIndex));
@@ -59,16 +45,14 @@ void History::prev()
   emit changed();
 }
 
-void History::setIndex(int index)
-{
+void History::setIndex(int index) {
   mIndex = index;
   mView->setLocation(index < mLocs.size() ? mLocs.at(index) : mPendingLoc);
 
   emit changed();
 }
 
-void History::update(const Location &location, bool spontaneous)
-{
+void History::update(const Location &location, bool spontaneous) {
   // Skip invalid locations where the pending entry already represents
   // uncommitted changes. This handles the case where the user refreshes
   // with the uncommitted item already selected.
@@ -90,16 +74,14 @@ void History::update(const Location &location, bool spontaneous)
   emit changed();
 }
 
-void History::updatePrevMenu(QMenu *menu)
-{
+void History::updatePrevMenu(QMenu *menu) {
   menu->clear();
   git::Repository repo = mView->repo();
   for (int i = mIndex - 1; i >= 0; --i)
     addAction(menu, repo, mLocs.at(i), i);
 }
 
-void History::updateNextMenu(QMenu *menu)
-{
+void History::updateNextMenu(QMenu *menu) {
   menu->clear();
   git::Repository repo = mView->repo();
   for (int i = mIndex + 1; i < mLocs.size(); ++i)
@@ -109,8 +91,7 @@ void History::updateNextMenu(QMenu *menu)
     addAction(menu, repo, mPendingLoc, mLocs.size());
 }
 
-void History::clean()
-{
+void History::clean() {
   // Can't clean while navigating back through history.
   if (mIndex < mLocs.size())
     return;

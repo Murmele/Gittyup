@@ -41,8 +41,7 @@
 
 static LPTOP_LEVEL_EXCEPTION_FILTER defaultFilter = nullptr;
 
-static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info)
-{
+static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info) {
   // Protect against reentering.
   static bool entered = false;
   if (entered)
@@ -61,23 +60,23 @@ static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info)
   CreateDirectory(dir, NULL);
 
   char fileName[MAX_PATH];
-  StringCchPrintf(fileName, MAX_PATH,
-    "%s\\%s-%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp",
-    dir, "indexer", GITTYUP_VERSION,
-    localTime.wYear, localTime.wMonth, localTime.wDay,
-    localTime.wHour, localTime.wMinute, localTime.wSecond,
-    GetCurrentProcessId(), GetCurrentThreadId());
+  StringCchPrintf(
+      fileName, MAX_PATH, "%s\\%s-%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp",
+      dir, "indexer", GITTYUP_VERSION, localTime.wYear, localTime.wMonth,
+      localTime.wDay, localTime.wHour, localTime.wMinute, localTime.wSecond,
+      GetCurrentProcessId(), GetCurrentThreadId());
 
-  HANDLE dumpFile = CreateFile(fileName, GENERIC_READ|GENERIC_WRITE,
-    FILE_SHARE_WRITE|FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
+  HANDLE dumpFile =
+      CreateFile(fileName, GENERIC_READ | GENERIC_WRITE,
+                 FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
 
   MINIDUMP_EXCEPTION_INFORMATION expParam;
   expParam.ThreadId = GetCurrentThreadId();
   expParam.ExceptionPointers = info;
   expParam.ClientPointers = TRUE;
 
-  MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(),
-    dumpFile, MiniDumpWithDataSegs, &expParam, NULL, NULL);
+  MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dumpFile,
+                    MiniDumpWithDataSegs, &expParam, NULL, NULL);
 
   return defaultFilter ? defaultFilter(info) : EXCEPTION_CONTINUE_SEARCH;
 }
@@ -95,15 +94,13 @@ bool canceled = false;
 #ifdef Q_OS_UNIX
 // signal handler
 int fds[2];
-void term(int)
-{
+void term(int) {
   char ch = 1;
   write(fds[0], &ch, sizeof(ch));
 }
 #endif
 
-void log(QFile *out, const QString &text)
-{
+void log(QFile *out, const QString &text) {
   if (!out)
     return;
 
@@ -111,29 +108,23 @@ void log(QFile *out, const QString &text)
   QTextStream(out) << time << " - " << text << endl;
 }
 
-void log(QFile *out, const QString &fmt, const git::Id &id)
-{
+void log(QFile *out, const QString &fmt, const git::Id &id) {
   if (!out)
     return;
 
   log(out, fmt.arg(id.toString()));
 }
 
-struct Intermediate
-{
-  using TermMap = QHash<QByteArray,QVector<quint32>>;
-  using FieldMap = QMap<quint8,TermMap>;
+struct Intermediate {
+  using TermMap = QHash<QByteArray, QVector<quint32>>;
+  using FieldMap = QMap<quint8, TermMap>;
 
   git::Id id;
   FieldMap fields;
 };
 
-void index(
-  const Lexer::Lexeme &lexeme,
-  Intermediate::FieldMap &fields,
-  quint8 field,
-  quint32 &pos)
-{
+void index(const Lexer::Lexeme &lexeme, Intermediate::FieldMap &fields,
+           quint8 field, quint32 &pos) {
   QByteArray text = lexeme.text;
   switch (lexeme.token) {
     // Lex further.
@@ -151,9 +142,14 @@ void index(
     case Lexer::Type:
     case Lexer::Label: {
       switch (lexeme.token) {
-        case Lexer::String:  field |= Index::String;  break;
-        case Lexer::Comment: field |= Index::Comment; break;
-        default: break;
+        case Lexer::String:
+          field |= Index::String;
+          break;
+        case Lexer::Comment:
+          field |= Index::Comment;
+          break;
+        default:
+          break;
       }
 
       GenericLexer sublexer;
@@ -181,31 +177,23 @@ void index(
   }
 }
 
-class LexerPool
-{
+class LexerPool {
 public:
-  LexerPool()
-    : mHome(Settings::lexerDir().path().toUtf8())
-  {}
+  LexerPool() : mHome(Settings::lexerDir().path().toUtf8()) {}
 
-  ~LexerPool()
-  {
-    qDeleteAll(mLexers);
+  ~LexerPool() { qDeleteAll(mLexers); }
+
+  Lexer *acquire(const QByteArray &name) {
+    QMutexLocker locker(&mMutex);
+    (void)locker;
+
+    return mLexers.contains(name) ? mLexers.take(name)
+                                  : new LPegLexer(mHome, name);
   }
 
-  Lexer *acquire(const QByteArray &name)
-  {
+  void release(Lexer *lexer) {
     QMutexLocker locker(&mMutex);
-    (void) locker;
-
-    return mLexers.contains(name) ?
-      mLexers.take(name) : new LPegLexer(mHome, name);
-  }
-
-  void release(Lexer *lexer)
-  {
-    QMutexLocker locker(&mMutex);
-    (void) locker;
+    (void)locker;
 
     mLexers.insert(lexer->name(), lexer);
   }
@@ -213,24 +201,21 @@ public:
 private:
   QByteArray mHome;
   QMutex mMutex;
-  QMultiMap<QByteArray,Lexer *> mLexers;
+  QMultiMap<QByteArray, Lexer *> mLexers;
 };
 
-class Map
-{
+class Map {
 public:
   typedef Intermediate result_type;
 
   Map(const git::Repository &repo, LexerPool &lexers, QFile *out)
-    : mLexers(lexers), mOut(out)
-  {
+      : mLexers(lexers), mOut(out) {
     git::Config config = repo.appConfig();
     mTermLimit = config.value<int>("index.termlimit", mTermLimit);
     mContextLines = config.value<int>("index.contextlines", mContextLines);
   }
 
-  Intermediate operator()(const git::Commit &commit)
-  {
+  Intermediate operator()(const git::Commit &commit) {
     log(mOut, "map: %1", commit.id());
 
     quint32 filePos = 0;
@@ -313,10 +298,17 @@ public:
 
           Index::Field field;
           switch (patch.lineOrigin(hidx, line)) {
-            case GIT_DIFF_LINE_CONTEXT:  field = Index::Context;  break;
-            case GIT_DIFF_LINE_ADDITION: field = Index::Addition; break;
-            case GIT_DIFF_LINE_DELETION: field = Index::Deletion; break;
-            default: continue;
+            case GIT_DIFF_LINE_CONTEXT:
+              field = Index::Context;
+              break;
+            case GIT_DIFF_LINE_ADDITION:
+              field = Index::Addition;
+              break;
+            case GIT_DIFF_LINE_DELETION:
+              field = Index::Deletion;
+              break;
+            default:
+              continue;
           }
 
           if (lexer->lex(patch.lineContent(hidx, line))) {
@@ -342,15 +334,11 @@ private:
   int mTermLimit = 1000000;
 };
 
-class Reduce
-{
+class Reduce {
 public:
-  Reduce(Index::IdList &ids, QFile *out)
-    : mIds(ids), mOut(out)
-  {}
+  Reduce(Index::IdList &ids, QFile *out) : mIds(ids), mOut(out) {}
 
-  void operator()(Index::PostingMap &result, const Intermediate &intermediate)
-  {
+  void operator()(Index::PostingMap &result, const Intermediate &intermediate) {
     if (canceled || intermediate.fields.isEmpty())
       return;
 
@@ -379,21 +367,19 @@ private:
   QFile *mOut;
 };
 
-class Indexer : public QObject, public QAbstractNativeEventFilter
-{
+class Indexer : public QObject, public QAbstractNativeEventFilter {
 public:
   Indexer(Index &index, QFile *out, bool notify, QObject *parent = nullptr)
-    : QObject(parent), mIndex(index), mOut(out), mNotify(notify)
-  {
+      : QObject(parent), mIndex(index), mOut(out), mNotify(notify) {
     mWalker = mIndex.repo().walker();
-    connect(&mWatcher, &QFutureWatcher<Index::PostingMap>::finished,
-            this, &Indexer::finish);
+    connect(&mWatcher, &QFutureWatcher<Index::PostingMap>::finished, this,
+            &Indexer::finish);
 
 #ifdef Q_OS_UNIX
     if (!socketpair(AF_UNIX, SOCK_STREAM, 0, fds)) {
       // Create notifier.
       QSocketNotifier *notifier =
-        new QSocketNotifier(fds[1], QSocketNotifier::Read, this);
+          new QSocketNotifier(fds[1], QSocketNotifier::Read, this);
       connect(notifier, &QSocketNotifier::activated, [this, notifier] {
         notifier->setEnabled(false);
         char ch;
@@ -412,8 +398,7 @@ public:
 #endif
   }
 
-  bool start()
-  {
+  bool start() {
     log(mOut, "start");
 
     // Get list of commits.
@@ -440,13 +425,13 @@ public:
     // Start map-reduce.
     using CommitList = QList<git::Commit>;
     mWatcher.setFuture(
-      QtConcurrent::mappedReduced<Index::PostingMap,CommitList,Map,Reduce>(
-      commits, Map(mIndex.repo(), mLexers, mOut), Reduce(mIndex.ids(), mOut)));
+        QtConcurrent::mappedReduced<Index::PostingMap, CommitList, Map, Reduce>(
+            commits, Map(mIndex.repo(), mLexers, mOut),
+            Reduce(mIndex.ids(), mOut)));
     return true;
   }
 
-  void finish()
-  {
+  void finish() {
     log(mOut, "finish");
 
     if (canceled) {
@@ -463,11 +448,8 @@ public:
     }
   }
 
-  bool nativeEventFilter(
-    const QByteArray &type,
-    void *message,
-    long *result) override
-  {
+  bool nativeEventFilter(const QByteArray &type, void *message,
+                         long *result) override {
 #ifdef Q_OS_WIN
     MSG *msg = static_cast<MSG *>(message);
     if (msg->message == WM_CLOSE)
@@ -478,8 +460,7 @@ public:
   }
 
 private:
-  void cancel()
-  {
+  void cancel() {
     canceled = true;
     mWatcher.cancel();
     mWatcher.waitForFinished();
@@ -494,27 +475,21 @@ private:
   QFutureWatcher<Index::PostingMap> mWatcher;
 };
 
-class RepoInit
-{
+class RepoInit {
 public:
-  RepoInit()
-  {
+  RepoInit() {
     git::Repository::init();
 
     // Initialize settings on this thread.
-    (void) Settings::instance();
+    (void)Settings::instance();
   }
 
-  ~RepoInit()
-  {
-    git::Repository::shutdown();
-  }
+  ~RepoInit() { git::Repository::shutdown(); }
 };
 
-} // anon. namespace
+} // namespace
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 #ifdef Q_OS_WIN
   // Install exception filter.
   defaultFilter = SetUnhandledExceptionFilter(&exceptionFilter);
@@ -537,7 +512,7 @@ int main(int argc, char *argv[])
 
   // Initialize global git state.
   RepoInit init;
-  (void) init;
+  (void)init;
 
   git::Repository repo = git::Repository::open(args.first());
   if (!repo.isValid())

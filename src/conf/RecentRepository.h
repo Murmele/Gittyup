@@ -12,8 +12,7 @@
 
 #include <QObject>
 
-class RecentRepository : public QObject
-{
+class RecentRepository : public QObject {
   Q_OBJECT
 
 public:

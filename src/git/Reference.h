@@ -23,8 +23,7 @@ class Commit;
 class Object;
 class RevWalk;
 
-class Reference
-{
+class Reference {
   Q_DECLARE_TR_FUNCTIONS(Reference)
 
 public:

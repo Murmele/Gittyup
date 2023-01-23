@@ -12,12 +12,8 @@
 namespace git {
 
 Buffer::Buffer(const char *data, int size)
-  : d(GIT_BUF_INIT_CONST(data, size))
-{}
+    : d(GIT_BUF_INIT_CONST(data, size)) {}
 
-bool Buffer::isBinary() const
-{
-  return git_buf_is_binary(&d);
-}
+bool Buffer::isBinary() const { return git_buf_is_binary(&d); }
 
 } // namespace git

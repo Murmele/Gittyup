@@ -21,15 +21,13 @@
 namespace {
 
 const QString kLogKey = "credential/log";
-const QString kStoreKey = "credential/store";
 
-} // anon. namespace
+} // namespace
 
-CredentialHelper *CredentialHelper::instance()
-{
+CredentialHelper *CredentialHelper::instance() {
   static QPointer<CredentialHelper> instance;
   if (!instance) {
-    if (Settings::instance()->value(kStoreKey).toBool()) {
+    if (Settings::instance()->value(Setting::Id::StoreCredentials).toBool()) {
 #if defined(Q_OS_MAC)
       instance = new GitCredential("osxkeychain");
 #elif defined(Q_OS_WIN)
@@ -54,18 +52,15 @@ CredentialHelper *CredentialHelper::instance()
   return instance;
 }
 
-bool CredentialHelper::isLoggingEnabled()
-{
+bool CredentialHelper::isLoggingEnabled() {
   return QSettings().value(kLogKey).toBool();
 }
 
-void CredentialHelper::setLoggingEnabled(bool enable)
-{
+void CredentialHelper::setLoggingEnabled(bool enable) {
   QSettings().setValue(kLogKey, enable);
 }
 
-void CredentialHelper::log(const QString &text)
-{
+void CredentialHelper::log(const QString &text) {
   if (!isLoggingEnabled())
     return;
 

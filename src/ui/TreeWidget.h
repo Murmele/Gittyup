@@ -18,22 +18,19 @@ class ColumnView;
 namespace git {
 class Diff;
 class Repository;
-}
+} // namespace git
 
-class TreeWidget : public ContentWidget
-{
+class TreeWidget : public ContentWidget {
   Q_OBJECT
-  
+
 public:
   TreeWidget(const git::Repository &repo, QWidget *parent = nullptr);
 
   QString selectedFile() const override;
   virtual QModelIndex selectedIndex() const override;
 
-  void setDiff(
-    const git::Diff &diff,
-    const QString &file = QString(),
-    const QString &pathspec = QString()) override;
+  void setDiff(const git::Diff &diff, const QString &file = QString(),
+               const QString &pathspec = QString()) override;
 
   void cancelBackgroundTasks() override;
 

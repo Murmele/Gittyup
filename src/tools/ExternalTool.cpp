@@ -16,18 +16,17 @@
 #include "git/Index.h"
 #include "git/Repository.h"
 #include <QStandardPaths>
+#include <QProcess>
 
 namespace {
 
 const QString kGlobFmt = "%1tool\\..*\\.cmd";
 
-QChar safeAt(const QString &string, int i)
-{
+QChar safeAt(const QString &string, int i) {
   return (i >= 0 && i < string.length()) ? string.at(i) : QChar();
 }
 
-void splitCommand(const QString &command, QString &program, QString &args)
-{
+void splitCommand(const QString &command, QString &program, QString &args) {
   bool quoted = command.startsWith('"');
   int index = command.indexOf(quoted ? '"' : ' ', quoted ? 1 : 0);
   if (safeAt(command, index) == '"' && safeAt(command, index + 1) == ' ')
@@ -38,19 +37,14 @@ void splitCommand(const QString &command, QString &program, QString &args)
     args = command.mid(index + 1);
 }
 
-} // anon. namespace
+} // namespace
 
 ExternalTool::ExternalTool(const QString &file, QObject *parent)
-  : QObject(parent), mFile(file)
-{}
+    : QObject(parent), mFile(file) {}
 
-bool ExternalTool::isValid() const
-{
-  return !mFile.isEmpty();
-}
+bool ExternalTool::isValid() const { return !mFile.isEmpty(); }
 
-QString ExternalTool::lookupCommand(const QString &key, bool &shell)
-{
+QString ExternalTool::lookupCommand(const QString &key, bool &shell) {
   git::Config config = git::Config::global();
   QString path = Settings::confDir().filePath("mergetools");
   config.addFile(QDir::toNativeSeparators(path), GIT_CONFIG_LEVEL_PROGRAMDATA);
@@ -63,8 +57,7 @@ QString ExternalTool::lookupCommand(const QString &key, bool &shell)
   return config.value<QString>(QString("%1tool.%2.cmd").arg(key, name));
 }
 
-QList<ExternalTool::Info> ExternalTool::readGlobalTools(const QString &key)
-{
+QList<ExternalTool::Info> ExternalTool::readGlobalTools(const QString &key) {
   QList<Info> tools;
   git::Config config = git::Config::global();
   git::Config::Iterator it = config.glob(kGlobFmt.arg(key));
@@ -78,8 +71,7 @@ QList<ExternalTool::Info> ExternalTool::readGlobalTools(const QString &key)
   return tools;
 }
 
-QList<ExternalTool::Info> ExternalTool::readBuiltInTools(const QString &key)
-{
+QList<ExternalTool::Info> ExternalTool::readBuiltInTools(const QString &key) {
   QList<Info> tools;
   QDir conf = Settings::confDir();
   git::Config config = git::Config::open(conf.filePath("mergetools"));
@@ -88,19 +80,25 @@ QList<ExternalTool::Info> ExternalTool::readBuiltInTools(const QString &key)
     QString program, args;
     QString name = entry.name().section(".", 1, 1);
     splitCommand(entry.value<QString>(), program, args);
+
+#define TESTING_PROCESS 0
+#if defined(FLATPAK) || TESTING_PROCESS
+    QProcess process;
+    process.start("flatpak-spawn", {"--host", "which", program});
+    process.waitForFinished(-1); // will wait forever until finished
+    QString path = process.readAllStandardOutput();
+#else
     QString path = QStandardPaths::findExecutable(program);
+#endif
     tools.append({name, program, args, !path.isEmpty()});
   }
 
   return tools;
 }
 
-ExternalTool *ExternalTool::create(
-  const QString &file,
-  const git::Diff &diff,
-  const git::Repository &repo,
-  QObject *parent)
-{
+ExternalTool *ExternalTool::create(const QString &file, const git::Diff &diff,
+                                   const git::Repository &repo,
+                                   QObject *parent) {
   if (!diff.isValid())
     return nullptr;
 

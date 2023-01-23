@@ -14,37 +14,27 @@
 #include <QString>
 #include <QVariant>
 
-class Settings : public QObject
-{
+#include "Setting.h"
+
+class Settings : public QObject {
   Q_OBJECT
 
 public:
-  enum PromptKind
-  {
-    PromptStash,
-    PromptMerge,
-    PromptRevert,
-    PromptCherryPick,
-    PromptDirectories,
-    PromptLargeFiles
-  };
-
-  QString group() const;
-  void beginGroup(const QString &prefix);
-  void endGroup();
-
-  QVariant value(const QString &key) const;
-  QVariant defaultValue(const QString &key) const;
-  void setValue(const QString &key, const QVariant &value, bool refresh = false);
+  QVariant value(Setting::Id id) const;
+  QVariant value(Setting::Id id, const QVariant &defaultValue) const;
+  void setValue(Setting::Id id, const QVariant &value);
 
   // Look up lexer name by file name.
   QString lexer(const QString &filename);
   QString kind(const QString &filename);
 
   // prompt dialogs
-  bool prompt(PromptKind kind) const;
-  void setPrompt(PromptKind kind, bool prompt);
-  QString promptDescription(PromptKind kind) const;
+  bool prompt(Prompt::Kind kind) const;
+  void setPrompt(Prompt::Kind kind, bool prompt);
+  QString promptDescription(Prompt::Kind kind) const;
+
+  void setHotkey(const QString &action, const QString &hotkey);
+  QString hotkey(const QString &action) const;
 
   // ignore whitespace
   bool isWhitespaceIgnored() const;
@@ -75,6 +65,14 @@ signals:
 
 private:
   Settings(QObject *parent = nullptr);
+
+  QString group() const;
+
+  QVariant value(const QString &key) const;
+  QVariant value(const QString &key, const QVariant &defaultValue) const;
+  QVariant defaultValue(const QString &key) const;
+  void setValue(const QString &key, const QVariant &value,
+                bool refresh = false);
 
   QStringList mGroup;
   QVariantMap mDefaults;

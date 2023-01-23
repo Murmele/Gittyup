@@ -11,15 +11,11 @@
 
 Cache::Cache() {}
 
-bool Cache::get(
-  const QString &url,
-  QString &username,
-  QString &password)
-{
+bool Cache::get(const QString &url, QString &username, QString &password) {
   if (!mCache.contains(url))
     return false;
 
-  const QMap<QString,QString> &map = mCache[url];
+  const QMap<QString, QString> &map = mCache[url];
   if (map.isEmpty())
     return false;
 
@@ -33,11 +29,8 @@ bool Cache::get(
   return true;
 }
 
-bool Cache::store(
-  const QString &url,
-  const QString &username,
-  const QString &password)
-{
+bool Cache::store(const QString &url, const QString &username,
+                  const QString &password) {
   mCache[url][username] = password;
   return true;
 }

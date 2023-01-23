@@ -16,18 +16,16 @@
 class QNetworkReply;
 class QTemporaryFile;
 
-class Updater : public QObject
-{
+class Updater : public QObject {
   Q_OBJECT
 
 public:
-  class Download
-  {
+  class Download {
   public:
     Download(const QString &link);
     ~Download();
 
-    QString name() const { return mName; }
+    QString name() const { return QUrl(url()).fileName(); }
 
     QTemporaryFile *file() { return mFile; }
     void setFile(QTemporaryFile *file) { mFile = file; }
@@ -35,8 +33,10 @@ public:
     QNetworkReply *reply() const { return mReply; }
     void setReply(QNetworkReply *reply) { mReply = reply; }
 
+    QString url() const { return mUrl; }
+
   private:
-    QString mName;
+    QString mUrl;
     QTemporaryFile *mFile = nullptr;
     QNetworkReply *mReply = nullptr;
   };
@@ -54,15 +54,17 @@ signals:
   void updateCanceled();
   void updateError(const QString &text, const QString &detail);
   void sslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
-  void updateAvailable(
-    const QString &version,
-    const QString &changelog,
-    const QString &link);
+  void updateAvailable(const QString &platform, const QString &version,
+                       const QString &changelog, const QString &link);
 
 private:
   Updater(QObject *parent = nullptr);
 
   bool install(const DownloadRef &download, QString &error);
+
+#if defined(FLATPAK) || defined(DEBUG_FLATPAK)
+  bool uninstallGittyup(bool system);
+#endif
 
   QNetworkAccessManager mMgr;
 };

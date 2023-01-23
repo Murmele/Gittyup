@@ -13,14 +13,10 @@
 #include <QIcon>
 #include <QWidget>
 
-class IconLabel : public QWidget
-{
+class IconLabel : public QWidget {
 public:
-  IconLabel(
-    const QIcon &icon,
-    int width,
-    int height,
-    QWidget *parent = nullptr);
+  IconLabel(const QIcon &icon, int width, int height,
+            QWidget *parent = nullptr);
 
   QSize sizeHint() const override;
   QSize minimumSizeHint() const override;

@@ -6,17 +6,14 @@
 class QDialogButtonBox;
 class QTextEdit;
 
-class IgnoreDialog : public QDialog
-{
+class IgnoreDialog : public QDialog {
 public:
-  IgnoreDialog(QString &ignore, QWidget* parent = nullptr);
+  IgnoreDialog(const QString &ignore, QWidget *parent = nullptr);
+  QString ignoreText() const;
+
 private:
-  void applyIgnore();
-
-  QDialogButtonBox* mButtonBox{nullptr};
-  QTextEdit* mIgnore{nullptr};
-
-  QString& mIgnoreText;
+  QDialogButtonBox *mButtonBox{nullptr};
+  QTextEdit *mIgnore{nullptr};
 };
 
 #endif // IGNOREDIALOG_H

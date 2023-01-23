@@ -10,6 +10,7 @@
 #ifndef TOOLBAR_H
 #define TOOLBAR_H
 
+#include <QAction>
 #include <QToolBar>
 
 class History;
@@ -19,8 +20,7 @@ class SearchField;
 class QButtonGroup;
 class QToolButton;
 
-class ToolBar : public QToolBar
-{
+class ToolBar : public QToolBar {
   Q_OBJECT
 
 public:
@@ -52,14 +52,20 @@ private:
 
   QToolButton *mRefreshButton;
 
+  QToolButton *mRebaseContinueButton;
+  QToolButton *mRebaseAbortButton;
+
   QToolButton *mPullRequestButton = nullptr;
 
-  QToolButton *mConfigButton;
+  QToolButton *mTerminalButton;
+  QToolButton *mFileManagerButton;
   QToolButton *mLogButton;
   const QButtonGroup *mModeGroup;
 
   QToolButton *mStarButton;
   SearchField *mSearchField;
+
+  QAction *mRepoConfigAction;
 
   friend class MainWindow;
   friend class RepoView;

@@ -9,11 +9,10 @@
 
 #ifndef CONTEXTMENUBUTTON_H
 #define CONTEXTMENUBUTTON_H
- 
+
 #include <QToolButton>
 
-class ContextMenuButton : public QToolButton
-{
+class ContextMenuButton : public QToolButton {
 public:
   ContextMenuButton(QWidget *parent = nullptr);
 

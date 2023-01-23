@@ -12,8 +12,7 @@
 
 #include <QTabBar>
 
-class TabBar : public QTabBar
-{
+class TabBar : public QTabBar {
   Q_OBJECT
 
 public:

@@ -22,15 +22,12 @@ namespace git {
 class Reference;
 }
 
-class MergeDialog : public QDialog
-{
+class MergeDialog : public QDialog {
   Q_OBJECT
 
 public:
-  MergeDialog(
-    RepoView::MergeFlags flags,
-    const git::Repository &repo,
-    QWidget *parent = nullptr);
+  MergeDialog(RepoView::MergeFlags flags, const git::Repository &repo,
+              QWidget *parent = nullptr);
 
   git::Commit target() const;
   git::Reference reference() const;

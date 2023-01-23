@@ -1,20 +1,16 @@
 #ifndef DISCARDBUTTON_H
-#define DISCARDBUTTON_H 
+#define DISCARDBUTTON_H
 
 #include "Button.h"
 
-class DiscardButton : public Button
-{
+class DiscardButton : public Button {
 public:
-  DiscardButton(QWidget *parent = nullptr)
-    : Button(parent)
-  {
+  DiscardButton(QWidget *parent = nullptr) : Button(parent) {
     setObjectName("DiscardButton");
   }
 
 protected:
-  void paintEvent(QPaintEvent *event) override
-  {
+  void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
     initButtonPainter(&painter);
 

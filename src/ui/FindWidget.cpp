@@ -22,34 +22,30 @@
 
 namespace {
 
-const QString kPrevButtonStyle =
-  "QToolButton {"
-  "  border-top-right-radius: 0px;"
-  "  border-bottom-right-radius: 0px"
-  "}";
+const QString kPrevButtonStyle = "QToolButton {"
+                                 "  border-top-right-radius: 0px;"
+                                 "  border-bottom-right-radius: 0px"
+                                 "}";
 
-const QString kNextButtonStyle =
-  "QToolButton {"
-  "  border-left: none;"
-  "  border-top-left-radius: 0px;"
-  "  border-bottom-left-radius: 0px"
-  "}";
+const QString kNextButtonStyle = "QToolButton {"
+                                 "  border-left: none;"
+                                 "  border-top-left-radius: 0px;"
+                                 "  border-bottom-left-radius: 0px"
+                                 "}";
 
-const QString kFieldStyle =
-  "QLineEdit {"
-  "  border-radius: 4px;"
-  "  padding: 0px 4px 0px 4px"
-  "}";
+const QString kFieldStyle = "QLineEdit {"
+                            "  border-radius: 4px;"
+                            "  padding: 0px 4px 0px 4px"
+                            "}";
 
-} // anon. namespace
+} // namespace
 
 QString FindWidget::sText;
 
 FindWidget::SegmentedButton::SegmentedButton(QWidget *parent)
-  : QWidget(parent), mPrev(nullptr), mNext(nullptr)
-{
+    : QWidget(parent), mPrev(nullptr), mNext(nullptr) {
   QHBoxLayout *layout = new QHBoxLayout(this);
-  layout->setContentsMargins(0,0,0,0);
+  layout->setContentsMargins(0, 0, 0, 0);
   layout->setSpacing(0);
 
   mPrev = new Segment(Segment::Prev, this);
@@ -63,11 +59,9 @@ FindWidget::SegmentedButton::SegmentedButton(QWidget *parent)
 }
 
 FindWidget::SegmentedButton::Segment::Segment(Kind kind, QWidget *parent)
-  : QToolButton(parent), mKind(kind)
-{}
+    : QToolButton(parent), mKind(kind) {}
 
-void FindWidget::SegmentedButton::Segment::paintEvent(QPaintEvent *event)
-{
+void FindWidget::SegmentedButton::Segment::paintEvent(QPaintEvent *event) {
   // Draw background.
   QToolButton::paintEvent(event);
 
@@ -88,10 +82,9 @@ void FindWidget::SegmentedButton::Segment::paintEvent(QPaintEvent *event)
 }
 
 FindWidget::FindWidget(EditorProvider *provider, QWidget *parent)
-  : QWidget(parent), mEditorProvider(provider)
-{
+    : QWidget(parent), mEditorProvider(provider) {
   QHBoxLayout *layout = new QHBoxLayout(this);
-  layout->setContentsMargins(8,4,8,4);
+  layout->setContentsMargins(8, 4, 8, 4);
   layout->setSpacing(8);
   layout->addStretch();
 
@@ -130,9 +123,8 @@ FindWidget::FindWidget(EditorProvider *provider, QWidget *parent)
   });
 
   // Connect previous button.
-  connect(mButtons->prev(), &QToolButton::clicked, [this]() {
-    find(FindWidget::Backward);
-  });
+  connect(mButtons->prev(), &QToolButton::clicked,
+          [this]() { find(FindWidget::Backward); });
 
   // Connect return and next button.
   auto next = [this]() { find(); };
@@ -146,19 +138,14 @@ FindWidget::FindWidget(EditorProvider *provider, QWidget *parent)
   connect(done, &QToolButton::clicked, this, &FindWidget::hide);
 }
 
-void FindWidget::reset()
-{
-  mEditorIndex = 0;
-}
+void FindWidget::reset() { mEditorIndex = 0; }
 
-void FindWidget::clearHighlights()
-{
+void FindWidget::clearHighlights() {
   foreach (TextEditor *editor, mEditorProvider->editors())
     editor->clearHighlights();
 }
 
-void FindWidget::highlightAll()
-{
+void FindWidget::highlightAll() {
   int matches = 0;
   foreach (TextEditor *editor, mEditorProvider->editors())
     matches += editor->highlightAll(sText);
@@ -187,8 +174,7 @@ void FindWidget::highlightAll()
     find(Forward);
 }
 
-void FindWidget::find(Direction direction)
-{
+void FindWidget::find(Direction direction) {
   bool forward = (direction != Backward);
 
   // Search through all editors until a match is found.
@@ -232,32 +218,28 @@ void FindWidget::find(Direction direction)
   }
 }
 
-void FindWidget::showAndSetFocus()
-{
+void FindWidget::showAndSetFocus() {
   show();
   mField->setText(sText);
   mField->selectAll();
   mField->setFocus();
 }
 
-void FindWidget::paintEvent(QPaintEvent *)
-{
+void FindWidget::paintEvent(QPaintEvent *) {
   QStyleOption opt;
   opt.init(this);
   QPainter painter(this);
   style()->drawPrimitive(QStyle::PE_Widget, &opt, &painter, this);
 }
 
-void FindWidget::hideEvent(QHideEvent *event)
-{
+void FindWidget::hideEvent(QHideEvent *event) {
   QWidget::hideEvent(event);
 
   if (!event->spontaneous())
     clearHighlights();
 }
 
-void FindWidget::showEvent(QShowEvent *event)
-{
+void FindWidget::showEvent(QShowEvent *event) {
   if (!event->spontaneous() && !sText.isEmpty())
     highlightAll();
 

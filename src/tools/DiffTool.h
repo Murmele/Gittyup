@@ -13,16 +13,12 @@
 #include "ExternalTool.h"
 #include "git/Blob.h"
 
-class DiffTool : public ExternalTool
-{
+class DiffTool : public ExternalTool {
   Q_OBJECT
 
 public:
-  DiffTool(
-    const QString &file,
-    const git::Blob &localBlob,
-    const git::Blob &remoteBlob,
-    QObject *parent = nullptr);
+  DiffTool(const QString &file, const git::Blob &localBlob,
+           const git::Blob &remoteBlob, QObject *parent = nullptr);
 
   bool isValid() const override;
 

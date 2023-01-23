@@ -17,20 +17,13 @@ namespace {
 // size
 const int kSize = 26;
 
-} // anon. namespace
+} // namespace
 
-QSize ProgressIndicator::size()
-{
-  return QSize(kSize, kSize);
-}
+QSize ProgressIndicator::size() { return QSize(kSize, kSize); }
 
-void ProgressIndicator::paint(
-  QPainter *painter,
-  const QRect &rect,
-  const QColor &c,
-  int progress,
-  const QWidget *widget)
-{
+void ProgressIndicator::paint(QPainter *painter, const QRect &rect,
+                              const QColor &c, int progress,
+                              const QWidget *widget) {
   painter->save();
   painter->setRenderHints(QPainter::Antialiasing);
 
@@ -67,9 +60,8 @@ void ProgressIndicator::paint(
       painter->setPen(QPen(color, 2.5, Qt::SolidLine, Qt::RoundCap));
 
       qreal angle = (i + (progress % 12)) * (M_PI / 6); // in radians
-      painter->drawLine(QLineF(
-        x + qCos(angle) * in, y + qSin(angle) * in,
-        x + qCos(angle) * out, y + qSin(angle) * out));
+      painter->drawLine(QLineF(x + qCos(angle) * in, y + qSin(angle) * in,
+                               x + qCos(angle) * out, y + qSin(angle) * out));
     }
   }
 

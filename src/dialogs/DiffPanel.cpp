@@ -24,8 +24,7 @@
 #include <QTextCodec>
 
 DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
-  : QWidget(parent), mConfig(repo ? repo.config() : git::Config::global())
-{
+    : QWidget(parent), mConfig(repo ? repo.config() : git::Config::global()) {
   // diff context
   QSpinBox *context = new QSpinBox(this);
   QLabel *contextLabel = new QLabel(tr("lines"), this);
@@ -89,15 +88,17 @@ DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
   // auto collapse
   Settings *settings = Settings::instance();
   QCheckBox *collapseAdded = new QCheckBox(tr("Added files"), this);
-  collapseAdded->setChecked(settings->value("collapse/added").toBool());
+  collapseAdded->setChecked(
+      settings->value(Setting::Id::AutoCollapseAddedFiles).toBool());
   connect(collapseAdded, &QCheckBox::toggled, [settings](bool checked) {
-    settings->setValue("collapse/added", checked);
+    settings->setValue(Setting::Id::AutoCollapseAddedFiles, checked);
   });
 
   QCheckBox *collapseDeleted = new QCheckBox(tr("Deleted files"), this);
-  collapseDeleted->setChecked(settings->value("collapse/deleted").toBool());
+  collapseDeleted->setChecked(
+      settings->value(Setting::Id::AutoCollapseDeletedFiles).toBool());
   connect(collapseDeleted, &QCheckBox::toggled, [settings](bool checked) {
-    settings->setValue("collapse/deleted", checked);
+    settings->setValue(Setting::Id::AutoCollapseDeletedFiles, checked);
   });
 
   layout->addRow(tr("Whitespace:"), ignoreWs);

@@ -1,6 +1,8 @@
 set(CONF_DIR ${CMAKE_SOURCE_DIR}/conf)
 set(RSRC_DIR ${CMAKE_SOURCE_DIR}/rsrc)
 
+option(GENERATE_APPDATA "Create appdata/metadata file" OFF)
+
 if(APPLE)
   set(ICON ${RSRC_DIR}/Gittyup.icns)
   set(APP_IMPL_FILE Application_mac.mm)
@@ -13,7 +15,8 @@ set(EMOJI ${CONF_DIR}/emoji.json)
 set(MERGETOOLS ${CONF_DIR}/mergetools)
 
 file(GLOB CONFIG_FILES ${CONF_DIR}/*.lua)
-file(GLOB DICTIONARIES ${CONF_DIR}/dictionaries/*.aff ${CONF_DIR}/dictionaries/*.dic ${CONF_DIR}/dictionaries/*.txt)
+file(GLOB DICTIONARIES ${CONF_DIR}/dictionaries/*.aff
+     ${CONF_DIR}/dictionaries/*.dic ${CONF_DIR}/dictionaries/*.txt)
 file(GLOB THEMES ${CONF_DIR}/themes/*.lua)
 file(GLOB SCINTILLUA_LEXERS ${SCINTILLUA_LEXERS_DIR}/*.lua)
 file(GLOB LUA_PLUGINS ${CONF_DIR}/plugins/*.lua ${CONF_DIR}/plugins/*.txt)
@@ -22,8 +25,8 @@ file(GLOB LUA_PLUGINS ${CONF_DIR}/plugins/*.lua ${CONF_DIR}/plugins/*.txt)
 qt5_add_resources(RESOURCES ${RSRC_DIR}/resources.qrc)
 
 # Generate acknowledgments.
-set(DOC_SOURCE_DIR ${CMAKE_SOURCE_DIR}/doc)
-set(DOC_BINARY_DIR ${CMAKE_BINARY_DIR}/doc)
+set(DOC_SOURCE_DIR ${CMAKE_SOURCE_DIR}/docs)
+set(DOC_BINARY_DIR ${CMAKE_BINARY_DIR}/docs)
 set(CHANGELOG_MD ${DOC_SOURCE_DIR}/changelog.md)
 set(ACKNOWLEDGMENTS_MD ${DOC_SOURCE_DIR}/acknowledgments.md)
 set(PRIVACY_MD ${DOC_SOURCE_DIR}/privacy.md)
@@ -32,49 +35,45 @@ set(CHANGELOG_HTML ${DOC_BINARY_DIR}/changelog.html)
 set(ACKNOWLEDGMENTS_HTML ${DOC_BINARY_DIR}/acknowledgments.html)
 set(PRIVACY_HTML ${DOC_BINARY_DIR}/privacy.html)
 set(PLUGIN_HTML ${DOC_BINARY_DIR}/plugin.html)
-add_custom_command(OUTPUT
-  ${CHANGELOG_HTML} ${ACKNOWLEDGMENTS_HTML} ${PRIVACY_HTML} ${PLUGIN_HTML}
+set(APPDATA_CONF
+    ${CMAKE_SOURCE_DIR}/rsrc/linux/com.github.Murmele.Gittyup.appdata.xml.in)
+set(APPDATA
+    ${CMAKE_BINARY_DIR}/rsrc/linux/com.github.Murmele.Gittyup.appdata.xml)
+add_custom_command(
+  OUTPUT ${CHANGELOG_HTML} ${ACKNOWLEDGMENTS_HTML} ${PRIVACY_HTML}
+         ${PLUGIN_HTML}
   COMMAND ${CMAKE_COMMAND} -E make_directory ${DOC_BINARY_DIR}
-  COMMAND cmark ${CHANGELOG_MD} > ${CHANGELOG_HTML}
-  COMMAND cmark ${ACKNOWLEDGMENTS_MD} > ${ACKNOWLEDGMENTS_HTML}
-  COMMAND cmark ${PRIVACY_MD} > ${PRIVACY_HTML}
-  COMMAND cmark ${PLUGIN_MD} > ${PLUGIN_HTML}
-  DEPENDS ${CHANGELOG_MD} ${ACKNOWLEDGMENTS_MD} ${PRIVACY_MD} ${PLUGIN_MD}
-)
+  COMMAND cmark_exe ${CHANGELOG_MD} > ${CHANGELOG_HTML}
+  COMMAND cmark_exe ${ACKNOWLEDGMENTS_MD} > ${ACKNOWLEDGMENTS_HTML}
+  COMMAND cmark_exe ${PRIVACY_MD} > ${PRIVACY_HTML}
+  COMMAND cmark_exe ${PLUGIN_MD} > ${PLUGIN_HTML}
+  DEPENDS ${CHANGELOG_MD} ${ACKNOWLEDGMENTS_MD} ${PRIVACY_MD} ${PLUGIN_MD})
 
 # Add application library.
-add_library(app
-  Application.cpp
-  CustomTheme.cpp
-  Theme.cpp
-  ${RESOURCES}
-  ${APP_IMPL_FILE}
-  ${THEME_IMPL_FILE}
-)
+add_library(app Application.cpp CustomTheme.cpp Theme.cpp ${RESOURCES}
+                ${APP_IMPL_FILE} ${THEME_IMPL_FILE})
 
-target_compile_definitions(app
-  PUBLIC
-    GITTYUP_NAME="${GITTYUP_NAME}"
-    GITTYUP_VERSION="${GITTYUP_VERSION}"
-  PRIVATE
-    GITTYUP_TRACKING_ID="${GITTYUP_TRACKING_ID}"
-    QT_TRANSLATIONS_DIR="${QT_TRANSLATIONS_DIR}"
-)
+if(UNIX AND NOT APPLE)
+  set_target_properties(app PROPERTIES AUTOMOC ON)
+endif()
 
-target_link_libraries(app
-  conf
-  git
-  ui
-  update
-  Qt5::Widgets
-)
+target_compile_definitions(
+  app
+  PUBLIC GITTYUP_NAME="${GITTYUP_NAME}" GITTYUP_VERSION="${GITTYUP_VERSION}"
+  PRIVATE QT_TRANSLATIONS_DIR="${QT_TRANSLATIONS_DIR}"
+          BUILD_DESCRIPTION="${BUILD_DESCRIPTION}")
 
-set_target_properties(app PROPERTIES
-  AUTOMOC ON
-)
+target_link_libraries(app conf git ui update Qt5::Widgets)
+
+set_target_properties(app PROPERTIES AUTOMOC ON)
+
+if(UNIX AND NOT APPLE)
+  target_link_libraries(app Qt5::DBus)
+endif()
 
 # Add main executable.
-add_executable(gittyup WIN32 MACOSX_BUNDLE
+add_executable(
+  gittyup WIN32 MACOSX_BUNDLE
   Gittyup.cpp
   ${ICON}
   ${RC_FILE}
@@ -88,65 +87,84 @@ add_executable(gittyup WIN32 MACOSX_BUNDLE
   ${CHANGELOG_HTML}
   ${ACKNOWLEDGMENTS_HTML}
   ${PRIVACY_HTML}
-  ${PLUGIN_HTML}
-)
+  ${PLUGIN_HTML})
+
+if(GENERATE_APPDATA)
+  add_custom_target(
+    appdata ALL
+    COMMAND
+      ${CMAKE_COMMAND} -DCHANGELOG_HTML:STRING=${CHANGELOG_HTML}
+      -DAPPDATA_CONF:STRING=${APPDATA_CONF} -DAPPDATA:STRING=${APPDATA} -P
+      "${CMAKE_SOURCE_DIR}/cmake/generate_appdata.cmake"
+    DEPENDS ${CHANGELOG_HTML}
+    COMMENT "Create appdata file")
+endif()
 
 target_link_libraries(gittyup app)
 
-set_target_properties(gittyup PROPERTIES
-  OUTPUT_NAME ${GITTYUP_NAME}
-  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-)
+set_target_properties(
+  gittyup PROPERTIES OUTPUT_NAME ${GITTYUP_NAME} RUNTIME_OUTPUT_DIRECTORY
+                                                 ${CMAKE_BINARY_DIR})
 
 if(WIN32)
   target_link_libraries(app Dbghelp.lib)
 elseif(APPLE)
-  set_target_properties(gittyup PROPERTIES
-    INSTALL_RPATH "/usr/local/qt;@loader_path/../Frameworks"
-    MACOSX_BUNDLE_INFO_PLIST ${RSRC_DIR}/Info.plist.in
-    MACOSX_BUNDLE_ICON_FILE ${GITTYUP_NAME}
-    MACOSX_BUNDLE_BUNDLE_NAME ${GITTYUP_NAME}
-    MACOSX_BUNDLE_BUNDLE_VERSION ${GITTYUP_VERSION}
-    MACOSX_BUNDLE_LONG_VERSION_STRING ${GITTYUP_VERSION}
-    MACOSX_BUNDLE_SHORT_VERSION_STRING ${GITTYUP_VERSION}
-    MACOSX_BUNDLE_GUI_IDENTIFIER "com.Murmele.Gittyup"
-  )
+  set_target_properties(
+    gittyup
+    PROPERTIES INSTALL_RPATH "/usr/local/qt;@loader_path/../Frameworks"
+               MACOSX_BUNDLE_INFO_PLIST ${RSRC_DIR}/Info.plist.in
+               MACOSX_BUNDLE_ICON_FILE ${GITTYUP_NAME}
+               MACOSX_BUNDLE_BUNDLE_NAME ${GITTYUP_NAME}
+               MACOSX_BUNDLE_BUNDLE_VERSION ${GITTYUP_VERSION}
+               MACOSX_BUNDLE_LONG_VERSION_STRING ${GITTYUP_VERSION}
+               MACOSX_BUNDLE_SHORT_VERSION_STRING ${GITTYUP_VERSION}
+               MACOSX_BUNDLE_GUI_IDENTIFIER "com.Murmele.Gittyup")
 
   # Copy config files into bundle.
   set_source_files_properties(
-    ${ICON} ${EMOJI} ${MERGETOOLS} ${CONFIG_FILES}
-    ${CHANGELOG_HTML} ${ACKNOWLEDGMENTS_HTML} ${PRIVACY_HTML} ${PLUGIN_HTML}
-    PROPERTIES MACOSX_PACKAGE_LOCATION Resources
-  )
+    ${ICON}
+    ${EMOJI}
+    ${MERGETOOLS}
+    ${CONFIG_FILES}
+    ${CHANGELOG_HTML}
+    ${ACKNOWLEDGMENTS_HTML}
+    ${PRIVACY_HTML}
+    ${PLUGIN_HTML}
+    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
-  set_source_files_properties(${DICTIONARIES} PROPERTIES
-    MACOSX_PACKAGE_LOCATION Resources/dictionaries
-  )
+  set_source_files_properties(${DICTIONARIES} PROPERTIES MACOSX_PACKAGE_LOCATION
+                                                         Resources/dictionaries)
 
-  set_source_files_properties(${THEMES} PROPERTIES
-    MACOSX_PACKAGE_LOCATION Resources/themes
-  )
+  set_source_files_properties(${THEMES} PROPERTIES MACOSX_PACKAGE_LOCATION
+                                                   Resources/themes)
 
-  set_source_files_properties(${LUA_PLUGINS} PROPERTIES
-    MACOSX_PACKAGE_LOCATION Resources/plugins
-  )
+  set_source_files_properties(${LUA_PLUGINS} PROPERTIES MACOSX_PACKAGE_LOCATION
+                                                        Resources/plugins)
 
-  set_source_files_properties(${SCINTILLUA_LEXERS} PROPERTIES
-    MACOSX_PACKAGE_LOCATION Resources/lexers
-  )
+  set_source_files_properties(
+    ${SCINTILLUA_LEXERS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources/lexers)
 else()
-  set_target_properties(gittyup PROPERTIES
-    INSTALL_RPATH "$ORIGIN"
-  )
+
+  if(NOT FLATPAK)
+    set_target_properties(gittyup PROPERTIES INSTALL_RPATH "$ORIGIN")
+  endif()
 endif()
 
 add_dependencies(gittyup indexer relauncher)
 
-# Install application.
-install(TARGETS gittyup
-  DESTINATION .
-  COMPONENT ${GITTYUP_NAME}
-)
+if(FLATPAK)
+  # Install application.
+  install(
+    TARGETS gittyup
+    DESTINATION ./bin # otherwise the executable will not be found by flatpak
+    COMPONENT ${GITTYUP_NAME})
+else()
+  # Install application.
+  install(
+    TARGETS gittyup
+    DESTINATION .
+    COMPONENT ${GITTYUP_NAME})
+endif()
 
 if(APPLE)
   get_target_property(QT_LIBRARY Qt5::Core LOCATION)
@@ -155,79 +173,125 @@ if(APPLE)
 
   # Fixup relauncher RPATH.
   set(RELAUNCHER ${GITTYUP_NAME}.app/Contents/MacOS/relauncher)
-  install(CODE
-    "execute_process(COMMAND
-      ${CMAKE_INSTALL_NAME_TOOL} -delete_rpath \"${RPATH}\"
-        \"\${CMAKE_INSTALL_PREFIX}/${RELAUNCHER}\"
-    )
-    execute_process(COMMAND
-      ${CMAKE_INSTALL_NAME_TOOL} -add_rpath \"/usr/local/qt\"
-        \"\${CMAKE_INSTALL_PREFIX}/${RELAUNCHER}\"
-    )
-    execute_process(COMMAND
-      ${CMAKE_INSTALL_NAME_TOOL} -add_rpath \"@loader_path/../Frameworks\"
-        \"\${CMAKE_INSTALL_PREFIX}/${RELAUNCHER}\"
-    )"
-    COMPONENT ${GITTYUP_NAME}
+  install(
+    CODE "execute_process(COMMAND
+		${CMAKE_INSTALL_NAME_TOOL} -delete_rpath \"${RPATH}\"
+	  \"\${CMAKE_INSTALL_PREFIX}/${RELAUNCHER}\"
   )
+execute_process(COMMAND
+	${CMAKE_INSTALL_NAME_TOOL} -add_rpath \"/usr/local/qt\"
+	  \"\${CMAKE_INSTALL_PREFIX}/${RELAUNCHER}\"
+  )
+execute_process(COMMAND
+	${CMAKE_INSTALL_NAME_TOOL} -add_rpath \"@loader_path/../Frameworks\"
+	  \"\${CMAKE_INSTALL_PREFIX}/${RELAUNCHER}\"
+  )"
+    COMPONENT ${GITTYUP_NAME})
 
   # Fixup indexer RPATH.
   set(INDEXER ${GITTYUP_NAME}.app/Contents/MacOS/indexer)
-  install(CODE
-    "execute_process(COMMAND
-      ${CMAKE_INSTALL_NAME_TOOL} -delete_rpath \"${RPATH}\"
-        \"\${CMAKE_INSTALL_PREFIX}/${INDEXER}\"
-    )
-    execute_process(COMMAND
-      ${CMAKE_INSTALL_NAME_TOOL} -add_rpath \"/usr/local/qt\"
-        \"\${CMAKE_INSTALL_PREFIX}/${INDEXER}\"
-    )
-    execute_process(COMMAND
-      ${CMAKE_INSTALL_NAME_TOOL} -add_rpath \"@loader_path/../Frameworks\"
-        \"\${CMAKE_INSTALL_PREFIX}/${INDEXER}\"
-    )"
-    COMPONENT ${GITTYUP_NAME}
+  install(
+    CODE "execute_process(COMMAND
+		${CMAKE_INSTALL_NAME_TOOL} -delete_rpath \"${RPATH}\"
+	  \"\${CMAKE_INSTALL_PREFIX}/${INDEXER}\"
   )
+execute_process(COMMAND
+	${CMAKE_INSTALL_NAME_TOOL} -add_rpath \"/usr/local/qt\"
+	  \"\${CMAKE_INSTALL_PREFIX}/${INDEXER}\"
+  )
+execute_process(COMMAND
+	${CMAKE_INSTALL_NAME_TOOL} -add_rpath \"@loader_path/../Frameworks\"
+	  \"\${CMAKE_INSTALL_PREFIX}/${INDEXER}\"
+  )"
+    COMPONENT ${GITTYUP_NAME})
 else()
-  # Install config files.
-  if(CHANGELOG_HTML AND ACKNOWLEDGMENTS_HTML AND PRIVACY_HTML AND PLUGIN_HTML)
-    install(FILES ${CHANGELOG_HTML} ${ACKNOWLEDGMENTS_HTML} ${PRIVACY_HTML} ${PLUGIN_HTML}
-      DESTINATION Resources
-      COMPONENT ${GITTYUP_NAME}
-    )
+  # Windows and UNIX must be ./ otherwise it is interpreted as absolute path
+  if(UNIX)
+    set(RESOURCES_INSTALL_DIR
+        "${CMAKE_INSTALL_DATADIR}/gittyup/Resources"
+        CACHE STRING "The path for installing resource files")
+  else()
+    set(RESOURCES_INSTALL_DIR
+        "Resources"
+        CACHE STRING "The path for installing resource files")
   endif()
 
-  install(FILES ${EMOJI} ${MERGETOOLS}
-    DESTINATION Resources
-    COMPONENT ${GITTYUP_NAME}
-  )
+  # Install config files.
+  if(CHANGELOG_HTML
+     AND ACKNOWLEDGMENTS_HTML
+     AND PRIVACY_HTML
+     AND PLUGIN_HTML)
+    install(
+      FILES ${CHANGELOG_HTML} ${ACKNOWLEDGMENTS_HTML} ${PRIVACY_HTML}
+            ${PLUGIN_HTML}
+      DESTINATION ${RESOURCES_INSTALL_DIR}
+      COMPONENT ${GITTYUP_NAME})
+  endif()
+
+  install(
+    FILES ${EMOJI} ${MERGETOOLS}
+    DESTINATION ${RESOURCES_INSTALL_DIR}
+    COMPONENT ${GITTYUP_NAME})
+
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${EMOJI}
+                          ${CMAKE_BINARY_DIR}/Resources/emoji.json)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MERGETOOLS}
+                          ${CMAKE_BINARY_DIR}/Resources/mergetools)
 
   foreach(CONFIG_FILE ${CONFIG_FILES})
-    install(FILES ${CONFIG_FILE}
-      DESTINATION Resources
-      COMPONENT ${GITTYUP_NAME}
-    )
+    install(
+      FILES ${CONFIG_FILE}
+      DESTINATION ${RESOURCES_INSTALL_DIR}
+      COMPONENT ${GITTYUP_NAME})
+
+    file(RELATIVE_PATH CONFIG_FILE_DEST ${CONF_DIR} ${CONFIG_FILE})
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CONFIG_FILE}
+              ${CMAKE_BINARY_DIR}/Resources/${CONFIG_FILE_DEST})
   endforeach()
 
-  install(FILES ${DICTIONARIES}
-    DESTINATION Resources/dictionaries
-    COMPONENT ${GITTYUP_NAME}
-  )
+  install(
+    FILES ${DICTIONARIES}
+    DESTINATION ${RESOURCES_INSTALL_DIR}/dictionaries
+    COMPONENT ${GITTYUP_NAME})
 
-  install(FILES ${THEMES}
-    DESTINATION Resources/themes
-    COMPONENT ${GITTYUP_NAME}
-  )
+  foreach(DICTIONARY ${DICTIONARIES})
+    file(RELATIVE_PATH DICTIONARY_DEST ${CONF_DIR} ${DICTIONARY})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DICTIONARY}
+                            ${CMAKE_BINARY_DIR}/Resources/${DICTIONARY_DEST})
+  endforeach()
 
-  install(FILES ${LUA_PLUGINS}
-    DESTINATION Resources/plugins
-    COMPONENT ${GITTYUP_NAME}
-  )
+  install(
+    FILES ${THEMES}
+    DESTINATION ${RESOURCES_INSTALL_DIR}/themes
+    COMPONENT ${GITTYUP_NAME})
+
+  foreach(THEME ${THEMES})
+    file(RELATIVE_PATH THEME_DEST ${CONF_DIR} ${THEME})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${THEME}
+                            ${CMAKE_BINARY_DIR}/Resources/${THEME_DEST})
+  endforeach()
+
+  install(
+    FILES ${LUA_PLUGINS}
+    DESTINATION ${RESOURCES_INSTALL_DIR}/plugins
+    COMPONENT ${GITTYUP_NAME})
+
+  foreach(LUA_PLUGIN ${LUA_PLUGINS})
+    file(RELATIVE_PATH LUA_PLUGIN_DEST ${CONF_DIR} ${LUA_PLUGIN})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LUA_PLUGIN}
+                            ${CMAKE_BINARY_DIR}/Resources/${LUA_PLUGIN_DEST})
+  endforeach()
 
   foreach(SCINTILLUA_LEXER ${SCINTILLUA_LEXERS})
-    install(FILES ${SCINTILLUA_LEXER}
-      DESTINATION Resources/lexers
-      COMPONENT ${GITTYUP_NAME}
-    )
+    install(
+      FILES ${SCINTILLUA_LEXER}
+      DESTINATION ${RESOURCES_INSTALL_DIR}/lexers
+      COMPONENT ${GITTYUP_NAME})
+
+    get_filename_component(SCINTILLUA_LEXER_DEST ${SCINTILLUA_LEXER} NAME)
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SCINTILLUA_LEXER}
+              ${CMAKE_BINARY_DIR}/Resources/lexers/${SCINTILLUA_LEXER_DEST})
   endforeach()
 endif()

@@ -4,12 +4,9 @@
 
 #include <QScrollBar>
 
-Comment::Comment(
-  const QDateTime &date,
-  const Account::Comment &comment,
-  QWidget *parent)
-  : QTextEdit(parent)
-{
+Comment::Comment(const QDateTime &date, const Account::Comment &comment,
+                 QWidget *parent)
+    : QTextEdit(parent) {
   setReadOnly(true);
   setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
   setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
@@ -31,7 +28,8 @@ Comment::Comment(
   cursor.insertText(date.toString(Qt::DefaultLocaleLongDate));
 
   QTextBlockFormat indent;
-  indent.setLeftMargin(fontMetrics().horizontalAdvance(' ') * DiffViewStyle::kIndent);
+  indent.setLeftMargin(fontMetrics().horizontalAdvance(' ') *
+                       DiffViewStyle::kIndent);
   cursor.insertBlock(indent);
 
   QTextCharFormat body;
@@ -39,17 +37,10 @@ Comment::Comment(
   cursor.setCharFormat(body);
   cursor.insertText(comment.body);
 
-  connect(verticalScrollBar(), &QScrollBar::rangeChanged, [this] {
-    updateGeometry();
-  });
+  connect(verticalScrollBar(), &QScrollBar::rangeChanged,
+          [this] { updateGeometry(); });
 }
 
-QSize Comment::minimumSizeHint() const
-{
-  return QSize();
-}
+QSize Comment::minimumSizeHint() const { return QSize(); }
 
-QSize Comment::viewportSizeHint() const
-{
-  return document()->size().toSize();
-}
+QSize Comment::viewportSizeHint() const { return document()->size().toSize(); }

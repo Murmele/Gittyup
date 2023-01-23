@@ -14,16 +14,11 @@
 
 Location::Location() {}
 
-Location::Location(
-  RepoView::ViewMode mode,
-  const QString &ref,
-  const QString &id,
-  const QString &file)
-  : mMode(mode), mRef(ref), mId(id), mFile(file), mValid(true)
-{}
+Location::Location(RepoView::ViewMode mode, const QString &ref,
+                   const QString &id, const QString &file)
+    : mMode(mode), mRef(ref), mId(id), mFile(file), mValid(true) {}
 
-QString Location::toString(const git::Repository &repo) const
-{
+QString Location::toString(const git::Repository &repo) const {
   QString fmt = tr("%1 | %2");
   git::Commit commit = repo.lookupCommit(mId);
   if (!commit.isValid())
@@ -33,8 +28,7 @@ QString Location::toString(const git::Repository &repo) const
   return fmt.arg(initials, commit.summary(git::Commit::SubstituteEmoji));
 }
 
-bool Location::operator==(const Location &rhs) const
-{
-  return (mMode == rhs.mode() && mRef == rhs.ref() &&
-          mId == rhs.id() && mFile == rhs.file());
+bool Location::operator==(const Location &rhs) const {
+  return (mMode == rhs.mode() && mRef == rhs.ref() && mId == rhs.id() &&
+          mFile == rhs.file());
 }

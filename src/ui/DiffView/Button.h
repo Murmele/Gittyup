@@ -6,15 +6,11 @@
 #include <QStyleOptionToolButton>
 #include <QPainter>
 
-class Button : public QToolButton
-{
+class Button : public QToolButton {
 public:
-  Button(QWidget *parent = nullptr)
-    : QToolButton(parent)
-  {}
+  Button(QWidget *parent = nullptr) : QToolButton(parent) {}
 
-  QSize sizeHint() const override
-  {
+  QSize sizeHint() const override {
     QStyleOptionToolButton opt;
     initStyleOption(&opt);
 
@@ -25,8 +21,7 @@ public:
   }
 
 protected:
-  void initButtonPainter(QPainter *painter)
-  {
+  void initButtonPainter(QPainter *painter) {
     painter->setRenderHint(QPainter::Antialiasing);
 
     QPen pen = painter->pen();

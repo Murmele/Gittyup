@@ -12,15 +12,12 @@
 
 namespace git {
 
-Result::Result(int error)
-  : mError(error)
-{
+Result::Result(int error) : mError(error) {
   const git_error *err = git_error_last();
   mErrorString = err ? err->message : QString();
 }
 
-QString Result::errorString(const QString &defaultError) const
-{
+QString Result::errorString(const QString &defaultError) const {
   return !mErrorString.isEmpty() ? mErrorString : defaultError;
 }
 

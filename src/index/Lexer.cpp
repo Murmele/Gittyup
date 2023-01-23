@@ -9,6 +9,4 @@
 
 #include "Lexer.h"
 
-Lexer::Lexer(QObject *parent)
-  : QObject(parent)
-{}
+Lexer::Lexer(QObject *parent) : QObject(parent) {}

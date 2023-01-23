@@ -26,14 +26,9 @@
 #include <QListWidget>
 #include <QStringList>
 
-TagDialog::TagDialog(
-  const git::Repository &repo,
-  const QString &id,
-  const git::Remote &remote,
-  QWidget *parent)
-  : QDialog(parent),
-    mRemote(remote)
-{
+TagDialog::TagDialog(const git::Repository &repo, const QString &id,
+                     const git::Remote &remote, QWidget *parent)
+    : QDialog(parent), mRemote(remote) {
   setAttribute(Qt::WA_DeleteOnClose);
 
   setWindowTitle(tr("Create Tag"));
@@ -68,28 +63,27 @@ TagDialog::TagDialog(
   });
 
   QDialogButtonBox *buttons =
-    new QDialogButtonBox(QDialogButtonBox::Cancel, this);
+      new QDialogButtonBox(QDialogButtonBox::Cancel, this);
   connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
   connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
   QPushButton *create =
-    buttons->addButton(tr("Create Tag"), QDialogButtonBox::AcceptRole);
+      buttons->addButton(tr("Create Tag"), QDialogButtonBox::AcceptRole);
   create->setEnabled(false);
 
-  // filtering must be done only once, because mExistingTags does not change during
-  // the use of this dialog
+  // filtering must be done only once, because mExistingTags does not change
+  // during the use of this dialog
   mExistingTags = repo.existingTags(),
   // filter descending. V1.1 before V1.0 makes more sense, because normaly the
   // next greater number will be choosen and so it can be seen faster
-  std::sort(mExistingTags.begin(), mExistingTags.end(), std::greater <>());
+      std::sort(mExistingTags.begin(), mExistingTags.end(), std::greater<>());
   mFilteredTags = mExistingTags;
 
   mListWidget = new QListWidget(this);
   mListWidget->addItems(mExistingTags);
 
-  connect(mListWidget, &QListWidget::itemDoubleClicked, [this] (QListWidgetItem* item) {
-      mNameField->setText(item->text());
-  });
+  connect(mListWidget, &QListWidget::itemDoubleClicked,
+          [this](QListWidgetItem *item) { mNameField->setText(item->text()); });
 
   auto updateButton = [this, repo, create, annotated] {
     QString name = mNameField->text();
@@ -97,14 +91,16 @@ TagDialog::TagDialog(
     mOldTagname = name;
     bool force = mForce->isChecked();
     create->setEnabled(
-      !name.isEmpty() && (force || !repo.lookupTag(name).isValid()) &&
-      (!annotated->isChecked() || !mMessage->toPlainText().isEmpty()));
+        !name.isEmpty() && (force || !repo.lookupTag(name).isValid()) &&
+        (!annotated->isChecked() || !mMessage->toPlainText().isEmpty()));
 
     if (value >= 0) {
-        // a new character was added, so the filtered data can be filtered again
-        mFilteredTags = mFilteredTags.filter(name, Qt::CaseSensitivity::CaseSensitive);
+      // a new character was added, so the filtered data can be filtered again
+      mFilteredTags =
+          mFilteredTags.filter(name, Qt::CaseSensitivity::CaseSensitive);
     } else {
-        mFilteredTags = mExistingTags.filter(name, Qt::CaseSensitivity::CaseSensitive);
+      mFilteredTags =
+          mExistingTags.filter(name, Qt::CaseSensitivity::CaseSensitive);
     }
 
     mListWidget->clear();
@@ -125,10 +121,10 @@ TagDialog::TagDialog(
   layout->addRow(annotatedLayout);
   layout->addRow(mMessage);
 
-  QHBoxLayout* hLayout = new QHBoxLayout();
+  QHBoxLayout *hLayout = new QHBoxLayout();
   hLayout->addLayout(layout);
 
-  QVBoxLayout* vLayout = new QVBoxLayout();
+  QVBoxLayout *vLayout = new QVBoxLayout();
   vLayout->addWidget(new QLabel("Existing Tags:", this));
   vLayout->addWidget(mListWidget);
   hLayout->addLayout(vLayout);
@@ -140,25 +136,15 @@ TagDialog::TagDialog(
   setLayout(vLayout);
 }
 
-bool TagDialog::force() const
-{
-  return mForce->isChecked();
-}
+bool TagDialog::force() const { return mForce->isChecked(); }
 
-git::Remote TagDialog::remote() const
-{
+git::Remote TagDialog::remote() const {
   if (mPush && mPush->isChecked())
     return mRemote;
   else
     return git::Remote();
 }
 
-QString TagDialog::name() const
-{
-  return mNameField->text();
-}
+QString TagDialog::name() const { return mNameField->text(); }
 
-QString TagDialog::message() const
-{
-  return mMessage->toPlainText();
-}
+QString TagDialog::message() const { return mMessage->toPlainText(); }

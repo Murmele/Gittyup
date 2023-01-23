@@ -17,21 +17,14 @@
 
 class Account;
 
-class Repository : public QObject
-{
+class Repository : public QObject {
   Q_OBJECT
 
 public:
-  enum Protocol
-  {
-    Https,
-    Ssh
-  };
+  enum Protocol { Https, Ssh };
 
-  Repository(
-    const QString &name,
-    const QString &fullName,
-    Account *parent = nullptr);
+  Repository(const QString &name, const QString &fullName,
+             Account *parent = nullptr);
 
   Account *account() const;
 
@@ -46,7 +39,7 @@ private:
   // remote properties
   QString mName;
   QString mFullName;
-  QMap<Protocol,QString> mUrls;
+  QMap<Protocol, QString> mUrls;
 };
 
 #endif

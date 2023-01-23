@@ -14,8 +14,7 @@
 #include <QPushButton>
 
 AddRemoteDialog::AddRemoteDialog(const QString &name, QWidget *parent)
-  : QDialog(parent)
-{
+    : QDialog(parent) {
   setWindowTitle(tr("Add Remote"));
 
   mName = new QLineEdit(name, this);
@@ -23,14 +22,14 @@ AddRemoteDialog::AddRemoteDialog(const QString &name, QWidget *parent)
 
   mUrl = new QLineEdit(this);
   connect(mUrl, &QLineEdit::textChanged, this, &AddRemoteDialog::update);
-  
+
   QDialogButtonBox *buttons = new QDialogButtonBox(this);
   connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
   connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
   buttons->addButton(QDialogButtonBox::Cancel);
   mAdd = buttons->addButton(tr("Add Remote"), QDialogButtonBox::AcceptRole);
-  
+
   QFormLayout *layout = new QFormLayout(this);
   layout->addRow(tr("Name:"), mName);
   layout->addRow(tr("URL:"), mUrl);
@@ -39,17 +38,10 @@ AddRemoteDialog::AddRemoteDialog(const QString &name, QWidget *parent)
   update();
 }
 
-QString AddRemoteDialog::name() const
-{
-  return mName->text();
-}
+QString AddRemoteDialog::name() const { return mName->text(); }
 
-QString AddRemoteDialog::url() const
-{
-  return mUrl->text();
-}
+QString AddRemoteDialog::url() const { return mUrl->text(); }
 
-void AddRemoteDialog::update(const QString &text)
-{
+void AddRemoteDialog::update(const QString &text) {
   mAdd->setEnabled(!name().isEmpty() && !url().isEmpty());
 }

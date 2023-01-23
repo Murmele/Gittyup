@@ -16,13 +16,11 @@ class QProcessEnvironment;
 
 namespace git {
 
-class Command
-{
+class Command {
 public:
   static QString bashPath();
-  static QString substitute(
-    const QProcessEnvironment &env,
-    const QString &command);
+  static QString substitute(const QProcessEnvironment &env,
+                            const QString &command);
 };
 
 } // namespace git

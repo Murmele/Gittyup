@@ -20,8 +20,7 @@ class QListView;
 class QPushButton;
 class QTreeView;
 
-class StartDialog : public QDialog
-{
+class StartDialog : public QDialog {
   Q_OBJECT
 
 public:

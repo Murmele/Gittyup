@@ -20,17 +20,15 @@ class QCheckBox;
 namespace git {
 class Reference;
 class Repository;
-}
+} // namespace git
 
-class NewBranchDialog : public QDialog
-{
+class NewBranchDialog : public QDialog {
   Q_OBJECT
 
 public:
-  NewBranchDialog(
-    const git::Repository &repo,
-    const git::Commit &commit = git::Commit(),
-    QWidget *parent = nullptr);
+  NewBranchDialog(const git::Repository &repo,
+                  const git::Commit &commit = git::Commit(),
+                  QWidget *parent = nullptr);
 
   QString name() const;
   bool checkout() const;

@@ -16,8 +16,7 @@
 
 namespace {
 
-QString host(const QString &url)
-{
+QString host(const QString &url) {
   QString host = QUrl(url).host();
   if (!host.isEmpty())
     return host;
@@ -28,23 +27,17 @@ QString host(const QString &url)
   return url.mid(begin, end - begin);
 }
 
-QString protocol(const QString &url)
-{
+QString protocol(const QString &url) {
   QString scheme = QUrl(url).scheme();
   return !scheme.isEmpty() ? scheme : "ssh";
 }
 
-} // anon. namespace
+} // namespace
 
-GitCredential::GitCredential(const QString &name)
-  : mName(name)
-{}
+GitCredential::GitCredential(const QString &name) : mName(name) {}
 
-bool GitCredential::get(
-  const QString &url,
-  QString &username,
-  QString &password)
-{
+bool GitCredential::get(const QString &url, QString &username,
+                        QString &password) {
   QProcess process;
   process.start(command(), {"get"});
   if (!process.waitForStarted())
@@ -78,11 +71,8 @@ bool GitCredential::get(
   return !username.isEmpty() && !password.isEmpty();
 }
 
-bool GitCredential::store(
-  const QString &url,
-  const QString &username,
-  const QString &password)
-{
+bool GitCredential::store(const QString &url, const QString &username,
+                          const QString &password) {
   QProcess process;
   process.start(command(), {"store"});
   if (!process.waitForStarted())
@@ -101,8 +91,7 @@ bool GitCredential::store(
   return true;
 }
 
-QString GitCredential::command() const
-{
+QString GitCredential::command() const {
   QDir dir(QCoreApplication::applicationDirPath());
   return dir.filePath(QString("git-credential-%1").arg(mName));
 }

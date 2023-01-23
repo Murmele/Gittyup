@@ -18,28 +18,16 @@ typedef struct lua_State lua_State;
 
 using PluginRef = QSharedPointer<class Plugin>;
 
-class Plugin : public QObject
-{
+class Plugin : public QObject {
   Q_OBJECT
 
 public:
-  enum OptionKind {
-    Boolean,
-    Integer,
-    String,
-    List
-  };
+  enum OptionKind { Boolean, Integer, String, List };
 
-  enum DiagnosticKind {
-    Note,
-    Warning,
-    Error
-  };
+  enum DiagnosticKind { Note, Warning, Error };
 
-  Plugin(
-    const QString &file,
-    const git::Repository &repo = git::Repository(),
-    QObject *parent = nullptr);
+  Plugin(const QString &file, const git::Repository &repo = git::Repository(),
+         QObject *parent = nullptr);
   ~Plugin() override;
 
   bool isValid() const;
@@ -51,12 +39,9 @@ public:
   bool isEnabled(const QString &key) const;
   void setEnabled(const QString &key, bool enabled);
 
-  void defineOption(
-    const QString &key,
-    OptionKind kind,
-    const QString &text,
-    const QVariant &value,
-    const QStringList &opts = QStringList());
+  void defineOption(const QString &key, OptionKind kind, const QString &text,
+                    const QVariant &value,
+                    const QStringList &opts = QStringList());
   void setOptionValue(const QString &key, const QVariant &value);
 
   QStringList optionKeys() const;
@@ -65,13 +50,9 @@ public:
   OptionKind optionKind(const QString &key) const;
   QStringList optionOpts(const QString &key) const;
 
-  void defineDiagnostic(
-    const QString &key,
-    DiagnosticKind kind,
-    const QString &name,
-    const QString &msg,
-    const QString &desc,
-    bool enabled = false);
+  void defineDiagnostic(const QString &key, DiagnosticKind kind,
+                        const QString &name, const QString &msg,
+                        const QString &desc, bool enabled = false);
   void setDiagnosticKind(const QString &key, DiagnosticKind kind);
 
   QStringList diagnosticKeys() const;
@@ -82,23 +63,21 @@ public:
 
   bool hunk(TextEditor *editor) const;
 
-  static QList<PluginRef> plugins(
-    const git::Repository &repo = git::Repository());
+  static QList<PluginRef>
+  plugins(const git::Repository &repo = git::Repository());
 
 signals:
   void error(const QString &msg) const;
 
 private:
-  struct Option
-  {
+  struct Option {
     OptionKind kind;
     QString text;
     QVariant value;
     QStringList opts;
   };
 
-  struct Diagnostic
-  {
+  struct Diagnostic {
     DiagnosticKind kind;
     QString name;
     QString message;
@@ -116,6 +95,6 @@ private:
   QString mName;
   QString mError;
 
-  QMap<QString,Option> mOptions;
-  QMap<QString,Diagnostic> mDiagnostics;
+  QMap<QString, Option> mOptions;
+  QMap<QString, Diagnostic> mDiagnostics;
 };

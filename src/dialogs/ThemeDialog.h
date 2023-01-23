@@ -12,8 +12,7 @@
 
 #include <QDialog>
 
-class ThemeDialog : public QDialog
-{
+class ThemeDialog : public QDialog {
   Q_OBJECT
 
 public:

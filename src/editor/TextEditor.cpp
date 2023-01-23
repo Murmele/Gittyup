@@ -16,16 +16,40 @@
 #include <QStyle>
 #include <QWindow>
 #include <QMenu>
+#include <QCheckBox>
 
 #include "PlatQt.h"
 
 using namespace Scintilla;
 
+namespace {
+
+QPixmap stagedUnstagedIcon(const bool &checked, const QColor &background,
+                           const int &fontHeight) {
+  // Set background color and checkbox size.
+  QString checkBoxStyle = "QCheckBox {"
+                          "  background: %1;"
+                          "}"
+                          "QCheckBox::indicator {"
+                          "  height: %2;"
+                          "  width: %2;"
+                          "}";
+
+  QCheckBox checkBox;
+  checkBox.setChecked(checked);
+  checkBox.setStyleSheet(
+      checkBoxStyle.arg(background.name()).arg(fontHeight - 2));
+  return checkBox.grab(
+      QRect(QPoint(0, 0), QSize(fontHeight - 2, fontHeight - 2)));
+}
+
+const float textHeightFactorCheckBoxSize = 2.0;
+
+} // namespace
+
 extern LexerModule lmLPeg;
 
-TextEditor::TextEditor(QWidget *parent)
-  : ScintillaIFace(parent)
-{
+TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
   // Load colors.
   Theme *theme = Application::theme();
   mOursColor = theme->diff(Theme::Diff::Ours);
@@ -38,7 +62,6 @@ TextEditor::TextEditor(QWidget *parent)
   mNoteIcon = style->standardIcon(QStyle::SP_MessageBoxInformation);
   mWarningIcon = style->standardIcon(QStyle::SP_MessageBoxWarning);
   mErrorIcon = style->standardIcon(QStyle::SP_MessageBoxCritical);
-  mStagedIcon = style->standardIcon(QStyle::SP_ArrowUp);
 
   // Register the LPeg lexer.
   static bool initialized = false;
@@ -61,8 +84,7 @@ TextEditor::TextEditor(QWidget *parent)
     setMarginMaskN(i, 0);
   }
 
-
-  setMarginMaskN(Staged, 1 << StagedMarker);
+  setMarginMaskN(Margin::Staged, (1 << StagedMarker) | (1 << UnstagedMarker));
   setStatusDiff(mStatusDiff); // to apply margin width
 
   int mask = 0;
@@ -130,16 +152,15 @@ TextEditor::TextEditor(QWidget *parent)
 
   // Apply default settings.
   applySettings();
-  connect(Settings::instance(), &Settings::settingsChanged,
-          this, &TextEditor::applySettings);
+  connect(Settings::instance(), &Settings::settingsChanged, this,
+          &TextEditor::applySettings);
 
   // Update geometry when the scroll bar becomes visible.
-  connect(horizontalScrollBar(), &QScrollBar::rangeChanged,
-          this, &TextEditor::updateGeometry);
+  connect(horizontalScrollBar(), &QScrollBar::rangeChanged, this,
+          &TextEditor::updateGeometry);
 }
 
-void TextEditor::contextMenuEvent(QContextMenuEvent *event)
-{
+void TextEditor::contextMenuEvent(QContextMenuEvent *event) {
   Point pos = PointFromQPoint(event->globalPos());
   Point pt = PointFromQPoint(event->pos());
   if (!PointInSelection(pt))
@@ -147,25 +168,33 @@ void TextEditor::contextMenuEvent(QContextMenuEvent *event)
   ContextMenu(pos);
 }
 
-void TextEditor::applySettings()
-{
+void TextEditor::applySettings() {
   // Set default font and size.
   Settings *settings = Settings::instance();
-  settings->beginGroup("editor");
-  settings->beginGroup("font");
-  QString family = settings->value("family").toString();
-  int pointSize = settings->value("size").toInt();
+  QString family = settings->value(Setting::Id::FontFamily).toString();
+  int pointSize = settings->value(Setting::Id::FontSize).toInt();
   styleSetFont(STYLE_DEFAULT, QFont(family, pointSize));
-  settings->endGroup(); // font
 
-  settings->beginGroup("indent");
-  setUseTabs(settings->value("tabs").toBool());
-  setIndent(settings->value("width").toInt());
-  setTabWidth(settings->value("tabwidth").toInt());
-  settings->endGroup(); // indent
-  settings->endGroup(); // editor
+  setUseTabs(settings->value(Setting::Id::UseTabsForIndent).toBool());
+  setIndent(settings->value(Setting::Id::IndentWidth).toInt());
+  setTabWidth(settings->value(Setting::Id::TabWidth).toInt());
 
   // Initialize markers.
+  QColor background = palette().color(QPalette::Base);
+  int fontHeight;
+  // On windows it looks ugly when using pointSize, but on
+  // linux with flatpak textHeight looks strange
+#if defined(FLATPAK)
+  fontHeight = pointSize * textHeightFactorCheckBoxSize;
+#else
+  fontHeight = textHeight(0);
+#endif
+  setStatusDiff(mStatusDiff); // to apply margin width
+  mStagedIcon = stagedUnstagedIcon(true, background, fontHeight);
+  mUnStagedIcon = stagedUnstagedIcon(false, background, fontHeight);
+  if (mStatusDiff)
+    setMarginWidthN(Staged, fontHeight);
+
   // used to colorize the background of the text
   markerDefine(Context, SC_MARK_EMPTY);
   markerDefine(Ours, SC_MARK_BACKGROUND);
@@ -173,6 +202,7 @@ void TextEditor::applySettings()
   markerDefine(Addition, SC_MARK_BACKGROUND);
   markerDefine(Deletion, SC_MARK_BACKGROUND);
   markerDefine(StagedMarker, SC_MARK_RGBAIMAGE);
+  markerDefine(UnstagedMarker, SC_MARK_RGBAIMAGE);
   markerDefine(DiscardMarker, SC_MARK_EMPTY);
 
   markerSetBack(Ours, mOursColor);
@@ -185,8 +215,8 @@ void TextEditor::applySettings()
   loadMarkerIcon(WarningMarker, mWarningIcon);
   loadMarkerIcon(ErrorMarker, mErrorIcon);
 
-
-  loadMarkerIcon(StagedMarker, mStagedIcon);
+  loadMarkerPixmap(StagedMarker, mStagedIcon);
+  loadMarkerPixmap(UnstagedMarker, mUnStagedIcon);
 
   // Set LPeg lexer language.
   QByteArray lexer = this->lexer().toUtf8();
@@ -216,8 +246,10 @@ void TextEditor::applySettings()
   styleSetBack(CommentAuthor, theme->remoteComment(Theme::Comment::Background));
 
   styleSetFont(CommentTimestamp, regular);
-  styleSetFore(CommentTimestamp, theme->remoteComment(Theme::Comment::Timestamp));
-  styleSetBack(CommentTimestamp, theme->remoteComment(Theme::Comment::Background));
+  styleSetFore(CommentTimestamp,
+               theme->remoteComment(Theme::Comment::Timestamp));
+  styleSetBack(CommentTimestamp,
+               theme->remoteComment(Theme::Comment::Background));
 
   // Emit own signal.
   emit settingsChanged();
@@ -226,24 +258,16 @@ void TextEditor::applySettings()
   updateGeometry();
 }
 
-QString TextEditor::lexer() const
-{
-  return Settings::instance()->lexer(mPath);
-}
+QString TextEditor::lexer() const { return Settings::instance()->lexer(mPath); }
 
-void TextEditor::setLineCount(int lines)
-{
-  mLineCount = lines;
-}
+void TextEditor::setLineCount(int lines) { mLineCount = lines; }
 
-void TextEditor::setLexer(const QString &path)
-{
+void TextEditor::setLexer(const QString &path) {
   mPath = path;
   applySettings();
 }
 
-void TextEditor::load(const QString &path, const QString &text)
-{
+void TextEditor::load(const QString &path, const QString &text) {
   setScrollWidth(256);
   setLexer(path);
   setText(text);
@@ -256,21 +280,24 @@ void TextEditor::load(const QString &path, const QString &text)
   updateGeometry();
 }
 
-void TextEditor::setStatusDiff(bool statusDiff)
-{
-    mStatusDiff = statusDiff;
-    if (mStatusDiff) {
-        // fixed width, because it indicates only if staged or not
-        setMarginWidthN(Staged, 30);
-        setMarginSensitiveN(Staged, true); // to change by mouseclick staged/unstaged
-    } else {
-        setMarginWidthN(Staged, 0);
-        setMarginSensitiveN(Staged, false);
-    }
+void TextEditor::setStatusDiff(bool statusDiff) {
+  mStatusDiff = statusDiff;
+  if (mStatusDiff) {
+#if defined(FLATPAK)
+    setMarginWidthN(Staged, fontPointSize(0) * textHeightFactorCheckBoxSize);
+#else
+    setMarginWidthN(Staged, textHeight(0));
+#endif
+
+    setMarginSensitiveN(Staged,
+                        true); // to change by mouseclick staged/unstaged
+  } else {
+    setMarginWidthN(Staged, 0);
+    setMarginSensitiveN(Staged, false);
+  }
 }
 
-void TextEditor::clearHighlights()
-{
+void TextEditor::clearHighlights() {
   setIndicatorCurrent(FindAll);
   indicatorClearRange(0, length());
 
@@ -283,9 +310,7 @@ void TextEditor::clearHighlights()
   emit highlightActivated(false);
 }
 
-int TextEditor::highlightAll(const QString &text)
-{
-
+int TextEditor::highlightAll(const QString &text) {
 
   clearHighlights();
   if (text.isEmpty())
@@ -308,7 +333,7 @@ int TextEditor::highlightAll(const QString &text)
 
   int matches = 0;
   int max = length();
-  QPair<int,int> match = findText(0, data, 0, max);
+  QPair<int, int> match = findText(0, data, 0, max);
   while (match.first >= 0) {
     // Search again from the end of the last range.
     indicatorFillRange(match.first, match.second - match.first);
@@ -319,8 +344,7 @@ int TextEditor::highlightAll(const QString &text)
   return matches;
 }
 
-int TextEditor::find(const QString &text, bool forward, bool indicator)
-{
+int TextEditor::find(const QString &text, bool forward, bool indicator) {
   QByteArray utf8 = text.toUtf8();
   const char *data = utf8.constData();
 
@@ -344,13 +368,11 @@ int TextEditor::find(const QString &text, bool forward, bool indicator)
   return pos;
 }
 
-QList<TextEditor::Diagnostic> TextEditor::diagnostics(int line)
-{
+QList<TextEditor::Diagnostic> TextEditor::diagnostics(int line) {
   return mDiagnostics.value(line);
 }
 
-void TextEditor::addDiagnostic(int line, const Diagnostic &diag)
-{
+void TextEditor::addDiagnostic(int line, const Diagnostic &diag) {
   int marker;
   int indicator;
   switch (diag.kind) {
@@ -397,44 +419,43 @@ void TextEditor::addDiagnostic(int line, const Diagnostic &diag)
  */
 void TextEditor::ContextMenu(Scintilla::Point pt) {
 
-
-    int startLine = lineFromPosition(selectionStart());
-    int end = lineFromPosition(selectionEnd()) + 1;
-    int staged = 0;
-    int diffLines = 0;
-    for (int i = startLine; i < end; i ++) {
-        int mask = markers(i);
-        if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
-            diffLines++;
-            if (mask & 1 << TextEditor::Marker::StagedMarker)
-                staged++;
-        }
+  int startLine = lineFromPosition(selectionStart());
+  int end = lineFromPosition(selectionEnd()) + 1;
+  int staged = 0;
+  int diffLines = 0;
+  for (int i = startLine; i < end; i++) {
+    int mask = markers(i);
+    if (mask & (1 << TextEditor::Marker::Addition |
+                1 << TextEditor::Marker::Deletion)) {
+      diffLines++;
+      if (mask & 1 << TextEditor::Marker::StagedMarker)
+        staged++;
     }
+  }
 
-    if (displayPopupMenu) {
-        const bool writable = !WndProc(SCI_GETREADONLY, 0, 0);
-        popup.CreatePopUp();
-        AddToPopUp("Undo", idcmdUndo, writable && pdoc->CanUndo());
-        AddToPopUp("Redo", idcmdRedo, writable && pdoc->CanRedo());
-        AddToPopUp("");
-        AddToPopUp("Cut", idcmdCut, writable && !sel.Empty());
-        AddToPopUp("Copy", idcmdCopy, !sel.Empty());
-        AddToPopUp("Paste", idcmdPaste, writable && WndProc(SCI_CANPASTE, 0, 0));
-        AddToPopUp("Delete", idcmdDelete, writable && !sel.Empty());
-        if (mStatusDiff) {
-            AddToPopUp("");
-            AddToPopUp("Stage selected\tS", stageSelected, diffLines - staged > 0);
-            AddToPopUp("Unstage selected\tU", unstageSelected, staged > 0);
-            AddToPopUp("Discard selected\tR", discardSelected, diffLines > 0);
-        }
-        AddToPopUp("");
-        AddToPopUp("Select All", idcmdSelectAll);
-        popup.Show(pt, wMain);
+  if (displayPopupMenu) {
+    const bool writable = !WndProc(SCI_GETREADONLY, 0, 0);
+    popup.CreatePopUp();
+    AddToPopUp("Undo", idcmdUndo, writable && pdoc->CanUndo());
+    AddToPopUp("Redo", idcmdRedo, writable && pdoc->CanRedo());
+    AddToPopUp("");
+    AddToPopUp("Cut", idcmdCut, writable && !sel.Empty());
+    AddToPopUp("Copy", idcmdCopy, !sel.Empty());
+    AddToPopUp("Paste", idcmdPaste, writable && WndProc(SCI_CANPASTE, 0, 0));
+    AddToPopUp("Delete", idcmdDelete, writable && !sel.Empty());
+    if (mStatusDiff) {
+      AddToPopUp("");
+      AddToPopUp("Stage selected\tS", stageSelected, diffLines - staged > 0);
+      AddToPopUp("Unstage selected\tU", unstageSelected, staged > 0);
+      AddToPopUp("Discard selected\tR", discardSelected, diffLines > 0);
     }
+    AddToPopUp("");
+    AddToPopUp("Select All", idcmdSelectAll);
+    popup.Show(pt, wMain);
+  }
 }
 
-sptr_t TextEditor::WndProc(unsigned int message, uptr_t wParam, sptr_t lParam)
-{
+sptr_t TextEditor::WndProc(unsigned int message, uptr_t wParam, sptr_t lParam) {
   switch (message) {
 
     case stageSelected:
@@ -450,8 +471,7 @@ sptr_t TextEditor::WndProc(unsigned int message, uptr_t wParam, sptr_t lParam)
   return 0;
 }
 
-void TextEditor::AddToPopUp(const char *label, int cmd, bool enabled)
-{
+void TextEditor::AddToPopUp(const char *label, int cmd, bool enabled) {
   QMenu *menu = static_cast<QMenu *>(popup.GetID());
 
   if (!qstrlen(label)) {
@@ -464,40 +484,38 @@ void TextEditor::AddToPopUp(const char *label, int cmd, bool enabled)
 
   // Make sure the menu's signal is connected only once.
   menu->disconnect();
-  connect(menu, &QMenu::triggered, this, [this](QAction *action) {
-    Command(action->data().toInt());
-  });
+  connect(menu, &QMenu::triggered, this,
+          [this](QAction *action) { Command(action->data().toInt()); });
 }
 
 void TextEditor::Command(int cmdId) {
 
-    switch (cmdId) {
+  switch (cmdId) {
     case stageSelected: {
-        int startLine = lineFromPosition(selectionStart());
-        int end = lineFromPosition(selectionEnd()) + 1;
-        emit stageSelectedSignal(startLine, end);
-        break;
-
-    } case unstageSelected: {
-        int startLine = lineFromPosition(selectionStart());
-        int end = lineFromPosition(selectionEnd()) + 1;
-        emit unstageSelectedSignal(startLine, end);
-        break;
-
-    } case discardSelected: {
-        int startLine = lineFromPosition(selectionStart());
-        int end = lineFromPosition(selectionEnd()) + 1;
-        emit discardSelectedSignal(startLine, end);
-        break;
-
-    } default:
-        ScintillaBase::Command(cmdId);
-        break;
+      int startLine = lineFromPosition(selectionStart());
+      int end = lineFromPosition(selectionEnd()) + 1;
+      emit stageSelectedSignal(startLine, end);
+      break;
     }
+    case unstageSelected: {
+      int startLine = lineFromPosition(selectionStart());
+      int end = lineFromPosition(selectionEnd()) + 1;
+      emit unstageSelectedSignal(startLine, end);
+      break;
+    }
+    case discardSelected: {
+      int startLine = lineFromPosition(selectionStart());
+      int end = lineFromPosition(selectionEnd()) + 1;
+      emit discardSelectedSignal(startLine, end);
+      break;
+    }
+    default:
+      ScintillaBase::Command(cmdId);
+      break;
+  }
 }
 
-QSize TextEditor::viewportSizeHint() const
-{
+QSize TextEditor::viewportSizeHint() const {
   // Return placeholder size if the content isn't loaded.
   QSize size = ScintillaIFace::viewportSizeHint();
   if (length() == 0 && mLineCount >= 0) {
@@ -520,8 +538,7 @@ QSize TextEditor::viewportSizeHint() const
   return QSize(size.width(), y + (lines * height) + scrollBarHeight);
 }
 
-int TextEditor::diagnosticMarker(int line)
-{
+int TextEditor::diagnosticMarker(int line) {
   int marks = markers(line);
   if (marks & (1 << NoteMarker))
     return NoteMarker;
@@ -535,8 +552,26 @@ int TextEditor::diagnosticMarker(int line)
   return -1;
 }
 
-void TextEditor::loadMarkerIcon(Marker marker, const QIcon &icon)
-{
+void TextEditor::loadMarkerPixmap(Marker marker, const QPixmap &pixmap) {
+  qreal dpr = 1.0;
+  if (QWidget *window = this->window()) {
+    if (QWindow *handle = window->windowHandle())
+      dpr = handle->devicePixelRatio();
+  }
+
+  qreal height = textHeight(0);
+  qreal scaled = height * dpr;
+  QPixmap scaledPixmap(pixmap);
+  if (pixmap.height() > height) {
+    // scale
+    scaledPixmap = pixmap.scaled(scaled, scaled, Qt::KeepAspectRatio,
+                                 Qt::SmoothTransformation);
+  }
+
+  markerDefineImage(marker, scaledPixmap.toImage());
+}
+
+void TextEditor::loadMarkerIcon(Marker marker, const QIcon &icon) {
   qreal dpr = 1.0;
   if (QWidget *window = this->window()) {
     if (QWindow *handle = window->windowHandle())
@@ -548,38 +583,39 @@ void TextEditor::loadMarkerIcon(Marker marker, const QIcon &icon)
 
   QPixmap pixmap = icon.pixmap(height, height);
   pixmap.setDevicePixelRatio(dpr);
-  QPixmap scaledPixmap = pixmap.scaled(
-    scaled, scaled, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  QPixmap scaledPixmap = pixmap.scaled(scaled, scaled, Qt::KeepAspectRatio,
+                                       Qt::SmoothTransformation);
   markerDefineImage(marker, scaledPixmap.toImage());
 }
 
-void TextEditor::keyPressEvent(QKeyEvent * ke) {
-    if (ke->key() == Qt::Key_S || ke->key() == Qt::Key_U || ke->key() == Qt::Key_R) {
-        if (!mStatusDiff)
-            return;
-
-        int startLine = lineFromPosition(selectionStart());
-        int end = lineFromPosition(selectionEnd()) + 1;
-        int staged = 0;
-        int diffLines = 0;
-        for (int i = startLine; i < end; i ++) {
-            int mask = markers(i);
-            if (mask & (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion)) {
-                diffLines++;
-                if (mask & 1 << TextEditor::Marker::StagedMarker)
-                    staged++;
-            }
-        }
-
-        if (ke->key() == Qt::Key_S && diffLines - staged > 0) {
-            Command(stageSelected);
-            return;
-        } else if (ke->key() == Qt::Key_U && staged > 0) {
-            Command(unstageSelected);
-            return;
-        } else if (ke->key() == Qt::Key_R && diffLines > 0) {
-            Command(discardSelected);
-            return;
-        }
+void TextEditor::keyPressEvent(QKeyEvent *ke) {
+  if (mStatusDiff && (ke->key() == Qt::Key_S || ke->key() == Qt::Key_U ||
+                      ke->key() == Qt::Key_R)) {
+    int startLine = lineFromPosition(selectionStart());
+    int end = lineFromPosition(selectionEnd()) + 1;
+    int staged = 0;
+    int diffLines = 0;
+    for (int i = startLine; i < end; i++) {
+      int mask = markers(i);
+      if (mask & (1 << TextEditor::Marker::Addition |
+                  1 << TextEditor::Marker::Deletion)) {
+        diffLines++;
+        if (mask & 1 << TextEditor::Marker::StagedMarker)
+          staged++;
+      }
     }
+
+    if (ke->key() == Qt::Key_S && diffLines - staged > 0) {
+      Command(stageSelected);
+      return;
+    } else if (ke->key() == Qt::Key_U && staged > 0) {
+      Command(unstageSelected);
+      return;
+    } else if (ke->key() == Qt::Key_R && diffLines > 0) {
+      Command(discardSelected);
+      return;
+    }
+  }
+
+  ScintillaIFace::keyPressEvent(ke);
 }

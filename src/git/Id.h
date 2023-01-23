@@ -16,8 +16,7 @@
 
 namespace git {
 
-class Id
-{
+class Id {
 public:
   Id();
   Id(const QByteArray &id);

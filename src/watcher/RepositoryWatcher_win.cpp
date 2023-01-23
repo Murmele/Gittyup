@@ -15,27 +15,20 @@
 namespace {
 
 const uint kFlags =
-  (FILE_NOTIFY_CHANGE_FILE_NAME |
-   FILE_NOTIFY_CHANGE_DIR_NAME |
-   FILE_NOTIFY_CHANGE_ATTRIBUTES |
-   FILE_NOTIFY_CHANGE_SIZE |
-   FILE_NOTIFY_CHANGE_LAST_WRITE |
-   FILE_NOTIFY_CHANGE_LAST_ACCESS |
-   FILE_NOTIFY_CHANGE_CREATION |
-   FILE_NOTIFY_CHANGE_SECURITY);
+    (FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME |
+     FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE |
+     FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_LAST_ACCESS |
+     FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_SECURITY);
 
-} // anon. namespace
+} // namespace
 
-class RepositoryWatcherPrivate : public QThread
-{
+class RepositoryWatcherPrivate : public QThread {
   Q_OBJECT
 
 public:
-  RepositoryWatcherPrivate(
-    const git::Repository &repo,
-    QObject *parent = nullptr)
-    : QThread(parent), mRepo(repo), mBuffer(16 * 1024)
-  {
+  RepositoryWatcherPrivate(const git::Repository &repo,
+                           QObject *parent = nullptr)
+      : QThread(parent), mRepo(repo), mBuffer(16 * 1024) {
     // Pass this to callback.
     ZeroMemory(&mOverlapped, sizeof(OVERLAPPED));
     mOverlapped.hEvent = this;
@@ -45,18 +38,14 @@ public:
 
     // Open directory.
     QString path = QDir::toNativeSeparators(repo.workdir().path());
-    mHandle = CreateFileW(
-      (wchar_t *) path.utf16(),
-      FILE_LIST_DIRECTORY,
-      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-      nullptr,
-      OPEN_EXISTING,
-      FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
-      nullptr);
+    mHandle =
+        CreateFileW((wchar_t *)path.utf16(), FILE_LIST_DIRECTORY,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                    nullptr, OPEN_EXISTING,
+                    FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, nullptr);
   }
 
-  ~RepositoryWatcherPrivate()
-  {
+  ~RepositoryWatcherPrivate() {
     CloseHandle(mHandle);
     CloseHandle(mStop);
   }
@@ -64,8 +53,7 @@ public:
   git::Repository repo() const { return mRepo; }
   QVector<BYTE> buffer() const { return mBuffer; }
 
-  void run() override
-  {
+  void run() override {
     // Start watching for notifications.
     watch();
 
@@ -84,36 +72,24 @@ public:
     }
   }
 
-  void watch()
-  {
-    ReadDirectoryChangesW(
-      mHandle,
-      mBuffer.data(),
-      mBuffer.size(),
-      true,
-      kFlags,
-      nullptr,
-      &mOverlapped,
-      &notify);
+  void watch() {
+    ReadDirectoryChangesW(mHandle, mBuffer.data(), mBuffer.size(), true, kFlags,
+                          nullptr, &mOverlapped, &notify);
   }
 
-  void stop()
-  {
+  void stop() {
     // Signal the thread to quit.
     SetEvent(mStop);
   }
 
-  static void CALLBACK notify(
-    DWORD errorCode,
-    DWORD numBytes,
-    LPOVERLAPPED overlapped)
-  {
+  static void CALLBACK notify(DWORD errorCode, DWORD numBytes,
+                              LPOVERLAPPED overlapped) {
     if (errorCode || !numBytes)
       return; // FIXME: Report error?
 
     // Copy buffer and restart.
     RepositoryWatcherPrivate *watcher =
-      static_cast<RepositoryWatcherPrivate *>(overlapped->hEvent);
+        static_cast<RepositoryWatcherPrivate *>(overlapped->hEvent);
     QVector<BYTE> buffer = watcher->buffer();
     watcher->watch();
 
@@ -122,7 +98,7 @@ public:
     const BYTE *ptr = buffer.constData();
     forever {
       const FILE_NOTIFY_INFORMATION *info =
-        reinterpret_cast<const FILE_NOTIFY_INFORMATION *>(ptr);
+          reinterpret_cast<const FILE_NOTIFY_INFORMATION *>(ptr);
 
       int size = info->FileNameLength / sizeof(wchar_t);
       QString native = QString::fromWCharArray(info->FileName, size);
@@ -150,20 +126,17 @@ private:
   OVERLAPPED mOverlapped;
 };
 
-RepositoryWatcher::RepositoryWatcher(
-  const git::Repository &repo,
-  QObject *parent)
-  : QObject(parent), d(new RepositoryWatcherPrivate(repo, this))
-{
+RepositoryWatcher::RepositoryWatcher(const git::Repository &repo,
+                                     QObject *parent)
+    : QObject(parent), d(new RepositoryWatcherPrivate(repo, this)) {
   init(repo);
-  connect(d, &RepositoryWatcherPrivate::notificationReceived,
-          &mTimer, static_cast<void (QTimer::*)()>(&QTimer::start));
+  connect(d, &RepositoryWatcherPrivate::notificationReceived, &mTimer,
+          static_cast<void (QTimer::*)()>(&QTimer::start));
 
   d->start();
 }
 
-RepositoryWatcher::~RepositoryWatcher()
-{
+RepositoryWatcher::~RepositoryWatcher() {
   d->stop();
   d->wait();
 }

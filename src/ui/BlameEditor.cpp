@@ -31,43 +31,35 @@
 
 namespace {
 
-class BlameCallbacks : public git::Blame::Callbacks
-{
+const QString kSplitterKey = QString("blamesplitter");
+
+class BlameCallbacks : public git::Blame::Callbacks {
 public:
-  BlameCallbacks()
-    : mCanceled(false)
-  {}
+  BlameCallbacks() : mCanceled(false) {}
 
-  void setCanceled(bool canceled)
-  {
-    mCanceled = canceled;
-  }
+  void setCanceled(bool canceled) { mCanceled = canceled; }
 
-  bool progress() override
-  {
-    return !mCanceled;
-  }
+  bool progress() override { return !mCanceled; }
 
 private:
   bool mCanceled;
 };
 
-} // anon. namespace
+} // namespace
 
 BlameEditor::BlameEditor(const git::Repository &repo, QWidget *parent)
-  : QWidget(parent), mRepo(repo), mCallbacks(new BlameCallbacks)
-{
+    : QWidget(parent), mRepo(repo), mCallbacks(new BlameCallbacks) {
   // Create editor.
   mEditor = new TextEditor(this);
-  connect(mEditor, &TextEditor::linesAdded,
-          this, &BlameEditor::adjustLineMarginWidth);
-  connect(mEditor, &TextEditor::settingsChanged,
-          this, &BlameEditor::adjustLineMarginWidth);
+  connect(mEditor, &TextEditor::linesAdded, this,
+          &BlameEditor::adjustLineMarginWidth);
+  connect(mEditor, &TextEditor::settingsChanged, this,
+          &BlameEditor::adjustLineMarginWidth);
 
   // Create blame margin.
   mMargin = new BlameMargin(mEditor, this);
-  connect(mMargin, &BlameMargin::linkActivated,
-          this, &BlameEditor::linkActivated);
+  connect(mMargin, &BlameMargin::linkActivated, this,
+          &BlameEditor::linkActivated);
 
   // Add find widget.
   mFind = new FindWidget(this, this);
@@ -79,14 +71,18 @@ BlameEditor::BlameEditor(const git::Repository &repo, QWidget *parent)
   splitter->addWidget(mEditor);
   splitter->addWidget(mMargin);
   splitter->setStretchFactor(0, 1);
+  connect(splitter, &QSplitter::splitterMoved, this, [splitter] {
+    QSettings().setValue(kSplitterKey, splitter->saveState());
+  });
+
+  // Restore splitter state.
+  splitter->restoreState(QSettings().value(kSplitterKey).toByteArray());
 
   QVBoxLayout *layout = new QVBoxLayout(this);
-  layout->setContentsMargins(0,0,0,0);
+  layout->setContentsMargins(0, 0, 0, 0);
   layout->setSpacing(0);
   layout->addWidget(mFind);
   layout->addWidget(splitter, 1);
-
-  // FIXME: Remember splitter position?
 
   // Handle asynchronous blame termination.
   connect(&mBlame, &QFutureWatcher<git::Blame>::finished, [this] {
@@ -102,13 +98,11 @@ BlameEditor::BlameEditor(const git::Repository &repo, QWidget *parent)
   mMargin->setVisible(false);
 }
 
-QString BlameEditor::name() const
-{
+QString BlameEditor::name() const {
   return !mName.isEmpty() ? mName : tr("Untitled");
 }
 
-QString BlameEditor::path() const
-{
+QString BlameEditor::path() const {
   if (mName.isEmpty())
     return QString();
 
@@ -118,16 +112,12 @@ QString BlameEditor::path() const
   return abs ? mName : mRepo.workdir().filePath(mName);
 }
 
-QString BlameEditor::revision() const
-{
+QString BlameEditor::revision() const {
   return !mRevision.isEmpty() ? mRevision : tr("Not Tracked");
 }
 
-bool BlameEditor::load(
-  const QString &name,
-  const git::Blob &blob,
-  const git::Commit &commit)
-{
+bool BlameEditor::load(const QString &name, const git::Blob &blob,
+                       const git::Commit &commit) {
   // Clear content.
   clear();
 
@@ -167,15 +157,14 @@ bool BlameEditor::load(
   // Calculate blame.
   if (mRepo.isValid() && !content.isEmpty()) {
     mMargin->startBlame(name);
-    mBlame.setFuture(QtConcurrent::run(
-      mRepo, &git::Repository::blame, name, commit, mCallbacks.data()));
+    mBlame.setFuture(QtConcurrent::run(mRepo, &git::Repository::blame, name,
+                                       commit, mCallbacks.data()));
   }
 
   return true;
 }
 
-void BlameEditor::cancelBlame()
-{
+void BlameEditor::cancelBlame() {
   BlameCallbacks *callbacks = static_cast<BlameCallbacks *>(mCallbacks.data());
   callbacks->setCanceled(true);
   if (mBlame.isRunning())
@@ -184,8 +173,7 @@ void BlameEditor::cancelBlame()
   callbacks->setCanceled(false);
 }
 
-void BlameEditor::save()
-{
+void BlameEditor::save() {
   QString path = this->path();
   if (path.isEmpty()) {
     QDir dir = mRepo.isValid() ? mRepo.workdir() : QDir();
@@ -218,8 +206,7 @@ void BlameEditor::save()
   emit saved();
 }
 
-void BlameEditor::clear()
-{
+void BlameEditor::clear() {
   // Cancel find and blame.
   mFind->hide();
   cancelBlame();
@@ -236,24 +223,16 @@ void BlameEditor::clear()
   mRevision = QString();
 }
 
-void BlameEditor::find()
-{
+void BlameEditor::find() {
   if (mEditor->length() > 0)
     mFind->showAndSetFocus();
 }
 
-void BlameEditor::findNext()
-{
-  mFind->find();
-}
+void BlameEditor::findNext() { mFind->find(); }
 
-void BlameEditor::findPrevious()
-{
-  mFind->find(FindWidget::Backward);
-}
+void BlameEditor::findPrevious() { mFind->find(FindWidget::Backward); }
 
-void BlameEditor::adjustLineMarginWidth()
-{
+void BlameEditor::adjustLineMarginWidth() {
   // Enable dynamic line margin width by tracking document changes.
   QByteArray lines = QByteArray::number(static_cast<int>(mEditor->lineCount()));
   int width = mEditor->textWidth(STYLE_LINENUMBER, lines.constData());

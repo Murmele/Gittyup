@@ -22,14 +22,12 @@
 class BlameMargin;
 class TextEditor;
 
-class BlameEditor : public QWidget, public EditorProvider
-{
+class BlameEditor : public QWidget, public EditorProvider {
   Q_OBJECT
 
 public:
-  BlameEditor(
-    const git::Repository &repo = git::Repository(),
-    QWidget *parent = nullptr);
+  BlameEditor(const git::Repository &repo = git::Repository(),
+              QWidget *parent = nullptr);
 
   QString name() const;
   QString path() const;
@@ -39,10 +37,8 @@ public:
   QList<TextEditor *> editors() override { return {mEditor}; }
   void ensureVisible(TextEditor *editor, int pos) override {}
 
-  bool load(
-    const QString &name,
-    const git::Blob &blob,
-    const git::Commit &commit);
+  bool load(const QString &name, const git::Blob &blob,
+            const git::Commit &commit);
 
   void cancelBlame();
 

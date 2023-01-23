@@ -19,11 +19,8 @@
 #include <QPushButton>
 #include <QtConcurrent>
 
-DeleteTagDialog::DeleteTagDialog(
-  const git::TagRef &tag,
-  QWidget *parent)
-  : QMessageBox(parent)
-{
+DeleteTagDialog::DeleteTagDialog(const git::TagRef &tag, QWidget *parent)
+    : QMessageBox(parent) {
   QString text = tr("Are you sure you want to delete tag '%1'?");
   setWindowTitle(tr("Delete Tag?"));
   setText(text.arg(tag.name()));
@@ -37,7 +34,7 @@ DeleteTagDialog::DeleteTagDialog(
   }
 
   QPushButton *remove = addButton(tr("Delete"), QMessageBox::AcceptRole);
-  connect (remove, &QPushButton::clicked, [this, tag, remote] {
+  connect(remove, &QPushButton::clicked, [this, tag, remote] {
     RepoView *view = RepoView::parentView(this);
     QString name = tag.name();
 
@@ -49,29 +46,30 @@ DeleteTagDialog::DeleteTagDialog(
       LogEntry *entry = view->addLogEntry(text, tr("Push"));
 
       QFutureWatcher<git::Result> *watcher =
-        new QFutureWatcher<git::Result>(view);
-      RemoteCallbacks *callbacks = new RemoteCallbacks(
-        RemoteCallbacks::Send, entry, remote.url(), remoteName, watcher, repo);
+          new QFutureWatcher<git::Result>(view);
+      RemoteCallbacks *callbacks =
+          new RemoteCallbacks(RemoteCallbacks::Send, entry, remote.url(),
+                              remoteName, watcher, repo);
 
       entry->setBusy(true);
       QStringList refspecs(QString(":refs/tags/%1").arg(name));
       watcher->setFuture(
-        QtConcurrent::run(remote, &git::Remote::push, callbacks, refspecs));
+          QtConcurrent::run(remote, &git::Remote::push, callbacks, refspecs));
 
-      connect(watcher, &QFutureWatcher<git::Result>::finished, watcher, 
-      [entry, watcher, callbacks, remoteName] {
-        entry->setBusy(false);
-        git::Result result = watcher->result();
-        if (callbacks->isCanceled()) {
-          entry->addEntry(LogEntry::Error, tr("Push canceled."));
-        } else if (!result) {
-          QString err = result.errorString();
-          QString fmt = tr("Unable to push to %1 - %2");
-          entry->addEntry(LogEntry::Error, fmt.arg(remoteName, err));
-        }
+      connect(watcher, &QFutureWatcher<git::Result>::finished, watcher,
+              [entry, watcher, callbacks, remoteName] {
+                entry->setBusy(false);
+                git::Result result = watcher->result();
+                if (callbacks->isCanceled()) {
+                  entry->addEntry(LogEntry::Error, tr("Push canceled."));
+                } else if (!result) {
+                  QString err = result.errorString();
+                  QString fmt = tr("Unable to push to %1 - %2");
+                  entry->addEntry(LogEntry::Error, fmt.arg(remoteName, err));
+                }
 
-        watcher->deleteLater();
-      });
+                watcher->deleteLater();
+              });
     }
 
     if (!git::TagRef(tag).remove()) {

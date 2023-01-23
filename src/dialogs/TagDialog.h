@@ -22,16 +22,13 @@ namespace git {
 class Repository;
 }
 
-class TagDialog : public QDialog
-{
+class TagDialog : public QDialog {
   Q_OBJECT
 
 public:
-  TagDialog(
-    const git::Repository &repo,
-    const QString &id,
-    const git::Remote &remote = git::Remote(),
-    QWidget *parent = nullptr);
+  TagDialog(const git::Repository &repo, const QString &id,
+            const git::Remote &remote = git::Remote(),
+            QWidget *parent = nullptr);
 
   bool force() const;
   git::Remote remote() const;
@@ -44,7 +41,7 @@ private:
   QCheckBox *mForce;
   QCheckBox *mPush;
   QTextEdit *mMessage;
-  QListWidget* mListWidget{nullptr};
+  QListWidget *mListWidget{nullptr};
   QStringList mExistingTags;
   QStringList mFilteredTags;
   QString mOldTagname;

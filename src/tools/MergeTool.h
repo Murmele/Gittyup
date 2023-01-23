@@ -13,17 +13,13 @@
 #include "ExternalTool.h"
 #include "git/Blob.h"
 
-class MergeTool : public ExternalTool
-{
+class MergeTool : public ExternalTool {
   Q_OBJECT
 
 public:
-  MergeTool(
-    const QString &file,
-    const git::Blob &localBlob,
-    const git::Blob &remoteBlob,
-    const git::Blob &baseBlob,
-    QObject *parent = nullptr);
+  MergeTool(const QString &file, const git::Blob &localBlob,
+            const git::Blob &remoteBlob, const git::Blob &baseBlob,
+            QObject *parent = nullptr);
 
   bool isValid() const override;
 

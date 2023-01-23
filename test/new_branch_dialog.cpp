@@ -17,8 +17,7 @@
 using namespace Test;
 using namespace QTest;
 
-class TestNewBranchDialog : public QObject
-{
+class TestNewBranchDialog : public QObject {
   Q_OBJECT
 
 private slots:
@@ -28,28 +27,27 @@ private slots:
 
 private:
   int closeDelay = 0;
-  
+
   ScratchRepository mRepo;
   QMainWindow *mWindow = nullptr;
 };
 
-void TestNewBranchDialog::initTestCase()
-{
+void TestNewBranchDialog::initTestCase() {
   mWindow = new QMainWindow;
   NewBranchDialog *dialog = new NewBranchDialog(mRepo, git::Commit(), mWindow);
   dialog->show();
-  QVERIFY(qWaitForWindowActive(dialog));
+  QVERIFY(qWaitForWindowExposed(dialog));
 }
 
-void TestNewBranchDialog::verifyName()
-{
+void TestNewBranchDialog::verifyName() {
   QLineEdit *nameField = mWindow->findChild<QLineEdit *>();
   QDialogButtonBox *buttons = mWindow->findChild<QDialogButtonBox *>();
   QVERIFY(nameField && buttons);
 
   // Find the button with the accept role.
-  auto end = buttons->buttons().end();
-  auto begin = buttons->buttons().begin();
+  auto button_list = buttons->buttons();
+  auto end = button_list.end();
+  auto begin = button_list.begin();
   auto it = std::find_if(begin, end, [buttons](QAbstractButton *button) {
     return buttons->buttonRole(button) == QDialogButtonBox::AcceptRole;
   });
@@ -59,16 +57,15 @@ void TestNewBranchDialog::verifyName()
 
   keyClicks(nameField, "valid");
   QVERIFY(accept->isEnabled());
-  
+
   keyClick(nameField, 'a', Qt::ControlModifier);
   keyClick(nameField, Qt::Key_Delete);
-  
+
   keyClicks(nameField, "Invalid Name");
   QVERIFY(!accept->isEnabled());
 }
 
-void TestNewBranchDialog::cleanupTestCase()
-{
+void TestNewBranchDialog::cleanupTestCase() {
   qWait(closeDelay);
   mWindow->close();
 }

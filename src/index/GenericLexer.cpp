@@ -13,42 +13,30 @@ namespace {
 
 const QByteArray kOperators = ":/.()*?";
 
-char safeAt(const QByteArray &buffer, int i)
-{
+char safeAt(const QByteArray &buffer, int i) {
   return (i < buffer.length()) ? buffer.at(i) : 0;
 }
 
-bool isDigit(char ch)
-{
-  return (ch >= '0' && ch <= '9');
-}
+bool isDigit(char ch) { return (ch >= '0' && ch <= '9'); }
 
-bool isAlpha(char ch)
-{
+bool isAlpha(char ch) {
   return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
 }
 
-} // anon. namespace
+} // namespace
 
-GenericLexer::GenericLexer(QObject *parent)
-  : Lexer(parent)
-{}
+GenericLexer::GenericLexer(QObject *parent) : Lexer(parent) {}
 
-bool GenericLexer::lex(const QByteArray &buffer)
-{
+bool GenericLexer::lex(const QByteArray &buffer) {
   mIndex = 0;
   mBuffer = buffer;
 
   return true;
 }
 
-bool GenericLexer::hasNext()
-{
-  return (mIndex < mBuffer.length());
-}
+bool GenericLexer::hasNext() { return (mIndex < mBuffer.length()); }
 
-Lexer::Lexeme GenericLexer::next()
-{
+Lexer::Lexeme GenericLexer::next() {
   // Whitespace isn't a valid state itself. It indicates a
   // string of underscores that might become an identifier.
   int startPos = 0;

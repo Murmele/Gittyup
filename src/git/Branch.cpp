@@ -28,28 +28,21 @@ namespace {
 
 const QString kRebaseFmt = "branch.%1.rebase";
 
-} // anon. namespace
+} // namespace
 
-Branch::Branch()
-  : Reference()
-{}
+Branch::Branch() : Reference() {}
 
-Branch::Branch(git_reference *ref)
-  : Reference(ref)
-{
+Branch::Branch(git_reference *ref) : Reference(ref) {
   if (isValid() && !isBranch())
     d.clear();
 }
 
-Branch::Branch(const Reference &rhs)
-  : Reference(rhs)
-{
+Branch::Branch(const Reference &rhs) : Reference(rhs) {
   if (isValid() && !isBranch())
     d.clear();
 }
 
-Branch Branch::upstream() const
-{
+Branch Branch::upstream() const {
   Q_ASSERT(isLocalBranch());
 
   git_reference *ref = nullptr;
@@ -57,8 +50,7 @@ Branch Branch::upstream() const
   return Branch(ref);
 }
 
-void Branch::setUpstream(const Branch &upstream)
-{
+void Branch::setUpstream(const Branch &upstream) {
   Q_ASSERT(isLocalBranch());
 
   QByteArray buffer;
@@ -71,8 +63,7 @@ void Branch::setUpstream(const Branch &upstream)
   emit repo().notifier()->referenceUpdated(*this);
 }
 
-bool Branch::isMerged() const
-{
+bool Branch::isMerged() const {
   if (!isLocalBranch())
     return false;
 
@@ -86,8 +77,7 @@ bool Branch::isMerged() const
   return !difference(branch);
 }
 
-Remote Branch::remote() const
-{
+Remote Branch::remote() const {
   if (isLocalBranch()) {
     Branch up = upstream();
     return up.isValid() ? up.remote() : Remote();
@@ -108,8 +98,7 @@ Remote Branch::remote() const
   return Remote(remote);
 }
 
-Branch Branch::rename(const QString &name)
-{
+Branch Branch::rename(const QString &name) {
   Q_ASSERT(isLocalBranch());
 
   git_reference *ref = nullptr;
@@ -124,8 +113,7 @@ Branch Branch::rename(const QString &name)
   return branch;
 }
 
-void Branch::remove(bool force)
-{
+void Branch::remove(bool force) {
   // Remember name.
   QString name = this->name();
 
@@ -140,18 +128,15 @@ void Branch::remove(bool force)
   emit repo.notifier()->referenceRemoved(name);
 }
 
-bool Branch::isRebase() const
-{
+bool Branch::isRebase() const {
   return repo().config().value<bool>(kRebaseFmt.arg(name()));
 }
 
-void Branch::setRebase(bool checked)
-{
+void Branch::setRebase(bool checked) {
   repo().config().setValue(kRebaseFmt.arg(name()), checked);
 }
 
-AnnotatedCommit Branch::annotatedCommitFromFetchHead() const
-{
+AnnotatedCommit Branch::annotatedCommitFromFetchHead() const {
   Branch up = upstream();
   if (!up.isValid())
     return AnnotatedCommit();
@@ -174,8 +159,7 @@ AnnotatedCommit Branch::annotatedCommitFromFetchHead() const
   return AnnotatedCommit(head, repo);
 }
 
-bool Branch::isNameValid(const QString &name)
-{
+bool Branch::isNameValid(const QString &name) {
   return Reference::isNameValid(QString("refs/heads/%1").arg(name));
 }
 

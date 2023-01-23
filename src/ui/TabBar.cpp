@@ -9,23 +9,19 @@
 
 #include "TabBar.h"
 
-TabBar::TabBar(QWidget *parent)
-  : QTabBar(parent)
-{
+TabBar::TabBar(QWidget *parent) : QTabBar(parent) {
   setAutoHide(true);
   setDocumentMode(true);
 }
 
-QSize TabBar::minimumTabSizeHint(int index) const
-{
+QSize TabBar::minimumTabSizeHint(int index) const {
   mCalculatingMinimumSize = true;
   QSize size = QTabBar::minimumTabSizeHint(index);
   mCalculatingMinimumSize = false;
   return size;
 }
 
-QSize TabBar::tabSizeHint(int index) const
-{
+QSize TabBar::tabSizeHint(int index) const {
   if (!count() || mCalculatingMinimumSize)
     return QTabBar::tabSizeHint(index);
 

@@ -22,39 +22,32 @@
 
 namespace {
 
-const QString kButtonStyle =
-  "QPushButton {"
-  "  text-align: left;"
-  "  padding: 3px 3px 3px 3px;"
-  "  background: palette(base);"
+const QString kButtonStyle = "QPushButton {"
+                             "  text-align: left;"
+                             "  padding: 3px 3px 3px 3px;"
+                             "  background: palette(base);"
 #ifndef Q_OS_MAC
-  "  border: 1px solid palette(mid);"
+                             "  border: 1px solid palette(mid);"
 #endif
-  "  border-top: 1px solid palette(dark)"
-  "}"
-  "QPushButton:pressed {"
-  "  background: palette(dark)"
-  "}";
+                             "  border-top: 1px solid palette(dark)"
+                             "}"
+                             "QPushButton:pressed {"
+                             "  background: palette(dark)"
+                             "}";
 
 const QRegularExpression kWsRe("\\s");
 
-QString word(const QString &text, int &index)
-{
+QString word(const QString &text, int &index) {
   index = text.lastIndexOf(kWsRe, qMax(0, index - 1)) + 1;
   return text.mid(index, text.indexOf(kWsRe, index) - index);
 }
 
-class Model : public QAbstractListModel
-{
+class Model : public QAbstractListModel {
 public:
-  Model(MainWindow *window)
-    : QAbstractListModel(window), mWindow(window)
-  {}
+  Model(MainWindow *window) : QAbstractListModel(window), mWindow(window) {}
 
-  QVariant data(
-    const QModelIndex &index,
-    int role = Qt::DisplayRole) const override
-  {
+  QVariant data(const QModelIndex &index,
+                int role = Qt::DisplayRole) const override {
     if (!index.isValid())
       return QVariant();
 
@@ -68,28 +61,23 @@ public:
     }
   }
 
-  int rowCount(const QModelIndex &parent = QModelIndex()) const override
-  {
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override {
     return mWindow->count() ? dict().size() : 0;
   }
 
 private:
-  const Index::Dictionary &dict() const
-  {
+  const Index::Dictionary &dict() const {
     return mWindow->currentView()->index()->dict();
   }
 
   MainWindow *mWindow;
 };
 
-class Popup : public QListView
-{
+class Popup : public QListView {
   Q_OBJECT
 
 public:
-  Popup(QLineEdit *parent = nullptr)
-    : QListView(parent)
-  {
+  Popup(QLineEdit *parent = nullptr) : QListView(parent) {
     setEditTriggers(QAbstractItemView::NoEditTriggers);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -110,8 +98,7 @@ public:
     }
   }
 
-  void adjustLayout(int maxVisibleItems)
-  {
+  void adjustLayout(int maxVisibleItems) {
     if (!mButton)
       return;
 
@@ -125,15 +112,13 @@ private:
   QPushButton *mButton = nullptr;
 };
 
-} // anon. namespace
+} // namespace
 
 IndexCompleter::IndexCompleter(MainWindow *window, QLineEdit *parent)
-  : IndexCompleter(new Model(window), parent)
-{}
+    : IndexCompleter(new Model(window), parent) {}
 
 IndexCompleter::IndexCompleter(QAbstractItemModel *model, QLineEdit *parent)
-  : QCompleter(model, parent)
-{
+    : QCompleter(model, parent) {
   setCaseSensitivity(Qt::CaseInsensitive);
   setModelSorting(QCompleter::CaseInsensitivelySortedModel);
 
@@ -144,16 +129,14 @@ IndexCompleter::IndexCompleter(QAbstractItemModel *model, QLineEdit *parent)
   popup->installEventFilter(this);
 }
 
-bool IndexCompleter::eventFilter(QObject *watched, QEvent *event)
-{
+bool IndexCompleter::eventFilter(QObject *watched, QEvent *event) {
   if (event->type() == QEvent::Show)
     mPos = -1;
 
   return QCompleter::eventFilter(watched, event);
 }
 
-QString IndexCompleter::pathFromIndex(const QModelIndex &index) const
-{
+QString IndexCompleter::pathFromIndex(const QModelIndex &index) const {
   QLineEdit *field = static_cast<QLineEdit *>(parent());
   if (!field->isEnabled())
     return QString();
@@ -166,8 +149,7 @@ QString IndexCompleter::pathFromIndex(const QModelIndex &index) const
   return text.replace(mPos, len, index.data(completionRole()).toString());
 }
 
-QStringList IndexCompleter::splitPath(const QString &path) const
-{
+QStringList IndexCompleter::splitPath(const QString &path) const {
   QLineEdit *field = static_cast<QLineEdit *>(parent());
   if (!field->isEnabled())
     return QStringList();

@@ -36,13 +36,12 @@ const QString kVersionFile = "version";
 
 const QStringList kIndexFiles = {kIdFile, kDictFile, kPostFile, kProxFile};
 
-} // anon. namespace
+} // namespace
 
 bool Index::sLoggingEnabled = false;
 
 Index::Index(const git::Repository &repo, QObject *parent)
-  : QObject(parent), mRepo(repo)
-{
+    : QObject(parent), mRepo(repo) {
   // Read log setting.
   sLoggingEnabled = QSettings().value(kLogKey).toBool();
 
@@ -57,13 +56,9 @@ Index::Index(const git::Repository &repo, QObject *parent)
   reset();
 }
 
-bool Index::isValid() const
-{
-  return indexDir().exists(kIdFile);
-}
+bool Index::isValid() const { return indexDir().exists(kIdFile); }
 
-void Index::reset()
-{
+void Index::reset() {
   mIds.clear();
   mDict.clear();
 
@@ -90,8 +85,7 @@ void Index::reset()
   emit indexReset();
 }
 
-void Index::clean()
-{
+void Index::clean() {
   QStringList filters;
   foreach (const QString &file, kIndexFiles)
     filters.append(file + ".*");
@@ -111,8 +105,7 @@ void Index::clean()
     dir.remove(file);
 }
 
-bool Index::remove()
-{
+bool Index::remove() {
   // Try to lock the index for writing.
   QLockFile lock(lockFile(mRepo));
   lock.setStaleLockTime(staleLockTime());
@@ -129,8 +122,7 @@ bool Index::remove()
   return true;
 }
 
-bool Index::write(PostingMap map)
-{
+bool Index::write(PostingMap map) {
   if (map.isEmpty())
     return false;
 
@@ -239,8 +231,7 @@ bool Index::write(PostingMap map)
   return true;
 }
 
-QList<git::Commit> Index::commits(const QString &filter) const
-{
+QList<git::Commit> Index::commits(const QString &filter) const {
   if (filter.isEmpty())
     return QList<git::Commit>();
 
@@ -252,15 +243,14 @@ QList<git::Commit> Index::commits(const QString &filter) const
   // Sort by commit date.
   QList<git::Commit> commits = query->commits(this);
   std::sort(commits.begin(), commits.end(),
-  [this](const git::Commit &lhs, const git::Commit &rhs) {
-    return (lhs.committer().date() > rhs.committer().date());
-  });
+            [this](const git::Commit &lhs, const git::Commit &rhs) {
+              return (lhs.committer().date() > rhs.committer().date());
+            });
 
   return commits;
 }
 
-QList<git::Commit> Index::commits(const QList<Posting> &postings) const
-{
+QList<git::Commit> Index::commits(const QList<Posting> &postings) const {
   // Look up commits.
   QSet<git::Commit> commits;
   foreach (const Posting &posting, postings) {
@@ -272,8 +262,7 @@ QList<git::Commit> Index::commits(const QList<Posting> &postings) const
   return commits.values();
 }
 
-QList<Index::Posting> Index::postings(const Term &term, bool positional) const
-{
+QList<Index::Posting> Index::postings(const Term &term, bool positional) const {
   Word word(term.text.toLower().toUtf8());
   Dictionary::const_iterator end = mDict.end();
   Dictionary::const_iterator it = std::lower_bound(mDict.begin(), end, word);
@@ -323,8 +312,8 @@ QList<Index::Posting> Index::postings(const Term &term, bool positional) const
   return postings;
 }
 
-QList<Index::Posting> Index::postings(const Predicate &pred, Field field) const
-{
+QList<Index::Posting> Index::postings(const Predicate &pred,
+                                      Field field) const {
   QDir dir = indexDir();
   QFile file(dir.filePath(kPostFile));
   if (!file.open(QIODevice::ReadOnly))
@@ -359,12 +348,11 @@ QList<Index::Posting> Index::postings(const Predicate &pred, Field field) const
   return postings;
 }
 
-QMap<Index::Field,QStringList> Index::fieldMap(const QString &prefix) const
-{
+QMap<Index::Field, QStringList> Index::fieldMap(const QString &prefix) const {
   QDir dir = indexDir();
   QFile file(dir.filePath(kPostFile));
   if (!file.open(QIODevice::ReadOnly))
-    return QMap<Field,QStringList>();
+    return QMap<Field, QStringList>();
 
   Dictionary::const_iterator it = mDict.constBegin();
   Dictionary::const_iterator end = mDict.constEnd();
@@ -376,7 +364,7 @@ QMap<Index::Field,QStringList> Index::fieldMap(const QString &prefix) const
     });
   }
 
-  QMap<Field,QStringList> map;
+  QMap<Field, QStringList> map;
   while (it != end) {
     // Skip to the correct entry.
     file.seek(it->value);
@@ -408,61 +396,67 @@ QMap<Index::Field,QStringList> Index::fieldMap(const QString &prefix) const
   return map;
 }
 
-quint8 Index::version()
-{
-  return 2;
-}
+quint8 Index::version() { return 2; }
 
-int Index::staleLockTime()
-{
-  return 24 * 60 * 60 * 1000;
-}
+int Index::staleLockTime() { return 24 * 60 * 60 * 1000; }
 
-QString Index::dateFormat()
-{
-  return "yyyy/MM/dd";
-}
+QString Index::dateFormat() { return "yyyy/MM/dd"; }
 
-QByteArray Index::fieldName(Index::Field field)
-{
+QByteArray Index::fieldName(Index::Field field) {
   switch (field) {
-    case Index::Id:         return "id";
-    case Index::Author:     return "author";
-    case Index::Email:      return "email";
-    case Index::Message:    return "message";
-    case Index::Date:       return "date";
-    case Index::Path:       return "path";
-    case Index::File:       return "file";
-    case Index::Scope:      return "scope";
-    case Index::Context:    return "context";
-    case Index::Addition:   return "addition";
-    case Index::Deletion:   return "deletion";
-    case Index::Any:        return "any";
-    case Index::Comment:    return "comment";
-    case Index::String:     return "string";
-    case Index::Identifier: return "identifier";
-    case Index::Is:         return "is";
-    case Index::Before:     return "before";
-    case Index::After:      return "after";
-    case Index::Pathspec:   return "pathspec";
+    case Index::Id:
+      return "id";
+    case Index::Author:
+      return "author";
+    case Index::Email:
+      return "email";
+    case Index::Message:
+      return "message";
+    case Index::Date:
+      return "date";
+    case Index::Path:
+      return "path";
+    case Index::File:
+      return "file";
+    case Index::Scope:
+      return "scope";
+    case Index::Context:
+      return "context";
+    case Index::Addition:
+      return "addition";
+    case Index::Deletion:
+      return "deletion";
+    case Index::Any:
+      return "any";
+    case Index::Comment:
+      return "comment";
+    case Index::String:
+      return "string";
+    case Index::Identifier:
+      return "identifier";
+    case Index::Is:
+      return "is";
+    case Index::Before:
+      return "before";
+    case Index::After:
+      return "after";
+    case Index::Pathspec:
+      return "pathspec";
   }
 }
 
-QDir Index::indexDir(const git::Repository &repo)
-{
+QDir Index::indexDir(const git::Repository &repo) {
   QDir dir = repo.appDir();
   dir.mkpath(kIndexDir);
   dir.cd(kIndexDir);
   return dir;
 }
 
-QString Index::lockFile(const git::Repository &repo)
-{
+QString Index::lockFile(const git::Repository &repo) {
   return indexDir(repo).filePath(kLockFile);
 }
 
-quint8 Index::readVersion() const
-{
+quint8 Index::readVersion() const {
   QFile file(indexDir().filePath(kVersionFile));
   if (!file.open(QFile::ReadOnly))
     return 0;
@@ -472,16 +466,14 @@ quint8 Index::readVersion() const
   return version;
 }
 
-void Index::writeVersion() const
-{
+void Index::writeVersion() const {
   QFile file(indexDir().filePath(kVersionFile));
   if (file.open(QFile::WriteOnly))
     QDataStream(&file) << version();
 }
 
 // Use the same variable length VInt encoding as Lucene.
-quint32 Index::readVInt(QDataStream &in)
-{
+quint32 Index::readVInt(QDataStream &in) {
   // Read least significant byte.
   quint8 byte;
   in >> byte;
@@ -496,8 +488,7 @@ quint32 Index::readVInt(QDataStream &in)
   return result;
 }
 
-void Index::writeVInt(QDataStream &out, quint32 arg)
-{
+void Index::writeVInt(QDataStream &out, quint32 arg) {
   // Write less significant bytes first.
   // Most significant bit is set.
   while (arg & ~0x7F) {
@@ -511,8 +502,7 @@ void Index::writeVInt(QDataStream &out, quint32 arg)
 }
 
 // Write deltas to minimize bytes per position.
-void Index::readPositions(QDataStream &in, QVector<quint32> &positions)
-{
+void Index::readPositions(QDataStream &in, QVector<quint32> &positions) {
   quint32 prev = 0;
   quint32 count = readVInt(in);
   positions.reserve(count);
@@ -524,8 +514,8 @@ void Index::readPositions(QDataStream &in, QVector<quint32> &positions)
   }
 }
 
-void Index::writePositions(QDataStream &out, const QVector<quint32> &positions)
-{
+void Index::writePositions(QDataStream &out,
+                           const QVector<quint32> &positions) {
   quint32 prev = 0;
   writeVInt(out, positions.size());
   foreach (quint32 position, positions) {
@@ -536,18 +526,13 @@ void Index::writePositions(QDataStream &out, const QVector<quint32> &positions)
   }
 }
 
-bool Index::isLoggingEnabled()
-{
+bool Index::isLoggingEnabled() {
   return sLoggingEnabled || QSettings().value(kLogKey).toBool();
 }
 
-void Index::setLoggingEnabled(bool enable)
-{
+void Index::setLoggingEnabled(bool enable) {
   sLoggingEnabled = enable;
   QSettings().setValue(kLogKey, enable);
 }
 
-QDir Index::indexDir() const
-{
-  return indexDir(mRepo);
-}
+QDir Index::indexDir() const { return indexDir(mRepo); }

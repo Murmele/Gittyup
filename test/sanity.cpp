@@ -11,16 +11,14 @@
 
 using namespace QTest;
 
-class TestSanity : public QObject
-{
+class TestSanity : public QObject {
   Q_OBJECT
 
 private slots:
   void sanity();
 };
 
-void TestSanity::sanity()
-{
+void TestSanity::sanity() {
   QCOMPARE(QCoreApplication::applicationName(), QString(GITTYUP_NAME));
   QCOMPARE(QCoreApplication::applicationVersion(), QString(GITTYUP_VERSION));
 }

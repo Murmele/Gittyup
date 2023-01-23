@@ -18,14 +18,14 @@ class QTableView;
 namespace git {
 class Repository;
 class Submodule;
-}
+} // namespace git
 
-class UpdateSubmodulesDialog : public QDialog
-{
+class UpdateSubmodulesDialog : public QDialog {
   Q_OBJECT
 
 public:
-  UpdateSubmodulesDialog(const git::Repository &repo, QWidget *parent = nullptr);
+  UpdateSubmodulesDialog(const git::Repository &repo,
+                         QWidget *parent = nullptr);
 
   QList<git::Submodule> submodules() const;
   bool recursive() const;

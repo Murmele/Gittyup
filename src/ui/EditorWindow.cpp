@@ -15,8 +15,7 @@
 #include <QMessageBox>
 
 EditorWindow::EditorWindow(const git::Repository &repo, QWidget *parent)
-  : QMainWindow(parent)
-{
+    : QMainWindow(parent) {
   setAttribute(Qt::WA_DeleteOnClose);
   resize(800, 800);
 
@@ -31,39 +30,33 @@ EditorWindow::EditorWindow(const git::Repository &repo, QWidget *parent)
   });
 
   TextEditor *editor = widget->editor();
-  connect(editor, &TextEditor::savePointChanged,
-          this, &QWidget::setWindowModified);
+  connect(editor, &TextEditor::savePointChanged, this,
+          &QWidget::setWindowModified);
 
   // Connect menu bar actions.
   if (MenuBar *menuBar = MenuBar::instance(this)) {
-    connect(editor, &TextEditor::savePointChanged,
-            menuBar, &MenuBar::updateSave);
-    connect(editor, &TextEditor::updateUi,
-            menuBar, &MenuBar::updateUndoRedo);
-    connect(editor, &TextEditor::updateUi,
-            menuBar, &MenuBar::updateCutCopyPaste);
+    connect(editor, &TextEditor::savePointChanged, menuBar,
+            &MenuBar::updateSave);
+    connect(editor, &TextEditor::updateUi, menuBar, &MenuBar::updateUndoRedo);
+    connect(editor, &TextEditor::updateUi, menuBar,
+            &MenuBar::updateCutCopyPaste);
   }
 
   setCentralWidget(widget);
 }
 
-BlameEditor *EditorWindow::widget() const
-{
+BlameEditor *EditorWindow::widget() const {
   return static_cast<BlameEditor *>(centralWidget());
 }
 
-void EditorWindow::updateWindowTitle()
-{
+void EditorWindow::updateWindowTitle() {
   BlameEditor *editor = widget();
   setWindowTitle(QString("%1: %2[*]").arg(editor->name(), editor->revision()));
 }
 
-EditorWindow *EditorWindow::open(
-  const QString &path,
-  const git::Blob &blob,
-  const git::Commit &commit,
-  const git::Repository &repo)
-{
+EditorWindow *EditorWindow::open(const QString &path, const git::Blob &blob,
+                                 const git::Commit &commit,
+                                 const git::Repository &repo) {
   QDir dir = repo.isValid() ? repo.workdir() : QDir::current();
   QFileInfo file(QDir::isAbsolutePath(path) ? path : dir.filePath(path));
   if (!file.exists() || !file.isFile())
@@ -83,26 +76,29 @@ EditorWindow *EditorWindow::open(
   return window;
 }
 
-void EditorWindow::showEvent(QShowEvent *event)
-{
+void EditorWindow::showEvent(QShowEvent *event) {
   updateWindowTitle();
   QMainWindow::showEvent(event);
 }
 
-void EditorWindow::closeEvent(QCloseEvent *event)
-{
+void EditorWindow::closeEvent(QCloseEvent *event) {
   // Prompt to save.
   BlameEditor *editor = widget();
   if (editor->editor()->isModified()) {
     QString text =
-      tr("'%1' has been modified. Do you want to save your changes?");
-    QMessageBox::StandardButton button =
-      QMessageBox::warning(this, tr("Save Changes?"), text.arg(editor->name()),
+        tr("'%1' has been modified. Do you want to save your changes?");
+    QMessageBox::StandardButton button = QMessageBox::warning(
+        this, tr("Save Changes?"), text.arg(editor->name()),
         QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
     switch (button) {
-      case QMessageBox::Cancel: event->ignore(); return;
-      case QMessageBox::Save: editor->save(); break;
-      default: break;
+      case QMessageBox::Cancel:
+        event->ignore();
+        return;
+      case QMessageBox::Save:
+        editor->save();
+        break;
+      default:
+        break;
     }
   }
 

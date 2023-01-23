@@ -12,8 +12,7 @@
 
 #include <QToolButton>
 
-class ExpandButton : public QToolButton
-{
+class ExpandButton : public QToolButton {
   Q_OBJECT
 
 public:

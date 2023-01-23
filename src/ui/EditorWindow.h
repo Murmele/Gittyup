@@ -17,24 +17,21 @@
 
 class BlameEditor;
 
-class EditorWindow : public QMainWindow
-{
+class EditorWindow : public QMainWindow {
   Q_OBJECT
 
 public:
-  EditorWindow(
-    const git::Repository &repo = git::Repository(),
-    QWidget *parent = nullptr);
+  EditorWindow(const git::Repository &repo = git::Repository(),
+               QWidget *parent = nullptr);
 
   BlameEditor *widget() const;
 
   void updateWindowTitle();
 
-  static EditorWindow *open(
-    const QString &path,
-    const git::Blob &blob = git::Blob(),
-    const git::Commit &commit = git::Commit(),
-    const git::Repository &repo = git::Repository());
+  static EditorWindow *open(const QString &path,
+                            const git::Blob &blob = git::Blob(),
+                            const git::Commit &commit = git::Commit(),
+                            const git::Repository &repo = git::Repository());
 
 protected:
   void showEvent(QShowEvent *event) override;

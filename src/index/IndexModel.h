@@ -14,8 +14,7 @@
 #include <QAbstractItemModel>
 #include <QMap>
 
-class IndexModel : public QAbstractItemModel
-{
+class IndexModel : public QAbstractItemModel {
   Q_OBJECT
 
 public:
@@ -23,28 +22,25 @@ public:
 
   void setFilter(const QString &prefix);
 
-  QModelIndex index(
-    int row,
-    int column,
-    const QModelIndex &parent = QModelIndex()) const override;
+  QModelIndex index(int row, int column,
+                    const QModelIndex &parent = QModelIndex()) const override;
   QModelIndex parent(const QModelIndex &index) const override;
 
   int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
-  QVariant data(
-    const QModelIndex &index,
-    int role = Qt::DisplayRole) const override;
+  QVariant data(const QModelIndex &index,
+                int role = Qt::DisplayRole) const override;
 
 private:
-  const QMap<Index::Field,QStringList> &map() const;
+  const QMap<Index::Field, QStringList> &map() const;
 
   Index *mIndex;
   int mLimit = -1;
   QString mPrefix;
 
   mutable bool mValid = false;
-  mutable QMap<Index::Field,QStringList> mMap;
+  mutable QMap<Index::Field, QStringList> mMap;
 };
 
 #endif

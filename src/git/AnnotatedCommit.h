@@ -20,8 +20,7 @@ namespace git {
 class Commit;
 class Repository;
 
-class AnnotatedCommit
-{
+class AnnotatedCommit {
 public:
   AnnotatedCommit();
 

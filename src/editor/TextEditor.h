@@ -12,15 +12,14 @@
 
 // Do not reorder.
 #include <cstddef>
-#include "ILexer.h"
-#include "LexerModule.h"
-#include "Catalogue.h"
-#include "SciLexer.h"
+#include <ILexer.h>
+#include <LexerModule.h>
+#include <Catalogue.h>
+#include <SciLexer.h>
 #include "ScintillaIFace.h"
-#include "Platform.h"
+#include <Platform.h>
 
-class TextEditor : public Scintilla::ScintillaIFace
-{
+class TextEditor : public Scintilla::ScintillaIFace {
   Q_OBJECT
 
 public:
@@ -62,26 +61,20 @@ public:
     CommentTimestamp
   };
 
-  enum DiagnosticKind {
-    Note,
-    Warning,
-    Error
-  };
+  enum DiagnosticKind { Note, Warning, Error };
 
   enum {
-      stageSelected = 30,
-      unstageSelected = 31,
-      discardSelected = 32,
+    stageSelected = 30,
+    unstageSelected = 31,
+    discardSelected = 32,
   };
 
-  struct Range
-  {
+  struct Range {
     int pos;
     int len;
   };
 
-  struct Diagnostic
-  {
+  struct Diagnostic {
     DiagnosticKind kind;
     QString message;
     QString description;
@@ -116,14 +109,12 @@ public:
 
   // Make wheel event public.
   // FIXME: This should be an event filter?
-  void wheelEvent(QWheelEvent *event) override
-  {
+  void wheelEvent(QWheelEvent *event) override {
     ScintillaIFace::wheelEvent(event);
   }
-  void keyPressEvent(QKeyEvent * ke) override;
+  void keyPressEvent(QKeyEvent *ke) override;
 
-  QRect textRectangle() const
-  {
+  QRect textRectangle() const {
     Scintilla::PRectangle pr = GetTextRectangle();
     return QRect(pr.left, pr.top, pr.Width(), pr.Height());
   }
@@ -138,14 +129,14 @@ signals:
    * \param startPos Start line of selection
    * \param end End line of selection + 1
    */
-  void stageSelectedSignal(int startPos, int end, bool emitSignal=true);
+  void stageSelectedSignal(int startPos, int end, bool emitSignal = true);
   /*!
    * Emitted when in the context menu "unstage selected" is triggered
    * \brief unstageSelectedSignal
    * \param startPos Start line of selection
    * \param end End line of selection + 1
    */
-  void unstageSelectedSignal(int startPos, int end, bool emitSignal=true);
+  void unstageSelectedSignal(int startPos, int end, bool emitSignal = true);
   /*!
    * Emitted when in the context menu "revert selected" is triggered
    * \brief discardSelectedSignal
@@ -162,16 +153,17 @@ protected:
 private:
   int diagnosticMarker(int line);
   void loadMarkerIcon(Marker marker, const QIcon &icon);
+  void loadMarkerPixmap(Marker marker, const QPixmap &pixmap);
   void AddToPopUp(const char *label, int cmd = 0, bool enabled = true);
   void ContextMenu(Scintilla::Point pt);
 
   QString mPath;
   int mLineCount = -1;
   /*!
-   * statusDiff Flag which determines if in the contextmenu stage actions are shown or not
-   * Because when checking out commits, it should not possible to select these actions.
-   * true: not commited diff.
-   * false: already commited diff.
+   * statusDiff Flag which determines if in the contextmenu stage actions are
+   * shown or not Because when checking out commits, it should not possible to
+   * select these actions. true: not commited diff. false: already commited
+   * diff.
    */
   bool mStatusDiff{false};
 
@@ -183,9 +175,10 @@ private:
   QIcon mNoteIcon;
   QIcon mWarningIcon;
   QIcon mErrorIcon;
-  QIcon mStagedIcon;
+  QPixmap mStagedIcon;
+  QPixmap mUnStagedIcon;
 
-  QMap<int,QList<Diagnostic>> mDiagnostics;
+  QMap<int, QList<Diagnostic>> mDiagnostics;
 };
 
 #endif

@@ -16,8 +16,7 @@ namespace git {
 
 class Tag;
 
-class TagRef : public Reference
-{
+class TagRef : public Reference {
 public:
   TagRef(const Reference &rhs);
 

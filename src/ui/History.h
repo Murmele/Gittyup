@@ -16,8 +16,7 @@
 class RepoView;
 class QMenu;
 
-class History : public QObject
-{
+class History : public QObject {
   Q_OBJECT
 
 public:

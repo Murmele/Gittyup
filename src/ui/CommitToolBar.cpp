@@ -26,31 +26,26 @@ const QString kRefsKey = "commit.refs.all";
 const QString kSortKey = "commit.sort.date";
 const QString kGraphKey = "commit.graph.visible";
 const QString kStatusKey = "commit.status.clean";
-const QString kCompactKey = "commit/compact";
-const QString kStyleSheet =
-  "QToolBar {"
-  "  border: none"
-  "}"
-  "QToolButton {"
-  "  border: none;"
-  "  border-radius: 4px;"
-  "  padding-right: 12px"
-  "}";
+const QString kStyleSheet = "QToolBar {"
+                            "  border: none"
+                            "}"
+                            "QToolButton {"
+                            "  border: none;"
+                            "  border-radius: 4px;"
+                            "  padding-right: 12px"
+                            "}";
 
-struct SettingsEntry
-{
+struct SettingsEntry {
   QString key;
   bool value;
 };
 
-using SettingsMap = QMap<QString,SettingsEntry>;
+using SettingsMap = QMap<QString, SettingsEntry>;
 
-class ToolButton : public QToolButton
-{
+class ToolButton : public QToolButton {
 public:
   ToolButton(const SettingsMap &map, CommitToolBar *parent)
-    : QToolButton(parent)
-  {
+      : QToolButton(parent) {
     setPopupMode(QToolButton::InstantPopup);
 
     QMenu *menu = new QMenu(this);
@@ -78,9 +73,8 @@ public:
     }
 
     setMenu(menu);
-    connect(menu, &QMenu::triggered, [this](QAction *action) {
-      setText(action->text());
-    });
+    connect(menu, &QMenu::triggered,
+            [this](QAction *action) { setText(action->text()); });
 
 #ifdef Q_OS_MAC
     QFont font = this->font();
@@ -90,19 +84,12 @@ public:
   }
 };
 
-class Style : public QProxyStyle
-{
+class Style : public QProxyStyle {
 public:
-  Style(QStyle *style)
-    : QProxyStyle(style)
-  {}
+  Style(QStyle *style) : QProxyStyle(style) {}
 
-  void drawPrimitive(
-    PrimitiveElement element,
-    const QStyleOption *option,
-    QPainter *painter,
-    const QWidget *widget = nullptr) const
-  {
+  void drawPrimitive(PrimitiveElement element, const QStyleOption *option,
+                     QPainter *painter, const QWidget *widget = nullptr) const {
     if (element != QStyle::PE_IndicatorArrowDown) {
       QProxyStyle::drawPrimitive(element, option, painter, widget);
       return;
@@ -125,11 +112,9 @@ public:
   }
 };
 
-} // anon. namespace
+} // namespace
 
-CommitToolBar::CommitToolBar(QWidget *parent)
-  : QToolBar(parent)
-{
+CommitToolBar::CommitToolBar(QWidget *parent) : QToolBar(parent) {
   setStyle(new Style(style()));
   setStyleSheet(kStyleSheet);
   setToolButtonStyle(Qt::ToolButtonTextOnly);
@@ -181,9 +166,12 @@ CommitToolBar::CommitToolBar(QWidget *parent)
 
   QAction *compact = menu->addAction(tr("Compact Mode"));
   compact->setCheckable(true);
-  compact->setChecked(Settings::instance()->value(kCompactKey).toBool());
+  compact->setChecked(Settings::instance()
+                          ->value(Setting::Id::ShowCommitsInCompactMode)
+                          .toBool());
   connect(compact, &QAction::triggered, [this](bool checked) {
-    Settings::instance()->setValue(kCompactKey, checked);
+    Settings::instance()->setValue(Setting::Id::ShowCommitsInCompactMode,
+                                   checked);
     emit settingsChanged();
   });
 }

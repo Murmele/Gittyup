@@ -16,8 +16,7 @@ namespace git {
 class Branch;
 }
 
-class DeleteBranchDialog : public QMessageBox
-{
+class DeleteBranchDialog : public QMessageBox {
   Q_OBJECT
 
 public:

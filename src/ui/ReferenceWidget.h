@@ -17,15 +17,13 @@
 
 class QLabel;
 
-class ReferenceWidget : public QFrame
-{
+class ReferenceWidget : public QFrame {
   Q_OBJECT
 
 public:
-  ReferenceWidget(
-    const git::Repository &repo,
-    ReferenceView::Kinds kinds = ReferenceView::AllRefs,
-    QWidget *parent = nullptr);
+  ReferenceWidget(const git::Repository &repo,
+                  ReferenceView::Kinds kinds = ReferenceView::AllRefs,
+                  QWidget *parent = nullptr);
 
   git::Reference currentReference() const;
   void select(const git::Reference &ref);

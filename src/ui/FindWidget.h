@@ -17,26 +17,19 @@ class TextEditor;
 class QLabel;
 class QLineEdit;
 
-class EditorProvider
-{
+class EditorProvider {
 public:
   virtual QList<TextEditor *> editors() = 0;
   virtual void ensureVisible(TextEditor *editor, int pos) = 0;
 };
 
-class FindWidget : public QWidget
-{
+class FindWidget : public QWidget {
   Q_OBJECT
 
 public:
   // The difference between Forward and Advance is that Forward doesn't
   // advance if the current selection already matches the search term.
-  enum Direction
-  {
-    Backward,
-    Forward,
-    Advance
-  };
+  enum Direction { Backward, Forward, Advance };
 
   FindWidget(EditorProvider *provider, QWidget *parent = nullptr);
 
@@ -57,8 +50,7 @@ protected:
   void showEvent(QShowEvent *event) override;
 
 private:
-  class SegmentedButton : public QWidget
-  {
+  class SegmentedButton : public QWidget {
   public:
     SegmentedButton(QWidget *parent = nullptr);
 
@@ -66,13 +58,9 @@ private:
     QToolButton *next() const { return mNext; }
 
   private:
-    class Segment : public QToolButton
-    {
+    class Segment : public QToolButton {
     public:
-      enum Kind {
-        Prev,
-        Next
-      };
+      enum Kind { Prev, Next };
 
       Segment(Kind kind, QWidget *parent = nullptr);
 

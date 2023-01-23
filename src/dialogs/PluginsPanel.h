@@ -10,17 +10,11 @@
 #include "git/Repository.h"
 #include <QTreeWidget>
 
-class PluginsPanel : public QTreeWidget
-{
+class PluginsPanel : public QTreeWidget {
   Q_OBJECT
 
 public:
-  enum Column
-  {
-    Name,
-    Kind,
-    Description
-  };
+  enum Column { Name, Kind, Description };
 
   PluginsPanel(const git::Repository &repo, QWidget *parent = nullptr);
 

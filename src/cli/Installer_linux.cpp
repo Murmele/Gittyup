@@ -13,14 +13,12 @@
 #include <QFile>
 #include <QProcess>
 
-bool Installer::isInstalled() const
-{
+bool Installer::isInstalled() const {
   QString path = QCoreApplication::applicationFilePath();
   return (QFile::symLinkTarget(QDir(mPath).filePath(mName)) == path);
 }
 
-bool Installer::install()
-{
+bool Installer::install() {
   QDir dir(mPath);
   if (!dir.exists() && !dir.mkpath(".")) {
     QProcess proc;
@@ -42,8 +40,7 @@ bool Installer::install()
   return true;
 }
 
-bool Installer::uninstall()
-{
+bool Installer::uninstall() {
   QDir dir(mPath);
   if (dir.remove(mName))
     return true;

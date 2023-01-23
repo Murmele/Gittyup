@@ -19,44 +19,36 @@ namespace git {
 
 namespace {
 
-int notify(const git_diff *, const git_diff_delta *, const char *, void *)
-{
+int notify(const git_diff *, const git_diff_delta *, const char *, void *) {
   // Abort the diff.
   return -1;
 }
 
-} // anon. namespace
+} // namespace
 
 RevWalk::RevWalk() {}
 
-RevWalk::RevWalk(git_revwalk *walker)
-  : d(walker, git_revwalk_free)
-{}
+RevWalk::RevWalk(git_revwalk *walker) : d(walker, git_revwalk_free) {}
 
-bool RevWalk::hide(const Commit &commit)
-{
+bool RevWalk::hide(const Commit &commit) {
   return !git_revwalk_hide(d.data(), commit);
 }
 
-bool RevWalk::hide(const Reference &ref)
-{
+bool RevWalk::hide(const Reference &ref) {
   Commit commit = ref.target();
   return commit.isValid() ? hide(commit) : false;
 }
 
-bool RevWalk::push(const Commit &commit)
-{
+bool RevWalk::push(const Commit &commit) {
   return !git_revwalk_push(d.data(), commit);
 }
 
-bool RevWalk::push(const Reference &ref)
-{
+bool RevWalk::push(const Reference &ref) {
   Commit commit = ref.target();
   return commit.isValid() ? push(commit) : false;
 }
 
-Commit RevWalk::next(const QString &path) const
-{
+Commit RevWalk::next(const QString &path) const {
   git_diff_options diffopts = GIT_DIFF_OPTIONS_INIT;
   diffopts.notify_cb = notify;
 

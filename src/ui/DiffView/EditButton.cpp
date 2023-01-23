@@ -1,38 +1,33 @@
-#include "EditButton.h"
 
+#include "EditButton.h"
+#include "ui/RepoView.h"
 #include <QPainterPath>
 
-EditButton::EditButton(
-  const git::Patch &patch,
-  int index,
-  bool binary,
-  bool lfs,
-  QWidget *parent)
-  : Button(parent),
-    mBinary(binary),
-    mLfs(lfs)
-{
+EditButton::EditButton(const git::Patch &patch, int index, bool binary,
+                       bool lfs, QWidget *parent)
+    : Button(parent) {
   setObjectName("EditButton");
 
   // Add edit button menu.
-  mEditMenu = new QMenu(this);
-  mEditWorkingCopyAction = mEditMenu->addAction("Edit Working Copy");
-  mEditNewRevisionAction = mEditMenu->addAction("Edit New Revision");
-  mEditOldRevisionAction = mEditMenu->addAction("Edit Old Revision");
+  QMenu *menu = new QMenu(this);
+  mEditWorkingCopyAction = menu->addAction(tr("Edit Working Copy"));
+  mEditNewRevisionAction = menu->addAction(tr("Edit New Revision"));
+  mEditOldRevisionAction = menu->addAction(tr("Edit Old Revision"));
+  setMenu(menu);
 
-  updatePatch(patch, index);
+  setPopupMode(QToolButton::InstantPopup);
 
-  // why I am not able to directly use mEditMenu?
-  QMenu* menu = mEditMenu;
-  connect(this, &EditButton::clicked, [menu] {
-    menu->actions().first()->trigger();
-  });
+  // Update button actions.
+  updatePatch(patch, index, true);
 
-  setMenu(mEditMenu);
+  // Enable edit button.
+  setVisible(!binary && !lfs);
 }
 
-void EditButton::updatePatch(const git::Patch &patch, int index)
-{
+void EditButton::updatePatch(const git::Patch &patch, int index, bool init) {
+  if ((!isEnabled() || !isVisible()) && !init)
+    return;
+
   RepoView *view = RepoView::parentView(this);
   QString name = patch.name();
 
@@ -44,31 +39,32 @@ void EditButton::updatePatch(const git::Patch &patch, int index)
     newLine = patch.lineNumber(index, 0, git::Diff::NewFile);
   }
 
-  disconnect(mEditWorkingCopyAction); // delete all connections from this sender
-  if (view->repo().workdir().exists(name)) {
-      mEditWorkingCopyAction->setVisible(true);
-    connect(mEditWorkingCopyAction, &QAction::triggered, [this, view, name, newLine] {
-      view->edit(name, newLine);
-    });
+  // Working copy action.
+  mEditWorkingCopyAction->disconnect();
+  if (patch.repo().workdir().exists(name)) {
+    mEditWorkingCopyAction->setVisible(true);
+    connect(mEditWorkingCopyAction, &QAction::triggered, this,
+            [view, name, newLine] { view->edit(name, newLine); });
   } else
-     mEditWorkingCopyAction->setVisible(false);
+    mEditWorkingCopyAction->setVisible(false);
 
-  // Add revision edit actions.
-  QList<git::Commit> commits = view->commits();
+  // Revision edit actions.
+  QList<git::Commit> commits = view ? view->commits() : QList<git::Commit>();
   git::Commit commit = !commits.isEmpty() ? commits.first() : git::Commit();
   git::Blob newBlob = patch.blob(git::Diff::NewFile);
-  disconnect(mEditNewRevisionAction);
+  git::Blob oldBlob = patch.blob(git::Diff::OldFile);
+
+  mEditNewRevisionAction->disconnect();
   if (newBlob.isValid()) {
     mEditNewRevisionAction->setVisible(true);
-    connect(mEditNewRevisionAction, &QAction::triggered,
-    [this, view, name, newLine, newBlob, commit] {
-      view->openEditor(name, newLine, newBlob, commit);
-    });
+    connect(mEditNewRevisionAction, &QAction::triggered, this,
+            [view, name, newLine, newBlob, commit] {
+              view->openEditor(name, newLine, newBlob, commit);
+            });
   } else
-      mEditNewRevisionAction->setVisible(false);
+    mEditNewRevisionAction->setVisible(false);
 
-  disconnect(mEditOldRevisionAction);
-  git::Blob oldBlob = patch.blob(git::Diff::OldFile);
+  mEditOldRevisionAction->disconnect();
   if (oldBlob.isValid()) {
     mEditOldRevisionAction->setVisible(true);
     if (commit.isValid()) {
@@ -77,27 +73,17 @@ void EditButton::updatePatch(const git::Patch &patch, int index)
         commit = parents.first();
     }
 
-    connect(mEditOldRevisionAction, &QAction::triggered,
-    [this, view, name, oldLine, oldBlob, commit] {
-      view->openEditor(name, oldLine, oldBlob, commit);
-    });
+    connect(mEditOldRevisionAction, &QAction::triggered, this,
+            [view, name, oldLine, oldBlob, commit] {
+              view->openEditor(name, oldLine, oldBlob, commit);
+            });
   } else
-      mEditOldRevisionAction->setVisible(false);
-
-  // Connect button click to the first menu action.
-  bool enable = false;
-  for (auto action: mEditMenu->actions()) {
-    if (action->isVisible()) {
-        enable = true;
-        break;
-    }
-  }
-  setEnabled(enable && !mBinary && !mLfs);
+    mEditOldRevisionAction->setVisible(false);
 }
 
+void EditButton::paintEvent(QPaintEvent *event) {
+  Q_UNUSED(event)
 
-void EditButton::paintEvent(QPaintEvent *event)
-{
   QPainter painter(this);
   initButtonPainter(&painter);
 

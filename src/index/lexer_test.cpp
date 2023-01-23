@@ -19,16 +19,12 @@
 namespace {
 
 const QStringList kStyleNames = {
-  "nothing", "whitespace", "comment", "string", "number", "keyword",
-  "identifier", "operator", "error", "preprocessor", "constant",
-  "variable", "function", "class", "type", "label", "regex", "embedded"
-};
+    "nothing",  "whitespace", "comment",  "string", "number",
+    "keyword",  "identifier", "operator", "error",  "preprocessor",
+    "constant", "variable",   "function", "class",  "type",
+    "label",    "regex",      "embedded"};
 
-void print(
-  QTextStream &out,
-  const Lexer::Lexeme &lexeme,
-  int indent = 0)
-{
+void print(QTextStream &out, const Lexer::Lexeme &lexeme, int indent = 0) {
   out << QByteArray(indent, ' ');
   out << lexeme.text << " - " << lexeme.token;
   if (lexeme.token < kStyleNames.length())
@@ -36,11 +32,7 @@ void print(
   out << endl;
 }
 
-void print(
-  QTextStream &out,
-  Lexer *lexer,
-  int indent = 0)
-{
+void print(QTextStream &out, Lexer *lexer, int indent = 0) {
   while (lexer->hasNext()) {
     Lexer::Lexeme lexeme = lexer->next();
     QByteArray text = lexeme.text;
@@ -79,15 +71,14 @@ void print(
   }
 }
 
-} // anon. namespace
+} // namespace
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   QCoreApplication app(argc, argv);
   QStringList args = app.arguments();
   args.removeFirst(); // program name
 
-  QMap<QByteArray,Lexer *> lexers;
+  QMap<QByteArray, Lexer *> lexers;
   QByteArray home = Settings::lexerDir().path().toUtf8();
 
   GenericLexer generic;

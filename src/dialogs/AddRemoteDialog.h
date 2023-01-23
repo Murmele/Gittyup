@@ -15,8 +15,7 @@
 class QLineEdit;
 class QPushButton;
 
-class AddRemoteDialog : public QDialog
-{
+class AddRemoteDialog : public QDialog {
   Q_OBJECT
 
 public:
@@ -34,4 +33,3 @@ private:
 };
 
 #endif
-

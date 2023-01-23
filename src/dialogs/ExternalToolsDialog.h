@@ -15,8 +15,7 @@
 class ExternalToolsModel;
 class QVBoxLayout;
 
-class ExternalToolsDialog : public QDialog
-{
+class ExternalToolsDialog : public QDialog {
   Q_OBJECT
 
 public:

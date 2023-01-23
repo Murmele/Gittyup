@@ -16,8 +16,7 @@ class QMenu;
 class QPaintEvent;
 class QToolButton;
 
-class Footer : public QWidget
-{
+class Footer : public QWidget {
   Q_OBJECT
 
 public:

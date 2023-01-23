@@ -21,13 +21,11 @@ namespace git {
 class Commit;
 }
 
-class Index : public QObject
-{
+class Index : public QObject {
   Q_OBJECT
 
 public:
-  enum Field
-  {
+  enum Field {
     // fields
     Id,
     Author,
@@ -43,8 +41,8 @@ public:
     Any,
 
     // subfields
-    Comment    = 1 << 4,
-    String     = 2 << 4,
+    Comment = 1 << 4,
+    String = 2 << 4,
     Identifier = 3 << 4,
 
     // pseudo-fields
@@ -54,33 +52,23 @@ public:
     Pathspec
   };
 
-  struct Word
-  {
-    Word(const QByteArray &key, quint32 value = 0)
-      : key(key), value(value)
-    {}
+  struct Word {
+    Word(const QByteArray &key, quint32 value = 0) : key(key), value(value) {}
 
-    bool operator<(const Word &rhs) const
-    {
-      return key < rhs.key;
-    }
+    bool operator<(const Word &rhs) const { return key < rhs.key; }
 
     QByteArray key;
     quint32 value;
   };
 
-  struct Term
-  {
-    Term(Field field, const QString &text)
-      : field(field), text(text)
-    {}
+  struct Term {
+    Term(Field field, const QString &text) : field(field), text(text) {}
 
     Field field;
     QString text;
   };
 
-  struct Posting
-  {
+  struct Posting {
     quint32 id;
     quint8 field;
     QVector<quint32> positions;
@@ -88,7 +76,7 @@ public:
 
   using IdList = QList<git::Id>;
   using Dictionary = QList<Word>;
-  using PostingMap = QMap<QByteArray,QVector<Index::Posting>>;
+  using PostingMap = QMap<QByteArray, QVector<Index::Posting>>;
   using Predicate = std::function<bool(const QByteArray &)>;
 
   Index(const git::Repository &repo, QObject *parent = nullptr);
@@ -110,7 +98,7 @@ public:
   QList<Posting> postings(const Term &term, bool positional = false) const;
   QList<Posting> postings(const Predicate &pred, Field field = Any) const;
 
-  QMap<Field,QStringList> fieldMap(const QString &prefix = QString()) const;
+  QMap<Field, QStringList> fieldMap(const QString &prefix = QString()) const;
 
   // constants
   static quint8 version();
@@ -130,7 +118,8 @@ public:
 
   // positions
   static void readPositions(QDataStream &in, QVector<quint32> &positions);
-  static void writePositions(QDataStream &out, const QVector<quint32> &positions);
+  static void writePositions(QDataStream &out,
+                             const QVector<quint32> &positions);
 
   // Enable logging. The log is written to the index dir.
   static bool isLoggingEnabled();

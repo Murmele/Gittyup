@@ -15,26 +15,15 @@
 #include <QString>
 #include <QTimer>
 
-class LogEntry : public QObject
-{
+class LogEntry : public QObject {
   Q_OBJECT
 
 public:
-  enum Kind
-  {
-    Entry,
-    File,
-    Hint,
-    Warning,
-    Error
-  };
+  enum Kind { Entry, File, Hint, Warning, Error };
 
   LogEntry(QObject *parent = nullptr);
-  LogEntry(
-    Kind kind,
-    const QString &text,
-    const QString &title,
-    LogEntry *parent = nullptr);
+  LogEntry(Kind kind, const QString &text, const QString &title,
+           LogEntry *parent = nullptr);
 
   Kind kind() const { return mKind; }
 
@@ -57,11 +46,9 @@ public:
   LogEntry *addEntry(const QString &text, const QString &title = QString());
 
   void insertEntries(int row, const QList<LogEntry *> &entries);
-  LogEntry *insertEntry(
-    int row,
-    Kind kind,
-    const QString &text,
-    const QString &title = QString());
+  LogEntry *insertEntry(int row, Kind kind, const QString &text,
+                        const QString &title = QString());
+  LogEntry *lastEntry() const;
 
   int progress() const { return mProgress; }
   void setBusy(bool busy);

@@ -14,8 +14,7 @@
 
 namespace git {
 
-class Buffer
-{
+class Buffer {
 public:
   Buffer(const char *data, int size);
 

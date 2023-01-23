@@ -12,8 +12,7 @@
 
 #include "Account.h"
 
-class Beanstalk : public Account
-{
+class Beanstalk : public Account {
   Q_OBJECT
 
 public:

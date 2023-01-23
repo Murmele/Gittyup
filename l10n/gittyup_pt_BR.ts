@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="pt_BR" sourcelanguage="en_US">
+<TS version="2.1" language="pt-BR">
 <context>
     <name>AboutDialog</name>
     <message>
@@ -608,7 +608,8 @@
     <message>
         <location filename="../src/ui/DetailView.cpp" line="395"/>
         <source>Parents:</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Pais...</translatorcomment>
+        <translation>Pais:</translation>
     </message>
 </context>
 <context>
@@ -682,33 +683,39 @@
         <location filename="../src/ui/DetailView.cpp" line="828"/>
         <location filename="../src/ui/DetailView.cpp" line="853"/>
         <source>Spell Check Language</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Idioma da verificação ortográfica...</translatorcomment>
+        <translation>Verificação ortográfica</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="829"/>
         <source>The dictionary &apos;%1&apos; is invalid</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>O dicionário &apos;%1&apos; é inválido...</translatorcomment>
+        <translation>O dicionário &apos;%1&apos; é inválido</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="830"/>
         <source>Spell checking is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>A verificação ortográfica está desativada...</translatorcomment>
+        <translation>A verificação ortográfica está desativada.</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="831"/>
         <source>The choosen dictionary &apos;%1.dic&apos; is not a valid hunspell dictionary.</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>O dicionário escolhido &apos;%1.dic&apos; não é um dicionário hunspell válido...</translatorcomment>
+        <translation>O dicionário escolhido &apos;%1.dic&apos; não é um dicionário hunspell válido.</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="837"/>
         <location filename="../src/ui/DetailView.cpp" line="894"/>
         <source>Invalid dictionary &apos;%1.dic&apos;</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Dicionário inválido &apos;%1.dic&apos;...</translatorcomment>
+        <translation>Dicionário inválido &apos;%1.dic&apos;</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="859"/>
         <source>Edit User Dictionary</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Editar dicionário do usuário...</translatorcomment>
+        <translation>Editar dicionário do usuário</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="916"/>
@@ -732,8 +739,8 @@
     <message>
         <location filename="../src/ui/DetailView.cpp" line="1049"/>
         <source>Update %1</source>
-        <translatorcomment>Modificações efetuadas em %1</translatorcomment>
-        <translation>Modificações efetuadas em %1</translation>
+        <translatorcomment>Comentário padrão para o commit...</translatorcomment>
+        <translation>Modificações efetuadas em: %1</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="1053"/>
@@ -1345,17 +1352,20 @@
     <message>
         <location filename="../src/ui/DiffView.cpp" line="297"/>
         <source>Edit Working Copy</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Editar cópia de trabalho...</translatorcomment>
+        <translation>Editar cópia de trabalho</translation>
     </message>
     <message>
         <location filename="../src/ui/DiffView.cpp" line="308"/>
         <source>Edit New Revision</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Editar Nova Revisão...</translatorcomment>
+        <translation>Editar Nova Revisão</translation>
     </message>
     <message>
         <location filename="../src/ui/DiffView.cpp" line="323"/>
         <source>Edit Old Revision</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Editar Revisão Antiga...</translatorcomment>
+        <translation>Editar Revisão Antiga</translation>
     </message>
 </context>
 <context>
@@ -1571,7 +1581,7 @@
     <message>
         <location filename="../src/ui/FileContextMenu.cpp" line="191"/>
         <source>discard</source>
-        <translatorcomment>descarta.</translatorcomment>
+        <translatorcomment>Descarta as alterações...</translatorcomment>
         <translation>descartar</translation>
     </message>
     <message>
@@ -2563,8 +2573,8 @@ Exemplos
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="100"/>
         <source>Initialize New Repository...</source>
-        <translatorcomment>Inicializar novo repositório...</translatorcomment>
-        <translation>Inicializar novo repositório...</translation>
+        <translatorcomment>Cria novo repositório...</translatorcomment>
+        <translation>Novo repositório...</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="101"/>
@@ -2721,8 +2731,8 @@ Exemplos
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="340"/>
         <source>Stage All</source>
-        <translatorcomment>Coloca todos em stage área...</translatorcomment>
-        <translation>Colocar todos em stage área</translation>
+        <translatorcomment>Coloca tudo na Stage Área...</translatorcomment>
+        <translation>Add Tudo a Stage Área</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="341"/>
@@ -2733,8 +2743,8 @@ Exemplos
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="346"/>
         <source>Unstage All</source>
-        <translatorcomment>Remove todos da stage área...</translatorcomment>
-        <translation>Remover todos da stage área</translation>
+        <translatorcomment>Remove todas as alterações da Stage Área...</translatorcomment>
+        <translation>Remover Tudo da Stage Área</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="347"/>
@@ -2902,8 +2912,8 @@ Exemplos
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="457"/>
         <source>Checkout Current</source>
-        <translatorcomment>Check-out atual...</translatorcomment>
-        <translation>Check-out atual</translation>
+        <translatorcomment>Checkout, muda para o destino especificado...</translatorcomment>
+        <translation>Checkout atual</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="458"/>
@@ -2914,8 +2924,8 @@ Exemplos
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="468"/>
         <source>Checkout...</source>
-        <translatorcomment>Check-out ...</translatorcomment>
-        <translation>Check-out...</translation>
+        <translatorcomment>Muda para um destino especificado...</translatorcomment>
+        <translation>Checkout...</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="469"/>
@@ -2951,7 +2961,7 @@ Exemplos
         <location filename="../src/ui/MenuBar.cpp" line="502"/>
         <source>Squash...</source>
         <translatorcomment>Mescla alocando as alterações do branch especificado no topo, mesclando como um novo commit.</translatorcomment>
-        <translation>Merge --squash...</translation>
+        <translation>Mesclar --Squash...</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="503"/>
@@ -3016,8 +3026,8 @@ Exemplos
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="577"/>
         <source>Show Stashes</source>
-        <translatorcomment>Mostra os stashes área...</translatorcomment>
-        <translation>Mostrar stashes</translation>
+        <translatorcomment>Mostra as alterações na Stage Area...</translatorcomment>
+        <translation>Mostrar Stashes</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="585"/>
@@ -3035,7 +3045,7 @@ Exemplos
         <location filename="../src/ui/MenuBar.cpp" line="591"/>
         <source>Pop Stash</source>
         <translatorcomment>Joga fora o stash (mais alto, por padrão) depois de aplicá-lo.</translatorcomment>
-        <translation>Descartar stash</translation>
+        <translation>Descartar Stash</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="592"/>
@@ -3118,13 +3128,14 @@ Exemplos
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="657"/>
         <source>Check For Updates...</source>
-        <translatorcomment>Verificar se há atualizações...</translatorcomment>
-        <translation>Verificar se há atualizações...</translation>
+        <translatorcomment>Busca atualizações...</translatorcomment>
+        <translation>Buscar atualizações...</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="661"/>
         <source>Plugin Documentation...</source>
-        <translation></translation>
+        <translatorcomment>Documentação do Plugin...</translatorcomment>
+        <translation>Plugin Documentação...</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="669"/>
@@ -3183,13 +3194,13 @@ Exemplos
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="895"/>
         <source>Merge</source>
-        <translatorcomment>Mesclar...</translatorcomment>
+        <translatorcomment>Mescla...</translatorcomment>
         <translation>Mesclar</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="905"/>
         <source>Revert</source>
-        <translatorcomment>Reverter...</translatorcomment>
+        <translatorcomment>Reverte...</translatorcomment>
         <translation>Reverter</translation>
     </message>
     <message>
@@ -3288,7 +3299,8 @@ Exemplos
     <message>
         <location filename="../src/tools/MergeTool.cpp" line="44"/>
         <source>External Merge</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Mesclar externamente...</translatorcomment>
+        <translation>Mesclar externamente</translation>
     </message>
 </context>
 <context>
@@ -3296,12 +3308,14 @@ Exemplos
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="667"/>
         <source>Path to SSH config file:</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Caminho para o arquivo de configuração SSH...</translatorcomment>
+        <translation>Caminho para o arquivo de configuração SSH:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="668"/>
         <source>Path to default / fallback SSH key file:</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Caminho para o arquivo de chave SSH padrão / substituto...</translatorcomment>
+        <translation>Caminho para o arquivo de chave SSH padrão / substituto:</translation>
     </message>
 </context>
 <context>
@@ -3309,27 +3323,32 @@ Exemplos
     <message>
         <location filename="../src/dialogs/NewBranchDialog.cpp" line="40"/>
         <source>Checkout branch</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Checkout branch...</translatorcomment>
+        <translation>Checkout branch</translation>
     </message>
     <message>
         <location filename="../src/dialogs/NewBranchDialog.cpp" line="46"/>
         <source>Name:</source>
-        <translation type="unfinished">Nome:</translation>
+        <translatorcomment>Nome...</translatorcomment>
+        <translation>Nome:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/NewBranchDialog.cpp" line="47"/>
         <source>Start Point:</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Ponto de partida...</translatorcomment>
+        <translation>Ponto inicial:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/NewBranchDialog.cpp" line="49"/>
         <source>Advanced:</source>
-        <translation type="unfinished">Avançado:</translation>
+        <translatorcomment>Avançado...</translatorcomment>
+        <translation>Avançado:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/NewBranchDialog.cpp" line="57"/>
         <source>Upstream:</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Upstream...</translatorcomment>
+        <translation>Upstream:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/NewBranchDialog.cpp" line="68"/>
@@ -3344,7 +3363,7 @@ Exemplos
         <location filename="../src/ui/PathspecWidget.cpp" line="115"/>
         <source>Filter by Path</source>
         <translatorcomment>FIltra por diretório...</translatorcomment>
-        <translation>FIltra por diretório</translation>
+        <translation>FIltrar por Diretório</translation>
     </message>
 </context>
 <context>
@@ -3352,42 +3371,50 @@ Exemplos
     <message>
         <location filename="../src/dialogs/PluginsPanel.cpp" line="26"/>
         <source>Name</source>
-        <translation type="unfinished">Nome</translation>
+        <translatorcomment>Nome...</translatorcomment>
+        <translation>Nome</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PluginsPanel.cpp" line="26"/>
         <source>Kind</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Tipo...</translatorcomment>
+        <translation>Tipo</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PluginsPanel.cpp" line="26"/>
         <source>Description</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Descrição...</translatorcomment>
+        <translation>Descrição</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PluginsPanel.cpp" line="65"/>
         <source>Options</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Opções...</translatorcomment>
+        <translation>Opções</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PluginsPanel.cpp" line="76"/>
         <source>%1 Options</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>%1 Opções...</translatorcomment>
+        <translation>%1 Opções</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PluginsPanel.cpp" line="158"/>
         <source>Note</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Nota...</translatorcomment>
+        <translation>Nota</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PluginsPanel.cpp" line="159"/>
         <source>Warning</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Atenção...</translatorcomment>
+        <translation>Atenção</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PluginsPanel.cpp" line="160"/>
         <source>Error</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Erro...</translatorcomment>
+        <translation>Erro</translation>
     </message>
 </context>
 <context>
@@ -3395,7 +3422,8 @@ Exemplos
     <message>
         <location filename="../src/ui/IndexCompleter.cpp" line="101"/>
         <source>Show Advanced Search</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Mostrar pesquisa avançada...</translatorcomment>
+        <translation>Mostrar pesquisa avançada</translation>
     </message>
 </context>
 <context>
@@ -3403,12 +3431,14 @@ Exemplos
     <message>
         <location filename="../src/ui/ColumnView.cpp" line="66"/>
         <source>Added</source>
-        <translation type="unfinished">Adicionado</translation>
+        <translatorcomment>Adicionado...</translatorcomment>
+        <translation>Adicionado</translation>
     </message>
     <message>
         <location filename="../src/ui/ColumnView.cpp" line="67"/>
         <source>Modified</source>
-        <translation type="unfinished">Modificado</translation>
+        <translatorcomment>Modificado...</translatorcomment>
+        <translation>Modificado</translation>
     </message>
 </context>
 <context>
@@ -3416,7 +3446,8 @@ Exemplos
     <message>
         <location filename="../src/ui/ToolBar.cpp" line="457"/>
         <source>Create Pull Request</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Cria solicitação pull...</translatorcomment>
+        <translation>Criar solicitação pull</translation>
     </message>
 </context>
 <context>
@@ -3424,32 +3455,38 @@ Exemplos
     <message>
         <location filename="../src/dialogs/PullRequestDialog.cpp" line="26"/>
         <source>Create Pull Request</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Cria solicitação pull</translatorcomment>
+        <translation>Criar solicitação pull</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PullRequestDialog.cpp" line="30"/>
         <source>Title</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Título...</translatorcomment>
+        <translation>Título</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PullRequestDialog.cpp" line="33"/>
         <source>Body</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Corpo...</translatorcomment>
+        <translation>Corpo</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PullRequestDialog.cpp" line="37"/>
         <source>Maintainer can modify</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>O mantenedor pode modificar...</translatorcomment>
+        <translation>O mantenedor pode modificar</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PullRequestDialog.cpp" line="51"/>
         <source>From:</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>De...</translatorcomment>
+        <translation>De:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PullRequestDialog.cpp" line="59"/>
         <source>owner/repository</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Dono e Repositório...</translatorcomment>
+        <translation>proprietário/repositório</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PullRequestDialog.cpp" line="63"/>
@@ -3460,12 +3497,14 @@ Exemplos
     <message>
         <location filename="../src/dialogs/PullRequestDialog.cpp" line="78"/>
         <source>To:</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Para...</translatorcomment>
+        <translation>Para:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/PullRequestDialog.cpp" line="89"/>
         <source>Create</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Criar...</translatorcomment>
+        <translation>Criar</translation>
     </message>
 </context>
 <context>
@@ -3473,7 +3512,8 @@ Exemplos
     <message>
         <location filename="../src/git/Reference.cpp" line="87"/>
         <source>HEAD detached at %1</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Desanexado do versionamento em %1</translatorcomment>
+        <translation>HEAD desanexado em %1</translation>
     </message>
 </context>
 <context>
@@ -3481,7 +3521,8 @@ Exemplos
     <message>
         <location filename="../src/ui/ReferenceList.cpp" line="167"/>
         <source>Commit</source>
-        <translation type="unfinished">Commitar</translation>
+        <translatorcomment>Commit...</translatorcomment>
+        <translation>Commit</translation>
     </message>
 </context>
 <context>
@@ -3540,32 +3581,37 @@ Exemplos
     <message>
         <location filename="../src/ui/ReferenceView.cpp" line="509"/>
         <source>Delete</source>
-        <translation type="unfinished">Deletar</translation>
+        <translation>Deletar</translation>
     </message>
     <message>
         <location filename="../src/ui/ReferenceView.cpp" line="529"/>
         <source>Push Tag to %1</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Empurre a Tag para %1</translatorcomment>
+        <translation>Empurre a Tag para %1</translation>
     </message>
     <message>
         <location filename="../src/ui/ReferenceView.cpp" line="537"/>
         <source>New Local Branch</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Novo Branch Local...</translatorcomment>
+        <translation>Novo Branch Local</translation>
     </message>
     <message>
         <location filename="../src/ui/ReferenceView.cpp" line="545"/>
         <source>Merge...</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Merge...</translatorcomment>
+        <translation>Merge...</translation>
     </message>
     <message>
         <location filename="../src/ui/ReferenceView.cpp" line="557"/>
         <source>Rebase...</source>
-        <translation type="unfinished">Rebase...</translation>
+        <translatorcomment>Pega os commits do branch pai, sincroniza com os commits anterior desse, e joga os commits do branch atual no final da pilha.</translatorcomment>
+        <translation>Rebase...</translation>
     </message>
     <message>
         <location filename="../src/ui/ReferenceView.cpp" line="569"/>
         <source>Squash...</source>
-        <translation type="unfinished">Merge --squash...</translation>
+        <translatorcomment>Mescla alocando as alterações do Branch especificado no topo, mesclando como um novo commit.</translatorcomment>
+        <translation>Merge --Squash...</translation>
     </message>
 </context>
 <context>
@@ -3573,7 +3619,8 @@ Exemplos
     <message>
         <location filename="../src/ui/ToolBar.cpp" line="400"/>
         <source>Refresh</source>
-        <translation type="unfinished">Atualizar</translation>
+        <translatorcomment>Atualizar...</translatorcomment>
+        <translation>Atualizar</translation>
     </message>
 </context>
 <context>
@@ -3581,7 +3628,8 @@ Exemplos
     <message>
         <location filename="../src/ui/ToolBar.cpp" line="283"/>
         <source>999+</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>999+</translatorcomment>
+        <translation>999+</translation>
     </message>
 </context>
 <context>
@@ -4594,12 +4642,14 @@ This reverts commit %2.</source>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="2141"/>
         <source>Pop Stash</source>
-        <translation type="unfinished">Descartar stash</translation>
+        <translatorcomment>Joga fora o Stash (mais alto, por padrão) depois de aplicá-lo.</translatorcomment>
+        <translation>Descartar Stash</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="2143"/>
         <source>pop stash</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Joga fora o stash (mais alto, por padrão) depois de aplicá-lo.</translatorcomment>
+        <translation>descartar stash</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="2164"/>
@@ -5339,7 +5389,7 @@ This reverts commit %2.</source>
     <message>
         <location filename="../src/ui/ToolBar.cpp" line="848"/>
         <source>Pop Stash</source>
-        <translation type="unfinished">Descartar stash</translation>
+        <translation>Descartar Stash</translation>
     </message>
     <message>
         <location filename="../src/ui/ToolBar.cpp" line="875"/>

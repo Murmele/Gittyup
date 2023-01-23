@@ -13,6 +13,7 @@ add_subdirectory(plugins)
 add_subdirectory(tools)
 add_subdirectory(ui)
 add_subdirectory(update)
+add_subdirectory(util)
 add_subdirectory(watcher)
 
 # Add executable last.

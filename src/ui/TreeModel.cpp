@@ -20,19 +20,14 @@ namespace {
 
 const QString kLinkFmt = "<a href='%1'>%2</a>";
 
-} // anon. namespace
+} // namespace
 
 TreeModel::TreeModel(const git::Repository &repo, QObject *parent)
-  : QAbstractItemModel(parent), mRepo(repo)
-{}
+    : QAbstractItemModel(parent), mRepo(repo) {}
 
-TreeModel::~TreeModel()
-{
-  delete mRoot;
-}
+TreeModel::~TreeModel() { delete mRoot; }
 
-void TreeModel::setTree(const git::Tree &tree, const git::Diff &diff)
-{
+void TreeModel::setTree(const git::Tree &tree, const git::Diff &diff) {
   beginResetModel();
 
   delete mRoot;
@@ -43,24 +38,20 @@ void TreeModel::setTree(const git::Tree &tree, const git::Diff &diff)
   endResetModel();
 }
 
-int TreeModel::rowCount(const QModelIndex &parent) const
-{
+int TreeModel::rowCount(const QModelIndex &parent) const {
   return mRoot ? node(parent)->children().size() : 0;
 }
 
-int TreeModel::columnCount(const QModelIndex &parent) const
-{
+int TreeModel::columnCount(const QModelIndex &parent) const {
   Q_UNUSED(parent);
   return 1;
 }
 
-bool TreeModel::hasChildren(const QModelIndex &parent) const
-{
+bool TreeModel::hasChildren(const QModelIndex &parent) const {
   return mRoot && node(parent)->hasChildren();
 }
 
-QModelIndex TreeModel::parent(const QModelIndex &index) const
-{
+QModelIndex TreeModel::parent(const QModelIndex &index) const {
   Node *parent = node(index)->parent();
   if (!parent || parent == mRoot)
     return QModelIndex();
@@ -69,20 +60,16 @@ QModelIndex TreeModel::parent(const QModelIndex &index) const
   return createIndex(parent->parent()->children().indexOf(parent), 0, parent);
 }
 
-QModelIndex TreeModel::index(
-  int row,
-  int column,
-  const QModelIndex &parent) const
-{
-  if (row < 0 || row >= rowCount(parent) ||
-      column < 0 || column >= columnCount(parent))
+QModelIndex TreeModel::index(int row, int column,
+                             const QModelIndex &parent) const {
+  if (row < 0 || row >= rowCount(parent) || column < 0 ||
+      column >= columnCount(parent))
     return QModelIndex();
 
   return createIndex(row, column, node(parent)->children().at(row));
 }
 
-QVariant TreeModel::data(const QModelIndex &index, int role) const
-{
+QVariant TreeModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid())
     return QVariant();
 
@@ -93,8 +80,8 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
 
     case Qt::DecorationRole: {
       QFileInfo info(node->path());
-      return info.exists() ? mIconProvider.icon(info) :
-        mIconProvider.icon(QFileIconProvider::File);
+      return info.exists() ? mIconProvider.icon(info)
+                           : mIconProvider.icon(QFileIconProvider::File);
     }
 
     case Qt::EditRole:
@@ -109,8 +96,8 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
 
       QStringList paths;
       QString prefix = node->path(true);
-	  // from these files the checkstate for the folders is created,
-	  // because the folder it self cannot be staged
+      // from these files the checkstate for the folders is created,
+      // because the folder it self cannot be staged
       for (int i = 0; i < mDiff.count(); ++i) {
         QString path = mDiff.name(i);
         if (path.startsWith(prefix))
@@ -123,7 +110,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
       int count = 0;
       git::Index index = mDiff.index();
       foreach (const QString &path, paths) {
-		// isStaged on folders does not work, because folder cannot be staged
+        // isStaged on folders does not work, because folder cannot be staged
         switch (index.isStaged(path)) {
           case git::Index::Disabled:
           case git::Index::Unstaged:
@@ -153,7 +140,8 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
     case KindRole: {
       Settings *settings = Settings::instance();
       git::Submodule submodule = mRepo.lookupSubmodule(node->path(true));
-      return submodule.isValid() ? tr("Submodule") : settings->kind(node->name());
+      return submodule.isValid() ? tr("Submodule")
+                                 : settings->kind(node->name());
     }
 
     case AddedRole:
@@ -194,18 +182,13 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
   return QVariant();
 }
 
-bool TreeModel::setData(const QModelIndex &index,
-                        const QVariant &value,
-                        int role)
-{
-    return setData(index, value, role, false);
+bool TreeModel::setData(const QModelIndex &index, const QVariant &value,
+                        int role) {
+  return setData(index, value, role, false);
 }
 
-bool TreeModel::setData(const QModelIndex &index,
-                        const QVariant &value,
-                        int role,
-                        bool ignoreIndexChanges)
-{
+bool TreeModel::setData(const QModelIndex &index, const QVariant &value,
+                        int role, bool ignoreIndexChanges) {
   switch (role) {
     case Qt::CheckStateRole: {
       QStringList files;
@@ -220,28 +203,30 @@ bool TreeModel::setData(const QModelIndex &index,
       if (!ignoreIndexChanges)
         mDiff.index().setStaged(files, value.toBool());
 
-	  // childs
-	  if (hasChildren(index)) {
-		  // emit dataChanged() for all files in the folder
-		  // all children changed too. TODO: only the tracked files should emit a signal
-		  int count = rowCount(index);
-		  for (int row = 0; row < count; row++) {
-			  QModelIndex child = this->index(row, 0, index);
-			  emit dataChanged(child, child, {role});
-		  }
-	  }
-	  // parents
-	  // recursive approach to emit signal dataChanged also for the parents.
-	  // Because when a file in a folder is staged, the state of the folder changes too
-	  QModelIndex parent = this->parent(index);
-	  while (parent.isValid()) {
-		  emit dataChanged(parent, parent, {role});
-		  parent = this->parent(parent);
-	  }
+      // childs
+      if (hasChildren(index)) {
+        // emit dataChanged() for all files in the folder
+        // all children changed too. TODO: only the tracked files should emit a
+        // signal
+        int count = rowCount(index);
+        for (int row = 0; row < count; row++) {
+          QModelIndex child = this->index(row, 0, index);
+          emit dataChanged(child, child, {role});
+        }
+      }
+      // parents
+      // recursive approach to emit signal dataChanged also for the parents.
+      // Because when a file in a folder is staged, the state of the folder
+      // changes too
+      QModelIndex parent = this->parent(index);
+      while (parent.isValid()) {
+        emit dataChanged(parent, parent, {role});
+        parent = this->parent(parent);
+      }
 
-	  // file/folder it self
-	  // emit dataChanged() for folder or file it self
-	  emit dataChanged(index, index, {role});
+      // file/folder it self
+      // emit dataChanged() for folder or file it self
+      emit dataChanged(index, index, {role});
       emit checkStateChanged(index, value.toInt());
 
       return true;
@@ -251,13 +236,11 @@ bool TreeModel::setData(const QModelIndex &index,
   return false;
 }
 
-Qt::ItemFlags TreeModel::flags(const QModelIndex &index) const
-{
+Qt::ItemFlags TreeModel::flags(const QModelIndex &index) const {
   return QAbstractItemModel::flags(index) | Qt::ItemIsUserCheckable;
 }
 
-TreeModel::Node *TreeModel::node(const QModelIndex &index) const
-{
+TreeModel::Node *TreeModel::node(const QModelIndex &index) const {
   return index.isValid() ? static_cast<Node *>(index.internalPointer()) : mRoot;
 }
 
@@ -266,42 +249,29 @@ TreeModel::Node *TreeModel::node(const QModelIndex &index) const
 //#############################################################################
 
 TreeModel::Node::Node(const QString &name, const git::Object &obj, Node *parent)
-  : mName(name), mObject(obj), mParent(parent)
-{}
+    : mName(name), mObject(obj), mParent(parent) {}
 
-TreeModel::Node::~Node()
-{
-  qDeleteAll(mChildren);
-}
+TreeModel::Node::~Node() { qDeleteAll(mChildren); }
 
-QString TreeModel::Node::name() const
-{
-  return mName;
-}
+QString TreeModel::Node::name() const { return mName; }
 
-QString TreeModel::Node::path(bool relative) const
-{
+QString TreeModel::Node::path(bool relative) const {
   bool root = (!mParent || (relative && !mParent->mParent));
   return !root ? mParent->path(relative) % "/" % mName : mName;
 }
 
-TreeModel::Node *TreeModel::Node::parent() const
-{
-  return mParent;
-}
+TreeModel::Node *TreeModel::Node::parent() const { return mParent; }
 
-bool TreeModel::Node::hasChildren() const
-{
+bool TreeModel::Node::hasChildren() const {
   git::Tree tree = object();
   return (tree.isValid() && tree.count() > 0);
 }
 
-QList<TreeModel::Node *> TreeModel::Node::children()
-{
+QList<TreeModel::Node *> TreeModel::Node::children() {
   if (mChildren.isEmpty() && hasChildren()) {
     git::Tree tree = object();
     for (int i = 0; i < tree.count(); ++i) {
-        QString name = tree.name(i);
+      QString name = tree.name(i);
       mChildren.append(new Node(tree.name(i), tree.object(i), this));
     }
   }
@@ -309,7 +279,4 @@ QList<TreeModel::Node *> TreeModel::Node::children()
   return mChildren;
 }
 
-git::Object TreeModel::Node::object() const
-{
-  return mObject;
-}
+git::Object TreeModel::Node::object() const { return mObject; }

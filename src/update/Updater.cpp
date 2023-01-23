@@ -13,6 +13,8 @@
 #include "UpdateDialog.h"
 #include "UpToDateDialog.h"
 #include "conf/Settings.h"
+#include "ui/MainWindow.h"
+#include "git/Command.h"
 #include <QApplication>
 #include <QCloseEvent>
 #include <QDialog>
@@ -29,7 +31,7 @@
 #include <QVersionNumber>
 
 #if defined(Q_OS_MAC)
-#define PLATFORM "mac"
+#define PLATFORM "macos"
 #elif defined(Q_OS_WIN)
 #if defined(Q_OS_WIN64)
 #define PLATFORM "win64"
@@ -42,30 +44,24 @@
 
 namespace {
 
+const QString kDownloadPlatform = "Github";
 const QString kTemplateFmt = "%1-XXXXXX.%2";
-const QString kLinkFmt =
-  "TODO: replace by release link<https://github.com/gitahead/gitahead/releases/download/v%1/GitAhead%2-%3.%4>";
+const QString kLinkFmt = "https://github.com/Murmele/gittyup/releases/latest/"
+                         "download/Gittyup%1%2.%3";
 const QString kChangelogUrl =
-  "https://raw.githubusercontent.com/Murmele/gittyup/master/doc/changelog.md";
+    "https://raw.githubusercontent.com/Murmele/Gittyup/gh-pages/changelog.md";
 
-} // anon. namespace
+} // namespace
 
-Updater::Download::Download(const QString &link)
-  : mName(QUrl(link).fileName())
-{
-  QFileInfo info(mName);
+Updater::Download::Download(const QString &link) : mUrl(link) {
+  QFileInfo info(name());
   QString name = kTemplateFmt.arg(info.completeBaseName(), info.suffix());
   mFile = new QTemporaryFile(QDir::temp().filePath(name));
 }
 
-Updater::Download::~Download()
-{
-  delete mFile;
-}
+Updater::Download::~Download() { delete mFile; }
 
-Updater::Updater(QObject *parent)
-  : QObject(parent)
-{
+Updater::Updater(QObject *parent) : QObject(parent) {
   // Set up connections.
   connect(&mMgr, &QNetworkAccessManager::sslErrors, this, &Updater::sslErrors);
   connect(this, &Updater::upToDate, [this] {
@@ -74,36 +70,39 @@ Updater::Updater(QObject *parent)
   });
 
   connect(this, &Updater::updateAvailable,
-  [this](const QString &version, const QString &log, const QString &link) {
-    // Show the update dialog.
-    QVersionNumber appVersion =
-      QVersionNumber::fromString(QCoreApplication::applicationVersion());
-    QVersionNumber newVersion = QVersionNumber::fromString(version);
-    if (newVersion.majorVersion() > appVersion.majorVersion() ||
-        !Settings::instance()->value("update/download").toBool()) {
-      UpdateDialog *dialog = new UpdateDialog(version, log, link);
-      connect(dialog, &UpdateDialog::rejected, this, &Updater::updateCanceled);
-      dialog->show();
-      return;
-    }
+          [this](const QString &platform, const QString &version,
+                 const QString &log, const QString &link) {
+            // Show the update dialog.
+            QVersionNumber appVersion = QVersionNumber::fromString(
+                QCoreApplication::applicationVersion());
+            QVersionNumber newVersion = QVersionNumber::fromString(version);
 
-    // Skip the update dialog and just start downloading.
-    if (Updater::DownloadRef download = this->download(link)) {
-      DownloadDialog *dialog = new DownloadDialog(download);
-      dialog->show();
-    }
-  });
+            if (Settings::instance()
+                    ->value(Setting::Id::InstallUpdatesAutomatically)
+                    .toBool()) {
+              // Skip the update dialog and just start downloading.
+              if (Updater::DownloadRef download = this->download(link)) {
+                DownloadDialog *dialog = new DownloadDialog(download);
+                dialog->show();
+              }
+            } else {
+              UpdateDialog *dialog =
+                  new UpdateDialog(platform, version, log, link);
+              connect(dialog, &UpdateDialog::rejected, this,
+                      &Updater::updateCanceled);
+              dialog->show();
+            }
+          });
 
   connect(this, &Updater::updateError,
-  [](const QString &text, const QString &detail) {
-    QMessageBox mb(QMessageBox::Critical, tr("Update Failed"), text);
-    mb.setInformativeText(detail);
-    mb.exec();
-  });
+          [](const QString &text, const QString &detail) {
+            QMessageBox mb(QMessageBox::Critical, tr("Update Failed"), text);
+            mb.setInformativeText(detail);
+            mb.exec();
+          });
 }
 
-void Updater::update(bool spontaneous)
-{
+void Updater::update(bool spontaneous) {
   QNetworkRequest request(kChangelogUrl);
   QNetworkReply *reply = mMgr.get(request);
   connect(reply, &QNetworkReply::finished, [this, spontaneous, reply] {
@@ -112,15 +111,15 @@ void Updater::update(bool spontaneous)
 
     if (reply->error() != QNetworkReply::NoError) {
       if (!spontaneous)
-        emit updateError(
-          tr("Unable to check for updates"), reply->errorString());
+        emit updateError(tr("Unable to check for updates"),
+                         reply->errorString());
       return;
     }
 
     QByteArray changelog;
     QList<QByteArray> versions;
     QVersionNumber appVersion =
-      QVersionNumber::fromString(QCoreApplication::applicationVersion());
+        QVersionNumber::fromString(QCoreApplication::applicationVersion());
 
     // Parse changelog.
     while (!reply->atEnd()) {
@@ -144,7 +143,7 @@ void Updater::update(bool spontaneous)
 
     // Check for skipped version.
     QString version = versions.first();
-    QVariant skipped = Settings::instance()->value("update/skip");
+    QVariant skipped = Settings::instance()->value(Setting::Id::SkippedUpdates);
     if (spontaneous && skipped.toStringList().contains(version))
       return;
 
@@ -152,8 +151,8 @@ void Updater::update(bool spontaneous)
     while (changelog.endsWith('-') || changelog.endsWith('\n'))
       changelog.chop(1);
 
-    char *ptr = cmark_markdown_to_html(
-      changelog.data(), changelog.size(), CMARK_OPT_DEFAULT);
+    char *ptr = cmark_markdown_to_html(changelog.data(), changelog.size(),
+                                       CMARK_OPT_DEFAULT);
     QString html(ptr);
     free(ptr);
 
@@ -161,20 +160,27 @@ void Updater::update(bool spontaneous)
     QString platform(PLATFORM);
     QString platformArg;
     QString extension = "sh";
-    if (platform == "mac") {
-      extension = "dmg";
-    } else if (platform.startsWith("win")) {
-      platformArg = QString("-%1").arg(platform);
-      extension = "exe";
-    }
+#if defined(FLATPAK) || defined(DEBUG_FLATPAK)
+    extension = "flatpak";
+    platformArg = "";
+    // The bundle does not have any version in its filename
+    QString link = kLinkFmt.arg(platformArg, "", extension);
+#else
+	if (platform == "macos") {
+	  extension = "dmg";
+	} else if (platform.startsWith("win")) {
+	  platformArg = QString("-%1").arg(platform);
+	  extension = "exe";
+	}
+	QString link = kLinkFmt.arg(platformArg, QString("-%1").arg(version), extension);
+#endif
+    qDebug() << "Download url of the update: " << link;
 
-    QString link = kLinkFmt.arg(version, platformArg, version, extension);
-    emit updateAvailable(version, html, link);
+    emit updateAvailable(platform, version, html, link);
   });
 }
 
-Updater::DownloadRef Updater::download(const QString &link)
-{
+Updater::DownloadRef Updater::download(const QString &link) {
   QString errorText = tr("Unable to download update");
   DownloadRef download = DownloadRef::create(link);
   if (!download->file()->open()) {
@@ -184,9 +190,8 @@ Updater::DownloadRef Updater::download(const QString &link)
 
   // Follow redirects.
   QNetworkRequest request(link);
-  request.setAttribute(
-    QNetworkRequest::RedirectPolicyAttribute,
-    QNetworkRequest::NoLessSafeRedirectPolicy);
+  request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                       QNetworkRequest::NoLessSafeRedirectPolicy);
 
   QNetworkReply *reply = mMgr.get(request);
   connect(reply, &QNetworkReply::finished, [this, errorText, download] {
@@ -221,17 +226,28 @@ Updater::DownloadRef Updater::download(const QString &link)
   return download;
 }
 
-void Updater::install(const DownloadRef &download)
-{
+void Updater::install(const DownloadRef &download) {
   // First try to close all windows. Disable quit on close.
-  QCloseEvent event;
-  QString errorText = tr("Unable to install update");
   bool quitOnClose = QGuiApplication::quitOnLastWindowClosed();
   QGuiApplication::setQuitOnLastWindowClosed(false);
-  bool rejected = (!qApp->notify(qApp, &event) || !event.isAccepted());
+
+  bool rejected = false;
+  for (MainWindow *window : MainWindow::windows()) {
+    rejected = !window->close();
+    if (rejected) {
+      break;
+    }
+  }
+
   QGuiApplication::setQuitOnLastWindowClosed(quitOnClose);
+
+  QString errorText = tr("Unable to install update");
   if (rejected) {
-    emit updateError(errorText, tr("Some windows failed to close"));
+    emit updateError(errorText,
+                     tr("Some windows failed to close. You can "
+                        "download the binary manually from %1")
+                         .arg(QString("<a href=\"%1\">%2</a>")
+                                  .arg(download->url(), kDownloadPlatform)));
     return;
   }
 
@@ -246,8 +262,7 @@ void Updater::install(const DownloadRef &download)
   QCoreApplication::quit();
 }
 
-Updater *Updater::instance()
-{
+Updater *Updater::instance() {
   static Updater *instance = nullptr;
   if (!instance)
     instance = new Updater(qApp);
@@ -255,9 +270,74 @@ Updater *Updater::instance()
   return instance;
 }
 
-#if !defined(Q_OS_MAC) && !defined(Q_OS_WIN)
-bool Updater::install(const DownloadRef &download, QString &error)
-{
+#if defined(FLATPAK) || defined(DEBUG_FLATPAK)
+bool Updater::uninstallGittyup(bool system) {
+  QString bash = git::Command::bashPath();
+  QString loc = system ? "--system" : "--user";
+
+  QStringList args;
+  args.append("-c");
+  args.append(QString("flatpak-spawn --host flatpak remove -y %1 "
+                      "com.github.Murmele.Gittyup")
+                  .arg(loc));
+  auto *p = new QProcess(this);
+
+  p->start(bash, args);
+  if (!p->waitForFinished()) {
+    const QString es = p->errorString();
+    qDebug() << "Uninstalling Gittyup failed: " + es;
+    return false;
+  } else {
+    qDebug() << "Uninstall: " + p->readAll();
+  }
+  p->deleteLater();
+  return true;
+}
+
+bool Updater::install(const DownloadRef &download, QString &error) {
+  QString path = download->file()->fileName();
+
+  // Ignore return value
+  uninstallGittyup(true);
+  uninstallGittyup(false);
+
+  QDir dir(QCoreApplication::applicationDirPath());
+  QStringList args;
+  args.append("-c");
+  args.append(
+      QString("flatpak-spawn --host flatpak install --user -y %1").arg(path));
+  qDebug() << "Install arguments: " << args;
+  qDebug() << "Download file: " << path;
+  QProcess *p = new QProcess(this);
+
+  QString bash = git::Command::bashPath();
+  qDebug() << "Bash: " << bash;
+  p->start(bash, args);
+  if (!p->waitForFinished()) {
+    const QString es = p->errorString();
+    error = tr("Installer script failed: %1").arg(es);
+    qDebug() << "Installer script failed: " + es;
+    return false;
+  } else {
+    qDebug() << "Successfully installed bundle: " + p->readAll();
+  }
+  p->deleteLater();
+
+  auto relauncher_cmd = dir.filePath("relauncher");
+  qDebug() << "Relauncher command: " << relauncher_cmd;
+
+  // Start the relaunch helper.
+  QString app = "flatpak-spawn --host flatpak run com.github.Murmele.Gittyup";
+  QString pid = QString::number(QCoreApplication::applicationPid());
+  if (!QProcess::startDetached(relauncher_cmd, {app, pid})) {
+    error = tr("Helper application failed to start");
+    return false;
+  }
+
+  return true;
+}
+#elif !defined(Q_OS_MAC) && !defined(Q_OS_WIN)
+bool Updater::install(const DownloadRef &download, QString &error) {
   QString path = download->file()->fileName();
   QDir dir(QCoreApplication::applicationDirPath());
   QString prefix = QString("--prefix=%1").arg(dir.path());

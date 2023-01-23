@@ -13,25 +13,16 @@
 #include "git/Repository.h"
 #include <QAbstractTableModel>
 
-class BranchTableModel : public QAbstractTableModel
-{
+class BranchTableModel : public QAbstractTableModel {
   Q_OBJECT
 
 public:
-  enum Role
-  {
-    BranchRole = Qt::UserRole
-  };
+  enum Role { BranchRole = Qt::UserRole };
 
-  enum Column
-  {
-    Name = 0,
-    Upstream,
-    Rebase
-  };
+  enum Column { Name = 0, Upstream, Rebase };
 
   BranchTableModel(const git::Repository &repo, QObject *parent = nullptr);
-  int rowCount(const QModelIndex &parent = QModelIndex()) const ;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const;
   int columnCount(const QModelIndex &parent = QModelIndex()) const;
   QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;

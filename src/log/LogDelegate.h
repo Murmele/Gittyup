@@ -16,35 +16,28 @@
 
 class QTextDocument;
 
-class LogDelegate : public QStyledItemDelegate
-{
+class LogDelegate : public QStyledItemDelegate {
 public:
   LogDelegate(QObject *parent = 0);
   ~LogDelegate() override;
 
-  virtual QSize sizeHint(
-    const QStyleOptionViewItem &option,
-    const QModelIndex &index) const override;
+  virtual QSize sizeHint(const QStyleOptionViewItem &option,
+                         const QModelIndex &index) const override;
 
-  virtual void paint(
-    QPainter *painter,
-    const QStyleOptionViewItem &option,
-    const QModelIndex &index) const override;
+  virtual void paint(QPainter *painter, const QStyleOptionViewItem &option,
+                     const QModelIndex &index) const override;
 
   void invalidateCache(const QModelIndex &index);
   QTextDocument *document(const QModelIndex &index) const;
-  QPoint documentPosition(
-    const QStyleOptionViewItem &option,
-    const QModelIndex &index) const;
+  QPoint documentPosition(const QStyleOptionViewItem &option,
+                          const QModelIndex &index) const;
 
-  QRect decorationRect(
-    const QStyleOptionViewItem &option,
-    const QModelIndex &index) const;
+  QRect decorationRect(const QStyleOptionViewItem &option,
+                       const QModelIndex &index) const;
 
 protected:
-  void initStyleOption(
-    QStyleOptionViewItem *option,
-    const QModelIndex &index) const override;
+  void initStyleOption(QStyleOptionViewItem *option,
+                       const QModelIndex &index) const override;
 
 private:
   QStyle *style(const QStyleOptionViewItem &option) const;
@@ -53,7 +46,7 @@ private:
 
   QDate mCacheDate;
   QTimer mCacheTimer;
-  mutable QMap<QModelIndex,QTextDocument *> mDocumentCache;
+  mutable QMap<QModelIndex, QTextDocument *> mDocumentCache;
 };
 
 #endif

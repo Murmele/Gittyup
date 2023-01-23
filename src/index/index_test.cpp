@@ -15,24 +15,16 @@
 
 namespace {
 
-class RepoInit
-{
+class RepoInit {
 public:
-  RepoInit()
-  {
-    git::Repository::init();
-  }
+  RepoInit() { git::Repository::init(); }
 
-  ~RepoInit()
-  {
-    git::Repository::shutdown();
-  }
+  ~RepoInit() { git::Repository::shutdown(); }
 };
 
-} // anon. namespace
+} // namespace
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   QApplication app(argc, argv);
 
   QCommandLineParser parser;
@@ -48,7 +40,7 @@ int main(int argc, char *argv[])
 
   // Initialize global git state.
   RepoInit init;
-  (void) init;
+  (void)init;
 
   git::Repository repo = git::Repository::open(args.last());
   if (!repo.isValid())

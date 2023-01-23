@@ -21,8 +21,7 @@
 
 using namespace QTest;
 
-class TestEditor : public QObject
-{
+class TestEditor : public QObject {
   Q_OBJECT
 
 private slots:
@@ -38,8 +37,7 @@ private:
   TextEditor *mEditor = nullptr;
 };
 
-void TestEditor::initTestCase()
-{
+void TestEditor::initTestCase() {
   mWindow = new EditorWindow;
   mBlameEditor = mWindow->widget();
   mEditor = mBlameEditor->editor();
@@ -47,23 +45,20 @@ void TestEditor::initTestCase()
   QVERIFY(qWaitForWindowActive(mWindow));
 }
 
-void TestEditor::insertText()
-{
+void TestEditor::insertText() {
   keyClicks(mEditor, "This is a test.");
   keyClick(mEditor, Qt::Key_Return);
 }
 
-void TestEditor::copyPaste()
-{
+void TestEditor::copyPaste() {
   keyClick(mEditor, 'A', Qt::ControlModifier);
   keyClick(mEditor, 'C', Qt::ControlModifier);
   keyClick(mEditor, Qt::Key_Down);
   keyClick(mEditor, 'V', Qt::ControlModifier);
 }
 
-void TestEditor::find()
-{
-  // It's difficult to trigger the shortcut on Mac.
+void TestEditor::find() {
+  // It's difficult to trigger the shortcut on macOS.
   MenuBar *menuBar = MenuBar::instance(mWindow);
   QAction *findAction = menuBar->findChild<QAction *>("Find");
   QVERIFY(findAction);
@@ -80,12 +75,11 @@ void TestEditor::find()
   QCOMPARE(label->text(), QString("2 matches"));
 }
 
-void TestEditor::cleanupTestCase()
-{
+void TestEditor::cleanupTestCase() {
   // Set up timer to dismiss the dialog.
   QTimer::singleShot(0, [] {
     QMessageBox *dialog =
-      qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+        qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
     QVERIFY(dialog && qWaitForWindowActive(dialog));
 
     QDialogButtonBox *buttons = dialog->findChild<QDialogButtonBox *>();

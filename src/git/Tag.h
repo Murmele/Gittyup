@@ -17,8 +17,7 @@ namespace git {
 
 class Signature;
 
-class Tag : public Object
-{
+class Tag : public Object {
 public:
   Tag();
   Tag(const Object &rhs);

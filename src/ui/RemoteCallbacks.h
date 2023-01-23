@@ -19,37 +19,31 @@
 
 class LogEntry;
 
-class RemoteCallbacks : public QObject, public git::Remote::Callbacks
-{
+class RemoteCallbacks : public QObject, public git::Remote::Callbacks {
   Q_OBJECT
 
 public:
-  enum Kind
-  {
-    Send,
-    Receive
-  };
+  enum Kind { Send, Receive };
 
-  RemoteCallbacks(
-    Kind kind,
-    LogEntry *log,
-    const QString &url,
-    const QString &name = QString(),
-    QObject *parent = nullptr,
-    const git::Repository &repo = git::Repository());
+  RemoteCallbacks(Kind kind, LogEntry *log, const QString &url,
+                  const QString &name = QString(), QObject *parent = nullptr,
+                  const git::Repository &repo = git::Repository());
 
   bool isCanceled() const { return mCanceled; }
   void setCanceled(bool canceled);
 
   void storeDeferredCredentials();
 
-  bool credentials(
-    const QString &url,
-    QString &username,
-    QString &password) override;
+  bool credentials(const QString &url, QString &username,
+                   QString &password) override;
+
+  virtual void
+  interactiveAuth(const QString &name, const QString &instruction,
+                  const QVector<git::Remote::SshInteractivePrompt> &prompts,
+                  QVector<QString> &responses) override;
 
   void sideband(const QString &text) override;
-  bool transfer(int total, int current, int bytes) override;
+  bool transfer(int total, int current, size_t bytes) override;
   bool resolve(int total, int current) override;
   void update(const QString &name, const git::Id &a, const git::Id &b) override;
   void rejected(const QString &name, const QString &status) override;
@@ -70,11 +64,13 @@ signals:
   void referenceUpdated(const QString &name);
 
   // These are implementation details.
-  void queueCredentials(
-    const QString &url,
-    QString &username,
-    QString &password,
-    QString &error);
+  void queueCredentials(const QString &url, QString &username,
+                        QString &password, QString &error);
+
+  void queueInteractiveAuth(
+      const QString &name, const QString &instruction,
+      const QVector<git::Remote::SshInteractivePrompt> &prompts,
+      QVector<QString> &responses, QString &error);
   void queueSideband(const QString &text, const QString &fmt = QString());
   void queueTransfer(int total, int current, int bytes, int elapsed);
   void queueResolve(int total, int current);
@@ -84,11 +80,12 @@ signals:
   void queueDelta(int total, int current);
 
 private:
-  void credentialsImpl(
-    const QString &url,
-    QString &username,
-    QString &password,
-    QString &error);
+  void credentialsImpl(const QString &url, QString &username, QString &password,
+                       QString &error);
+  void
+  interactiveAuthImpl(const QString &name, const QString &instruction,
+                      const QVector<git::Remote::SshInteractivePrompt> &prompts,
+                      QVector<QString> &responses, QString &error);
   void sidebandImpl(const QString &text, const QString &fmt = QString());
   void transferImpl(int total, int current, int bytes, int elapsed);
   void resolveImpl(int total, int current);

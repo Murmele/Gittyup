@@ -18,17 +18,13 @@ namespace git {
 class Id;
 class Signature;
 
-class Blame
-{
+class Blame {
 public:
   class Callbacks {
   public:
     virtual ~Callbacks() {}
 
-    virtual bool progress()
-    {
-      return false;
-    }
+    virtual bool progress() { return false; }
   };
 
   Blame();

@@ -16,12 +16,11 @@ namespace git {
 class TagRef;
 }
 
-class DeleteTagDialog : public QMessageBox
-{
+class DeleteTagDialog : public QMessageBox {
   Q_OBJECT
 
 public:
   DeleteTagDialog(const git::TagRef &tag, QWidget *parent = nullptr);
 };
 
-#endif 
+#endif

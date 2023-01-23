@@ -13,8 +13,7 @@
 using namespace Test;
 using namespace QTest;
 
-class TestSample : public QObject
-{
+class TestSample : public QObject {
   Q_OBJECT
 
 private slots:
@@ -25,27 +24,24 @@ private slots:
 private:
   int inputDelay = 99;
   int closeDelay = 9999;
-  
+
   ScratchRepository *mRepo = nullptr;
   QMainWindow *mWindow = nullptr;
 };
 
-void TestSample::initTestCase()
-{
+void TestSample::initTestCase() {
   mRepo = new ScratchRepository;
   mWindow = new QMainWindow;
-  //UiComponent *ui = new UiComponent(mRepo->repo(), mWindow);
-  //ui->show();
-  //QVERIFY(qWaitForWindowActive(ui));
+  // UiComponent *ui = new UiComponent(mRepo->repo(), mWindow);
+  // ui->show();
+  // QVERIFY(qWaitForWindowActive(ui));
 }
 
-void TestSample::sample()
-{
-  //keyClick(ui, 'Qt::Key_Return', Qt::NoModifier, inputDelay);
+void TestSample::sample() {
+  // keyClick(ui, 'Qt::Key_Return', Qt::NoModifier, inputDelay);
 }
 
-void TestSample::cleanupTestCase()
-{
+void TestSample::cleanupTestCase() {
   qWait(closeDelay);
   mWindow->close();
   delete mRepo;

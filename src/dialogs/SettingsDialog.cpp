@@ -11,6 +11,7 @@
 #include "AboutDialog.h"
 #include "DiffPanel.h"
 #include "ExternalToolsDialog.h"
+#include "HotkeysPanel.h"
 #include "PluginsPanel.h"
 #include "app/Application.h"
 #include "app/CustomTheme.h"
@@ -53,13 +54,11 @@
 
 namespace {
 
-void populateExternalTools(QComboBox *comboBox, const QString &type)
-{
+void populateExternalTools(QComboBox *comboBox, const QString &type) {
   comboBox->clear();
 
-  QList<ExternalTool::Info> tools =
-    ExternalTool::readGlobalTools(type) +
-    ExternalTool::readBuiltInTools(type);
+  QList<ExternalTool::Info> tools = ExternalTool::readGlobalTools(type) +
+                                    ExternalTool::readBuiltInTools(type);
 
   QStringList names;
   foreach (const ExternalTool::Info &tool, tools) {
@@ -72,39 +71,28 @@ void populateExternalTools(QComboBox *comboBox, const QString &type)
     comboBox->addItem(tool);
 }
 
-class StackedWidget : public QStackedWidget
-{
+class StackedWidget : public QStackedWidget {
 public:
-  StackedWidget(QWidget *parent = nullptr)
-    : QStackedWidget(parent)
-  {}
+  StackedWidget(QWidget *parent = nullptr) : QStackedWidget(parent) {}
 
-  QSize sizeHint() const override
-  {
-    return currentWidget()->sizeHint();
-  }
+  QSize sizeHint() const override { return currentWidget()->sizeHint(); }
 
-  QSize minimumSizeHint() const override
-  {
+  QSize minimumSizeHint() const override {
     return currentWidget()->minimumSizeHint();
   }
 };
 
-class GeneralPanel : public QWidget
-{
+class GeneralPanel : public QWidget {
   Q_OBJECT
 
 public:
-  GeneralPanel(QWidget *parent = nullptr)
-    : QWidget(parent)
-  {
+  GeneralPanel(QWidget *parent = nullptr) : QWidget(parent) {
     mName = new QLineEdit(this);
     mEmail = new QLineEdit(this);
 
     mFetch = new QCheckBox(tr("Fetch every"), this);
     mFetchMinutes = new QSpinBox(this);
-    connect(mFetch, &QCheckBox::toggled,
-            mFetchMinutes, &QSpinBox::setEnabled);
+    connect(mFetch, &QCheckBox::toggled, mFetchMinutes, &QSpinBox::setEnabled);
 
     QHBoxLayout *fetchLayout = new QHBoxLayout;
     fetchLayout->addWidget(mFetch);
@@ -113,19 +101,17 @@ public:
     fetchLayout->addStretch();
 
     mPushCommit = new QCheckBox(tr("Push after each commit"), this);
-    mPullUpdate = new QCheckBox(tr("Update submodules after pull"), this);
+    mPullUpdate =
+        new QCheckBox(tr("Update submodules after pull and clone"), this);
     mAutoPrune = new QCheckBox(tr("Prune when fetching"), this);
     mNoTranslation = new QCheckBox(tr("No translation"), this);
 
-    mStoreCredentials = new QCheckBox(
-      tr("Store credentials in secure storage"), this);
+    mStoreCredentials =
+        new QCheckBox(tr("Store credentials in secure storage"), this);
 
-    mUsageReporting = new QCheckBox(
-      tr("Allow collection of usage data"), this);
     QLabel *privacy = new QLabel(tr("<a href='view'>View privacy policy</a>"));
-    connect(privacy, &QLabel::linkActivated, [] {
-      AboutDialog::openSharedInstance(AboutDialog::Privacy);
-    });
+    connect(privacy, &QLabel::linkActivated,
+            [] { AboutDialog::openSharedInstance(AboutDialog::Privacy); });
 
     QFormLayout *form = new QFormLayout;
     form->addRow(tr("User name:"), mName);
@@ -136,26 +122,36 @@ public:
     form->addRow(QString(), mAutoPrune);
     form->addRow(tr("Language:"), mNoTranslation);
     form->addRow(tr("Credentials:"), mStoreCredentials);
-    form->addRow(tr("Usage reporting:"), mUsageReporting);
     form->addRow(QString(), privacy);
 
+    mSingleInstance =
+        new QCheckBox(tr("Only allow a single running instance"), this);
+
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
+    form->addRow(tr("Single instance:"), mSingleInstance);
+#elif defined(Q_OS_MACX)
+    mSingleInstance->setVisible(false);
+#endif
+
     QVBoxLayout *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(16,12,16,12);
+    layout->setContentsMargins(16, 12, 16, 12);
     layout->addLayout(form);
 
     init();
 
     // Connect signals after initializing fields.
     connect(mName, &QLineEdit::textChanged, [](const QString &text) {
-      git::Config::global().setValue("user.name", text);
+      git::Config config = git::Config::global();
+      config.setValue("user.name", text);
     });
 
     connect(mEmail, &QLineEdit::textChanged, [](const QString &text) {
-      git::Config::global().setValue("user.email", text);
+      git::Config config = git::Config::global();
+      config.setValue("user.email", text);
     });
 
-    connect(mFetch, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("global/autofetch/enable", checked);
+    connect(mFetch, &QCheckBox::toggled, this, [](bool checked) {
+      Settings::instance()->setValue(Setting::Id::FetchAutomatically, checked);
       foreach (MainWindow *window, MainWindow::windows()) {
         for (int i = 0; i < window->count(); ++i)
           window->view(i)->startFetchTimer();
@@ -164,56 +160,64 @@ public:
 
     auto signal = QOverload<int>::of(&QSpinBox::valueChanged);
     connect(mFetchMinutes, signal, [](int value) {
-      Settings::instance()->setValue("global/autofetch/minutes", value);
+      Settings::instance()->setValue(Setting::Id::AutomaticFetchPeriodInMinutes,
+                                     value);
     });
 
     connect(mPushCommit, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("global/autopush/enable", checked);
+      Settings::instance()->setValue(Setting::Id::PushAfterEachCommit, checked);
     });
 
     connect(mPullUpdate, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("global/autoupdate/enable", checked);
+      Settings::instance()->setValue(
+          Setting::Id::UpdateSubmodulesAfterPullAndClone, checked);
     });
 
     connect(mAutoPrune, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("global/autoprune/enable", checked);
+      Settings::instance()->setValue(Setting::Id::PruneAfterFetch, checked);
     });
 
     connect(mNoTranslation, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("translation/disable", checked);
+      Settings::instance()->setValue(Setting::Id::DontTranslate, checked);
     });
 
     connect(mStoreCredentials, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("credential/store", checked);
+      Settings::instance()->setValue(Setting::Id::StoreCredentials, checked);
       delete CredentialHelper::instance();
     });
 
-    connect(mUsageReporting, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("tracking/enabled", checked);
+    connect(mSingleInstance, &QCheckBox::toggled, [](bool checked) {
+      Settings::instance()->setValue(Setting::Id::AllowSingleInstanceOnly,
+                                     checked);
     });
   }
 
-  void init()
-  {
+  void init() {
     git::Config config = git::Config::global();
     mName->setText(config.value<QString>("user.name"));
     mEmail->setText(config.value<QString>("user.email"));
 
     Settings *settings = Settings::instance();
-    settings->beginGroup("global");
-    settings->beginGroup("autofetch");
-    mFetch->setChecked(settings->value("enable").toBool());
-    mFetchMinutes->setValue(settings->value("minutes").toInt());
-    settings->endGroup();
+    mFetch->setChecked(
+        settings->value(Setting::Id::FetchAutomatically).toBool());
+    mFetchMinutes->setValue(
+        settings->value(Setting::Id::AutomaticFetchPeriodInMinutes).toInt());
 
-    mPushCommit->setChecked(settings->value("autopush/enable").toBool());
-    mPullUpdate->setChecked(settings->value("autoupdate/enable").toBool());
-    mAutoPrune->setChecked(settings->value("autoprune/enable").toBool());
-    settings->endGroup();
+    mPushCommit->setChecked(
+        settings->value(Setting::Id::PushAfterEachCommit).toBool());
+    mPullUpdate->setChecked(
+        settings->value(Setting::Id::UpdateSubmodulesAfterPullAndClone)
+            .toBool());
+    mAutoPrune->setChecked(
+        settings->value(Setting::Id::PruneAfterFetch).toBool());
 
-    mNoTranslation->setChecked(settings->value("translation/disable").toBool());
-    mStoreCredentials->setChecked(settings->value("credential/store").toBool());
-    mUsageReporting->setChecked(settings->value("tracking/enabled").toBool());
+    mNoTranslation->setChecked(
+        settings->value(Setting::Id::DontTranslate).toBool());
+    mStoreCredentials->setChecked(
+        settings->value(Setting::Id::StoreCredentials).toBool());
+
+    mSingleInstance->setChecked(
+        settings->value(Setting::Id::AllowSingleInstanceOnly).toBool());
   }
 
 private:
@@ -227,27 +231,26 @@ private:
   QCheckBox *mAutoPrune;
   QCheckBox *mNoTranslation;
   QCheckBox *mStoreCredentials;
-  QCheckBox *mUsageReporting;
+  QCheckBox *mSingleInstance;
 };
 
-class ToolsPanel : public QWidget
-{
+class ToolsPanel : public QWidget {
   Q_OBJECT
 
 public:
   ToolsPanel(QWidget *parent = nullptr)
-    : QWidget(parent), mConfig(git::Config::global())
-  {
+      : QWidget(parent), mConfig(git::Config::global()) {
     // external editor
     QLineEdit *editTool = new QLineEdit(this);
     editTool->setText(mConfig.value<QString>("gui.editor"));
-    connect(editTool, &QLineEdit::textChanged, [this](const QString &text) {
-      if (text.isEmpty()) {
-        mConfig.remove("gui.editor");
-      } else {
-        mConfig.setValue("gui.editor", text);
-      }
-    });
+    connect(editTool, &QLineEdit::textChanged, this,
+            [this](const QString &text) {
+              if (text.isEmpty()) {
+                mConfig.remove("gui.editor");
+              } else {
+                mConfig.setValue("gui.editor", text);
+              }
+            });
 
     // external diff/merge
     QHBoxLayout *diffTool = externalTools("diff");
@@ -255,9 +258,9 @@ public:
 
     // backup files
     QCheckBox *backup =
-      new QCheckBox(tr("Keep backup of merge files (.orig)"), this);
+        new QCheckBox(tr("Keep backup of merge files (.orig)"), this);
     backup->setChecked(mConfig.value<bool>("mergetool.keepBackup"));
-    connect(backup, &QCheckBox::toggled, [this](bool checked) {
+    connect(backup, &QCheckBox::toggled, this, [this](bool checked) {
       mConfig.setValue("mergetool.keepBackup", checked);
     });
 
@@ -266,11 +269,33 @@ public:
     layout->addRow(tr("External diff:"), diffTool);
     layout->addRow(tr("External merge:"), mergeTool);
     layout->addRow(tr("Backup files:"), backup);
+
+    QLineEdit *mTerminalCommand = new QLineEdit(this);
+    layout->addRow(tr("Terminal emulator command:"), mTerminalCommand);
+    mTerminalCommand->setText(
+        Settings::instance()->value(Setting::Id::TerminalCommand).toString());
+
+    connect(mTerminalCommand, &QLineEdit::textChanged, [](const QString &text) {
+      Settings::instance()->setValue(Setting::Id::TerminalCommand, text);
+    });
+
+    QLineEdit *mFileManagerCommand = new QLineEdit(this);
+    QHBoxLayout *fileManagerLayout = new QHBoxLayout();
+    fileManagerLayout->addWidget(mFileManagerCommand);
+    fileManagerLayout->addWidget(new QLabel("\"%1\" = Repo Path", this));
+    layout->addRow(tr("File manager command:"), fileManagerLayout);
+
+    connect(
+        mFileManagerCommand, &QLineEdit::textChanged, [](const QString &text) {
+          Settings::instance()->setValue(Setting::Id::FilemanagerCommand, text);
+        });
+    mFileManagerCommand->setText(Settings::instance()
+                                     ->value(Setting::Id::FilemanagerCommand)
+                                     .toString());
   }
 
 private:
-  QHBoxLayout *externalTools(const QString &type)
-  {
+  QHBoxLayout *externalTools(const QString &type) {
     // Fill combo box with git config entries.
     QComboBox *comboBox = new QComboBox(this);
     populateExternalTools(comboBox, type);
@@ -282,16 +307,16 @@ private:
 
     // React to combo box selections.
     auto signal = QOverload<int>::of(&QComboBox::currentIndexChanged);
-    connect(comboBox, signal, [this, key, comboBox](int index) {
+    connect(comboBox, signal, this, [this, key, comboBox](int index) {
       mConfig.setValue(key, comboBox->currentText());
     });
 
     QPushButton *configure = new QPushButton(tr("Configure"), this);
-    connect(configure, &QPushButton::clicked, [this, comboBox, type] {
+    connect(configure, &QPushButton::clicked, this, [this, comboBox, type] {
       ExternalToolsDialog *dialog = new ExternalToolsDialog(type, this);
 
       // Update combo box when external tools dialog closes.
-      connect(dialog, &QDialog::finished, [dialog, comboBox, type] {
+      connect(dialog, &QDialog::finished, this, [comboBox, type] {
         QString name = comboBox->currentText();
         populateExternalTools(comboBox, type);
         comboBox->setCurrentIndex(comboBox->findText(name));
@@ -310,16 +335,12 @@ private:
   git::Config mConfig;
 };
 
-class WindowPanel : public QWidget
-{
+class WindowPanel : public QWidget {
   Q_OBJECT
 
 public:
-  WindowPanel(QWidget *parent = nullptr)
-    : QWidget(parent)
-  {
+  WindowPanel(QWidget *parent = nullptr) : QWidget(parent) {
     Settings *settings = Settings::instance();
-    settings->beginGroup("window");
 
     QComboBox *comboBox = new QComboBox(this);
 
@@ -355,7 +376,8 @@ public:
 
     comboBox->insertSeparator(comboBox->count());
 
-    int index = comboBox->findText(settings->value("theme").toString());
+    int index =
+        comboBox->findText(settings->value(Setting::Id::ColorTheme).toString());
 
     // add theme
     comboBox->addItem(tr("Add New Theme"));
@@ -366,28 +388,29 @@ public:
 
     // Edit enabled for user themes
     QStandardItemModel *model =
-      static_cast<QStandardItemModel *>(comboBox->model());
-    if(!comboBox->itemData(comboBox->currentIndex()).isValid())
+        static_cast<QStandardItemModel *>(comboBox->model());
+    if (!comboBox->itemData(comboBox->currentIndex()).isValid())
       model->item(comboBox->count() - 1)->setEnabled(false);
 
     auto signal = QOverload<int>::of(&QComboBox::currentIndexChanged);
-    connect(comboBox, signal, [this, parent, comboBox] {
-
-      //Add new theme
+    connect(comboBox, signal, this, [this, parent, comboBox] {
+      // Add new theme
       if (comboBox->currentIndex() == comboBox->count() - 2) {
         QDialog dialog;
 
         QDialogButtonBox *buttons =
-          new QDialogButtonBox(QDialogButtonBox::Cancel, &dialog);
-        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+            new QDialogButtonBox(QDialogButtonBox::Cancel, &dialog);
+        connect(buttons, &QDialogButtonBox::accepted, &dialog,
+                &QDialog::accept);
+        connect(buttons, &QDialogButtonBox::rejected, &dialog,
+                &QDialog::reject);
 
-        QPushButton *create =
-          buttons->addButton(tr("Create Theme"), QDialogButtonBox::AcceptRole);
+        QPushButton *create = buttons->addButton(tr("Create Theme"),
+                                                 QDialogButtonBox::AcceptRole);
         create->setEnabled(false);
 
         QLineEdit *nameField = new QLineEdit(&dialog);
-        connect(nameField, &QLineEdit::textChanged, [this, create, nameField] {
+        connect(nameField, &QLineEdit::textChanged, this, [create, nameField] {
           create->setEnabled(!nameField->text().isEmpty());
         });
 
@@ -406,9 +429,9 @@ public:
         return;
       }
 
-      //Edit current theme
+      // Edit current theme
       QStandardItemModel *model =
-        static_cast<QStandardItemModel *>(comboBox->model());
+          static_cast<QStandardItemModel *>(comboBox->model());
       bool enabled = comboBox->itemData(comboBox->currentIndex()).isValid();
       model->item(comboBox->count() - 1)->setEnabled(enabled);
 
@@ -420,22 +443,23 @@ public:
         return;
       }
 
-      //Save theme
-      Settings::instance()->setValue("window/theme", comboBox->currentText());
+      // Save theme
+      Settings::instance()->setValue(Setting::Id::ColorTheme,
+                                     comboBox->currentText());
 
       QMessageBox mb(QMessageBox::Information, tr("Restart?"),
-        tr("The application must be restarted for "
-           "the theme change to take effect."));
+                     tr("The application must be restarted for "
+                        "the theme change to take effect."));
       mb.setInformativeText(tr("Do you want to restart now?"));
       QPushButton *restart =
-        mb.addButton(tr("Restart"), QMessageBox::AcceptRole);
+          mb.addButton(tr("Restart"), QMessageBox::AcceptRole);
       mb.addButton(tr("Later"), QMessageBox::RejectRole);
       mb.setDefaultButton(restart);
       mb.exec();
 
       if (mb.clickedButton() == restart) {
         QWidget *dialog = window();
-        QTimer::singleShot(0, [dialog] {
+        QTimer::singleShot(0, this, [dialog] {
           // Close the dialog.
           dialog->close();
 
@@ -448,72 +472,88 @@ public:
     });
 
     QCheckBox *fullPath = new QCheckBox(tr("Show full repository path"));
-    fullPath->setChecked(settings->value("path/full").toBool());
+    fullPath->setChecked(
+        settings->value(Setting::Id::ShowFullRepoPath).toBool());
     connect(fullPath, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("window/path/full", checked);
+      Settings::instance()->setValue(Setting::Id::ShowFullRepoPath, checked);
     });
 
     QCheckBox *hideLog = new QCheckBox(tr("Hide automatically"));
-    hideLog->setChecked(settings->value("log/hide").toBool());
+    hideLog->setChecked(
+        settings->value(Setting::Id::HideLogAutomatically).toBool());
     connect(hideLog, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("window/log/hide", checked);
+      Settings::instance()->setValue(Setting::Id::HideLogAutomatically,
+                                     checked);
     });
 
-    settings->beginGroup("tabs");
     QCheckBox *smTabs = new QCheckBox(tr("Open submodules in tabs"));
-    smTabs->setChecked(settings->value("submodule").toBool());
+    smTabs->setChecked(
+        settings->value(Setting::Id::OpenSubmodulesInTabs).toBool());
     connect(smTabs, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("window/tabs/submodule", checked);
+      Settings::instance()->setValue(Setting::Id::OpenSubmodulesInTabs,
+                                     checked);
     });
 
     QCheckBox *repoTabs = new QCheckBox(tr("Open all repositories in tabs"));
-    repoTabs->setChecked(settings->value("repository").toBool());
+    repoTabs->setChecked(
+        settings->value(Setting::Id::OpenAllReposInTabs).toBool());
     connect(repoTabs, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("window/tabs/repository", checked);
+      Settings::instance()->setValue(Setting::Id::OpenAllReposInTabs, checked);
     });
-    settings->endGroup(); // tabs
-    settings->endGroup(); // window
 
-    QString mergeText = settings->promptDescription(Settings::PromptMerge);
+    QCheckBox *hideMenuBar = new QCheckBox(tr("Hide Menubar"));
+    hideMenuBar->setChecked(settings->value(Setting::Id::HideMenuBar).toBool());
+    connect(hideMenuBar, &QCheckBox::toggled, [](bool checked) {
+      Settings::instance()->setValue(Setting::Id::HideMenuBar, checked);
+    });
+    QCheckBox *showAvatars = new QCheckBox(tr("Show Avatars"));
+    showAvatars->setChecked(settings->value(Setting::Id::ShowAvatars).toBool());
+    connect(showAvatars, &QCheckBox::toggled, [](bool checked) {
+      Settings::instance()->setValue(Setting::Id::ShowAvatars, checked);
+    });
+
+    QString mergeText = settings->promptDescription(Prompt::Kind::Merge);
     QCheckBox *merge = new QCheckBox(mergeText, this);
-    merge->setChecked(settings->prompt(Settings::PromptMerge));
+    merge->setChecked(settings->prompt(Prompt::Kind::Merge));
     connect(merge, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setPrompt(Settings::PromptMerge, checked);
+      Settings::instance()->setPrompt(Prompt::Kind::Merge, checked);
     });
 
-    QString revertText = settings->promptDescription(Settings::PromptRevert);
+    QString revertText = settings->promptDescription(Prompt::Kind::Revert);
     QCheckBox *revert = new QCheckBox(revertText, this);
-    revert->setChecked(settings->prompt(Settings::PromptRevert));
+    revert->setChecked(settings->prompt(Prompt::Kind::Revert));
     connect(revert, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setPrompt(Settings::PromptRevert, checked);
+      Settings::instance()->setPrompt(Prompt::Kind::Revert, checked);
     });
 
-    QString cpText = settings->promptDescription(Settings::PromptCherryPick);
+    QString cpText = settings->promptDescription(Prompt::Kind::CherryPick);
     QCheckBox *cherryPick = new QCheckBox(cpText, this);
-    cherryPick->setChecked(settings->prompt(Settings::PromptCherryPick));
+    cherryPick->setChecked(settings->prompt(Prompt::Kind::CherryPick));
     connect(cherryPick, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setPrompt(Settings::PromptCherryPick, checked);
+      Settings::instance()->setPrompt(Prompt::Kind::CherryPick, checked);
     });
 
-    QString stashText = settings->promptDescription(Settings::PromptStash);
+    QString stashText = settings->promptDescription(Prompt::Kind::Stash);
     QCheckBox *stash = new QCheckBox(stashText, this);
-    stash->setChecked(settings->prompt(Settings::PromptStash));
+    stash->setChecked(settings->prompt(Prompt::Kind::Stash));
     connect(stash, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setPrompt(Settings::PromptStash, checked);
+      Settings::instance()->setPrompt(Prompt::Kind::Stash, checked);
     });
 
-    QString largeFilesText = settings->promptDescription(Settings::PromptLargeFiles);
+    QString largeFilesText =
+        settings->promptDescription(Prompt::Kind::LargeFiles);
     QCheckBox *largeFiles = new QCheckBox(largeFilesText, this);
-    largeFiles->setChecked(settings->prompt(Settings::PromptLargeFiles));
+    largeFiles->setChecked(settings->prompt(Prompt::Kind::LargeFiles));
     connect(largeFiles, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setPrompt(Settings::PromptLargeFiles, checked);
+      Settings::instance()->setPrompt(Prompt::Kind::LargeFiles, checked);
     });
 
-    QString directoriesText = settings->promptDescription(Settings::PromptDirectories);
+    QString directoriesText =
+        settings->promptDescription(Prompt::Kind::Directories);
     QCheckBox *directories = new QCheckBox(directoriesText, this);
-    directories->setChecked(settings->prompt(Settings::PromptDirectories));
+    directories->setChecked(settings->prompt(Prompt::Kind::Directories));
     connect(directories, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setPrompt(Settings::PromptDirectories, checked);
+      Settings::instance()->setPrompt(Prompt::Kind::Directories, checked);
     });
 
     QFormLayout *layout = new QFormLayout(this);
@@ -523,6 +563,8 @@ public:
     layout->addRow(tr("Log:"), hideLog);
     layout->addRow(tr("Tabs:"), smTabs);
     layout->addRow(QString(), repoTabs);
+    layout->addRow(tr("View:"), hideMenuBar);
+    layout->addRow(QString(), showAvatars);
     layout->addRow(tr("Prompt:"), merge);
     layout->addRow(QString(), revert);
     layout->addRow(QString(), cherryPick);
@@ -532,68 +574,61 @@ public:
   }
 };
 
-class EditorPanel : public QWidget
-{
+class EditorPanel : public QWidget {
   Q_OBJECT
 
 public:
-  EditorPanel(QWidget *parent = nullptr)
-    : QWidget(parent)
-  {
+  EditorPanel(QWidget *parent = nullptr) : QWidget(parent) {
     auto spin = QOverload<int>::of(&QSpinBox::valueChanged);
     auto combo = QOverload<int>::of(&QComboBox::currentIndexChanged);
 
     Settings *settings = Settings::instance();
-    settings->beginGroup("editor");
 
-    settings->beginGroup("font");
     QFontComboBox *font = new QFontComboBox(this);
     font->setEditable(false);
     font->setFontFilters(QFontComboBox::MonospacedFonts);
-    font->setCurrentText(settings->value("family").toString());
+    font->setCurrentText(settings->value(Setting::Id::FontFamily).toString());
     connect(font, &QFontComboBox::currentTextChanged, [](const QString &text) {
-      Settings::instance()->setValue("editor/font/family", text);
+      Settings::instance()->setValue(Setting::Id::FontFamily, text);
     });
 
     QSpinBox *fontSize = new QSpinBox(this);
     fontSize->setRange(2, 32);
-    fontSize->setValue(settings->value("size").toInt());
+    fontSize->setValue(settings->value(Setting::Id::FontSize).toInt());
     connect(fontSize, spin, [](int i) {
-      Settings::instance()->setValue("editor/font/size", i);
+      Settings::instance()->setValue(Setting::Id::FontSize, i);
     });
-    settings->endGroup(); // font
 
-    settings->beginGroup("indent");
     QComboBox *indent = new QComboBox(this);
     indent->addItem(tr("Tabs"));
     indent->addItem(tr("Spaces"));
-    indent->setCurrentIndex(settings->value("tabs").toBool() ? 0 : 1);
+    indent->setCurrentIndex(
+        settings->value(Setting::Id::UseTabsForIndent).toBool() ? 0 : 1);
     connect(indent, combo, [](int i) {
-      Settings::instance()->setValue("editor/indent/tabs", i == 0);
+      Settings::instance()->setValue(Setting::Id::UseTabsForIndent, i == 0);
     });
 
     QSpinBox *indentWidth = new QSpinBox(this);
     indentWidth->setRange(1, 32);
-    indentWidth->setValue(settings->value("width").toInt());
+    indentWidth->setValue(settings->value(Setting::Id::IndentWidth).toInt());
     connect(indentWidth, spin, [](int i) {
-      Settings::instance()->setValue("editor/indent/width", i);
+      Settings::instance()->setValue(Setting::Id::IndentWidth, i);
     });
 
     QSpinBox *tabWidth = new QSpinBox(this);
     tabWidth->setRange(1, 32);
-    tabWidth->setValue(settings->value("tabwidth").toInt());
+    tabWidth->setValue(settings->value(Setting::Id::TabWidth).toInt());
     connect(tabWidth, spin, [](int i) {
-      Settings::instance()->setValue("editor/indent/tabwidth", i);
+      Settings::instance()->setValue(Setting::Id::TabWidth, i);
     });
-    settings->endGroup(); // indent
 
     QCheckBox *blameHeatMap = new QCheckBox(tr("Show heat map"), this);
-    blameHeatMap->setChecked(settings->value("blame/heatmap").toBool());
+    blameHeatMap->setChecked(
+        settings->value(Setting::Id::ShowHeatmapInBlameMargin).toBool());
     connect(blameHeatMap, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("editor/blame/heatmap", checked);
+      Settings::instance()->setValue(Setting::Id::ShowHeatmapInBlameMargin,
+                                     checked);
     });
-
-    settings->endGroup(); // editor
 
     QFormLayout *layout = new QFormLayout(this);
     layout->addRow(tr("Font:"), font);
@@ -605,95 +640,95 @@ public:
   }
 };
 
-class UpdatePanel : public QWidget
-{
+class UpdatePanel : public QWidget {
   Q_OBJECT
 
 public:
-  UpdatePanel(QWidget *parent = nullptr)
-    : QWidget(parent)
-  {
+  UpdatePanel(QWidget *parent = nullptr) : QWidget(parent) {
     Settings *settings = Settings::instance();
-    settings->beginGroup("update");
 
     QString checkText = tr("Check for updates automatically");
     QCheckBox *check = new QCheckBox(checkText, this);
-    check->setChecked(settings->value("check").toBool());
+    check->setChecked(
+        settings->value(Setting::Id::CheckForUpdatesAutomatically).toBool());
     connect(check, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("update/check", checked);
+      Settings::instance()->setValue(Setting::Id::CheckForUpdatesAutomatically,
+                                     checked);
     });
 
+#if !defined(Q_OS_LINUX) || defined(FLATPAK)
+    // On linux the packages get installed over the package manager. So
+    // no manual download is needed
     QString downloadText = tr("Automatically download and install updates");
     QCheckBox *download = new QCheckBox(downloadText, this);
-    download->setChecked(settings->value("download").toBool());
+    download->setChecked(
+        settings->value(Setting::Id::InstallUpdatesAutomatically).toBool());
     connect(download, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue("update/download", checked);
+      Settings::instance()->setValue(Setting::Id::InstallUpdatesAutomatically,
+                                     checked);
     });
+#endif
 
     QPushButton *button = new QPushButton(tr("Check Now"), this);
-    connect(button, &QPushButton::clicked,
-            Updater::instance(), &Updater::update);
+    connect(button, &QPushButton::clicked, Updater::instance(),
+            &Updater::update);
 
     QFormLayout *layout = new QFormLayout(this);
     layout->addRow(tr("Software Update:"), check);
+#if !defined(Q_OS_LINUX) || defined(FLATPAK)
     layout->addRow(QString(), download);
+#endif
     layout->addRow(QString(), button);
-
-    settings->endGroup();
   }
 };
 
-class MiscPanel : public QWidget
-{
+class MiscPanel : public QWidget {
   Q_OBJECT
 
 public:
-  MiscPanel(QWidget *parent = nullptr)
-    : QWidget(parent)
-  {
+  MiscPanel(QWidget *parent = nullptr) : QWidget(parent) {
     Settings *settings = Settings::instance();
 
-    QLineEdit *sshConfigPathBox = new QLineEdit(settings->value("ssh/configFilePath").toString(), this);
+    QLineEdit *sshConfigPathBox = new QLineEdit(
+        settings->value(Setting::Id::SshConfigFilePath).toString(), this);
     connect(sshConfigPathBox, &QLineEdit::textChanged, [](const QString &text) {
-      Settings::instance()->setValue("ssh/configFilePath", text);
+      Settings::instance()->setValue(Setting::Id::SshConfigFilePath, text);
     });
 
-    QLineEdit *sshKeyPathBox = new QLineEdit(settings->value("ssh/keyFilePath").toString(), this);
+    QLineEdit *sshKeyPathBox = new QLineEdit(
+        settings->value(Setting::Id::SshKeyFilePath).toString(), this);
     connect(sshKeyPathBox, &QLineEdit::textChanged, [](const QString &text) {
-      Settings::instance()->setValue("ssh/keyFilePath", text);
+      Settings::instance()->setValue(Setting::Id::SshKeyFilePath, text);
     });
 
     QFormLayout *layout = new QFormLayout(this);
     layout->addRow(tr("Path to SSH config file:"), sshConfigPathBox);
-    layout->addRow(tr("Path to default / fallback SSH key file:"), sshKeyPathBox);
+    layout->addRow(tr("Path to default / fallback SSH key file:"),
+                   sshKeyPathBox);
   }
 };
 
 #ifdef Q_OS_UNIX
-class TerminalPanel : public QWidget
-{
+class TerminalPanel : public QWidget {
   Q_OBJECT
 
 public:
-  TerminalPanel(QWidget *parent = nullptr)
-    : QWidget(parent)
-  {
+  TerminalPanel(QWidget *parent = nullptr) : QWidget(parent) {
     Settings *settings = Settings::instance();
-    settings->beginGroup("terminal");
 
-    mNameBox = new QLineEdit(settings->value("name").toString(), this);
+    mNameBox = new QLineEdit(
+        settings->value(Setting::Id::TerminalName).toString(), this);
     connect(mNameBox, &QLineEdit::textChanged, [this](const QString &text) {
-      Settings::instance()->setValue("terminal/name", text);
+      Settings::instance()->setValue(Setting::Id::TerminalName, text);
       updateInstallButton();
     });
 
-    mPathBox = new QLineEdit(settings->value("path").toString(), this);
+    mPathBox = new QLineEdit(
+        settings->value(Setting::Id::TerminalPath).toString(), this);
     connect(mPathBox, &QLineEdit::textChanged, [this](const QString &text) {
-      Settings::instance()->setValue("terminal/path", text);
+      Settings::instance()->setValue(Setting::Id::TerminalPath, text);
       updateInstallButton();
     });
-
-    settings->endGroup();
 
     mInstallButton = new QPushButton(tr("Install"), this);
     connect(mInstallButton, &QPushButton::clicked, [this] {
@@ -716,8 +751,7 @@ public:
   }
 
 private:
-  void updateInstallButton()
-  {
+  void updateInstallButton() {
     Installer installer(mNameBox->text(), mPathBox->text());
     bool installed = installer.isInstalled();
     mInstallButton->setText(!installed ? tr("Install") : tr("Uninstall"));
@@ -730,12 +764,10 @@ private:
 };
 #endif
 
-} // anon. namespace
+} // namespace
 
 SettingsDialog::SettingsDialog(Index index, QWidget *parent)
-  : QMainWindow(parent, Qt::Dialog)
-{
-  setMinimumWidth(500);
+    : QMainWindow(parent, Qt::Dialog) {
   setAttribute(Qt::WA_DeleteOnClose);
   setUnifiedTitleAndToolBarOnMac(true);
   setContextMenuPolicy(Qt::NoContextMenu);
@@ -752,12 +784,12 @@ SettingsDialog::SettingsDialog(Index index, QWidget *parent)
 
   // Create central stack widget.
   StackedWidget *stack = new StackedWidget(this);
-  connect(stack, &StackedWidget::currentChanged,
-          this, &SettingsDialog::adjustSize);
+  connect(stack, &StackedWidget::currentChanged, this,
+          &SettingsDialog::adjustSize);
 
   QString text =
-    tr("Global git settings can be overridden for each repository in "
-       "the corresponding repository configuration page.");
+      tr("Global git settings can be overridden for each repository in "
+         "the corresponding repository configuration page.");
   QLabel *description = new QLabel(text, this);
   description->setStyleSheet("QLabel { padding: 0px 20px 0px 20px }");
   description->setWordWrap(true);
@@ -768,14 +800,13 @@ SettingsDialog::SettingsDialog(Index index, QWidget *parent)
   description->setFont(small);
 #endif
 
-  QDialogButtonBox *buttons =
-    new QDialogButtonBox(QDialogButtonBox::Ok, this);
+  QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok, this);
   connect(buttons, &QDialogButtonBox::accepted, this, &SettingsDialog::close);
   connect(buttons, &QDialogButtonBox::rejected, this, &SettingsDialog::close);
 
   // Add edit button.
-  QPushButton *edit =
-    buttons->addButton(tr("Edit Config File..."), QDialogButtonBox::ResetRole);
+  QPushButton *edit = buttons->addButton(tr("Edit Config File..."),
+                                         QDialogButtonBox::ResetRole);
 
   QWidget *widget = new QWidget(this);
   QVBoxLayout *layout = new QVBoxLayout(widget);
@@ -792,15 +823,15 @@ SettingsDialog::SettingsDialog(Index index, QWidget *parent)
 
   // Track actions in a group.
   QActionGroup *actions = new QActionGroup(this);
-  connect(actions, &QActionGroup::triggered,
-  [this, stack, description, edit](QAction *action) {
-    int index = action->data().toInt();
-    bool config = (index < Window);
-    description->setVisible(config);
-    edit->setVisible(config);
-    stack->setCurrentIndex(index);
-    setWindowTitle(action->text());
-  });
+  connect(actions, &QActionGroup::triggered, this,
+          [this, stack, description, edit](QAction *action) {
+            int index = action->data().toInt();
+            bool config = (index < Window);
+            description->setVisible(config);
+            edit->setVisible(config);
+            stack->setCurrentIndex(index);
+            setWindowTitle(action->text());
+          });
 
   // Add global git settings panel.
   QAction *general = toolbar->addAction(QIcon(":/general.png"), tr("General"));
@@ -868,9 +899,18 @@ SettingsDialog::SettingsDialog(Index index, QWidget *parent)
 
   stack->addWidget(new MiscPanel(this));
 
+  // Add hotkeys panel.
+  QAction *hotkeys = toolbar->addAction(QIcon(":/hotkeys.png"), tr("Hotkeys"));
+  hotkeys->setData(Hotkeys);
+  hotkeys->setActionGroup(actions);
+  hotkeys->setCheckable(true);
+
+  stack->addWidget(new HotkeysPanel(this));
+
 #ifdef Q_OS_UNIX
   // Add terminal panel.
-  QAction *terminal = toolbar->addAction(QIcon(":/terminal.png"), tr("Terminal"));
+  QAction *terminal =
+      toolbar->addAction(QIcon(":/terminal.png"), tr("Terminal"));
   terminal->setData(Terminal);
   terminal->setActionGroup(actions);
   terminal->setCheckable(true);
@@ -888,12 +928,11 @@ SettingsDialog::SettingsDialog(Index index, QWidget *parent)
 
   // Select the requested index.
   actions->actions().at(index)->trigger();
+
+  setMinimumWidth(toolbar->sizeHint().width());
 }
 
-void SettingsDialog::openSharedInstance(Index index)
-{
-  Application::track("SettingsDialog");
-
+void SettingsDialog::openSharedInstance(Index index) {
   static QPointer<SettingsDialog> dialog;
   if (dialog) {
     dialog->show();

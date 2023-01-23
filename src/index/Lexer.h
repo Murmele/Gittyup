@@ -13,8 +13,7 @@
 #include <QByteArray>
 #include <QObject>
 
-class Lexer : public QObject
-{
+class Lexer : public QObject {
 public:
   enum Token {
     Nothing,
@@ -37,8 +36,7 @@ public:
     Embedded
   };
 
-  struct Lexeme
-  {
+  struct Lexeme {
     Token token;
     QByteArray text;
   };

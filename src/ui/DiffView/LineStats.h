@@ -7,34 +7,30 @@
 #include "git/Patch.h"
 #include "app/Application.h"
 
-class LineStats : public QWidget
-{
+class LineStats : public QWidget {
 public:
   LineStats(const git::Patch::LineStats &stats, QWidget *parent = nullptr)
-    : QWidget(parent)
-  {
+      : QWidget(parent) {
     setStats(stats);
   }
 
   void setStats(const git::Patch::LineStats &stats) {
-      qreal x = static_cast<qreal>(stats.additions + stats.deletions) / 5;
-      if (x > 0) {
-          bool scaled = (stats.additions + stats.deletions > 5);
-          mPluses = scaled ? stats.additions / x : stats.additions;
-          mMinuses = scaled ? stats.deletions / x : stats.deletions;
-      } else {
-          mPluses = 0;
-          mMinuses = 0;
-      }
+    qreal x = static_cast<qreal>(stats.additions + stats.deletions) / 5;
+    if (x > 0) {
+      bool scaled = (stats.additions + stats.deletions > 5);
+      mPluses = scaled ? stats.additions / x : stats.additions;
+      mMinuses = scaled ? stats.deletions / x : stats.deletions;
+    } else {
+      mPluses = 0;
+      mMinuses = 0;
+    }
   }
 
-  QSize minimumSizeHint() const override
-  {
+  QSize minimumSizeHint() const override {
     return QSize(10 * (mPluses + mMinuses), 12);
   }
 
-  void paintEvent(QPaintEvent *event) override
-  {
+  void paintEvent(QPaintEvent *event) override {
     // Drawing the outline of the shapes with a narrow pen approximates
     // a slight drop shadow. Minus has to be drawn slightly smaller than
     // plus or it creates an optical illusion that makes it look to big.
@@ -83,6 +79,5 @@ private:
   int mPluses = 0;
   int mMinuses = 0;
 };
-
 
 #endif // LINESTATS_H

@@ -15,8 +15,7 @@
 #include <QDir>
 #include <QPalette>
 
-class CustomTheme : public Theme
-{
+class CustomTheme : public Theme {
 public:
   CustomTheme(const QString &name);
 
@@ -32,13 +31,14 @@ public:
   QPalette commitList() override;
   QColor commitEditor(CommitEditor color) override;
   QColor diff(Diff color) override;
-  QPalette fileList() override;
   QColor heatMap(HeatMap color) override;
   QColor remoteComment(Comment color) override;
   QColor star() override;
 
   QVariantMap checkbox() const;
   void polishWindow(QWindow *window) const;
+
+  static void drawCloseButton(const QStyleOption *option, QPainter *painter);
 
   static QDir userDir(bool create = false, bool *exists = nullptr);
   static bool isValid(const QString &name);

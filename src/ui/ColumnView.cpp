@@ -36,20 +36,17 @@ const QString kLabelFmt = "<p style='color: gray; font-weight: bold'>%1</p>";
  * \brief The PreviewWidget class
  * Widget shown in the next column when file selected instead of a folder
  */
-class PreviewWidget : public QFrame
-{
+class PreviewWidget : public QFrame {
   Q_OBJECT
 
 public:
-  PreviewWidget(ColumnView *parent)
-    : QFrame(parent)
-  {
+  PreviewWidget(ColumnView *parent) : QFrame(parent) {
     mIcon = new QLabel(this);
     mIcon->setAlignment(Qt::AlignHCenter);
 
     mName = new QLabel(this);
     mName->setAlignment(Qt::AlignHCenter);
-    mName->setContentsMargins(4,4,4,4);
+    mName->setContentsMargins(4, 4, 4, 4);
 
     mKind = new QLabel(this);
     mKind->setAlignment(Qt::AlignHCenter);
@@ -57,10 +54,9 @@ public:
     mAdded = new QLabel(this);
     mModified = new QLabel(this);
 
-    connect(mAdded, &QLabel::linkActivated,
-            parent, &ColumnView::linkActivated);
-    connect(mModified, &QLabel::linkActivated,
-            parent, &ColumnView::linkActivated);
+    connect(mAdded, &QLabel::linkActivated, parent, &ColumnView::linkActivated);
+    connect(mModified, &QLabel::linkActivated, parent,
+            &ColumnView::linkActivated);
 
     QFormLayout *form = new QFormLayout;
     form->setLabelAlignment(Qt::AlignRight);
@@ -79,8 +75,7 @@ public:
     layout->addLayout(form);
   }
 
-  void setFile(const QModelIndex &index, int width)
-  {
+  void setFile(const QModelIndex &index, int width) {
     mIndex = index;
     if (!index.isValid() || index.model()->rowCount(index) > 0) {
       hide();
@@ -110,8 +105,7 @@ signals:
   void iconDoubleClicked(const QModelIndex &index);
 
 protected:
-  void mouseDoubleClickEvent(QMouseEvent *event) override
-  {
+  void mouseDoubleClickEvent(QMouseEvent *event) override {
     if (mIcon->geometry().contains(event->pos()))
       emit iconDoubleClicked(mIndex);
   }
@@ -125,27 +119,24 @@ private:
   QModelIndex mIndex;
 };
 
-} // anon. namespace
+} // namespace
 
 ColumnView::ColumnView(QWidget *parent)
-  : QColumnView(parent), mSharedDelegate(new ViewDelegate(this))
-{
+    : QColumnView(parent), mSharedDelegate(new ViewDelegate(this)) {
   PreviewWidget *preview = new PreviewWidget(this);
-  connect(preview, &PreviewWidget::iconDoubleClicked,
-          this, &ColumnView::doubleClicked);
+  connect(preview, &PreviewWidget::iconDoubleClicked, this,
+          &ColumnView::doubleClicked);
 
   setPreviewWidget(preview);
 }
 
-void ColumnView::setModel(QAbstractItemModel *model)
-{
+void ColumnView::setModel(QAbstractItemModel *model) {
   QColumnView::setModel(model);
-  connect(selectionModel(), &QItemSelectionModel::selectionChanged,
-          this, &ColumnView::handleSelectionChange);
+  connect(selectionModel(), &QItemSelectionModel::selectionChanged, this,
+          &ColumnView::handleSelectionChange);
 }
 
-bool ColumnView::eventFilter(QObject *obj, QEvent *event)
-{
+bool ColumnView::eventFilter(QObject *obj, QEvent *event) {
   if (event->type() == QEvent::MouseButtonPress) {
     QWidget *columnViewport = static_cast<QWidget *>(obj);
     QPoint globalPos = static_cast<QMouseEvent *>(event)->globalPos();
@@ -159,18 +150,15 @@ bool ColumnView::eventFilter(QObject *obj, QEvent *event)
   return false;
 }
 
-QAbstractItemView *ColumnView::createColumn(const QModelIndex &index)
-{
+QAbstractItemView *ColumnView::createColumn(const QModelIndex &index) {
   QAbstractItemView *view = QColumnView::createColumn(index);
   view->setItemDelegate(mSharedDelegate);
   view->viewport()->installEventFilter(this);
   return view;
 }
 
-void ColumnView::handleSelectionChange(
-  const QItemSelection &selected,
-  const QItemSelection &deselected)
-{
+void ColumnView::handleSelectionChange(const QItemSelection &selected,
+                                       const QItemSelection &deselected) {
   // FIXME: The argument sent by Qt doesn't contain the whole selection.
   int width = columnWidths().last() - SCROLL_BAR_WIDTH;
   QModelIndexList indexes = selectionModel()->selectedIndexes();

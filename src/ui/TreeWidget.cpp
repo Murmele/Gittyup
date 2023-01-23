@@ -23,25 +23,26 @@
 #include <QAction>
 #include <QContextMenuEvent>
 #include <QMenu>
+#include <QSettings>
 #include <QSplitter>
 #include <QVBoxLayout>
 
 namespace {
 
-const QItemSelectionModel::SelectionFlags kSelectionFlags =
-  QItemSelectionModel::Clear |
-  QItemSelectionModel::Current |
-  QItemSelectionModel::Select;
+const QString kSplitterKey = QString("treesplitter");
 
-} // anon. namespace
+const QItemSelectionModel::SelectionFlags kSelectionFlags =
+    QItemSelectionModel::Clear | QItemSelectionModel::Current |
+    QItemSelectionModel::Select;
+
+} // namespace
 
 TreeWidget::TreeWidget(const git::Repository &repo, QWidget *parent)
-  : ContentWidget(parent)
-{
+    : ContentWidget(parent) {
   mView = new ColumnView(this);
   mView->setModel(new TreeModel(repo, this));
-  connect(mView, &ColumnView::fileSelected,
-          this, &TreeWidget::loadEditorContent);
+  connect(mView, &ColumnView::fileSelected, this,
+          &TreeWidget::loadEditorContent);
 
   // Open a new editor window on double-click.
   connect(mView, &ColumnView::doubleClicked, this, &TreeWidget::edit);
@@ -53,9 +54,15 @@ TreeWidget::TreeWidget(const git::Repository &repo, QWidget *parent)
   splitter->addWidget(mView);
   splitter->addWidget(mEditor);
   splitter->setStretchFactor(1, 1);
+  connect(splitter, &QSplitter::splitterMoved, this, [splitter] {
+    QSettings().setValue(kSplitterKey, splitter->saveState());
+  });
+
+  // Restore splitter state.
+  splitter->restoreState(QSettings().value(kSplitterKey).toByteArray());
 
   QVBoxLayout *layout = new QVBoxLayout(this);
-  layout->setContentsMargins(0,0,0,0);
+  layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(splitter);
 
   RepoView *view = RepoView::parentView(this);
@@ -63,23 +70,19 @@ TreeWidget::TreeWidget(const git::Repository &repo, QWidget *parent)
   connect(mEditor, &BlameEditor::linkActivated, view, &RepoView::visitLink);
 }
 
-QString TreeWidget::selectedFile() const
-{
+QString TreeWidget::selectedFile() const {
   QModelIndexList indexes = mView->selectionModel()->selectedIndexes();
-  return indexes.isEmpty() ? QString() :
-         indexes.first().data(Qt::EditRole).toString();
+  return indexes.isEmpty() ? QString()
+                           : indexes.first().data(Qt::EditRole).toString();
 }
 
 QModelIndex TreeWidget::selectedIndex() const {
-    QModelIndexList indexes = mView->selectionModel()->selectedIndexes();
-    return indexes.isEmpty() ? QModelIndex(): indexes.first();
+  QModelIndexList indexes = mView->selectionModel()->selectedIndexes();
+  return indexes.isEmpty() ? QModelIndex() : indexes.first();
 }
 
-void TreeWidget::setDiff(
-  const git::Diff &diff,
-  const QString &file,
-  const QString &pathspec)
-{
+void TreeWidget::setDiff(const git::Diff &diff, const QString &file,
+                         const QString &pathspec) {
   // Remember selection.
   QString name = file;
   if (name.isEmpty()) {
@@ -103,23 +106,13 @@ void TreeWidget::setDiff(
   mView->setVisible(tree.isValid());
 }
 
-void TreeWidget::find()
-{
-  mEditor->find();
-}
+void TreeWidget::find() { mEditor->find(); }
 
-void TreeWidget::findNext()
-{
-  mEditor->findNext();
-}
+void TreeWidget::findNext() { mEditor->findNext(); }
 
-void TreeWidget::findPrevious()
-{
-  mEditor->findPrevious();
-}
+void TreeWidget::findPrevious() { mEditor->findPrevious(); }
 
-void TreeWidget::contextMenuEvent(QContextMenuEvent *event)
-{
+void TreeWidget::contextMenuEvent(QContextMenuEvent *event) {
   QStringList files;
   QModelIndexList indexes = mView->selectionModel()->selectedIndexes();
   foreach (const QModelIndex &index, indexes)
@@ -133,21 +126,16 @@ void TreeWidget::contextMenuEvent(QContextMenuEvent *event)
   menu.exec(event->globalPos());
 }
 
-void TreeWidget::cancelBackgroundTasks()
-{
-  mEditor->cancelBlame();
-}
+void TreeWidget::cancelBackgroundTasks() { mEditor->cancelBlame(); }
 
-void TreeWidget::edit(const QModelIndex &index)
-{
+void TreeWidget::edit(const QModelIndex &index) {
   if (!index.isValid() || index.model()->hasChildren(index))
     return;
 
   RepoView::parentView(this)->edit(index.data(Qt::EditRole).toString());
 }
 
-void TreeWidget::loadEditorContent(const QModelIndex &index)
-{
+void TreeWidget::loadEditorContent(const QModelIndex &index) {
   QString name = index.data(Qt::EditRole).toString();
   git::Blob blob = index.data(TreeModel::BlobRole).value<git::Blob>();
 
@@ -156,8 +144,7 @@ void TreeWidget::loadEditorContent(const QModelIndex &index)
   mEditor->load(name, blob, commit);
 }
 
-void TreeWidget::selectFile(const QString &file)
-{
+void TreeWidget::selectFile(const QString &file) {
   if (file.isEmpty())
     return;
 

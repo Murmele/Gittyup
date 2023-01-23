@@ -11,33 +11,22 @@
 #include "Beanstalk.h"
 #include "Bitbucket.h"
 #include "GitHub.h"
+#include "Gitea.h"
 #include "GitLab.h"
 #include <QCoreApplication>
 #include <QSettings>
 
-Accounts::Accounts(QObject *parent)
-  : QObject(parent)
-{
-  load();
-}
+Accounts::Accounts(QObject *parent) : QObject(parent) { load(); }
 
-int Accounts::count() const
-{
-  return mAccounts.size();
-}
+int Accounts::count() const { return mAccounts.size(); }
 
-Account *Accounts::account(int index) const
-{
-  return mAccounts.at(index);
-}
+Account *Accounts::account(int index) const { return mAccounts.at(index); }
 
-int Accounts::indexOf(Account *account) const
-{
+int Accounts::indexOf(Account *account) const {
   return mAccounts.indexOf(account);
 }
 
-Repository *Accounts::lookup(const QString &url) const
-{
+Repository *Accounts::lookup(const QString &url) const {
   QUrl remote(url);
   foreach (Account *account, mAccounts) {
     for (int i = 0; i < account->repositoryCount(); ++i) {
@@ -54,9 +43,7 @@ Repository *Accounts::lookup(const QString &url) const
   return nullptr;
 }
 
-
-Account *Accounts::lookup(const QString &username, Account::Kind kind) const
-{
+Account *Accounts::lookup(const QString &username, Account::Kind kind) const {
   foreach (Account *account, mAccounts) {
     if (username == account->username() && kind == account->kind())
       return account;
@@ -65,48 +52,52 @@ Account *Accounts::lookup(const QString &username, Account::Kind kind) const
   return nullptr;
 }
 
-Account *Accounts::createAccount(
-  Account::Kind kind,
-  const QString &username,
-  const QString &url)
-{
+Account *Accounts::createAccount(Account::Kind kind, const QString &username,
+                                 const QString &url) {
   int index = mAccounts.size();
 
   Account *account = nullptr;
   switch (kind) {
-    case Account::GitHub:    account = new GitHub(username);    break;
-    case Account::Bitbucket: account = new Bitbucket(username); break;
-    case Account::Beanstalk: account = new Beanstalk(username); break;
-    case Account::GitLab:    account = new GitLab(username);    break;
+    case Account::GitHub:
+      account = new GitHub(username);
+      break;
+    case Account::Gitea:
+      account = new Gitea(username);
+      break;
+    case Account::Bitbucket:
+      account = new Bitbucket(username);
+      break;
+    case Account::Beanstalk:
+      account = new Beanstalk(username);
+      break;
+    case Account::GitLab:
+      account = new GitLab(username);
+      break;
   }
 
   if (!account)
-      return nullptr;
+    return nullptr;
 
   account->setUrl(url);
 
   AccountProgress *progress = account->progress();
-  connect(progress, &AccountProgress::valueChanged, [this, index](int value) {
-    emit this->progress(index, value);
-  });
-  connect(progress, &AccountProgress::started, [this, index] {
-    emit started(index);
-  });
+  connect(progress, &AccountProgress::valueChanged,
+          [this, index](int value) { emit this->progress(index, value); });
+  connect(progress, &AccountProgress::started,
+          [this, index] { emit started(index); });
   connect(progress, &AccountProgress::finished, [this, index] {
     emit finished(index);
     store();
   });
 
-  connect(account, &Account::repositoryAboutToBeAdded, [this, index] {
-    emit repositoryAboutToBeAdded(index);
-  });
-  connect(account, &Account::repositoryAdded, [this, index] {
-    emit repositoryAdded(index);
-  });
+  connect(account, &Account::repositoryAboutToBeAdded,
+          [this, index] { emit repositoryAboutToBeAdded(index); });
+  connect(account, &Account::repositoryAdded,
+          [this, index] { emit repositoryAdded(index); });
   connect(account, &Account::repositoryPathChanged,
-  [this, index](int repoIndex, const QString &path) {
-    emit repositoryPathChanged(index, repoIndex, path);
-  });
+          [this, index](int repoIndex, const QString &path) {
+            emit repositoryPathChanged(index, repoIndex, path);
+          });
 
   emit accountAboutToBeAdded();
   mAccounts.append(account);
@@ -115,31 +106,27 @@ Account *Accounts::createAccount(
   return account;
 }
 
-void Accounts::removeAccount(int index)
-{
+void Accounts::removeAccount(int index) {
   emit accountAboutToBeRemoved();
   delete mAccounts.takeAt(index);
   emit accountRemoved();
   store();
 }
 
-void Accounts::removeAccount(Account *account)
-{
+void Accounts::removeAccount(Account *account) {
   int index = mAccounts.indexOf(account);
   if (index >= 0)
     removeAccount(index);
 }
 
-Accounts *Accounts::instance()
-{
+Accounts *Accounts::instance() {
   static Accounts *instance = nullptr;
   if (!instance)
     instance = new Accounts(qApp);
   return instance;
 }
 
-void Accounts::load()
-{
+void Accounts::load() {
   qDeleteAll(mAccounts);
   mAccounts.clear();
 
@@ -147,13 +134,32 @@ void Accounts::load()
   int accountCount = settings.beginReadArray("accounts");
   for (int i = 0; i < accountCount; ++i) {
     settings.setArrayIndex(i);
-    auto kind = static_cast<Account::Kind>(settings.value("kind").toInt());
+
+    Account::Kind kind;
+
+    {
+      auto kindSetting = settings.value("kind");
+      bool isNum;
+      auto kindInt = kindSetting.toInt(&isNum);
+
+      if (isNum) {
+        kind = static_cast<Account::Kind>(kindInt);
+      } else {
+        bool ok;
+        kind = Account::kindFromString(kindSetting.toString(), &ok);
+
+        if (!ok) {
+          continue;
+        }
+      }
+    }
+
     QString username = settings.value("username").toString();
     QString url = settings.value("url").toString();
     Account *account = createAccount(kind, username, url);
 
     if (!account)
-        continue;
+      continue;
 
     int repoCount = settings.beginReadArray("repos");
     for (int j = 0; j < repoCount; ++j) {
@@ -174,14 +180,13 @@ void Accounts::load()
   settings.endArray();
 }
 
-void Accounts::store()
-{
+void Accounts::store() {
   QSettings settings;
   settings.beginWriteArray("accounts");
   for (int i = 0; i < mAccounts.size(); ++i) {
     Account *account = mAccounts.at(i);
     settings.setArrayIndex(i);
-    settings.setValue("kind", account->kind());
+    settings.setValue("kind", Account::kindToString(account->kind()));
     settings.setValue("username", account->username());
     if (account->hasCustomUrl()) {
       settings.setValue("url", account->url());

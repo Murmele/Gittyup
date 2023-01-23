@@ -16,3 +16,12 @@
 [submodule "dep/hunspell/hunspell"]
 	path = dep/hunspell/hunspell
 	url = https://github.com/hunspell/hunspell
+[submodule "test/dep/zip"]
+	path = test/dep/zip
+	url = https://github.com/kuba--/zip.git
+[submodule "dep/scintilla/lexilla"]
+	path = dep/scintilla/lexilla
+	url = https://github.com/ScintillaOrg/lexilla.git
+[submodule "dep/scintilla/scintillua"]
+	path = dep/scintilla/scintillua
+	url = https://github.com/orbitalquark/scintillua.git

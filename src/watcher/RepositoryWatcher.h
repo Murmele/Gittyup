@@ -16,8 +16,7 @@
 
 class RepositoryWatcherPrivate;
 
-class RepositoryWatcher : public QObject
-{
+class RepositoryWatcher : public QObject {
 public:
   RepositoryWatcher(const git::Repository &repo, QObject *parent = nullptr);
   ~RepositoryWatcher() override;

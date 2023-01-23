@@ -11,19 +11,20 @@
 #define REFERENCEVIEW_H
 
 #include <QTreeView>
+#include "git/Commit.h"
 
 namespace git {
 class Reference;
 class Repository;
-}
+} // namespace git
 
-class ReferenceView : public QTreeView
-{
+class QAbstractItemModel;
+
+class ReferenceView : public QTreeView {
   Q_OBJECT
 
 public:
-  enum Kind
-  {
+  enum Kind {
     InvalidRef = 0x1, // invalid element
     DetachedHead = 0x2,
     LocalBranches = 0x4,
@@ -36,20 +37,22 @@ public:
 
   Q_DECLARE_FLAGS(Kinds, Kind);
 
-  ReferenceView(
-    const git::Repository &repo,
-    Kinds kinds = AllRefs,
-    bool popup = false,
-    QWidget *parent = nullptr);
+  ReferenceView(const git::Repository &repo, Kinds kinds = AllRefs,
+                bool popup = false, QWidget *parent = nullptr);
 
   bool isPopup() const { return mPopup; }
   void resetTabIndex();
 
   git::Reference currentReference() const;
+  QModelIndex firstBranch();
+  QModelIndex firstTag();
+  QModelIndex firstRemote();
 
   bool eventFilter(QObject *watched, QEvent *event) override;
 
   static QString kindString(const git::Reference &ref);
+
+  void setCommit(const git::Commit &commit);
 
 protected:
   void showEvent(QShowEvent *event) override;
@@ -57,6 +60,7 @@ protected:
 
 private:
   bool mPopup;
+  QAbstractItemModel *mSource;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ReferenceView::Kinds);

@@ -12,8 +12,7 @@
 
 #include "Lexer.h"
 
-class GenericLexer : public Lexer
-{
+class GenericLexer : public Lexer {
 public:
   GenericLexer(QObject *parent = nullptr);
 

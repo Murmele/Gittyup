@@ -15,8 +15,7 @@
 
 namespace git {
 
-class FilterList
-{
+class FilterList {
 public:
   bool isValid() const { return !d.isNull(); }
 

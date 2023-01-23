@@ -10,12 +10,10 @@
 #include "Updater.h"
 #include <QDialog>
 
-class DownloadDialog : public QDialog
-{
+class DownloadDialog : public QDialog {
   Q_OBJECT
 
 public:
-  DownloadDialog(
-    const Updater::DownloadRef &download,
-    QWidget *parent = nullptr);
+  DownloadDialog(const Updater::DownloadRef &download,
+                 QWidget *parent = nullptr);
 };

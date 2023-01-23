@@ -43,27 +43,31 @@ LUALIB_API int luaopen_lpeg(lua_State *L);
 
 #define streq(s1, s2) (strcasecmp((s1), (s2)) == 0)
 
-#define l_setmetatable(l, k, mtf) { \
-  if (luaL_newmetatable(l, k)) { \
-    lua_pushcfunction(l, mtf), lua_setfield(l, -2, "__index"); \
-    lua_pushcfunction(l, mtf), lua_setfield(l, -2, "__newindex"); \
-  } \
-  lua_setmetatable(l, -2); \
-}
-#define l_pushlexerp(l, mtf) { \
-  lua_newtable(l); \
-  lua_pushvalue(l, 2), lua_setfield(l, -2, "property"); \
-  l_setmetatable(l, "sci_lexerp", mtf); \
-}
-#define l_getlexerobj(l) { \
-  lua_getfield(l, LUA_REGISTRYINDEX, "sci_lexers"); \
-  lua_pushlightuserdata(l, reinterpret_cast<void *>(this)); \
-  lua_gettable(l, -2), lua_replace(l, -2); \
-}
-#define l_getlexerfield(l, k) { \
-  l_getlexerobj(l); \
-  lua_getfield(l, -1, k), lua_replace(l, -2); \
-}
+#define l_setmetatable(l, k, mtf)                                              \
+  {                                                                            \
+    if (luaL_newmetatable(l, k)) {                                             \
+      lua_pushcfunction(l, mtf), lua_setfield(l, -2, "__index");               \
+      lua_pushcfunction(l, mtf), lua_setfield(l, -2, "__newindex");            \
+    }                                                                          \
+    lua_setmetatable(l, -2);                                                   \
+  }
+#define l_pushlexerp(l, mtf)                                                   \
+  {                                                                            \
+    lua_newtable(l);                                                           \
+    lua_pushvalue(l, 2), lua_setfield(l, -2, "property");                      \
+    l_setmetatable(l, "sci_lexerp", mtf);                                      \
+  }
+#define l_getlexerobj(l)                                                       \
+  {                                                                            \
+    lua_getfield(l, LUA_REGISTRYINDEX, "sci_lexers");                          \
+    lua_pushlightuserdata(l, reinterpret_cast<void *>(this));                  \
+    lua_gettable(l, -2), lua_replace(l, -2);                                   \
+  }
+#define l_getlexerfield(l, k)                                                  \
+  {                                                                            \
+    l_getlexerobj(l);                                                          \
+    lua_getfield(l, -1, k), lua_replace(l, -2);                                \
+  }
 #define l_openlib(f, s) (luaL_requiref(L, s, f, 1), lua_pop(L, 1))
 #define LUA_BASELIBNAME "_G"
 #define l_setconstant(l, c, k) (lua_pushinteger(l, c), lua_setfield(l, -2, k))
@@ -98,7 +102,7 @@ class LexerLPeg : public ILexer5 {
    * @param str The error message to print. If `NULL`, prints the Lua error
    *   message at the top of the stack.
    */
-  static void l_error(lua_State *L, const char *str=NULL) {
+  static void l_error(lua_State *L, const char *str = NULL) {
     fprintf(stderr, "Lua Error: %s.\n", str ? str : lua_tostring(L, -1));
     lua_settop(L, 0);
   }
@@ -126,7 +130,8 @@ class LexerLPeg : public ILexer5 {
       luaL_argcheck(L, !newindex, 3, "read-only property");
       if (is_lexer) {
         l_pushlexerp(L, llexer_property);
-      } else lua_pushinteger(L, buffer->GetLevel(luaL_checkinteger(L, 2)));
+      } else
+        lua_pushinteger(L, buffer->GetLevel(luaL_checkinteger(L, 2)));
     } else if (strcmp(key, "indent_amount") == 0) {
       luaL_argcheck(L, !newindex, 3, "read-only property");
       if (is_lexer) {
@@ -162,12 +167,14 @@ class LexerLPeg : public ILexer5 {
         lua_getfield(L, -1, "_TOKENSTYLES"), lua_replace(L, -2);
         lua_pushnil(L);
         while (lua_next(L, -2)) {
-          if (luaL_checkinteger(L, -1) == style) break;
+          if (luaL_checkinteger(L, -1) == style)
+            break;
           lua_pop(L, 1); // value
         }
         lua_pop(L, 1); // style_num
       }
-    } else return !newindex ? (lua_rawget(L, 1), 1) : (lua_rawset(L, 1), 0);
+    } else
+      return !newindex ? (lua_rawget(L, 1), 1) : (lua_rawset(L, 1), 0);
     return 1;
   }
 
@@ -194,8 +201,10 @@ class LexerLPeg : public ILexer5 {
     char *style_copy = static_cast<char *>(malloc(strlen(style) + 1));
     char *option = strcpy(style_copy, style), *next = NULL, *p = NULL;
     while (option) {
-      if ((next = strchr(option, ','))) *next++ = '\0';
-      if ((p = strchr(option, ':'))) *p++ = '\0';
+      if ((next = strchr(option, ',')))
+        *next++ = '\0';
+      if ((p = strchr(option, ':')))
+        *p++ = '\0';
       if (streq(option, "font"))
         fn(sci, SCI_STYLESETFONT, num, reinterpret_cast<sptr_t>(p));
       else if (streq(option, "size"))
@@ -269,7 +278,7 @@ class LexerLPeg : public ILexer5 {
     }
     lua_pushstring(L, "style.default"), lL_getexpanded(L, -1);
     SetStyle(STYLE_DEFAULT, lua_tostring(L, -1));
-    lua_pop(L, 2); // style and "style.default"
+    lua_pop(L, 2);                    // style and "style.default"
     fn(sci, SCI_STYLECLEARALL, 0, 0); // set default styles
     lua_pushnil(L);
     while (lua_next(L, -2)) {
@@ -295,7 +304,8 @@ class LexerLPeg : public ILexer5 {
     props.GetExpanded("lexer.lpeg.home", home);
     props.GetExpanded("lexer.lpeg.themes", themes);
     props.GetExpanded("lexer.lpeg.theme", theme);
-    if (!*home || !*lexer) return false;
+    if (!*home || !*lexer)
+      return false;
 
     lua_pushlightuserdata(L, reinterpret_cast<void *>(&props));
     lua_setfield(L, LUA_REGISTRYINDEX, "sci_props");
@@ -311,7 +321,8 @@ class LexerLPeg : public ILexer5 {
     // Load the lexer module.
     lua_getglobal(L, "require");
     lua_pushstring(L, "lexer");
-    if (lua_pcall(L, 1, 1, 0) != LUA_OK) return (l_error(L), false);
+    if (lua_pcall(L, 1, 1, 0) != LUA_OK)
+      return (l_error(L), false);
     lua_pushvalue(L, -1), lua_setglobal(L, "lexer");
     l_setconstant(L, SC_FOLDLEVELBASE, "FOLD_BASE");
     l_setconstant(L, SC_FOLDLEVELWHITEFLAG, "FOLD_BLANK");
@@ -334,9 +345,11 @@ class LexerLPeg : public ILexer5 {
         lua_pushstring(L, theme);
         lua_pushstring(L, ".lua");
         lua_concat(L, 4);
-      } else lua_pushstring(L, theme); // path to theme
+      } else
+        lua_pushstring(L, theme); // path to theme
       if (luaL_loadfile(L, lua_tostring(L, -1)) != LUA_OK ||
-          lua_pcall(L, 0, 0, 0) != LUA_OK) return (l_error(L), false);
+          lua_pcall(L, 0, 0, 0) != LUA_OK)
+        return (l_error(L), false);
       lua_pop(L, 1); // theme
     }
 
@@ -344,14 +357,17 @@ class LexerLPeg : public ILexer5 {
     lua_getfield(L, -1, "load");
     if (lua_isfunction(L, -1)) {
       lua_pushstring(L, lexer);
-      if (lua_pcall(L, 1, 1, 0) != LUA_OK) return (l_error(L), false);
-    } else return (l_error(L, "'lexer.load' function not found"), false);
+      if (lua_pcall(L, 1, 1, 0) != LUA_OK)
+        return (l_error(L), false);
+    } else
+      return (l_error(L, "'lexer.load' function not found"), false);
     lua_getfield(L, LUA_REGISTRYINDEX, "sci_lexers");
     lua_pushlightuserdata(L, reinterpret_cast<void *>(this));
     lua_pushvalue(L, -3), lua_settable(L, -3), lua_pop(L, 1); // sci_lexers
     lua_pushvalue(L, -1), lua_setfield(L, LUA_REGISTRYINDEX, "sci_lexer_obj");
     lua_remove(L, -2); // lexer module
-    if (!SetStyles()) return false;
+    if (!SetStyles())
+      return false;
 
     // If the lexer is a parent, it will have children in its _CHILDREN table.
     lua_getfield(L, -1, "_CHILDREN");
@@ -441,20 +457,22 @@ public:
     // languages instead of parent ones if necessary.
     if (startPos > 0) {
       Sci_PositionU i = startPos;
-      while (i > 0 && styler.StyleAt(i - 1) == initStyle) i--;
+      while (i > 0 && styler.StyleAt(i - 1) == initStyle)
+        i--;
       if (multilang)
-        while (i > 0 && !ws[static_cast<size_t>(styler.StyleAt(i))]) i--;
+        while (i > 0 && !ws[static_cast<size_t>(styler.StyleAt(i))])
+          i--;
       lengthDoc += startPos - i, startPos = i;
     }
 
     Sci_PositionU startSeg = startPos, endSeg = startPos + lengthDoc;
     int style = 0;
-    l_getlexerfield(L, "lex")
-    if (lua_isfunction(L, -1)) {
+    l_getlexerfield(L, "lex") if (lua_isfunction(L, -1)) {
       l_getlexerobj(L);
       lua_pushlstring(L, buffer->BufferPointer() + startPos, lengthDoc);
       lua_pushinteger(L, styler.StyleAt(startPos));
-      if (lua_pcall(L, 3, 1, 0) != LUA_OK) l_error(L);
+      if (lua_pcall(L, 3, 1, 0) != LUA_OK)
+        l_error(L);
       // Style the text from the token table returned.
       if (lua_istable(L, -1)) {
         int len = lua_rawlen(L, -1);
@@ -466,8 +484,9 @@ public:
           for (int i = 1; i < len; i += 2) {
             style = STYLE_DEFAULT;
             lua_rawgeti(L, -2, i), lua_rawget(L, -2); // _TOKENSTYLES[token]
-            if (!lua_isnil(L, -1)) style = lua_tointeger(L, -1);
-            lua_pop(L, 1); // _TOKENSTYLES[token]
+            if (!lua_isnil(L, -1))
+              style = lua_tointeger(L, -1);
+            lua_pop(L, 1);             // _TOKENSTYLES[token]
             lua_rawgeti(L, -2, i + 1); // pos
             unsigned int position = lua_tointeger(L, -1) - 1;
             lua_pop(L, 1); // pos
@@ -475,14 +494,17 @@ public:
               styler.ColourTo(startSeg + position - 1, style);
             else
               l_error(L, "Bad style number");
-            if (position > endSeg) break;
+            if (position > endSeg)
+              break;
           }
           lua_pop(L, 2); // _TOKENSTYLES and token table returned
           styler.ColourTo(endSeg - 1, style);
           styler.Flush();
         }
-      } else l_error(L, "Table of tokens expected from 'lexer.lex'");
-    } else l_error(L, "'lexer.lex' function not found");
+      } else
+        l_error(L, "Table of tokens expected from 'lexer.lex'");
+    }
+    else l_error(L, "'lexer.lex' function not found");
   }
 
   /**
@@ -508,7 +530,8 @@ public:
       lua_pushinteger(L, startPos);
       lua_pushinteger(L, currentLine);
       lua_pushinteger(L, styler.LevelAt(currentLine) & SC_FOLDLEVELNUMBERMASK);
-      if (lua_pcall(L, 5, 1, 0) != LUA_OK) l_error(L);
+      if (lua_pcall(L, 5, 1, 0) != LUA_OK)
+        l_error(L);
       // Fold the text from the fold table returned.
       if (lua_istable(L, -1)) {
         lua_pushnil(L);
@@ -517,8 +540,10 @@ public:
           lua_pop(L, 1); // level
         }
         lua_pop(L, 1); // fold table returned
-      } else l_error(L, "Table of folds expected from 'lexer.fold'");
-    } else l_error(L, "'lexer.fold' function not found");
+      } else
+        l_error(L, "Table of folds expected from 'lexer.fold'");
+    } else
+      l_error(L, "'lexer.fold' function not found");
   }
 
   /**
@@ -530,7 +555,7 @@ public:
   Sci_Position SCI_METHOD PropertySet(const char *key, const char *value) {
     const char *val = *value ? value : " ";
     props.Set(key, val, strlen(key), strlen(val)); // ensure property is cleared
-    return -1; // no need to re-lex
+    return -1;                                     // no need to re-lex
   }
 
   /**
@@ -541,8 +566,8 @@ public:
    * @param arg The argument.
    * @return void *data
    */
-  void * SCI_METHOD PrivateCall(int code, void *arg) {
-    switch(code) {
+  void *SCI_METHOD PrivateCall(int code, void *arg) {
+    switch (code) {
       case SCI_GETDIRECTFUNCTION:
         fn = reinterpret_cast<SciFnDirect>(arg);
         return nullptr;
@@ -579,57 +604,39 @@ public:
   }
 
   int SCI_METHOD Version() const { return 0; }
-  const char * SCI_METHOD PropertyNames() { return ""; }
+  const char *SCI_METHOD PropertyNames() { return ""; }
   int SCI_METHOD PropertyType(const char *) { return 0; }
-  const char * SCI_METHOD DescribeProperty(const char *) { return ""; }
-  const char * SCI_METHOD DescribeWordListSets() { return ""; }
+  const char *SCI_METHOD DescribeProperty(const char *) { return ""; }
+  const char *SCI_METHOD DescribeWordListSets() { return ""; }
   Sci_Position SCI_METHOD WordListSet(int, const char *) { return -1; }
 
-  int SCI_METHOD LineEndTypesSupported() noexcept override {return SC_LINE_END_TYPE_UNICODE;}
+  int SCI_METHOD LineEndTypesSupported() noexcept override {
+    return SC_LINE_END_TYPE_UNICODE;
+  }
 
   int SCI_METHOD AllocateSubStyles(int styleBase, int numberStyles) override {
-      return 0;
+    return 0;
   }
-  int SCI_METHOD SubStylesStart(int styleBase) override {
-      return 0;
-  }
-  int SCI_METHOD SubStylesLength(int styleBase) override {
-      return 0;
-  }
-  int SCI_METHOD StyleFromSubStyle(int subStyle) override {
-      return 0;
-  }
+  int SCI_METHOD SubStylesStart(int styleBase) override { return 0; }
+  int SCI_METHOD SubStylesLength(int styleBase) override { return 0; }
+  int SCI_METHOD StyleFromSubStyle(int subStyle) override { return 0; }
   int SCI_METHOD PrimaryStyleFromStyle(int style) noexcept override {
-      return 0;
+    return 0;
   }
-  void SCI_METHOD FreeSubStyles() override {
-  }
-  void SCI_METHOD SetIdentifiers(int style, const char *identifiers) override {
-  }
-  int SCI_METHOD DistanceToSecondaryStyles() noexcept override {
-      return 0;
-  }
-  const char * SCI_METHOD GetSubStyleBases() noexcept override {
-      return "";
-  }
-  int SCI_METHOD NamedStyles() override {
-      return 0;
-  }
-  const char * SCI_METHOD NameOfStyle(int style) override {
-      return "";
-  }
-  const char * SCI_METHOD TagsOfStyle(int style) override {
-      return "";
-  }
-  const char * SCI_METHOD DescriptionOfStyle(int style) override {
-      return "";
-  }
+  void SCI_METHOD FreeSubStyles() override {}
+  void SCI_METHOD SetIdentifiers(int style, const char *identifiers) override {}
+  int SCI_METHOD DistanceToSecondaryStyles() noexcept override { return 0; }
+  const char *SCI_METHOD GetSubStyleBases() noexcept override { return ""; }
+  int SCI_METHOD NamedStyles() override { return 0; }
+  const char *SCI_METHOD NameOfStyle(int style) override { return ""; }
+  const char *SCI_METHOD TagsOfStyle(int style) override { return ""; }
+  const char *SCI_METHOD DescriptionOfStyle(int style) override { return ""; }
 
-  const char * SCI_METHOD GetName() override {return "";}
+  const char *SCI_METHOD GetName() override { return ""; }
 
-  int SCI_METHOD  GetIdentifier() override { return 0; }
+  int SCI_METHOD GetIdentifier() override { return 0; }
 
-  const char * SCI_METHOD PropertyGet(const char *key) {return "";}
+  const char *SCI_METHOD PropertyGet(const char *key) { return ""; }
 
   /** Constructs a new instance of the lexer. */
   static ILexer5 *LexerFactoryLPeg() { return new LexerLPeg(); }

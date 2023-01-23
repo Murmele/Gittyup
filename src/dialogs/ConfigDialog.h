@@ -16,13 +16,11 @@ class RepoView;
 class QActionGroup;
 class QStackedWidget;
 
-class ConfigDialog : public QDialog
-{
+class ConfigDialog : public QDialog {
   Q_OBJECT
 
 public:
-  enum Index
-  {
+  enum Index {
     General,
     Diff,
     Remotes,

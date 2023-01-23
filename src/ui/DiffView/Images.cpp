@@ -13,31 +13,22 @@
 //#############################################################################
 
 _Images::Image::Image(const QPixmap &pixmap, QWidget *parent)
-  : QWidget(parent), mPixmap(pixmap)
-{
+    : QWidget(parent), mPixmap(pixmap) {
   setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
 }
 
-QSize _Images::Image::sizeHint() const
-{
-  return mPixmap.size();
-}
+QSize _Images::Image::sizeHint() const { return mPixmap.size(); }
 
-bool _Images::Image::hasHeightForWidth() const
-{
-  return true;
-}
+bool _Images::Image::hasHeightForWidth() const { return true; }
 
-int _Images::Image::heightForWidth(int w) const
-{
+int _Images::Image::heightForWidth(int w) const {
   QSize size = sizeHint();
   int width = size.width();
   int height = size.height();
-  return (w >= width) ? height : height * (w / (qreal) width);
+  return (w >= width) ? height : height * (w / (qreal)width);
 }
 
-void _Images::Image::paintEvent(QPaintEvent *event)
-{
+void _Images::Image::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   painter.drawPixmap(rect(), mPixmap);
 }
@@ -46,20 +37,13 @@ void _Images::Image::paintEvent(QPaintEvent *event)
 //###########     Arrow     ###################################################
 //#############################################################################
 
-_Images::Arrow::Arrow(QWidget *parent)
-  : QWidget(parent)
-{
+_Images::Arrow::Arrow(QWidget *parent) : QWidget(parent) {
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
 }
 
-QSize _Images::Arrow::sizeHint() const
-{
-  return QSize(100, 100);
-}
+QSize _Images::Arrow::sizeHint() const { return QSize(100, 100); }
 
-
-void _Images::Arrow::paintEvent(QPaintEvent *event)
-{
+void _Images::Arrow::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
 
@@ -86,44 +70,37 @@ void _Images::Arrow::paintEvent(QPaintEvent *event)
   painter.drawPath(arrow);
 }
 
-
 //#############################################################################
 //###########     Images     ##################################################
 //#############################################################################
 
-Images::Images(
-  const git::Patch patch,
-  bool lfs,
-  QWidget *parent)
-  : QWidget(parent), mPatch(patch)
-{
+Images::Images(const git::Patch patch, bool lfs, QWidget *parent)
+    : QWidget(parent), mPatch(patch) {
   int size = 0;
-  QPixmap pixmap = loadPixmap(git::Diff::NewFile, size, lfs);
-  if (pixmap.isNull()) {
+  QPixmap newFile = loadPixmap(git::Diff::NewFile, size, lfs);
+  if (newFile.isNull()) {
     QString path = mPatch.repo().workdir().filePath(mPatch.name());
     size = QFileInfo(path).size();
-    pixmap.load(path);
+    newFile.load(path);
   }
-
-  if (pixmap.isNull())
-    return;
 
   QHBoxLayout *layout = new QHBoxLayout(this);
   layout->setContentsMargins(6, 4, 8, 4);
 
   int beforeSize = 0;
   QPixmap before = loadPixmap(git::Diff::OldFile, beforeSize, lfs);
-  if (!before.isNull()) {
+  if (!before.isNull())
     layout->addLayout(imageLayout(before, beforeSize), 1);
-    layout->addWidget(new _Images::Arrow(this));
-  }
 
-  layout->addLayout(imageLayout(pixmap, size), 1);
+  if (!before.isNull() && !newFile.isNull())
+    layout->addWidget(new _Images::Arrow(this));
+
+  if (!newFile.isNull())
+    layout->addLayout(imageLayout(newFile, size), 1);
   layout->addStretch();
 }
 
-QPixmap Images::loadPixmap(git::Diff::File type, int &size, bool lfs)
-{
+QPixmap Images::loadPixmap(git::Diff::File type, int &size, bool lfs) {
   git::Blob blob = mPatch.blob(type);
   if (!blob.isValid())
     return QPixmap();
@@ -146,8 +123,7 @@ QPixmap Images::loadPixmap(git::Diff::File type, int &size, bool lfs)
   return icon.pixmap(windowHandle(), QSize(64, 64));
 }
 
-QVBoxLayout *Images::imageLayout(const QPixmap pixmap, int size)
-{
+QVBoxLayout *Images::imageLayout(const QPixmap pixmap, int size) {
   QString arg = locale().formattedDataSize(size);
   QLabel *label = new QLabel(tr("<b>Size:</b> %1").arg(arg));
   label->setAlignment(Qt::AlignCenter);

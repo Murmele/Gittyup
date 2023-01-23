@@ -11,10 +11,8 @@
 #include <QDir>
 
 Installer::Installer(const QString &name, const QString &path)
-  : mName(name), mPath(path)
-{}
+    : mName(name), mPath(path) {}
 
-bool Installer::exists() const
-{
+bool Installer::exists() const {
   return (!mName.isEmpty() && !mPath.isEmpty() && QDir(mPath).exists(mName));
 }

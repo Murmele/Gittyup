@@ -17,14 +17,14 @@
 #include <QPushButton>
 
 AccountDialog::AccountDialog(Account *account, QWidget *parent)
-  : QDialog(parent)
-{
+    : QDialog(parent) {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowTitle(tr("Add Remote Account"));
 
   mHost = new QComboBox(this);
   mHost->setMinimumWidth(mHost->sizeHint().width() * 2);
   mHost->addItem("GitHub", Account::GitHub);
+  mHost->addItem("Gitea", Account::Gitea);
   mHost->addItem("Bitbucket", Account::Bitbucket);
   mHost->addItem("Beanstalk", Account::Beanstalk);
   mHost->addItem("GitLab", Account::GitLab);
@@ -34,14 +34,14 @@ AccountDialog::AccountDialog(Account *account, QWidget *parent)
 
   mUsername = new QLineEdit(this);
   mUsername->setText(account ? account->username() : QString());
-  connect(mUsername, &QLineEdit::textChanged,
-          this, &AccountDialog::updateButtons);
+  connect(mUsername, &QLineEdit::textChanged, this,
+          &AccountDialog::updateButtons);
 
   mPassword = new QLineEdit(this);
   mPassword->setEchoMode(QLineEdit::Password);
   mPassword->setText(account ? account->password() : QString());
-  connect(mPassword, &QLineEdit::textChanged,
-          this, &AccountDialog::updateButtons);
+  connect(mPassword, &QLineEdit::textChanged, this,
+          &AccountDialog::updateButtons);
 
   auto signal = QOverload<int>::of(&QComboBox::currentIndexChanged);
   mLabel = new QLabel(Account::helpText(kind), this);
@@ -50,7 +50,7 @@ AccountDialog::AccountDialog(Account *account, QWidget *parent)
   mLabel->setVisible(!mLabel->text().isEmpty());
   connect(mHost, signal, [this] {
     Account::Kind kind =
-    static_cast<Account::Kind>(mHost->currentData().toInt());
+        static_cast<Account::Kind>(mHost->currentData().toInt());
     mLabel->setText(Account::helpText(kind));
     mLabel->setVisible(!mLabel->text().isEmpty());
   });
@@ -71,14 +71,14 @@ AccountDialog::AccountDialog(Account *account, QWidget *parent)
   mUrl->setText(account ? account->url() : Account::defaultUrl(kind));
   connect(mHost, signal, [this] {
     Account::Kind kind =
-    static_cast<Account::Kind>(mHost->currentData().toInt());
+        static_cast<Account::Kind>(mHost->currentData().toInt());
     mUrl->setText(Account::defaultUrl(kind));
     QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     resize(sizeHint());
   });
 
   QFormLayout *advancedForm = new QFormLayout(advanced);
-  advancedForm->setContentsMargins(-1,0,0,0);
+  advancedForm->setContentsMargins(-1, 0, 0, 0);
   advancedForm->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
   advancedForm->addRow(tr("URL:"), mUrl);
 
@@ -89,7 +89,7 @@ AccountDialog::AccountDialog(Account *account, QWidget *parent)
   });
 
   QDialogButtonBox::StandardButtons buttons =
-    QDialogButtonBox::Ok | QDialogButtonBox::Cancel;
+      QDialogButtonBox::Ok | QDialogButtonBox::Cancel;
   mButtons = new QDialogButtonBox(buttons, this);
   mButtons->button(QDialogButtonBox::Ok)->setEnabled(false);
   connect(mButtons, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -103,21 +103,19 @@ AccountDialog::AccountDialog(Account *account, QWidget *parent)
   updateButtons();
 }
 
-void AccountDialog::accept()
-{
+void AccountDialog::accept() {
   // Validate account.
-  Account::Kind kind =
-    static_cast<Account::Kind>(mHost->currentData().toInt());
+  Account::Kind kind = static_cast<Account::Kind>(mHost->currentData().toInt());
   QString username = mUsername->text();
-  QString url = (mUrl->text() != Account::defaultUrl(kind)) ?
-    mUrl->text() : QString();
+  QString url =
+      (mUrl->text() != Account::defaultUrl(kind)) ? mUrl->text() : QString();
 
   if (Account *account = Accounts::instance()->lookup(username, kind)) {
     QMessageBox mb(QMessageBox::Information, tr("Replace?"),
                    tr("An account of this type already exists."));
-    mb.setInformativeText(tr("Would you like to replace the previous account?"));
-    QPushButton *remove =
-      mb.addButton(tr("Replace"), QMessageBox::AcceptRole);
+    mb.setInformativeText(
+        tr("Would you like to replace the previous account?"));
+    QPushButton *remove = mb.addButton(tr("Replace"), QMessageBox::AcceptRole);
     mb.addButton(tr("Cancel"), QMessageBox::RejectRole);
     mb.setDefaultButton(remove);
     mb.exec();
@@ -158,13 +156,12 @@ void AccountDialog::accept()
   account->connect(mPassword->text());
 }
 
-void AccountDialog::setKind(Account::Kind kind)
-{
+void AccountDialog::setKind(Account::Kind kind) {
   mHost->setCurrentIndex(mHost->findData(kind));
 }
 
-void AccountDialog::updateButtons()
-{
-  mButtons->button(QDialogButtonBox::Ok)->setEnabled(
-    !mUsername->text().isEmpty() && !mPassword->text().isEmpty());
+void AccountDialog::updateButtons() {
+  mButtons->button(QDialogButtonBox::Ok)
+      ->setEnabled(!mUsername->text().isEmpty() &&
+                   !mPassword->text().isEmpty());
 }

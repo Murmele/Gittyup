@@ -12,8 +12,7 @@
 
 #include <QString>
 
-class Installer
-{
+class Installer {
 public:
   Installer(const QString &name, const QString &path);
 

@@ -53,65 +53,46 @@ int lexemeText(lua_State *L);
 int lexemeKind(lua_State *L);
 int lexemeIsKind(lua_State *L);
 
-const luaL_Reg kOptionsFuncs[] = {
-  { "script_dir", &optionsScriptDir },
-  { "define_boolean", &optionsDefineBoolean },
-  { "define_integer", &optionsDefineInteger },
-  { "define_string", &optionsDefineString },
-  { "define_list", &optionsDefineList },
-  { "value", &optionsValue },
-  { nullptr, nullptr }
-};
+const luaL_Reg kOptionsFuncs[] = {{"script_dir", &optionsScriptDir},
+                                  {"define_boolean", &optionsDefineBoolean},
+                                  {"define_integer", &optionsDefineInteger},
+                                  {"define_string", &optionsDefineString},
+                                  {"define_list", &optionsDefineList},
+                                  {"value", &optionsValue},
+                                  {nullptr, nullptr}};
 
-const luaL_Reg kKindsFuncs[] = {
-  { "define_note", &kindsDefineNote },
-  { "define_warning", &kindsDefineWarning },
-  { "define_error", &kindsDefineError },
-  { nullptr, nullptr }
-};
+const luaL_Reg kKindsFuncs[] = {{"define_note", &kindsDefineNote},
+                                {"define_warning", &kindsDefineWarning},
+                                {"define_error", &kindsDefineError},
+                                {nullptr, nullptr}};
 
-const luaL_Reg kHunkFuncs[] = {
-  { "lines", &hunkLines },
-  { "lexer", &hunkLexer },
-  { "tab_width", &hunkTabWidth },
-  { nullptr, nullptr }
-};
+const luaL_Reg kHunkFuncs[] = {{"lines", &hunkLines},
+                               {"lexer", &hunkLexer},
+                               {"tab_width", &hunkTabWidth},
+                               {nullptr, nullptr}};
 
 const luaL_Reg kLineFuncs[] = {
-  { "text", &lineText },
-  { "origin", &lineOrigin },
-  { "lexemes", &lineLexemes },
-  { "add_error", &lineAddError },
-  { "column", &lineColumn },
-  { "column_pos", &lineColumnPos },
-  { nullptr, nullptr }
-};
+    {"text", &lineText},       {"origin", &lineOrigin},
+    {"lexemes", &lineLexemes}, {"add_error", &lineAddError},
+    {"column", &lineColumn},   {"column_pos", &lineColumnPos},
+    {nullptr, nullptr}};
 
 const luaL_Reg kLexemeFuncs[] = {
-  { "__eq", &lexemeEq },
-  { "pos", &lexemePos },
-  { "text", &lexemeText },
-  { "kind", &lexemeKind },
-  { "is_kind", &lexemeIsKind },
-  { nullptr, nullptr }
-};
+    {"__eq", &lexemeEq},   {"pos", &lexemePos},        {"text", &lexemeText},
+    {"kind", &lexemeKind}, {"is_kind", &lexemeIsKind}, {nullptr, nullptr}};
 
-Plugin *plugin(lua_State *L)
-{
+Plugin *plugin(lua_State *L) {
   return static_cast<Plugin *>(lua_touserdata(L, lua_upvalueindex(1)));
 }
 
-template <typename T>
-T member(lua_State *L, const char *member)
-{
+template <typename T> T member(lua_State *L, const char *member) {
   lua_getfield(L, 1, member);
   void *result = lua_touserdata(L, -1);
   lua_pop(L, 1); // member
   return static_cast<T>(result);
 }
 
-template <> int member<int>(lua_State *L, const char *member)
-{
+template <> int member<int>(lua_State *L, const char *member) {
   lua_getfield(L, 1, member);
   int result = lua_tointeger(L, -1);
   lua_pop(L, 1); // member
@@ -119,30 +100,24 @@ template <> int member<int>(lua_State *L, const char *member)
 }
 
 template <typename T>
-void setMember(lua_State *L, const char *member, T value)
-{
+void setMember(lua_State *L, const char *member, T value) {
   lua_pushlightuserdata(L, value);
   lua_setfield(L, -2, member);
 }
 
-template <> void setMember(lua_State *L, const char *member, int value)
-{
+template <> void setMember(lua_State *L, const char *member, int value) {
   lua_pushinteger(L, value);
   lua_setfield(L, -2, member);
 }
 
-template <> void setMember(lua_State *L, const char *member, const char *value)
-{
+template <>
+void setMember(lua_State *L, const char *member, const char *value) {
   lua_pushstring(L, value);
   lua_setfield(L, -2, member);
 }
 
-void createInstance(
-  lua_State *L,
-  Plugin *plugin,
-  const char *name,
-  const luaL_Reg functions[])
-{
+void createInstance(lua_State *L, Plugin *plugin, const char *name,
+                    const luaL_Reg functions[]) {
   lua_newtable(L);
   if (luaL_newmetatable(L, name)) {
     lua_pushvalue(L, -1); // metatable
@@ -154,8 +129,7 @@ void createInstance(
   lua_setmetatable(L, -2);
 }
 
-int optionsScriptDir(lua_State *L)
-{
+int optionsScriptDir(lua_State *L) {
   if (lua_gettop(L) != 1 || !lua_istable(L, 1))
     luaL_error(L, "invalid arguments");
 
@@ -163,47 +137,40 @@ int optionsScriptDir(lua_State *L)
   return 1;
 }
 
-int optionsDefineBoolean(lua_State *L)
-{
+int optionsDefineBoolean(lua_State *L) {
   if (lua_gettop(L) != 4 || !lua_istable(L, 1) || !lua_isstring(L, 2) ||
       !lua_isstring(L, 3) || !lua_isboolean(L, 4))
     luaL_error(L, "invalid arguments");
 
-  plugin(L)->defineOption(
-    lua_tostring(L, 2), Plugin::Boolean,
-    lua_tostring(L, 3), lua_toboolean(L, 4));
+  plugin(L)->defineOption(lua_tostring(L, 2), Plugin::Boolean,
+                          lua_tostring(L, 3), lua_toboolean(L, 4));
 
   return 0;
 }
 
-int optionsDefineInteger(lua_State *L)
-{
+int optionsDefineInteger(lua_State *L) {
   if (lua_gettop(L) != 4 || !lua_istable(L, 1) || !lua_isstring(L, 2) ||
       !lua_isstring(L, 3) || !lua_isinteger(L, 4))
     luaL_error(L, "invalid arguments");
 
-  plugin(L)->defineOption(
-    lua_tostring(L, 2), Plugin::Integer,
-    lua_tostring(L, 3), lua_tointeger(L, 4));
+  plugin(L)->defineOption(lua_tostring(L, 2), Plugin::Integer,
+                          lua_tostring(L, 3), lua_tointeger(L, 4));
 
   return 0;
 }
 
-int optionsDefineString(lua_State *L)
-{
+int optionsDefineString(lua_State *L) {
   if (lua_gettop(L) != 4 || !lua_istable(L, 1) || !lua_isstring(L, 2) ||
       !lua_isstring(L, 3) || !lua_isstring(L, 4))
     luaL_error(L, "invalid arguments");
 
-  plugin(L)->defineOption(
-    lua_tostring(L, 2), Plugin::String,
-    lua_tostring(L, 3), lua_tostring(L, 4));
+  plugin(L)->defineOption(lua_tostring(L, 2), Plugin::String,
+                          lua_tostring(L, 3), lua_tostring(L, 4));
 
   return 0;
 }
 
-int optionsDefineList(lua_State *L)
-{
+int optionsDefineList(lua_State *L) {
   if (lua_gettop(L) != 5 || !lua_istable(L, 1) || !lua_isstring(L, 2) ||
       !lua_isstring(L, 3) || !lua_istable(L, 4) || !lua_isinteger(L, 5))
     luaL_error(L, "invalid arguments");
@@ -220,15 +187,13 @@ int optionsDefineList(lua_State *L)
     lua_pop(L, 1);
   }
 
-  plugin(L)->defineOption(
-    lua_tostring(L, 2), Plugin::List, lua_tostring(L, 3),
-    lua_tointeger(L, 5), opts);
+  plugin(L)->defineOption(lua_tostring(L, 2), Plugin::List, lua_tostring(L, 3),
+                          lua_tointeger(L, 5), opts);
 
   return 0;
 }
 
-int optionsValue(lua_State *L)
-{
+int optionsValue(lua_State *L) {
   if (lua_gettop(L) != 2 || !lua_istable(L, 1) || !lua_isstring(L, 2))
     luaL_error(L, "invalid arguments");
 
@@ -255,37 +220,30 @@ int optionsValue(lua_State *L)
   return 1;
 }
 
-int defineDiagnostic(lua_State *L, Plugin::DiagnosticKind kind)
-{
+int defineDiagnostic(lua_State *L, Plugin::DiagnosticKind kind) {
   if (lua_gettop(L) < 5 || lua_gettop(L) > 6 || !lua_istable(L, 1) ||
       !lua_isstring(L, 2) || !lua_isstring(L, 3) || !lua_isstring(L, 4) ||
       !lua_isstring(L, 5) || (lua_gettop(L) == 6 && !lua_isboolean(L, 6)))
     luaL_error(L, "invalid arguments");
 
-  plugin(L)->defineDiagnostic(
-    lua_tostring(L, 2), kind, lua_tostring(L, 3), lua_tostring(L, 4),
-    lua_tostring(L, 5), (lua_gettop(L) == 6 && lua_toboolean(L, 6)));
+  plugin(L)->defineDiagnostic(lua_tostring(L, 2), kind, lua_tostring(L, 3),
+                              lua_tostring(L, 4), lua_tostring(L, 5),
+                              (lua_gettop(L) == 6 && lua_toboolean(L, 6)));
 
   return 0;
 }
 
-int kindsDefineNote(lua_State *L)
-{
-  return defineDiagnostic(L, Plugin::Note);
-}
+int kindsDefineNote(lua_State *L) { return defineDiagnostic(L, Plugin::Note); }
 
-int kindsDefineWarning(lua_State *L)
-{
+int kindsDefineWarning(lua_State *L) {
   return defineDiagnostic(L, Plugin::Warning);
 }
 
-int kindsDefineError(lua_State *L)
-{
+int kindsDefineError(lua_State *L) {
   return defineDiagnostic(L, Plugin::Error);
 }
 
-int hunkLines(lua_State *L)
-{
+int hunkLines(lua_State *L) {
   if (lua_gettop(L) != 1 || !lua_istable(L, 1))
     luaL_error(L, "invalid arguments");
 
@@ -310,8 +268,7 @@ int hunkLines(lua_State *L)
   return 1;
 }
 
-int hunkLexer(lua_State *L)
-{
+int hunkLexer(lua_State *L) {
   if (lua_gettop(L) != 1 || !lua_istable(L, 1))
     luaL_error(L, "invalid arguments");
 
@@ -319,8 +276,7 @@ int hunkLexer(lua_State *L)
   return 1;
 }
 
-int hunkTabWidth(lua_State *L)
-{
+int hunkTabWidth(lua_State *L) {
   if (lua_gettop(L) != 1 || !lua_istable(L, 1))
     luaL_error(L, "invalid arguments");
 
@@ -328,8 +284,7 @@ int hunkTabWidth(lua_State *L)
   return 1;
 }
 
-int lineText(lua_State *L)
-{
+int lineText(lua_State *L) {
   if (lua_gettop(L) != 1 || !lua_istable(L, 1))
     luaL_error(L, "invalid arguments");
 
@@ -340,8 +295,7 @@ int lineText(lua_State *L)
   return 1;
 }
 
-int lineOrigin(lua_State *L)
-{
+int lineOrigin(lua_State *L) {
   if (lua_gettop(L) != 1 || !lua_istable(L, 1))
     luaL_error(L, "invalid arguments");
 
@@ -360,15 +314,8 @@ int lineOrigin(lua_State *L)
   return 1;
 }
 
-void addLexeme(
-  lua_State *L,
-  Plugin *plugin,
-  int index,
-  TextEditor *editor,
-  int pos,
-  int style,
-  const QByteArray &text)
-{
+void addLexeme(lua_State *L, Plugin *plugin, int index, TextEditor *editor,
+               int pos, int style, const QByteArray &text) {
   // index
   lua_pushinteger(L, index);
 
@@ -382,8 +329,7 @@ void addLexeme(
   lua_settable(L, -3);
 }
 
-int lineLexemes(lua_State *L)
-{
+int lineLexemes(lua_State *L) {
   if (lua_gettop(L) != 1 || !lua_istable(L, 1))
     luaL_error(L, "invalid arguments");
 
@@ -423,8 +369,7 @@ int lineLexemes(lua_State *L)
   return 1;
 }
 
-int lineAddError(lua_State *L)
-{
+int lineAddError(lua_State *L) {
   if (lua_gettop(L) < 4 || lua_gettop(L) > 5 || !lua_istable(L, 1) ||
       !lua_isstring(L, 2) || !lua_isinteger(L, 3) || !lua_isinteger(L, 4) ||
       (lua_gettop(L) == 5 && !lua_isstring(L, 5)))
@@ -444,15 +389,14 @@ int lineAddError(lua_State *L)
   QString msg = plugin(L)->diagnosticMessage(key);
   QString desc = plugin(L)->diagnosticDescription(key);
   TextEditor::DiagnosticKind kind =
-    static_cast<TextEditor::DiagnosticKind>(plugin(L)->diagnosticKind(key));
+      static_cast<TextEditor::DiagnosticKind>(plugin(L)->diagnosticKind(key));
   QString replacement = (lua_gettop(L) == 5) ? lua_tostring(L, 5) : QString();
   editor->addDiagnostic(line, {kind, msg, desc, {pos, len}, replacement});
 
   return 0;
 }
 
-int lineColumn(lua_State *L)
-{
+int lineColumn(lua_State *L) {
   if (lua_gettop(L) != 2 || !lua_istable(L, 1) || !lua_isinteger(L, 2))
     luaL_error(L, "invalid arguments");
 
@@ -464,8 +408,7 @@ int lineColumn(lua_State *L)
   return 1;
 }
 
-int lineColumnPos(lua_State *L)
-{
+int lineColumnPos(lua_State *L) {
   if (lua_gettop(L) != 2 || !lua_istable(L, 1) || !lua_isinteger(L, 2))
     luaL_error(L, "invalid arguments");
 
@@ -477,8 +420,7 @@ int lineColumnPos(lua_State *L)
   return 1;
 }
 
-int lexemeEq(lua_State *L)
-{
+int lexemeEq(lua_State *L) {
   if (lua_gettop(L) != 2 || !lua_istable(L, 1) || !lua_istable(L, 2))
     luaL_error(L, "invalid arguments");
 
@@ -494,8 +436,7 @@ int lexemeEq(lua_State *L)
   return 1;
 }
 
-int lexemePos(lua_State *L)
-{
+int lexemePos(lua_State *L) {
   if (lua_gettop(L) != 1 || !lua_istable(L, 1))
     luaL_error(L, "invalid arguments");
 
@@ -503,8 +444,7 @@ int lexemePos(lua_State *L)
   return 1;
 }
 
-int lexemeText(lua_State *L)
-{
+int lexemeText(lua_State *L) {
   if (lua_gettop(L) != 1 || !lua_istable(L, 1))
     luaL_error(L, "invalid arguments");
 
@@ -512,15 +452,13 @@ int lexemeText(lua_State *L)
   return 1;
 }
 
-QByteArray kind(TextEditor *editor, int style)
-{
+QByteArray kind(TextEditor *editor, int style) {
   uintptr_t ptr = editor->privateLexerCall(style, 0);
   QByteArray name(reinterpret_cast<char *>(ptr));
   return name.endsWith("_whitespace") ? "whitespace" : name;
 }
 
-int lexemeKind(lua_State *L)
-{
+int lexemeKind(lua_State *L) {
   if (lua_gettop(L) != 1 || !lua_istable(L, 1))
     luaL_error(L, "invalid arguments");
 
@@ -531,8 +469,7 @@ int lexemeKind(lua_State *L)
   return 1;
 }
 
-int lexemeIsKind(lua_State *L)
-{
+int lexemeIsKind(lua_State *L) {
   if (lua_gettop(L) != 2 || !lua_istable(L, 1) || !lua_isstring(L, 2))
     luaL_error(L, "invalid arguments");
 
@@ -543,14 +480,11 @@ int lexemeIsKind(lua_State *L)
   return 1;
 }
 
-} // anon. namespace
+} // namespace
 
-Plugin::Plugin(
-  const QString &file,
-  const git::Repository &repo,
-  QObject *parent)
-  : QObject(parent), mRepo(repo), L(luaL_newstate())
-{
+Plugin::Plugin(const QString &file, const git::Repository &repo,
+               QObject *parent)
+    : QObject(parent), mRepo(repo), L(luaL_newstate()) {
   QFileInfo info(file);
   mDir = info.dir().path();
   mName = info.baseName();
@@ -608,33 +542,17 @@ Plugin::Plugin(
     setError(lua_tostring(L, -1));
 }
 
-Plugin::~Plugin()
-{
-  lua_close(L);
-}
+Plugin::~Plugin() { lua_close(L); }
 
-bool Plugin::isValid() const
-{
-  return mError.isEmpty();
-}
+bool Plugin::isValid() const { return mError.isEmpty(); }
 
-QString Plugin::name() const
-{
-  return mName;
-}
+QString Plugin::name() const { return mName; }
 
-QString Plugin::scriptDir() const
-{
-  return mDir;
-}
+QString Plugin::scriptDir() const { return mDir; }
 
-QString Plugin::errorString() const
-{
-  return mError;
-}
+QString Plugin::errorString() const { return mError; }
 
-bool Plugin::isEnabled() const
-{
+bool Plugin::isEnabled() const {
   foreach (const QString &key, mDiagnostics.keys()) {
     if (isEnabled(key))
       return true;
@@ -643,30 +561,23 @@ bool Plugin::isEnabled() const
   return false;
 }
 
-bool Plugin::isEnabled(const QString &key) const
-{
+bool Plugin::isEnabled(const QString &key) const {
   bool enabled = mDiagnostics.value(key).enabled;
   return config().value<bool>(kSubkeyFmt.arg(mName, key, "enabled"), enabled);
 }
 
-void Plugin::setEnabled(const QString &key, bool enabled)
-{
+void Plugin::setEnabled(const QString &key, bool enabled) {
   if (enabled != isEnabled(key))
     config().setValue(kSubkeyFmt.arg(mName, key, "enabled"), enabled);
 }
 
-void Plugin::defineOption(
-  const QString &key,
-  OptionKind kind,
-  const QString &text,
-  const QVariant &value,
-  const QStringList &opts)
-{
+void Plugin::defineOption(const QString &key, OptionKind kind,
+                          const QString &text, const QVariant &value,
+                          const QStringList &opts) {
   mOptions.insert(key, {kind, text, value, opts});
 }
 
-void Plugin::setOptionValue(const QString &key, const QVariant &value)
-{
+void Plugin::setOptionValue(const QString &key, const QVariant &value) {
   switch (optionKind(key)) {
     case Boolean:
       config().setValue(kKeyFmt.arg(mName, key), value.toBool());
@@ -683,18 +594,13 @@ void Plugin::setOptionValue(const QString &key, const QVariant &value)
   }
 }
 
-QStringList Plugin::optionKeys() const
-{
-  return mOptions.keys();
-}
+QStringList Plugin::optionKeys() const { return mOptions.keys(); }
 
-QString Plugin::optionText(const QString &key) const
-{
+QString Plugin::optionText(const QString &key) const {
   return mOptions.value(key).text;
 }
 
-QVariant Plugin::optionValue(const QString &key) const
-{
+QVariant Plugin::optionValue(const QString &key) const {
   QVariant value = mOptions.value(key).value;
   switch (optionKind(key)) {
     case Boolean:
@@ -709,61 +615,45 @@ QVariant Plugin::optionValue(const QString &key) const
   }
 }
 
-Plugin::OptionKind Plugin::optionKind(const QString &key) const
-{
+Plugin::OptionKind Plugin::optionKind(const QString &key) const {
   return mOptions.value(key).kind;
 }
 
-QStringList Plugin::optionOpts(const QString &key) const
-{
+QStringList Plugin::optionOpts(const QString &key) const {
   return mOptions.value(key).opts;
 }
 
-void Plugin::defineDiagnostic(
-  const QString &key,
-  DiagnosticKind kind,
-  const QString &name,
-  const QString &msg,
-  const QString &desc,
-  bool enabled)
-{
+void Plugin::defineDiagnostic(const QString &key, DiagnosticKind kind,
+                              const QString &name, const QString &msg,
+                              const QString &desc, bool enabled) {
   mDiagnostics.insert(key, {kind, name, msg, desc, enabled});
 }
 
-void Plugin::setDiagnosticKind(const QString &key, DiagnosticKind kind)
-{
+void Plugin::setDiagnosticKind(const QString &key, DiagnosticKind kind) {
   config().setValue<int>(kSubkeyFmt.arg(mName, key, "kind"), kind);
 }
 
-QStringList Plugin::diagnosticKeys() const
-{
-  return mDiagnostics.keys();
-}
+QStringList Plugin::diagnosticKeys() const { return mDiagnostics.keys(); }
 
-Plugin::DiagnosticKind Plugin::diagnosticKind(const QString &key) const
-{
+Plugin::DiagnosticKind Plugin::diagnosticKind(const QString &key) const {
   DiagnosticKind defaultKind = mDiagnostics.value(key).kind;
   return static_cast<DiagnosticKind>(
-    config().value<int>(kSubkeyFmt.arg(mName, key, "kind"), defaultKind));
+      config().value<int>(kSubkeyFmt.arg(mName, key, "kind"), defaultKind));
 }
 
-QString Plugin::diagnosticName(const QString &key) const
-{
+QString Plugin::diagnosticName(const QString &key) const {
   return mDiagnostics.value(key).name;
 }
 
-QString Plugin::diagnosticMessage(const QString &key) const
-{
+QString Plugin::diagnosticMessage(const QString &key) const {
   return mDiagnostics.value(key).message;
 }
 
-QString Plugin::diagnosticDescription(const QString &key) const
-{
+QString Plugin::diagnosticDescription(const QString &key) const {
   return mDiagnostics.value(key).description;
 }
 
-bool Plugin::hunk(TextEditor *editor) const
-{
+bool Plugin::hunk(TextEditor *editor) const {
   if (!lua_getglobal(L, "hunk")) {
     const_cast<Plugin *>(this)->setError("global 'hunk' function not found");
     return false;
@@ -785,8 +675,7 @@ bool Plugin::hunk(TextEditor *editor) const
   return true;
 }
 
-QList<PluginRef> Plugin::plugins(const git::Repository &repo)
-{
+QList<PluginRef> Plugin::plugins(const git::Repository &repo) {
   QList<PluginRef> plugins;
   QDir dir = Settings::pluginsDir();
   foreach (const QString &name, dir.entryList({"*.lua"}, QDir::Files))
@@ -801,13 +690,11 @@ QList<PluginRef> Plugin::plugins(const git::Repository &repo)
   return plugins;
 }
 
-git::Config Plugin::config() const
-{
+git::Config Plugin::config() const {
   return mRepo.isValid() ? mRepo.appConfig() : git::Config::appGlobal();
 }
 
-void Plugin::setError(const QString &err)
-{
+void Plugin::setError(const QString &err) {
   lua_pop(L, 1); // error or nil
   mError = err;
   emit error(err);

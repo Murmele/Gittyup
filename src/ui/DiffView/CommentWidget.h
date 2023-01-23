@@ -6,14 +6,12 @@
 #include <QWidget>
 #include <QVBoxLayout>
 
-class CommentWidget : public QWidget
-{
+class CommentWidget : public QWidget {
 public:
   CommentWidget(const Account::Comments &comments, QWidget *parent = nullptr)
-    : QWidget(parent)
-  {
+      : QWidget(parent) {
     setStyleSheet("QWidget { background-color: transparent; border: none }");
-    setContentsMargins(4,4,4,4);
+    setContentsMargins(4, 4, 4, 4);
 
     QVBoxLayout *layout = new QVBoxLayout(this);
     foreach (const QDateTime &key, comments.keys())

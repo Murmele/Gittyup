@@ -19,6 +19,7 @@
 #include "conf/RecentRepositories.h"
 #include "conf/Settings.h"
 #include "git/Repository.h"
+#include "git/Config.h"
 #include "git/Submodule.h"
 #include <QApplication>
 #include <QCloseEvent>
@@ -45,44 +46,33 @@ const QString kSidebarKey = "sidebar";
 const QString kGeometryKey = "geometry";
 const QString kWindowsGroup = "windows";
 
-class TabName
-{
+class TabName {
 public:
-  TabName(const QString &path)
-    : mPath(path)
-  {}
+  TabName(const QString &path) : mPath(path) {}
 
-  QString name() const
-  {
-    return mPath.section('/', -mSections);
-  }
+  QString name() const { return mPath.section('/', -mSections); }
 
-  void increment()
-  {
-    ++mSections;
-  }
+  void increment() { ++mSections; }
 
 private:
   QString mPath;
   int mSections = 1;
 };
 
-} // anon. namespace
+} // namespace
 
 bool MainWindow::sSaveWindowSettings = false;
 
-MainWindow::MainWindow(
-  const git::Repository &repo,
-  QWidget *parent,
-  Qt::WindowFlags flags)
-  : QMainWindow(parent, flags)
-{
+MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
+                       Qt::WindowFlags flags)
+    : QMainWindow(parent, flags) {
   setAttribute(Qt::WA_DeleteOnClose);
   setUnifiedTitleAndToolBarOnMac(true);
   setAcceptDrops(true);
 
   // Create new menu bar for this window if there isn't a shared one.
   mMenuBar = MenuBar::instance(this);
+  mMenuBar->registerActions(this);
 
   // Create tool bar.
   mToolBar = new ToolBar(this);
@@ -90,35 +80,44 @@ MainWindow::MainWindow(
 
   // Initialize search.
   SearchField *searchField = mToolBar->searchField();
-  connect(searchField, &QLineEdit::textEdited,
-          mMenuBar, &MenuBar::updateUndoRedo);
-  connect(searchField, &QLineEdit::selectionChanged,
-          mMenuBar, &MenuBar::updateCutCopyPaste);
+  connect(searchField, &QLineEdit::textEdited, mMenuBar,
+          &MenuBar::updateUndoRedo);
+  connect(searchField, &QLineEdit::selectionChanged, mMenuBar,
+          &MenuBar::updateCutCopyPaste);
 
   // Hook up advanced search.
   AdvancedSearchWidget *advancedSearch = new AdvancedSearchWidget(this);
-  connect(advancedSearch, &AdvancedSearchWidget::accepted,
-          searchField, &QLineEdit::setText);
+  connect(advancedSearch, &AdvancedSearchWidget::accepted, searchField,
+          &QLineEdit::setText);
   connect(searchField->advancedButton(), &QToolButton::clicked, this,
-  [this, searchField, advancedSearch] {
-    advancedSearch->exec(searchField, currentView()->index());
-  });
+          [this, searchField, advancedSearch] {
+            advancedSearch->exec(searchField, currentView()->index());
+          });
 
   // Update title and refresh when settings change.
-  mFullPath = Settings::instance()->value("window/path/full").toBool();
+  mFullPath =
+      Settings::instance()->value(Setting::Id::ShowFullRepoPath).toBool();
   connect(Settings::instance(), &Settings::settingsChanged, this,
-  [this](bool refresh) {
-    bool fullPath = Settings::instance()->value("window/path/full").toBool();
-    if (mFullPath != fullPath) {
-      mFullPath = fullPath;
-      updateWindowTitle();
-    }
+          [this](bool refresh) {
+            Settings *settings = Settings::instance();
 
-    if (refresh) {
-      for (int i = 0; i < count(); ++i)
-        view(i)->refresh();
-    }
-  });
+            bool menuBarHidden =
+                settings->value(Setting::Id::HideMenuBar).toBool();
+            if (mMenuBar->isHidden() != menuBarHidden)
+              mMenuBar->setHidden(menuBarHidden);
+
+            bool fullPath =
+                settings->value(Setting::Id::ShowFullRepoPath).toBool();
+            if (mFullPath != fullPath) {
+              mFullPath = fullPath;
+              updateWindowTitle();
+            }
+
+            if (refresh) {
+              for (int i = 0; i < count(); ++i)
+                view(i)->refresh();
+            }
+          });
 
   // Create splitter.
   QSplitter *splitter = new QSplitter(this);
@@ -135,10 +134,10 @@ MainWindow::MainWindow(
     MenuBar::instance(this)->update();
   });
 
-  connect(tabs, QOverload<>::of(&TabWidget::tabInserted),
-          this, &MainWindow::updateTabNames);
-  connect(tabs, QOverload<>::of(&TabWidget::tabRemoved),
-          this, &MainWindow::updateTabNames);
+  connect(tabs, QOverload<>::of(&TabWidget::tabInserted), this,
+          &MainWindow::updateTabNames);
+  connect(tabs, QOverload<>::of(&TabWidget::tabRemoved), this,
+          &MainWindow::updateTabNames);
 
   splitter->addWidget(new SideBar(tabs, splitter));
   splitter->addWidget(tabs);
@@ -172,13 +171,9 @@ MainWindow::MainWindow(
   updateInterface();
 }
 
-bool MainWindow::isSideBarVisible() const
-{
-  return mIsSideBarVisible;
-}
+bool MainWindow::isSideBarVisible() const { return mIsSideBarVisible; }
 
-void MainWindow::setSideBarVisible(bool visible)
-{
+void MainWindow::setSideBarVisible(bool visible) {
   if (visible == mIsSideBarVisible)
     return;
 
@@ -202,21 +197,17 @@ void MainWindow::setSideBarVisible(bool visible)
     splitter->setSizes({static_cast<int>(pos * value), 1});
   });
 
-  connect(timeline, &QTimeLine::finished, [timeline] {
-    delete timeline;
-  });
+  connect(timeline, &QTimeLine::finished, [timeline] { delete timeline; });
 
   timeline->start();
 }
 
-TabWidget *MainWindow::tabWidget() const
-{
+TabWidget *MainWindow::tabWidget() const {
   QSplitter *splitter = static_cast<QSplitter *>(centralWidget());
   return static_cast<TabWidget *>(splitter->widget(1));
 }
 
-RepoView *MainWindow::addTab(const QString &path)
-{
+RepoView *MainWindow::addTab(const QString &path) {
   if (path.isEmpty())
     return nullptr;
 
@@ -238,8 +229,7 @@ RepoView *MainWindow::addTab(const QString &path)
   return addTab(repo);
 }
 
-RepoView *MainWindow::addTab(const git::Repository &repo)
-{
+RepoView *MainWindow::addTab(const git::Repository &repo) {
   // Update recent repository settings.
   QDir dir = repo.workdir();
   RecentRepositories::instance()->add(dir.path());
@@ -256,14 +246,21 @@ RepoView *MainWindow::addTab(const git::Repository &repo)
   RepoView *view = new RepoView(repo, this);
   view->detailSplitterMaximize(mMenuBar->isMaximized());
   git::RepositoryNotifier *notifier = repo.notifier();
-  connect(notifier, &git::RepositoryNotifier::referenceUpdated,
-          this, &MainWindow::updateInterface);
-  connect(notifier, &git::RepositoryNotifier::stateChanged, this, [this] {
-    updateWindowTitle();
-  });
+  connect(notifier, &git::RepositoryNotifier::referenceUpdated, this,
+          &MainWindow::updateInterface);
+  connect(notifier, &git::RepositoryNotifier::stateChanged, this,
+          [this] { updateWindowTitle(); });
 
   emit tabs->tabAboutToBeInserted();
   tabs->setCurrentIndex(tabs->addTab(view, dir.dirName()));
+
+  Settings *settings = Settings::instance();
+  bool enable =
+      settings->value(Setting::Id::UpdateSubmodulesAfterPullAndClone).toBool();
+  if (repo.appConfig().value<bool>("autoupdate.enable", enable)) {
+    // update submodules
+    view->updateSubmodules(repo.submodules(), true, true, false, nullptr);
+  }
 
   // Start status diff.
   view->refresh();
@@ -275,23 +272,17 @@ RepoView *MainWindow::addTab(const git::Repository &repo)
   return view;
 }
 
-int MainWindow::count() const
-{
-  return tabWidget()->count();
-}
+int MainWindow::count() const { return tabWidget()->count(); }
 
-RepoView *MainWindow::currentView() const
-{
+RepoView *MainWindow::currentView() const {
   return static_cast<RepoView *>(tabWidget()->currentWidget());
 }
 
-RepoView *MainWindow::view(int index) const
-{
+RepoView *MainWindow::view(int index) const {
   return static_cast<RepoView *>(tabWidget()->widget(index));
 }
 
-MainWindow *MainWindow::activeWindow()
-{
+MainWindow *MainWindow::activeWindow() {
   QWidget *win = QApplication::activeWindow();
   if (MainWindow *mainWin = qobject_cast<MainWindow *>(win))
     return mainWin;
@@ -300,8 +291,7 @@ MainWindow *MainWindow::activeWindow()
   return !mainWins.isEmpty() ? mainWins.first() : nullptr;
 }
 
-QList<MainWindow *> MainWindow::windows()
-{
+QList<MainWindow *> MainWindow::windows() {
   QList<MainWindow *> mainWins;
   foreach (QWidget *win, QApplication::topLevelWidgets()) {
     if (MainWindow *mainWin = qobject_cast<MainWindow *>(win))
@@ -311,8 +301,7 @@ QList<MainWindow *> MainWindow::windows()
   return mainWins;
 }
 
-bool MainWindow::restoreWindows()
-{
+bool MainWindow::restoreWindows() {
   QList<MainWindow *> windows;
 
   // Open windows.
@@ -368,8 +357,7 @@ bool MainWindow::restoreWindows()
   return !windows.isEmpty();
 }
 
-MainWindow *MainWindow::open(const QString &path, bool warnOnInvalid)
-{
+MainWindow *MainWindow::open(const QString &path, bool warnOnInvalid) {
   if (path.isEmpty())
     return nullptr;
 
@@ -380,7 +368,7 @@ MainWindow *MainWindow::open(const QString &path, bool warnOnInvalid)
     return nullptr;
   }
 
-  if (Settings::instance()->value("window/tabs/repository").toBool()) {
+  if (Settings::instance()->value(Setting::Id::OpenAllReposInTabs).toBool()) {
     if (MainWindow *win = activeWindow()) {
       win->addTab(repo);
       return win;
@@ -390,8 +378,7 @@ MainWindow *MainWindow::open(const QString &path, bool warnOnInvalid)
   return open(repo);
 }
 
-MainWindow *MainWindow::open(const git::Repository &repo)
-{
+MainWindow *MainWindow::open(const git::Repository &repo) {
   // Update recent repository settings.
   if (repo.isValid())
     RecentRepositories::instance()->add(repo.workdir().path());
@@ -403,25 +390,21 @@ MainWindow *MainWindow::open(const git::Repository &repo)
   return window;
 }
 
-void MainWindow::setSaveWindowSettings(bool enabled)
-{
+void MainWindow::setSaveWindowSettings(bool enabled) {
   sSaveWindowSettings = enabled;
 }
 
-void MainWindow::showEvent(QShowEvent *event)
-{
+void MainWindow::showEvent(QShowEvent *event) {
   QMainWindow::showEvent(event);
 
   if (mShown)
     return;
 
   mShown = true;
-  installTouchBar();
   updateInterface();
 }
 
-void MainWindow::closeEvent(QCloseEvent *event)
-{
+void MainWindow::closeEvent(QCloseEvent *event) {
   // FIXME: Attempt to close windows before writing settings?
 
   if (sSaveWindowSettings) {
@@ -451,8 +434,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
   QMainWindow::closeEvent(event);
 }
 
-void MainWindow::dragEnterEvent(QDragEnterEvent *event)
-{
+void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
   if (!event->mimeData()->hasFormat("text/uri-list"))
     return;
 
@@ -471,21 +453,18 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
   event->acceptProposedAction();
 }
 
-void MainWindow::dropEvent(QDropEvent *event)
-{
+void MainWindow::dropEvent(QDropEvent *event) {
   foreach (const QUrl &url, event->mimeData()->urls())
     addTab(url.toLocalFile());
 }
 
-void MainWindow::warnInvalidRepo(const QString &path)
-{
+void MainWindow::warnInvalidRepo(const QString &path) {
   QString title = tr("Invalid Git Repository");
   QString text = tr("%1 does not contain a valid git repository.");
   QMessageBox::warning(nullptr, title, text.arg(path));
 }
 
-void MainWindow::updateTabNames()
-{
+void MainWindow::updateTabNames() {
   QList<TabName> names;
   for (int i = 0; i < count(); ++i) {
     TabName name(view(i)->repo().workdir().path());
@@ -507,8 +486,7 @@ void MainWindow::updateTabNames()
     tabs->setTabText(i, names.at(i).name());
 }
 
-void MainWindow::updateInterface()
-{
+void MainWindow::updateInterface() {
   // Avoid updating during close.
   if (mClosing)
     return;
@@ -524,16 +502,14 @@ void MainWindow::updateInterface()
     }
   }
 
-  updateTouchBar(ahead, behind);
   updateWindowTitle(ahead, behind);
   mToolBar->updateButtons(ahead, behind);
 }
 
-void MainWindow::updateWindowTitle(int ahead, int behind)
-{
+void MainWindow::updateWindowTitle(int ahead, int behind) {
   RepoView *view = currentView();
   if (!view) {
-    setWindowTitle(QCoreApplication::applicationName());
+    setWindowTitle(QCoreApplication::applicationName() + BUILD_DESCRIPTION);
     return;
   }
 
@@ -598,25 +574,18 @@ void MainWindow::updateWindowTitle(int ahead, int behind)
   if (!state.isEmpty())
     title = tr("%1 (%2)").arg(title, state);
 
-  setWindowTitle(title);
+  setWindowTitle(QString("%1%2").arg(title, BUILD_DESCRIPTION));
 }
 
-QStringList MainWindow::paths() const
-{
+QStringList MainWindow::paths() const {
   QStringList paths;
   for (int i = 0; i < count(); ++i)
     paths.append(view(i)->repo().workdir().path());
   return paths;
 }
 
-QString MainWindow::windowGroup() const
-{
+QString MainWindow::windowGroup() const {
   QByteArray group = paths().join(';').toUtf8();
   QByteArray hash = QCryptographicHash::hash(group, QCryptographicHash::Md5);
   return QString::fromUtf8(hash.toHex());
 }
-
-#ifndef Q_OS_MAC
-void MainWindow::installTouchBar() {}
-void MainWindow::updateTouchBar(int ahead, int behind) {}
-#endif

@@ -22,29 +22,26 @@ namespace {
 const QString kBoldFmt = "<b>%1</b>";
 const QString kNameFmt = "<span style='color: %1'>%2:</span> %3";
 const QString kLinkFmt =
-  "<a href='ref' style='color: %1; text-decoration: none'>%2</a>";
+    "<a href='ref' style='color: %1; text-decoration: none'>%2</a>";
 
-QModelIndex findReference(QAbstractItemModel *model, const git::Reference &ref)
-{
+QModelIndex findReference(QAbstractItemModel *model,
+                          const git::Reference &ref) {
   // Match by name.
   QModelIndexList indexes = model->match(
-    model->index(0, 0), Qt::DisplayRole, ref.name(), 1,
-    Qt::MatchFixedString | Qt::MatchCaseSensitive | Qt::MatchRecursive);
+      model->index(0, 0), Qt::DisplayRole, ref.name(), 1,
+      Qt::MatchFixedString | Qt::MatchCaseSensitive | Qt::MatchRecursive);
   return !indexes.isEmpty() ? indexes.first() : QModelIndex();
 }
 
-class Label : public QLabel
-{
+class Label : public QLabel {
 public:
   Label(QAbstractButton *button, QWidget *parent = nullptr)
-    : QLabel(parent), mButton(button)
-  {
+      : QLabel(parent), mButton(button) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   }
 
 protected:
-  void mouseMoveEvent(QMouseEvent *event) override
-  {
+  void mouseMoveEvent(QMouseEvent *event) override {
     QLabel::mouseMoveEvent(event);
 
     if (!(event->buttons() & Qt::LeftButton) ||
@@ -56,8 +53,7 @@ protected:
       mButton->setDown(!down);
   }
 
-  void mousePressEvent(QMouseEvent *event) override
-  {
+  void mousePressEvent(QMouseEvent *event) override {
     QLabel::mousePressEvent(event);
 
     if (event->button() != Qt::LeftButton ||
@@ -67,8 +63,7 @@ protected:
     mButton->setDown(true);
   }
 
-  void mouseReleaseEvent(QMouseEvent *event) override
-  {
+  void mouseReleaseEvent(QMouseEvent *event) override {
     QLabel::mouseReleaseEvent(event);
 
     if (event->button() != Qt::LeftButton ||
@@ -84,17 +79,13 @@ private:
   QAbstractButton *mButton;
 };
 
-class SelectionModel : public QItemSelectionModel
-{
+class SelectionModel : public QItemSelectionModel {
 public:
   SelectionModel(QAbstractItemModel *model, const git::Repository &repo)
-    : QItemSelectionModel(model), mRepo(repo)
-  {}
+      : QItemSelectionModel(model), mRepo(repo) {}
 
-  void setCurrentIndex(
-    const QModelIndex &index,
-    QItemSelectionModel::SelectionFlags command) override
-  {
+  void setCurrentIndex(const QModelIndex &index,
+                       QItemSelectionModel::SelectionFlags command) override {
     QModelIndex current = index;
     git::Reference head = mRepo.head();
     bool all = mRepo.appConfig().value<bool>("commit.refs.all", true);
@@ -109,36 +100,30 @@ private:
   git::Repository mRepo;
 };
 
-} // anon. namespace
+} // namespace
 
-ReferenceWidget::ReferenceWidget(
-  const git::Repository &repo,
-  ReferenceView::Kinds kinds,
-  QWidget *parent)
-  : QFrame(parent), mRepo(repo)
-{
-  setStyleSheet(
-    "ReferenceWidget {"
-    "  border: 1px solid palette(shadow)"
-    "}"
-    "ReferenceWidget QToolButton {"
-    "  border: none;"
-    "  border-left: 1px solid palette(shadow)"
-    "}"
-    "ReferenceWidget QLabel {"
-    "  padding-left: 4px;"
-    "  background: palette(base)"
-    "}"
-    "ReferenceWidget QTreeView {"
-    "  border: none"
-    "}"
-  );
+ReferenceWidget::ReferenceWidget(const git::Repository &repo,
+                                 ReferenceView::Kinds kinds, QWidget *parent)
+    : QFrame(parent), mRepo(repo) {
+  setStyleSheet("ReferenceWidget {"
+                "  border: 1px solid palette(shadow)"
+                "}"
+                "ReferenceWidget QToolButton {"
+                "  border: none;"
+                "  border-left: 1px solid palette(shadow)"
+                "}"
+                "ReferenceWidget QLabel {"
+                "  padding-left: 4px;"
+                "  background: palette(base)"
+                "}"
+                "ReferenceWidget QTreeView {"
+                "  border: none"
+                "}");
 
   ExpandButton *button = new ExpandButton(this);
   mLabel = new Label(button, this);
-  connect(mLabel, &QLabel::linkActivated, [this] {
-    emit referenceSelected(currentReference());
-  });
+  connect(mLabel, &QLabel::linkActivated,
+          [this] { emit referenceSelected(currentReference()); });
 
   QHBoxLayout *header = new QHBoxLayout;
   header->addWidget(mLabel);
@@ -148,7 +133,7 @@ ReferenceWidget::ReferenceWidget(
   mView->setSelectionModel(new SelectionModel(mView->model(), repo));
 
   QVBoxLayout *layout = new QVBoxLayout(this);
-  layout->setContentsMargins(0,0,0,0);
+  layout->setContentsMargins(0, 0, 0, 0);
   layout->setSpacing(0);
   layout->addLayout(header);
   layout->addWidget(mView);
@@ -174,9 +159,8 @@ ReferenceWidget::ReferenceWidget(
 
   // Handle model reset.
   QAbstractItemModel *model = mView->model();
-  connect(model, &QAbstractItemModel::modelAboutToBeReset, [this] {
-    mStoredRef = currentReference();
-  });
+  connect(model, &QAbstractItemModel::modelAboutToBeReset,
+          [this] { mStoredRef = currentReference(); });
 
   connect(model, &QAbstractItemModel::modelReset, [this] {
     // Try to restore the previous selection.
@@ -192,32 +176,31 @@ ReferenceWidget::ReferenceWidget(
 
   // Update the label when the reference changes.
   connect(this, &ReferenceWidget::referenceChanged,
-  [this](const git::Reference &ref) {
-    if (!ref.isValid()) {
-      mLabel->setText(QString());
-      return;
-    }
+          [this](const git::Reference &ref) {
+            if (!ref.isValid()) {
+              mLabel->setText(QString());
+              return;
+            }
 
-    QPalette palette = this->palette();
-    QString enabled = palette.color(QPalette::Text).name();
-    QString disabled = palette.color(QPalette::BrightText).name();
+            QPalette palette = this->palette();
+            QString enabled = palette.color(QPalette::Text).name();
+            QString disabled = palette.color(QPalette::BrightText).name();
 
-    QString kind = ReferenceView::kindString(ref);
-    QString link = kLinkFmt.arg(enabled, ref.name());
-    QString name = ref.isHead() ? kBoldFmt.arg(link) : link;
-    mLabel->setText(kind.isEmpty() ? name : kNameFmt.arg(disabled, kind, name));
-  });
+            QString kind = ReferenceView::kindString(ref);
+            QString link = kLinkFmt.arg(enabled, ref.name());
+            QString name = ref.isHead() ? kBoldFmt.arg(link) : link;
+            mLabel->setText(
+                kind.isEmpty() ? name : kNameFmt.arg(disabled, kind, name));
+          });
 }
 
-git::Reference ReferenceWidget::currentReference() const
-{
+git::Reference ReferenceWidget::currentReference() const {
   git::Reference ref = mView->currentReference();
   bool all = mRepo.appConfig().value<bool>("commit.refs.all", true);
   return (!all || (ref.isValid() && ref.isStash())) ? ref : mRepo.head();
 }
 
-void ReferenceWidget::select(const git::Reference &ref)
-{
+void ReferenceWidget::select(const git::Reference &ref) {
   if (!ref.isValid()) {
     emit referenceChanged(git::Reference());
     return;

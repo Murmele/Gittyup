@@ -15,14 +15,11 @@
 #include <QComboBox>
 
 SubmoduleDelegate::SubmoduleDelegate(QObject *parent)
-  : QStyledItemDelegate(parent)
-{}
+    : QStyledItemDelegate(parent) {}
 
-QWidget *SubmoduleDelegate::createEditor(
-  QWidget *parent,
-  const QStyleOptionViewItem &option,
-  const QModelIndex &index) const
-{
+QWidget *SubmoduleDelegate::createEditor(QWidget *parent,
+                                         const QStyleOptionViewItem &option,
+                                         const QModelIndex &index) const {
   // Create a reference list in the upstream column.
   if (index.column() != SubmoduleTableModel::Branch)
     return QStyledItemDelegate::createEditor(parent, option, index);
@@ -38,10 +35,8 @@ QWidget *SubmoduleDelegate::createEditor(
   return cb;
 }
 
-void SubmoduleDelegate::setEditorData(
-  QWidget *editor,
-  const QModelIndex &index) const
-{
+void SubmoduleDelegate::setEditorData(QWidget *editor,
+                                      const QModelIndex &index) const {
   if (QComboBox *cb = qobject_cast<QComboBox *>(editor)) {
     // Search for the matching item.
     int idx = cb->findText(index.data(Qt::DisplayRole).toString());
@@ -53,11 +48,8 @@ void SubmoduleDelegate::setEditorData(
   QStyledItemDelegate::setEditorData(editor, index);
 }
 
-void SubmoduleDelegate::setModelData(
-  QWidget *editor,
-  QAbstractItemModel *model,
-  const QModelIndex &index) const
-{
+void SubmoduleDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
+                                     const QModelIndex &index) const {
   if (QComboBox *cb = qobject_cast<QComboBox *>(editor)) {
     // Set current text.
     model->setData(index, cb->currentText(), Qt::EditRole);

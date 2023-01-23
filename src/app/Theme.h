@@ -13,37 +13,20 @@
 #include <QDir>
 #include <QPalette>
 #include <QString>
+#include <QMap>
 
 class QStyle;
 class QStyleOption;
 
-class Theme
-{
+class Theme {
 public:
-  enum class BadgeRole
-  {
-    Foreground,
-    Background
-  };
+  enum class BadgeRole { Foreground, Background };
 
-  enum class BadgeState
-  {
-    Normal,
-    Selected,
-    Conflicted,
-    Head,
-    Notification
-  };
+  enum class BadgeState { Normal, Selected, Conflicted, Head, Notification };
 
-  enum class CommitEditor
-  {
-    SpellError,
-    SpellIgnore,
-    LengthWarning
-  };
+  enum class CommitEditor { SpellError, SpellIgnore, LengthWarning };
 
-  enum class Diff
-  {
+  enum class Diff {
     Ours,
     Theirs,
     Addition,
@@ -59,22 +42,14 @@ public:
     Error
   };
 
-  enum class HeatMap
-  {
-    Hot,
-    Cold
-  };
+  enum class HeatMap { Hot, Cold };
 
-  enum class Comment
-  {
-    Background,
-    Body,
-    Author,
-    Timestamp
-  };
+  enum class Comment { Background, Body, Author, Timestamp };
 
   Theme();
   virtual ~Theme() = default;
+
+  QString diffButtonStyle(Diff role);
 
   virtual QDir dir() const;
   virtual QString name() const;
@@ -88,19 +63,17 @@ public:
   virtual QPalette commitList();
   virtual QColor commitEditor(CommitEditor color);
   virtual QColor diff(Diff color);
-  virtual QPalette fileList();
   virtual QColor heatMap(HeatMap color);
   virtual QColor remoteComment(Comment color);
   virtual QColor star();
-
-  static void drawCloseButton(
-    const QStyleOption *option,
-    QPainter *painter);
 
   static Theme *create(const QString &name = QString());
 
 private:
   bool mDark;
+  QString mName;
+  QDir mDir;
+  QVariantMap mMap;
 };
 
 #endif

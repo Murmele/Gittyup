@@ -15,6 +15,7 @@
 #include "git2/net.h"
 #include "git2/proxy.h"
 #include <QSet>
+#include <QString>
 #include <QSharedPointer>
 
 struct git_cred;
@@ -27,105 +28,62 @@ namespace git {
 class Id;
 class Reference;
 
-class Remote
-{
+class Remote {
 public:
-  struct PushUpdate
-  {
+  struct PushUpdate {
     QByteArray srcName;
     QByteArray dstName;
     Id srcId;
     Id dstId;
   };
 
-  class Callbacks
-  {
+  struct SshInteractivePrompt {
+    QString text;
+    bool echo;
+  };
+
+  class Callbacks {
   public:
-    enum State {
-      Transfer,
-      Resolve,
-      Update
-    };
+    enum State { Transfer, Resolve, Update };
 
     Callbacks(const QString &url, const Repository &repo = Repository())
-      : mUrl(url), mRepo(repo)
-    {}
+        : mUrl(url), mRepo(repo) {}
 
-    QString url() const
-    {
-      return mUrl;
-    }
+    QString url() const { return mUrl; }
 
-    State state() const
-    {
-      return mState;
-    }
+    State state() const { return mState; }
 
-    Repository repo() const
-    {
-      return mRepo;
-    }
+    Repository repo() const { return mRepo; }
 
-    virtual void sideband(
-      const QString &text)
-    {}
+    virtual void sideband(const QString &text) {}
 
-    virtual bool credentials(
-      const QString &url,
-      QString &username,
-      QString &password)
-    {
+    virtual bool credentials(const QString &url, QString &username,
+                             QString &password) {
       return true;
     }
 
-    virtual bool transfer(
-      int total,
-      int current,
-      int bytes)
-    {
-      return true;
-    }
+    virtual void interactiveAuth(const QString &name,
+                                 const QString &instruction,
+                                 const QVector<SshInteractivePrompt> &prompts,
+                                 QVector<QString> &responses) {}
 
-    virtual bool resolve(
-      int total,
-      int current)
-    {
-      return true;
-    }
+    virtual bool transfer(int total, int current, size_t bytes) { return true; }
 
-    virtual void update(
-      const QString &name,
-      const Id &a,
-      const Id &b)
-    {}
+    virtual bool resolve(int total, int current) { return true; }
 
-    virtual void rejected(
-      const QString &name,
-      const QString &status)
-    {}
+    virtual void update(const QString &name, const Id &a, const Id &b) {}
 
-    virtual void add(
-      int total,
-      int current)
-    {}
+    virtual void rejected(const QString &name, const QString &status) {}
 
-    virtual void delta(
-      int total,
-      int current)
-    {}
+    virtual void add(int total, int current) {}
+
+    virtual void delta(int total, int current) {}
 
     // pre-push hook
-    virtual bool negotiation(
-      const QList<PushUpdate> &updates)
-    {
-      return true;
-    }
+    virtual bool negotiation(const QList<PushUpdate> &updates) { return true; }
 
     // url resolution hook
-    virtual bool url(QString &url)
-    {
-      return true;
-    }
+    virtual bool url(QString &url) { return true; }
 
     // user setting hooks
     virtual QString keyFilePath() const { return QString(); }
@@ -135,47 +93,24 @@ public:
     virtual bool connectToAgent() const { return false; }
 
     // static callback wrappers
-    static int connect(
-      git_remote *remote,
-      void *payload);
+    static int connect(git_remote *remote, void *payload);
 
-    static int disconnect(
-      git_remote *remote,
-      void *payload);
+    static int disconnect(git_remote *remote, void *payload);
 
-    static int sideband(
-      const char *str,
-      int len,
-      void *payload);
+    static int sideband(const char *str, int len, void *payload);
 
-    static int credentials(
-      git_credential **out,
-      const char *url,
-      const char *name,
-      unsigned int types,
-      void *payload);
+    static int credentials(git_credential **out, const char *url,
+                           const char *name, unsigned int types, void *payload);
 
-    static int certificate(
-      git_cert *cert,
-      int valid,
-      const char *host,
-      void *payload);
+    static int certificate(git_cert *cert, int valid, const char *host,
+                           void *payload);
 
-    static int transfer(
-      const git_indexer_progress *stats,
-      void *payload);
+    static int transfer(const git_indexer_progress *stats, void *payload);
 
-    static int update(
-      const char *name,
-      const git_oid *a,
-      const git_oid *b,
-      void *payload);
+    static int update(const char *name, const git_oid *a, const git_oid *b,
+                      void *payload);
 
-    static int url(
-      git_buf *out,
-      const char *url,
-      int direction,
-      void *payload);
+    static int url(git_buf *out, const char *url, int direction, void *payload);
 
   protected:
     // Try to stop the current remote.
@@ -186,6 +121,7 @@ public:
     State mState = Transfer;
     QSet<QString> mAgentNames;
     git_remote *mRemote = nullptr;
+    QSet<QString> mKeyFiles;
   };
 
   Remote();
@@ -201,18 +137,12 @@ public:
 
   Result fetch(Callbacks *callbacks, bool tags = false, bool prune = false);
   Result push(Callbacks *callbacks, const QStringList &refspecs);
-  Result push(
-    Callbacks *callbacks,
-    const Reference &src,
-    const QString &dst = QString(),
-    bool force = false,
-    bool tags = false);
+  Result push(Callbacks *callbacks, const Reference &src,
+              const QString &dst = QString(), bool force = false,
+              bool tags = false);
 
-  static Result clone(
-    Callbacks *callbacks,
-    const QString &url,
-    const QString &path,
-    bool bare = false);
+  static Result clone(Callbacks *callbacks, const QString &url,
+                      const QString &path, bool bare = false);
 
   static QByteArray proxyUrl(const QString &url, git_proxy_t &type);
 

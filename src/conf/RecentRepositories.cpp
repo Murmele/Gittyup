@@ -9,6 +9,7 @@
 
 #include "RecentRepositories.h"
 #include "RecentRepository.h"
+#include "util/Path.h"
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QSettings>
@@ -18,26 +19,19 @@ namespace {
 const QString kRecentKey = "recent";
 const QString kFilterKey = "recent/filter";
 
-} // anon. namespace
+} // namespace
 
-RecentRepositories::RecentRepositories(QObject *parent)
-  : QObject(parent)
-{
+RecentRepositories::RecentRepositories(QObject *parent) : QObject(parent) {
   load();
 }
 
-int RecentRepositories::count() const
-{
-  return mRepos.size();
-}
+int RecentRepositories::count() const { return mRepos.size(); }
 
-RecentRepository *RecentRepositories::repository(int index) const
-{
+RecentRepository *RecentRepositories::repository(int index) const {
   return mRepos.at(index);
 }
 
-void RecentRepositories::clear()
-{
+void RecentRepositories::clear() {
   emit repositoryAboutToBeRemoved();
 
   qDeleteAll(mRepos);
@@ -47,8 +41,7 @@ void RecentRepositories::clear()
   emit repositoryRemoved();
 }
 
-void RecentRepositories::remove(int index)
-{
+void RecentRepositories::remove(int index) {
   emit repositoryAboutToBeRemoved();
 
   delete mRepos.takeAt(index);
@@ -57,14 +50,17 @@ void RecentRepositories::remove(int index)
   emit repositoryRemoved();
 }
 
-void RecentRepositories::add(const QString &path)
-{
+void RecentRepositories::add(QString path) {
   emit repositoryAboutToBeAdded();
 
   auto end = mRepos.end();
   RecentRepository *repo = new RecentRepository(path, this);
   auto it = std::remove_if(mRepos.begin(), end, [repo](RecentRepository *rhs) {
+#ifdef Q_OS_WIN
+    return repo->path().compare(rhs->path(), Qt::CaseInsensitive) == 0;
+#else
     return (repo->path() == rhs->path());
+#endif
   });
 
   if (it != end)
@@ -76,16 +72,14 @@ void RecentRepositories::add(const QString &path)
   emit repositoryAdded();
 }
 
-RecentRepositories *RecentRepositories::instance()
-{
+RecentRepositories *RecentRepositories::instance() {
   static RecentRepositories *instance = nullptr;
   if (!instance)
     instance = new RecentRepositories(qApp);
   return instance;
 }
 
-void RecentRepositories::store()
-{
+void RecentRepositories::store() {
   QStringList paths;
   foreach (RecentRepository *repo, mRepos)
     paths.append(repo->path());
@@ -96,8 +90,7 @@ void RecentRepositories::store()
   load();
 }
 
-void RecentRepositories::load()
-{
+void RecentRepositories::load() {
   QSettings settings;
   QStringList paths = settings.value(kRecentKey).toStringList();
   paths.removeDuplicates();
@@ -111,6 +104,14 @@ void RecentRepositories::load()
 
     if (it != end)
       paths.erase(it, end);
+
+#ifdef Q_OS_WIN
+    for (QString &path : paths) {
+      path = util::canonicalizePath(path);
+    }
+
+    paths.removeDuplicates();
+#endif
   }
 
   // Store filtered list.

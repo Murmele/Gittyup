@@ -20,8 +20,7 @@ namespace git {
 class Repository;
 }
 
-class PathspecWidget : public QFrame
-{
+class PathspecWidget : public QFrame {
   Q_OBJECT
 
 public:

@@ -27,8 +27,7 @@ extern "C" {
 namespace {
 
 // Recursively decompose the table at the top of the stack.
-QVariantMap table(lua_State *L)
-{
+QVariantMap table(lua_State *L) {
   QVariantMap map;
 
   lua_pushnil(L);
@@ -63,11 +62,9 @@ QVariantMap table(lua_State *L)
   return map;
 }
 
-} // anon. namespace
+} // namespace
 
-ConfFile::ConfFile(const QString &filename)
-  : mFilename(filename)
-{}
+ConfFile::ConfFile(const QString &filename) : mFilename(filename) {}
 
 ConfFile::~ConfFile() {}
 

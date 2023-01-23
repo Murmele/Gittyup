@@ -12,8 +12,7 @@
 
 namespace git {
 
-class Filter
-{
+class Filter {
 public:
   static void init();
 };

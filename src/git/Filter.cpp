@@ -23,11 +23,8 @@ namespace {
 
 QString kFilterFmt = "filter=%1";
 
-struct FilterInfo
-{
-  FilterInfo()
-    : filter(GIT_FILTER_INIT)
-  {}
+struct FilterInfo {
+  FilterInfo() : filter(GIT_FILTER_INIT) {}
 
   git_filter filter;
 
@@ -39,18 +36,10 @@ struct FilterInfo
   QByteArray attributes;
 };
 
-QString quote(const QString &path)
-{
-  return QString("\"%1\"").arg(path);
-}
+QString quote(const QString &path) { return QString("\"%1\"").arg(path); }
 
-int apply(
-  git_filter *self,
-  void **payload,
-  git_buf *to,
-  const git_buf *from,
-  const git_filter_source *src)
-{
+int apply(git_filter *self, void **payload, git_buf *to, const git_buf *from,
+          const git_filter_source *src) {
   FilterInfo *info = reinterpret_cast<FilterInfo *>(self);
   git_filter_mode_t mode = git_filter_source_mode(src);
   QString command = (mode == GIT_FILTER_SMUDGE) ? info->smudge : info->clean;
@@ -83,11 +72,10 @@ int apply(
   return 0;
 }
 
-} // anon. namespace
+} // namespace
 
-void Filter::init()
-{
-  static QMap<QString,FilterInfo> filters;
+void Filter::init() {
+  static QMap<QString, FilterInfo> filters;
 
   // Read global filters.
   Config config = Config::global();
@@ -115,8 +103,8 @@ void Filter::init()
 
     info.filter.apply = &apply;
     info.filter.attributes = info.attributes.constData();
-    git_filter_register(
-      info.name.constData(), &info.filter, GIT_FILTER_DRIVER_PRIORITY);
+    git_filter_register(info.name.constData(), &info.filter,
+                        GIT_FILTER_DRIVER_PRIORITY);
   }
 }
 

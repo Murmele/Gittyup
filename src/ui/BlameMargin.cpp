@@ -29,17 +29,15 @@
 namespace {
 
 const QString kNowrapFmt = "<span style='white-space: nowrap'>%1</span><br>";
-const QString kStyleSheet =
-  "BlameMargin {"
-  "  background-color: palette(base);"
-  "  border-right: 1px solid palette(mid)"
-  "}";
+const QString kStyleSheet = "BlameMargin {"
+                            "  background-color: palette(base);"
+                            "  border-right: 1px solid palette(mid)"
+                            "}";
 
-} // anon. namespace
+} // namespace
 
 BlameMargin::BlameMargin(TextEditor *editor, QWidget *parent)
-  : QWidget(parent), mEditor(editor), mIndex(-1), mProgress(0)
-{
+    : QWidget(parent), mEditor(editor), mIndex(-1), mProgress(0) {
   setStyleSheet(kStyleSheet);
 
   // Can't connect directly because of different parameter types.
@@ -56,18 +54,17 @@ BlameMargin::BlameMargin(TextEditor *editor, QWidget *parent)
   });
 }
 
-void BlameMargin::startBlame(const QString &name)
-{
+void BlameMargin::startBlame(const QString &name) {
   mName = name;
   mProgress = 0;
   mTimer.start(50);
 }
 
-void BlameMargin::setBlame(
-  const git::Repository &repo,
-  const git::Blame &blame)
-{
-  if (Settings::instance()->value("editor/blame/heatmap").toBool()) {
+void BlameMargin::setBlame(const git::Repository &repo,
+                           const git::Blame &blame) {
+  if (Settings::instance()
+          ->value(Setting::Id::ShowHeatmapInBlameMargin)
+          .toBool()) {
     git::Commit first = repo.walker(GIT_SORT_TIME | GIT_SORT_REVERSE).next();
     git::Commit last = repo.walker(GIT_SORT_TIME).next();
     mMinTime = first ? first.committer().date().toTime_t() : -1;
@@ -79,8 +76,7 @@ void BlameMargin::setBlame(
   updateBlame();
 }
 
-void BlameMargin::clear()
-{
+void BlameMargin::clear() {
   mName = QString();
   mBlame = git::Blame();
   mSource = git::Blame();
@@ -95,13 +91,9 @@ void BlameMargin::clear()
   update();
 }
 
-QSize BlameMargin::minimumSizeHint() const
-{
-  return QSize(92, 0);
-}
+QSize BlameMargin::minimumSizeHint() const { return QSize(92, 0); }
 
-bool BlameMargin::event(QEvent *event)
-{
+bool BlameMargin::event(QEvent *event) {
   if (event->type() != QEvent::ToolTip || !mBlame.isValid())
     return QWidget::event(event);
 
@@ -143,13 +135,11 @@ bool BlameMargin::event(QEvent *event)
   return true;
 }
 
-void BlameMargin::mousePressEvent(QMouseEvent *event)
-{
+void BlameMargin::mousePressEvent(QMouseEvent *event) {
   mIndex = mBlame.isValid() ? index(event->y()) : -1;
 }
 
-void BlameMargin::mouseReleaseEvent(QMouseEvent *event)
-{
+void BlameMargin::mouseReleaseEvent(QMouseEvent *event) {
   if (mBlame.isValid() && mIndex >= 0 && mIndex == index(event->y())) {
     // Update selection.
     git::Id id = mBlame.id(mIndex);
@@ -160,8 +150,7 @@ void BlameMargin::mouseReleaseEvent(QMouseEvent *event)
   mIndex = -1;
 }
 
-void BlameMargin::mouseDoubleClickEvent(QMouseEvent *event)
-{
+void BlameMargin::mouseDoubleClickEvent(QMouseEvent *event) {
   if (!mBlame.isValid())
     return;
 
@@ -180,8 +169,7 @@ void BlameMargin::mouseDoubleClickEvent(QMouseEvent *event)
   emit linkActivated(url.toString());
 }
 
-void BlameMargin::paintEvent(QPaintEvent *event)
-{
+void BlameMargin::paintEvent(QPaintEvent *event) {
   // Draw background.
   QStyleOption opt;
   opt.init(this);
@@ -234,9 +222,9 @@ void BlameMargin::paintEvent(QPaintEvent *event)
     git::Signature signature = mBlame.signature(index);
     if (signature.isValid()) {
       QDateTime dateTime = signature.date();
-      date = (dateTime.date() == today) ?
-        dateTime.time().toString(Qt::DefaultLocaleShortDate) :
-        dateTime.date().toString(Qt::DefaultLocaleShortDate);
+      date = (dateTime.date() == today)
+                 ? dateTime.time().toString(Qt::DefaultLocaleShortDate)
+                 : dateTime.date().toString(Qt::DefaultLocaleShortDate);
       time = dateTime.toTime_t();
     }
 
@@ -294,9 +282,10 @@ void BlameMargin::paintEvent(QPaintEvent *event)
     if (signature.isValid()) {
       // Get long date.
       QDateTime dateTime = signature.date();
-      QString longDate = (dateTime.date() == today) ?
-                         dateTime.time().toString(Qt::DefaultLocaleLongDate) :
-                         dateTime.date().toString(Qt::DefaultLocaleLongDate);
+      QString longDate =
+          (dateTime.date() == today)
+              ? dateTime.time().toString(Qt::DefaultLocaleLongDate)
+              : dateTime.date().toString(Qt::DefaultLocaleLongDate);
 
       QRectF dateRect = regularMetrics.boundingRect(longDate);
       if (nameRect.width() + dateRect.width() + 4 <= rect.width())
@@ -343,14 +332,12 @@ void BlameMargin::paintEvent(QPaintEvent *event)
   }
 }
 
-void BlameMargin::wheelEvent(QWheelEvent *event)
-{
+void BlameMargin::wheelEvent(QWheelEvent *event) {
   // Forward to the editor.
   mEditor->wheelEvent(event);
 }
 
-void BlameMargin::updateBlame()
-{
+void BlameMargin::updateBlame() {
   if (!mSource.isValid())
     return;
 
@@ -364,14 +351,12 @@ void BlameMargin::updateBlame()
   update();
 }
 
-int BlameMargin::index(int y) const
-{
+int BlameMargin::index(int y) const {
   int line = mEditor->firstVisibleLine() + (y / mEditor->textHeight(0));
   return (line < mEditor->lineCount()) ? mBlame.index(line + 1) : -1;
 }
 
-QString BlameMargin::name(int index) const
-{
+QString BlameMargin::name(int index) const {
   if (!mBlame.isCommitted(index))
     return tr("Not Committed");
 

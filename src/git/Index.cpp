@@ -28,8 +28,7 @@ namespace git {
 
 namespace {
 
-void countDirectoryEntries(const QString &file, int &count)
-{
+void countDirectoryEntries(const QString &file, int &count) {
   QDir dir(file);
   auto filters = QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot;
   foreach (const QString &entry, dir.entryList(filters)) {
@@ -46,32 +45,22 @@ void countDirectoryEntries(const QString &file, int &count)
   }
 }
 
-} // anon. namespace
+} // namespace
 
-Index::Data::Data(git_index *index)
-  : index(index)
-{}
+Index::Data::Data(git_index *index) : index(index) {}
 
-Index::Data::~Data()
-{
-  git_index_free(index);
-}
+Index::Data::~Data() { git_index_free(index); }
 
 Index::Index() {}
 
-Index::Index(git_index *index)
-  : d(index ? new Data(index) : nullptr)
-{}
+Index::Index(git_index *index) : d(index ? new Data(index) : nullptr) {}
 
-Index::operator git_index *() const
-{
-  return isValid() ? d->index : nullptr;
-}
+Index::operator git_index *() const { return isValid() ? d->index : nullptr; }
 
-Index::Conflict Index::conflict(const QString &path) const
-{
+Index::Conflict Index::conflict(const QString &path) const {
   const git_index_entry *ancestor, *ours, *theirs;
-  if (git_index_conflict_get(&ancestor, &ours, &theirs, d->index, path.toUtf8()))
+  if (git_index_conflict_get(&ancestor, &ours, &theirs, d->index,
+                             path.toUtf8()))
     return Conflict();
 
   Id ancestorId = ancestor ? ancestor->id : Id();
@@ -80,8 +69,7 @@ Index::Conflict Index::conflict(const QString &path) const
   return {ancestorId, oursId, theirsId};
 }
 
-git_filemode_t Index::mode(const QString &path) const
-{
+git_filemode_t Index::mode(const QString &path) const {
   const git_index_entry *entry = this->entry(path);
   if (!entry)
     return GIT_FILEMODE_UNREADABLE;
@@ -89,8 +77,7 @@ git_filemode_t Index::mode(const QString &path) const
   return static_cast<git_filemode_t>(entry->mode);
 }
 
-void Index::setMode(const QString &path, git_filemode_t mode)
-{
+void Index::setMode(const QString &path, git_filemode_t mode) {
   const git_index_entry *entry = this->entry(path);
   if (!entry)
     return;
@@ -100,14 +87,10 @@ void Index::setMode(const QString &path, git_filemode_t mode)
   git_index_add(d->index, &copy);
 }
 
-bool Index::isTracked(const QString &path) const
-{
-  return entry(path);
-}
+bool Index::isTracked(const QString &path) const { return entry(path); }
 
-Index::StagedState Index::isStaged(const QString &path) const
-{
-  QMap<QString,StagedState>::const_iterator it = d->stagedCache.find(path);
+Index::StagedState Index::isStaged(const QString &path) const {
+  QMap<QString, StagedState>::const_iterator it = d->stagedCache.find(path);
   if (it != d->stagedCache.end())
     return it.value();
 
@@ -151,8 +134,7 @@ Index::StagedState Index::isStaged(const QString &path) const
   return d->stagedCache.insert(path, PartiallyStaged).value();
 }
 
-void Index::setStaged(const QStringList &files, bool staged, bool yieldFocus)
-{
+void Index::setStaged(const QStringList &files, bool staged, bool yieldFocus) {
   bool dirAdded = false;
   QStringList changedFiles;
   Repository repo(git_index_owner(d->index));
@@ -231,8 +213,7 @@ void Index::setStaged(const QStringList &files, bool staged, bool yieldFocus)
           int count = 0;
           bool allow = true;
           countDirectoryEntries(file, count);
-          emit notifier->directoryAboutToBeStaged(
-            file, count, allow);
+          emit notifier->directoryAboutToBeStaged(file, count, allow);
           bool added = (allow && addDirectory(file));
 
           QDir::setCurrent(current);
@@ -246,8 +227,7 @@ void Index::setStaged(const QStringList &files, bool staged, bool yieldFocus)
           int size = QFileInfo(repo.workdir(), file).size();
           bool allow = true;
           if (size > 10000000) // 10MB
-            emit notifier->largeFileAboutToBeStaged(
-              file, size, allow);
+            emit notifier->largeFileAboutToBeStaged(file, size, allow);
 
           if (!allow)
             continue;
@@ -303,8 +283,7 @@ void Index::setStaged(const QStringList &files, bool staged, bool yieldFocus)
     emit notifier->directoryStaged();
 }
 
-void Index::add(const QString &path, const QByteArray &buffer)
-{
+void Index::add(const QString &path, const QByteArray &buffer) {
   const git_index_entry *entry = this->entry(path);
   if (!entry) {
     git_index_add_bypath(d->index, path.toUtf8());
@@ -323,13 +302,9 @@ void Index::add(const QString &path, const QByteArray &buffer)
   emit repo.notifier()->indexChanged({path});
 }
 
-void Index::read()
-{
-  git_index_read(d->index, false);
-}
+void Index::read() { git_index_read(d->index, false); }
 
-Tree Index::writeTree() const
-{
+Tree Index::writeTree() const {
   // Write the index tree.
   git_oid id;
   if (git_index_write_tree(&id, d->index))
@@ -341,25 +316,19 @@ Tree Index::writeTree() const
   return Tree(tree);
 }
 
-bool Index::hasConflicts() const
-{
-  return git_index_has_conflicts(d->index);
-}
+bool Index::hasConflicts() const { return git_index_has_conflicts(d->index); }
 
-Index Index::create()
-{
+Index Index::create() {
   git_index *index = nullptr;
   git_index_new(&index);
   return Index(index);
 }
 
-const git_index_entry *Index::entry(const QString &path, int stage) const
-{
+const git_index_entry *Index::entry(const QString &path, int stage) const {
   return git_index_get_bypath(d->index, path.toUtf8(), stage);
 }
 
-bool Index::addDirectory(const QString &file) const
-{
+bool Index::addDirectory(const QString &file) const {
   QDir dir(file);
   git_repository *repo = git_index_owner(d->index);
   auto filters = QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot;
@@ -383,8 +352,7 @@ bool Index::addDirectory(const QString &file) const
   return true;
 }
 
-Id Index::headId(const QString &path, uint32_t *mode) const
-{
+Id Index::headId(const QString &path, uint32_t *mode) const {
   Repository repo(git_index_owner(d->index));
   Reference head = repo.head();
   if (!head.isValid())
@@ -395,7 +363,10 @@ Id Index::headId(const QString &path, uint32_t *mode) const
     return Id();
 
   git_tree_entry *entry = nullptr;
-  if (git_tree_entry_bypath(&entry, commit.tree(), path.toUtf8()))
+  const auto tree = commit.tree();
+  if (!tree.isValid())
+    return Id(); // broken repository?
+  if (git_tree_entry_bypath(&entry, tree, path.toUtf8()))
     return Id();
 
   if (mode)
@@ -408,8 +379,7 @@ Id Index::headId(const QString &path, uint32_t *mode) const
   return id;
 }
 
-Id Index::indexId(const QString &path, uint32_t *mode) const
-{
+Id Index::indexId(const QString &path, uint32_t *mode) const {
   const git_index_entry *entry = this->entry(path);
   if (!entry)
     return Id();
@@ -420,13 +390,12 @@ Id Index::indexId(const QString &path, uint32_t *mode) const
   return entry->id;
 }
 
-Id Index::workdirId(const QString &path, uint32_t *mode) const
-{
+Id Index::workdirId(const QString &path, uint32_t *mode) const {
   Repository repo(git_index_owner(d->index));
 
   git_oid id;
-  if (int error = git_repository_hashfile(
-        &id, repo, path.toUtf8(), GIT_OBJECT_BLOB, nullptr))
+  if (int error = git_repository_hashfile(&id, repo, path.toUtf8(),
+                                          GIT_OBJECT_BLOB, nullptr))
     return (error == GIT_EUSER) ? Id::invalidId() : Id();
 
   if (mode) {

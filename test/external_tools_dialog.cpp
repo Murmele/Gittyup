@@ -15,8 +15,7 @@
 using namespace Test;
 using namespace QTest;
 
-class TestExternalToolsDialog : public QObject
-{
+class TestExternalToolsDialog : public QObject {
   Q_OBJECT
 
 private slots:
@@ -27,17 +26,13 @@ private:
   int closeDelay = 0;
 };
 
-void TestExternalToolsDialog::initTestCase()
-{
+void TestExternalToolsDialog::initTestCase() {
   ExternalToolsDialog *dialog = new ExternalToolsDialog("diff");
   dialog->show();
   QVERIFY(qWaitForWindowActive(dialog));
 }
 
-void TestExternalToolsDialog::cleanupTestCase()
-{
-  qWait(closeDelay);
-}
+void TestExternalToolsDialog::cleanupTestCase() { qWait(closeDelay); }
 
 TEST_MAIN(TestExternalToolsDialog)
 

@@ -13,17 +13,12 @@
 #include <QWidget>
 
 // FIXME: Implement fully fledged widget?
-class ProgressIndicator : public QWidget
-{
+class ProgressIndicator : public QWidget {
 public:
   static QSize size();
 
-  static void paint(
-    QPainter *painter,
-    const QRect &rect,
-    const QColor &color,
-    int progress,
-    const QWidget *widget = nullptr);
+  static void paint(QPainter *painter, const QRect &rect, const QColor &color,
+                    int progress, const QWidget *widget = nullptr);
 };
 
 #endif

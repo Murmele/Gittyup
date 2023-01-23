@@ -20,28 +20,20 @@
 
 namespace {
 
-const QString kCommitKey = "merge/commit";
-
 const ReferenceView::Kinds kRefKinds =
-  ReferenceView::InvalidRef |
-  ReferenceView::LocalBranches |
-  ReferenceView::RemoteBranches |
-  ReferenceView::Tags |
-  ReferenceView::ExcludeHead;
+    ReferenceView::InvalidRef | ReferenceView::LocalBranches |
+    ReferenceView::RemoteBranches | ReferenceView::Tags |
+    ReferenceView::ExcludeHead;
 
-} // anon. namespace
+} // namespace
 
-MergeDialog::MergeDialog(
-  RepoView::MergeFlags flags,
-  const git::Repository &repo,
-  QWidget *parent)
-  : QDialog(parent), mRepo(repo)
-{
+MergeDialog::MergeDialog(RepoView::MergeFlags flags,
+                         const git::Repository &repo, QWidget *parent)
+    : QDialog(parent), mRepo(repo) {
   setAttribute(Qt::WA_DeleteOnClose);
 
   mRefs = new ReferenceList(repo, kRefKinds, this);
-  connect(mRefs, &ReferenceList::referenceSelected,
-          this, &MergeDialog::update);
+  connect(mRefs, &ReferenceList::referenceSelected, this, &MergeDialog::update);
 
   auto noff = RepoView::Merge | RepoView::NoFastForward;
   auto ffonly = RepoView::Merge | RepoView::FastForward;
@@ -57,9 +49,12 @@ MergeDialog::MergeDialog(
   QLabel *label = new QLabel(labelText(), this);
 
   QCheckBox *noCommit = new QCheckBox(tr("No commit"), this);
-  noCommit->setChecked(!Settings::instance()->value(kCommitKey).toBool());
+  noCommit->setChecked(!Settings::instance()
+                            ->value(Setting::Id::CommitMergeImmediately)
+                            .toBool());
   connect(noCommit, &QCheckBox::toggled, [](bool checked) {
-    Settings::instance()->setValue(kCommitKey, !checked);
+    Settings::instance()->setValue(Setting::Id::CommitMergeImmediately,
+                                   !checked);
   });
 
   noCommit->setVisible(flags & RepoView::Merge);
@@ -95,44 +90,35 @@ MergeDialog::MergeDialog(
   update();
 }
 
-git::Commit MergeDialog::target() const
-{
-  return mRefs->target();
-}
+git::Commit MergeDialog::target() const { return mRefs->target(); }
 
-git::Reference MergeDialog::reference() const
-{
+git::Reference MergeDialog::reference() const {
   return mRefs->currentReference();
 }
 
-RepoView::MergeFlags MergeDialog::flags() const
-{
+RepoView::MergeFlags MergeDialog::flags() const {
   int action = mAction->itemData(mAction->currentIndex()).toInt();
   RepoView::MergeFlags flags = static_cast<RepoView::MergeFlags>(action);
-  if (!Settings::instance()->value(kCommitKey).toBool())
+  if (!Settings::instance()
+           ->value(Setting::Id::CommitMergeImmediately)
+           .toBool())
     flags |= RepoView::NoCommit;
   return flags;
 }
 
-void MergeDialog::setCommit(const git::Commit &commit)
-{
+void MergeDialog::setCommit(const git::Commit &commit) {
   mRefs->setCommit(commit);
   update();
 }
 
-void MergeDialog::setReference(const git::Reference &ref)
-{
+void MergeDialog::setReference(const git::Reference &ref) {
   mRefs->select(ref);
   update();
 }
 
-void MergeDialog::update()
-{
-  mAccept->setEnabled(mRefs->target().isValid());
-}
+void MergeDialog::update() { mAccept->setEnabled(mRefs->target().isValid()); }
 
-QString MergeDialog::labelText() const
-{
+QString MergeDialog::labelText() const {
   QString fmt;
   if (flags() & RepoView::Merge)
     fmt = tr("Choose a reference to merge into '%1'.");
@@ -147,8 +133,7 @@ QString MergeDialog::labelText() const
   return fmt.arg(head.name(false));
 }
 
-QString MergeDialog::buttonText() const
-{
+QString MergeDialog::buttonText() const {
   if (flags() & RepoView::Merge)
     return tr("Merge");
 

@@ -12,12 +12,8 @@
 namespace git {
 
 FilterList::FilterList(git_filter_list *filter)
-  : d(filter, git_filter_list_free)
-{}
+    : d(filter, git_filter_list_free) {}
 
-FilterList::operator git_filter_list *() const
-{
-  return d.data();
-}
+FilterList::operator git_filter_list *() const { return d.data(); }
 
 } // namespace git

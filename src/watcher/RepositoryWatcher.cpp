@@ -9,16 +9,12 @@
 
 #include "RepositoryWatcher.h"
 
-void RepositoryWatcher::init(const git::Repository &repo)
-{
+void RepositoryWatcher::init(const git::Repository &repo) {
   // The timer has to run on the main thread.
   mTimer.setInterval(2000);
   mTimer.setSingleShot(true);
-  connect(&mTimer, &QTimer::timeout,
-          repo.notifier(), &git::RepositoryNotifier::workdirChanged);
+  connect(&mTimer, &QTimer::timeout, repo.notifier(),
+          &git::RepositoryNotifier::workdirChanged);
 }
 
-void RepositoryWatcher::cancelPendingNotification()
-{
-  mTimer.stop();
-}
+void RepositoryWatcher::cancelPendingNotification() { mTimer.stop(); }

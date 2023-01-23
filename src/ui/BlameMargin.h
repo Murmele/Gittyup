@@ -21,8 +21,7 @@ namespace git {
 class Repository;
 }
 
-class BlameMargin : public QWidget
-{
+class BlameMargin : public QWidget {
   Q_OBJECT
 
 public:

@@ -12,8 +12,7 @@
 
 #include <QDialog>
 
-class UpToDateDialog : public QDialog
-{
+class UpToDateDialog : public QDialog {
   Q_OBJECT
 
 public:

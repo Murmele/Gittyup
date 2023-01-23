@@ -15,8 +15,7 @@
 
 namespace git {
 
-class Blob : public Object
-{
+class Blob : public Object {
 public:
   Blob();
   Blob(const Object &rhs);

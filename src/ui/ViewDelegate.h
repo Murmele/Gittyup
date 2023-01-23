@@ -7,21 +7,20 @@
  * \brief The ViewDelegate class
  * Delegate used by the ColumnView and TreeView to paint the badges (M/A/?)
  */
-class ViewDelegate : public QItemDelegate
-{
+class ViewDelegate : public QItemDelegate {
 public:
-  ViewDelegate(QObject *parent = nullptr)
-    : QItemDelegate(parent)
-  {}
+  ViewDelegate(QObject *parent = nullptr) : QItemDelegate(parent) {}
 
-  void paint(
-    QPainter *painter,
-    const QStyleOptionViewItem &option,
-    const QModelIndex &index) const override;
+  void setDrawArrow(bool enable) { mDrawArrow = enable; }
 
-  QSize sizeHint(
-    const QStyleOptionViewItem &option,
-    const QModelIndex &index) const override;
+  void paint(QPainter *painter, const QStyleOptionViewItem &option,
+             const QModelIndex &index) const override;
+
+  QSize sizeHint(const QStyleOptionViewItem &option,
+                 const QModelIndex &index) const override;
+
+private:
+  bool mDrawArrow = true;
 };
 
 #endif // VIEWDELEGATE_H

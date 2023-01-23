@@ -16,8 +16,7 @@
 
 namespace git {
 
-QString Command::bashPath()
-{
+QString Command::bashPath() {
   QStringList paths;
 
 #ifdef Q_OS_WIN
@@ -38,10 +37,8 @@ QString Command::bashPath()
   return QStandardPaths::findExecutable("bash", paths);
 }
 
-QString Command::substitute(
-  const QProcessEnvironment &env,
-  const QString &command)
-{
+QString Command::substitute(const QProcessEnvironment &env,
+                            const QString &command) {
   QList<QRegularExpressionMatch> matches;
   QRegularExpression re("\\$\\{?([_a-zA-Z]\\w+)\\}?");
   QRegularExpressionMatchIterator it = re.globalMatch(command);

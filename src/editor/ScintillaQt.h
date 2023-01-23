@@ -24,38 +24,38 @@
 #include <algorithm>
 #include <memory>
 
-#include "Scintilla.h"
-#include "Platform.h"
-#include "ILexer.h"
-#include "Position.h"
-#include "SplitVector.h"
-#include "Partitioning.h"
-#include "RunStyles.h"
-#include "ContractionState.h"
-#include "CellBuffer.h"
-#include "CallTip.h"
-#include "KeyMap.h"
-#include "Indicator.h"
-#include "XPM.h"
-#include "LineMarker.h"
-#include "Style.h"
-#include "AutoComplete.h"
-#include "UniqueString.h"
-#include "ViewStyle.h"
-#include "CharClassify.h"
-#include "Decoration.h"
-#include "CaseFolder.h"
-#include "ILoader.h"
-#include "CharacterCategory.h"
-#include "Document.h"
-#include "Selection.h"
-#include "PositionCache.h"
-#include "EditModel.h"
-#include "MarginView.h"
-#include "EditView.h"
-#include "Editor.h"
-#include "ScintillaBase.h"
-#include "CaseConvert.h"
+#include <Scintilla.h>
+#include <Platform.h>
+#include <ILexer.h>
+#include <Position.h>
+#include <SplitVector.h>
+#include <Partitioning.h>
+#include <RunStyles.h>
+#include <ContractionState.h>
+#include <CellBuffer.h>
+#include <CallTip.h>
+#include <KeyMap.h>
+#include <Indicator.h>
+#include <XPM.h>
+#include <LineMarker.h>
+#include <Style.h>
+#include <AutoComplete.h>
+#include <UniqueString.h>
+#include <ViewStyle.h>
+#include <CharClassify.h>
+#include <Decoration.h>
+#include <CaseFolder.h>
+#include <ILoader.h>
+#include <CharacterCategory.h>
+#include <Document.h>
+#include <Selection.h>
+#include <PositionCache.h>
+#include <EditModel.h>
+#include <MarginView.h>
+#include <EditView.h>
+#include <Editor.h>
+#include <ScintillaBase.h>
+#include <CaseConvert.h>
 
 #ifdef SCI_LEXER
 #include "SciLexer.h"
@@ -70,18 +70,15 @@
 
 namespace Scintilla {
 
-class ScintillaQt : public QAbstractScrollArea, public ScintillaBase
-{
+class ScintillaQt : public QAbstractScrollArea, public ScintillaBase {
   Q_OBJECT
 
 public:
   ScintillaQt(QWidget *parent = nullptr);
   virtual ~ScintillaQt();
 
-  sptr_t send(
-    unsigned int iMessage,
-    uptr_t wParam = 0,
-    sptr_t lParam = 0) const;
+  sptr_t send(unsigned int iMessage, uptr_t wParam = 0,
+              sptr_t lParam = 0) const;
 
 signals:
   // Clients can use this hook to add additional
@@ -97,9 +94,8 @@ signals:
   void key(int key);
   void doubleClick(int position, int line);
   void updateUi();
-  void modified(
-    int type, int position, int length, int linesAdded,
-    const QByteArray &text, int line, int foldNow, int foldPrev);
+  void modified(int type, int position, int length, int linesAdded,
+                const QByteArray &text, int line, int foldNow, int foldPrev);
   void macroRecord(int message, uptr_t wParam, sptr_t lParam);
   void marginClicked(int position, int modifiers, int margin);
   void textAreaClicked(int line, int modifiers);
@@ -137,15 +133,15 @@ protected:
   void inputMethodEvent(QInputMethodEvent *event) override;
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
   void scrollContentsBy(int dx, int dy) override {}
-  static sptr_t DirectFunction(
-    sptr_t ptr, unsigned int iMessage, uptr_t wParam, sptr_t lParam);
+  static sptr_t DirectFunction(sptr_t ptr, unsigned int iMessage, uptr_t wParam,
+                               sptr_t lParam);
   sptr_t WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) override;
 
 private:
   void PasteFromMode(QClipboard::Mode);
   void CopyToModeClipboard(const SelectionText &, QClipboard::Mode);
 
-  void MoveImeCarets(int offset); 
+  void MoveImeCarets(int offset);
   void DrawImeIndicator(int indicator, int len);
 
   void Initialise() override;
@@ -174,7 +170,8 @@ private:
   std::string CaseMapString(const std::string &s, int caseMapping) override;
   void CreateCallTipWindow(PRectangle rc) override;
   void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) override;
-  sptr_t DefWndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) override;
+  sptr_t DefWndProc(unsigned int iMessage, uptr_t wParam,
+                    sptr_t lParam) override;
 
 private:
   QElapsedTimer timer;

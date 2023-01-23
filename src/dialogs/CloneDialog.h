@@ -25,21 +25,13 @@ namespace git {
 class Result;
 }
 
-class CloneDialog : public QWizard
-{
+class CloneDialog : public QWizard {
   Q_OBJECT
 
 public:
-  enum Kind
-  {
-    Init,
-    Clone
-  };
+  enum Kind { Init, Clone };
 
-  CloneDialog(
-    Kind kind,
-    QWidget *parent = nullptr,
-    Repository *repo = nullptr);
+  CloneDialog(Kind kind, QWidget *parent = nullptr, Repository *repo = nullptr);
 
   void accept() override;
 

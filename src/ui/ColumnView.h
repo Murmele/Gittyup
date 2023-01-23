@@ -14,8 +14,7 @@
 
 class QItemDelegate;
 
-class ColumnView : public QColumnView
-{
+class ColumnView : public QColumnView {
   Q_OBJECT
 
 public:
@@ -32,9 +31,8 @@ protected:
   QAbstractItemView *createColumn(const QModelIndex &index) override;
 
 private:
-  void handleSelectionChange(
-    const QItemSelection &selected,
-    const QItemSelection &deselected);
+  void handleSelectionChange(const QItemSelection &selected,
+                             const QItemSelection &deselected);
 
   QItemDelegate *mSharedDelegate;
 };

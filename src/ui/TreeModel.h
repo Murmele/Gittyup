@@ -17,13 +17,11 @@
 #include <QAbstractItemModel>
 #include <QFileIconProvider>
 
-class TreeModel : public QAbstractItemModel
-{
+class TreeModel : public QAbstractItemModel {
   Q_OBJECT
 
 public:
-  enum Role
-  {
+  enum Role {
     BlobRole = Qt::UserRole,
     KindRole,
     AddedRole,
@@ -31,9 +29,7 @@ public:
     StatusRole
   };
 
-  TreeModel(
-    const git::Repository &repo,
-    QObject *parent = nullptr);
+  TreeModel(const git::Repository &repo, QObject *parent = nullptr);
   virtual ~TreeModel();
 
   void setTree(const git::Tree &tree, const git::Diff &diff = git::Diff());
@@ -43,18 +39,13 @@ public:
   bool hasChildren(const QModelIndex &parent = QModelIndex()) const override;
 
   QModelIndex parent(const QModelIndex &index) const override;
-  QModelIndex index(
-    int row,
-    int column,
-    const QModelIndex &parent = QModelIndex()) const override;
+  QModelIndex index(int row, int column,
+                    const QModelIndex &parent = QModelIndex()) const override;
 
-  QVariant data(
-    const QModelIndex &index,
-    int role = Qt::DisplayRole) const override;
-  bool setData(
-    const QModelIndex &index,
-    const QVariant &value,
-    int role = Qt::EditRole) override;
+  QVariant data(const QModelIndex &index,
+                int role = Qt::DisplayRole) const override;
+  bool setData(const QModelIndex &index, const QVariant &value,
+               int role = Qt::EditRole) override;
   /*!
    * Setting the data to the item
    * \brief setData
@@ -62,20 +53,18 @@ public:
    * \param value
    * \param role
    * \param ignoreIndexChanges If index changes should be ignored or not.
-   * In normal case it is desired that the index is changed when checking an item,
-   * but when the data was changed outside of the model (like in the DiffView) the
-   * index must not be updated anymore because it is done already.
+   * In normal case it is desired that the index is changed when checking an
+   * item, but when the data was changed outside of the model (like in the
+   * DiffView) the index must not be updated anymore because it is done already.
    * \return
    */
-  bool setData(
-    const QModelIndex &index,
-    const QVariant &value,
-    int role, bool ignoreIndexChanges = false);
+  bool setData(const QModelIndex &index, const QVariant &value, int role,
+               bool ignoreIndexChanges = false);
 
   Qt::ItemFlags flags(const QModelIndex &index) const override;
 
 signals:
-  void checkStateChanged(const QModelIndex& index, int state);
+  void checkStateChanged(const QModelIndex &index, int state);
 
 private:
   class Node // item of the model

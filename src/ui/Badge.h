@@ -18,14 +18,11 @@ class QStyleOption;
  * \brief The Badge class
  * Blue widget (M -> Modified, ? -> New added)
  */
-class Badge : public QWidget
-{
+class Badge : public QWidget {
 public:
-  struct Label
-  {
+  struct Label {
     Label(const QString &text = QString(), bool bold = false, bool tag = false)
-      : text(text), bold(bold), tag(tag)
-    {}
+        : text(text), bold(bold), tag(tag) {}
 
     QString text;
     bool bold;
@@ -43,23 +40,16 @@ public:
   static QSize size(const QFont &font, const QList<Label> &labels);
   static QSize size(const QFont &font, const Label &label = Label());
 
-  static int paint(
-    QPainter *painter,
-    const QList<Label> &labels,
-    const QRect &rect,
-    QStyleOption *opt = nullptr,
-    Qt::Alignment alignment = Qt::AlignRight);
+  static int paint(QPainter *painter, const QList<Label> &labels,
+                   const QRect &rect, QStyleOption *opt = nullptr,
+                   Qt::Alignment alignment = Qt::AlignRight);
 
 protected:
   void paintEvent(QPaintEvent *event) override;
 
 private:
-  static void paint(
-    QPainter *painter,
-    const Label &label,
-    const QRect &rect,
-    bool selected,
-    bool active);
+  static void paint(QPainter *painter, const Label &label, const QRect &rect,
+                    bool selected, bool active);
 
   QList<Label> mLabels;
 };

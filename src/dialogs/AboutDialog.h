@@ -14,17 +14,11 @@
 
 class QTabBar;
 
-class AboutDialog : public QDialog
-{
+class AboutDialog : public QDialog {
   Q_OBJECT
 
 public:
-  enum Index
-  {
-    Changelog,
-    Acknowledgments,
-    Privacy
-  };
+  enum Index { Changelog, Acknowledgments, Privacy };
 
   AboutDialog(QWidget *parent = nullptr);
 

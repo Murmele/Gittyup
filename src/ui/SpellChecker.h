@@ -7,8 +7,7 @@
 
 class Hunspell;
 
-class SpellChecker
-{
+class SpellChecker {
 public:
   SpellChecker(const QString &dictionaryPath, const QString &userDictionary);
   ~SpellChecker();
@@ -31,4 +30,4 @@ private:
   bool mValid = false;
 };
 
-#endif // SPELLCHECKER_H 
+#endif // SPELLCHECKER_H

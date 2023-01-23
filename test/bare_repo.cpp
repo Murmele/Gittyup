@@ -19,8 +19,7 @@
 using namespace Test;
 using namespace QTest;
 
-class TestBareRepo : public QObject
-{
+class TestBareRepo : public QObject {
   Q_OBJECT
 
 private slots:
@@ -32,10 +31,9 @@ private:
   MainWindow *mWindow = nullptr;
 };
 
-void TestBareRepo::initTestCase()
-{
+void TestBareRepo::initTestCase() {
   StartDialog *dialog = StartDialog::openSharedInstance();
-  QVERIFY(qWaitForWindowActive(dialog));
+  QVERIFY(qWaitForWindowExposed(dialog));
 
   // Find the first button in the first footer.
   Footer *footer = dialog->findChild<Footer *>();
@@ -52,11 +50,15 @@ void TestBareRepo::initTestCase()
     keyClick(menu, Qt::Key_Return);
   });
 
-  // Show popup menu.
-  mouseClick(plus, Qt::LeftButton);
+  {
+    auto timeout = Timeout(1000, "Start dialog hasn't been dismissed in time");
+
+    // Show popup menu.
+    mouseClick(plus, Qt::LeftButton);
+  }
 
   CloneDialog *cloneDialog =
-    qobject_cast<CloneDialog *>(QApplication::activeModalWidget());
+      qobject_cast<CloneDialog *>(QApplication::activeModalWidget());
   QVERIFY(cloneDialog);
 
   // Set fields.
@@ -74,8 +76,7 @@ void TestBareRepo::initTestCase()
   QVERIFY(mWindow && qWaitForWindowActive(mWindow));
 }
 
-void TestBareRepo::checkDir()
-{
+void TestBareRepo::checkDir() {
   RepoView *view = mWindow->currentView();
   QVERIFY(view->repo().isBare());
 
@@ -93,9 +94,10 @@ void TestBareRepo::checkDir()
   QVERIFY(dir.exists("refs"));
 }
 
-void TestBareRepo::cleanupTestCase()
-{
-  mWindow->close();
+void TestBareRepo::cleanupTestCase() {
+  if (mWindow) {
+    mWindow->close();
+  }
   QDir dir = QDir::temp();
   QVERIFY(dir.cd("test_bare_repo"));
   QVERIFY(dir.removeRecursively());

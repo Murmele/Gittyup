@@ -15,8 +15,7 @@
 
 class QHBoxLayout;
 
-class DiffPanel : public QWidget
-{
+class DiffPanel : public QWidget {
   Q_OBJECT
 
 public:

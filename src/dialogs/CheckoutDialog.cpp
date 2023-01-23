@@ -16,17 +16,14 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-CheckoutDialog::CheckoutDialog(
-  const git::Repository &repo,
-  const git::Reference &ref,
-  QWidget *parent)
-  : QDialog(parent)
-{
+CheckoutDialog::CheckoutDialog(const git::Repository &repo,
+                               const git::Reference &ref, QWidget *parent)
+    : QDialog(parent) {
   setAttribute(Qt::WA_DeleteOnClose);
 
   mRefs = new ReferenceList(repo, ReferenceView::AllRefs, this);
-  connect(mRefs, &ReferenceList::referenceSelected,
-          this, &CheckoutDialog::update);
+  connect(mRefs, &ReferenceList::referenceSelected, this,
+          &CheckoutDialog::update);
 
   mDetachBox = new QCheckBox(tr("Detach HEAD"), this);
   connect(mDetachBox, &QCheckBox::toggled, [this](bool checked) {
@@ -54,13 +51,11 @@ CheckoutDialog::CheckoutDialog(
   update(mRefs->currentReference());
 }
 
-git::Reference CheckoutDialog::reference() const
-{
+git::Reference CheckoutDialog::reference() const {
   return mRefs->currentReference();
 }
 
-void CheckoutDialog::update(const git::Reference &ref)
-{
+void CheckoutDialog::update(const git::Reference &ref) {
   if (!ref.isValid()) {
     mDetachBox->setEnabled(false);
     mCheckout->setEnabled(false);

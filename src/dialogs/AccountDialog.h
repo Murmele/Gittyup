@@ -17,8 +17,7 @@
 #include <QLabel>
 #include <QLineEdit>
 
-class AccountDialog : public QDialog
-{
+class AccountDialog : public QDialog {
   Q_OBJECT
 
 public:
