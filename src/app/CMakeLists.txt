@@ -88,6 +88,7 @@ add_executable(
   ${ACKNOWLEDGMENTS_HTML}
   ${PRIVACY_HTML}
   ${PLUGIN_HTML})
+set_target_properties(gittyup PROPERTIES OUTPUT_NAME ${GITTYUP_NAME})
 
 if(GENERATE_APPDATA)
   add_custom_target(
