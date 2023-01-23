@@ -208,17 +208,10 @@ execute_process(COMMAND
 else()
   # Windows and UNIX must be ./ otherwise it is interpreted as absolute path
   if(UNIX)
-    set(RESOURCES_INSTALL_DIR
-        "${CMAKE_INSTALL_DATADIR}/gittyup/Resources"
-        CACHE STRING "The path for installing resource files")
         install(FILES ${CMAKE_SOURCE_DIR}/rsrc/linux/com.github.Murmele.Gittyup.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications RENAME ${GITTYUP_NAME}.desktop)
         if (${GENERATE_APPDATA})
             install(FILES ${APPDATA} DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo RENAME ${GITTYUP_NAME}.appdata.xml)
         endif()
-  else()
-    set(RESOURCES_INSTALL_DIR
-        "Resources"
-        CACHE STRING "The path for installing resource files")
   endif()
 
   # Install config files.
@@ -229,13 +222,13 @@ else()
     install(
       FILES ${CHANGELOG_HTML} ${ACKNOWLEDGMENTS_HTML} ${PRIVACY_HTML}
             ${PLUGIN_HTML}
-      DESTINATION ${RESOURCES_INSTALL_DIR}
+      DESTINATION ${RESOURCES_DIR}
       COMPONENT ${GITTYUP_NAME})
   endif()
 
   install(
     FILES ${EMOJI} ${MERGETOOLS}
-    DESTINATION ${RESOURCES_INSTALL_DIR}
+    DESTINATION ${RESOURCES_DIR}
     COMPONENT ${GITTYUP_NAME})
 
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${EMOJI}
@@ -246,7 +239,7 @@ else()
   foreach(CONFIG_FILE ${CONFIG_FILES})
     install(
       FILES ${CONFIG_FILE}
-      DESTINATION ${RESOURCES_INSTALL_DIR}
+      DESTINATION ${RESOURCES_DIR}
       COMPONENT ${GITTYUP_NAME})
 
     file(RELATIVE_PATH CONFIG_FILE_DEST ${CONF_DIR} ${CONFIG_FILE})
@@ -257,7 +250,7 @@ else()
 
   install(
     FILES ${DICTIONARIES}
-    DESTINATION ${RESOURCES_INSTALL_DIR}/dictionaries
+    DESTINATION ${RESOURCES_DIR}/dictionaries
     COMPONENT ${GITTYUP_NAME})
 
   foreach(DICTIONARY ${DICTIONARIES})
@@ -268,7 +261,7 @@ else()
 
   install(
     FILES ${THEMES}
-    DESTINATION ${RESOURCES_INSTALL_DIR}/themes
+    DESTINATION ${RESOURCES_DIR}/themes
     COMPONENT ${GITTYUP_NAME})
 
   foreach(THEME ${THEMES})
@@ -279,7 +272,7 @@ else()
 
   install(
     FILES ${LUA_PLUGINS}
-    DESTINATION ${RESOURCES_INSTALL_DIR}/plugins
+    DESTINATION ${RESOURCES_DIR}/plugins
     COMPONENT ${GITTYUP_NAME})
 
   foreach(LUA_PLUGIN ${LUA_PLUGINS})
@@ -291,7 +284,7 @@ else()
   foreach(SCINTILLUA_LEXER ${SCINTILLUA_LEXERS})
     install(
       FILES ${SCINTILLUA_LEXER}
-      DESTINATION ${RESOURCES_INSTALL_DIR}/lexers
+      DESTINATION ${RESOURCES_DIR}/lexers
       COMPONENT ${GITTYUP_NAME})
 
     get_filename_component(SCINTILLUA_LEXER_DEST ${SCINTILLUA_LEXER} NAME)
