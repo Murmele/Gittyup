@@ -100,7 +100,7 @@ elseif(NOT USE_SYSTEM_QT)
 
       install(
         FILES ${QT_LIBRARY}
-        DESTINATION .
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PERMISSIONS
           OWNER_READ
           OWNER_WRITE
@@ -131,7 +131,7 @@ if(UNIX AND NOT APPLE)
 
   install(
     FILES "${LIB_PATH}/${LIB_NAME}${LIB_EXT}"
-    DESTINATION .
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PERMISSIONS
       OWNER_READ
       OWNER_WRITE
@@ -166,7 +166,7 @@ if(NOT APPLE)
 
       install(
         FILES ${SSL_LIB}
-        DESTINATION .
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PERMISSIONS
           OWNER_READ
           OWNER_WRITE
