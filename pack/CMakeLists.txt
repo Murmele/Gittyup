@@ -203,7 +203,7 @@ if(UNIX AND NOT APPLE)
       FILES ${RSRC_DIR}/Gittyup.iconset/gittyup_logo.svg
       DESTINATION share/icons/hicolor/scalable/apps
       COMPONENT ${GITTYUP_NAME}
-      RENAME gittyup.png)
+      RENAME gittyup.svg)
   endforeach()
 endif()
 
@@ -294,7 +294,7 @@ set(CPACK_PACKAGE_VERSION_PATCH ${GITTYUP_VERSION_PATCH})
 if(WIN32)
   set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/LICENSE.md)
 else()
-    install(FILES ${CMAKE_SOURCE_DIR}/LICENSE.md DESTINATION ${DATAROOTDIR}/licenses/Gittyup/LICENSE)
+    install(FILES ${CMAKE_SOURCE_DIR}/LICENSE.md DESTINATION ${DATAROOTDIR}/licenses/Gittyup RENAME LICENSE)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
