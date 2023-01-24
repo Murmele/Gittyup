@@ -158,6 +158,7 @@ public:
     git::Config app = mRepo.appConfig();
     mFetch->setChecked(app.value<bool>("autofetch.enable", fetch));
     mFetchMinutes->setValue(app.value<int>("autofetch.minutes", minutes));
+    mFetchMinutes->setEnabled(mFetch->isChecked());
     mPushCommit->setChecked(app.value<bool>("autopush.enable", push));
     mPullUpdate->setChecked(app.value<bool>("autoupdate.enable", update));
     mAutoPrune->setChecked(app.value<bool>("autoprune.enable", prune));
