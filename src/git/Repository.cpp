@@ -173,12 +173,16 @@ QString Repository::message() const {
   return QString::fromUtf8(buf.ptr, buf.size);
 }
 
-Config Repository::config() const {
+// Config file used for git specific configs
+// config file in <Repository>/.git/config
+Config Repository::gitConfig() const {
   git_config *config = nullptr;
   git_repository_config(&config, d->repo);
   return Config(config);
 }
 
+// Config file used for app specific configs
+// config file in <Repository>/.git/gittyup/config
 Config Repository::appConfig() const {
   Config config = Config::appGlobal();
   QString path = appDir().filePath(kConfigFile);
@@ -1012,7 +1016,7 @@ void Repository::cleanupState() {
 }
 
 QTextCodec *Repository::codec() const {
-  QString encoding = config().value<QString>("gui.encoding");
+  QString encoding = gitConfig().value<QString>("gui.encoding");
   QTextCodec *codec = QTextCodec::codecForName(encoding.toUtf8());
   return codec ? codec : QTextCodec::codecForLocale();
 }

@@ -81,7 +81,7 @@ public:
   QString message() const;
 
   // config
-  Config config() const;
+  Config gitConfig() const;
   Config appConfig() const;
 
   // bare

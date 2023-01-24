@@ -693,7 +693,7 @@ void RepoView::visitLink(const QString &link) {
 
   if (action == "sslverifyrepo") {
     if (mRepo.isValid()) {
-      git::Config config = mRepo.config();
+      git::Config config = mRepo.gitConfig();
       config.setValue<bool>("http.sslVerify", false);
       QMessageBox msg(QMessageBox::Icon::Information, tr("Certificate Error"),
                       tr("SSL verification disabled for this repository"),
@@ -1003,7 +1003,7 @@ QFuture<git::Result> RepoView::fetch(const git::Remote &rmt, bool tags,
           // Add ssl hint.
           if (result.error() == -GIT_ERROR_SSL) {
             git::Config config =
-                mRepo.isValid() ? mRepo.config() : git::Config::global();
+                mRepo.isValid() ? mRepo.gitConfig() : git::Config::global();
             if (config.value<bool>("http.sslVerify", true)) {
               QString ssl =
                   tr("You may disable ssl verification <a "
@@ -1112,7 +1112,7 @@ void RepoView::pull(MergeFlags flags, const git::Remote &rmt, bool tags,
             MergeFlags mf = flags;
             if (flags == Default) {
               // Read pull.rebase from config.
-              git::Config config = mRepo.config();
+              git::Config config = mRepo.gitConfig();
               bool rebase = config.value<bool>("pull.rebase");
 
               // Read branch.<name>.rebase from config.

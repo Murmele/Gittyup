@@ -1397,7 +1397,7 @@ QString DetailView::overrideUser() const { return mOverrideUser; }
 QString DetailView::overrideEmail() const { return mOverrideEmail; }
 
 void DetailView::updateAuthor() {
-  git::Config config = RepoView::parentView(this)->repo().config();
+  git::Config config = RepoView::parentView(this)->repo().gitConfig();
 
   QString text = "<a href=\"changeAuthor\"><b>" + tr("Author:") + "</b></a> ";
 

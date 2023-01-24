@@ -24,7 +24,8 @@
 #include <QTextCodec>
 
 DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
-    : QWidget(parent), mConfig(repo ? repo.config() : git::Config::global()) {
+    : QWidget(parent),
+      mConfig(repo ? repo.gitConfig() : git::Config::global()) {
   // diff context
   QSpinBox *context = new QSpinBox(this);
   QLabel *contextLabel = new QLabel(tr("lines"), this);

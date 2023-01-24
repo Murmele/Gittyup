@@ -145,8 +145,8 @@ QString extractRepository(const QString &filename, bool useTempDir) {
 }
 
 void initRepo(git::Repository &repo) {
-  repo.config().setValue("user.name", QString("testuser"));
-  repo.config().setValue("user.email", QString("test@user"));
+  repo.gitConfig().setValue("user.name", QString("testuser"));
+  repo.gitConfig().setValue("user.email", QString("test@user"));
 }
 
 ScratchRepository::ScratchRepository(bool autoRemove) {

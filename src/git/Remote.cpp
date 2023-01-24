@@ -423,7 +423,7 @@ int Remote::Callbacks::certificate(git_cert *cert, int valid, const char *host,
     return 0;
 
   Repository repo = reinterpret_cast<Remote::Callbacks *>(payload)->repo();
-  Config config = repo.isValid() ? repo.config() : Config::global();
+  Config config = repo.isValid() ? repo.gitConfig() : Config::global();
   if (!config.value<bool>("http.sslVerify", true))
     return 0;
 
@@ -596,7 +596,7 @@ Result Remote::push(Callbacks *callbacks, const Reference &src,
     refspec += ":" + dst;
   } else {
     QString key = QString("branch.%1.merge").arg(src.name());
-    QString upstream = repo.config().value<QString>(key);
+    QString upstream = repo.gitConfig().value<QString>(key);
     if (!upstream.isEmpty())
       refspec += ":" + upstream;
   }
