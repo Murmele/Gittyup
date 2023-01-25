@@ -33,6 +33,7 @@ if(WIN32)
 endif()
 
 if(NOT USE_SYSTEM_LIBGIT2)
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/${GITTYUP_NAME}test123)
   add_subdirectory(libgit2)
   target_include_directories(
     git2 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libgit2/include)
