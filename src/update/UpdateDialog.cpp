@@ -127,7 +127,16 @@ UpdateDialog::UpdateDialog(const QString &platform, const QString &version,
   });
 
   connect(buttons, &QDialogButtonBox::rejected, this, &UpdateDialog::reject);
+  connect(this, &UpdateDialog::accepted, [platform, link] {
+    // Start download.
+    if (Updater::DownloadRef download = Updater::instance()->download(link)) {
+      DownloadDialog *dialog = new DownloadDialog(download);
+      dialog->show();
+    }
+  });
 #else
+  buttons->addButton(tr("Ok"), QDialogButtonBox::AcceptRole);
+  connect(buttons, &QDialogButtonBox::accepted, this, &UpdateDialog::accept);
   // Skip version automatically, because the user has no control to update
   Settings *settings = Settings::instance();
   QStringList skipped =
@@ -159,12 +168,4 @@ UpdateDialog::UpdateDialog(const QString &platform, const QString &version,
   QHBoxLayout *layout = new QHBoxLayout(this);
   layout->addLayout(iconLayout);
   layout->addLayout(content);
-
-  connect(this, &UpdateDialog::accepted, [platform, link] {
-    // Start download.
-    if (Updater::DownloadRef download = Updater::instance()->download(link)) {
-      DownloadDialog *dialog = new DownloadDialog(download);
-      dialog->show();
-    }
-  });
 }
