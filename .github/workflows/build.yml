@@ -87,6 +87,11 @@ jobs:
       if: github.ref_type != 'tag'
       run: >
         sed -i 's@desktop-file-name-suffix: ""@desktop-file-name-suffix: " (Development)"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        
+    - name: Enable automatic update
+      if: github.ref_type != 'tag'
+      run: >
+        sed -i 's@-DENABLE_UPDATE_OVER_GUI=OFF@-DENABLE_UPDATE_OVER_GUI=ON@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
 
     - name: Show Flatpak manifest
       run: cat com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml

@@ -25,6 +25,12 @@
 #include <QDesktopServices>
 #include <QMessageBox>
 
+#if ((!defined(Q_OS_LINUX) || defined(FLATPAK) || defined(DEBUG_FLATPAK)) &&   \
+     defined(ENABLE_UPDATE_OVER_GUI))
+#define ENABLE_UPDATE 1
+#else
+#define ENABLE_UPDATE 0
+#endif
 namespace {
 
 const QString kStyleSheet = "h3 {"
@@ -51,7 +57,14 @@ UpdateDialog::UpdateDialog(const QString &platform, const QString &version,
   iconLayout->addWidget(iconLabel);
   iconLayout->addStretch();
 
-#ifndef Q_OS_LINUX
+#if !ENABLE_UPDATE
+  QString label = tr("<h3>A new version of %1 is available!</h3>"
+                     "<p>%1 %2 is now available - you have %3. "
+                     "The new version will be soon available in your package "
+                     "manager. Just update your system.</p>"
+                     "<b>Release Notes:</b>")
+                      .arg(appName, version, appVersion);
+#elif !defined(Q_OS_LINUX)
   QString label = tr("<h3>A new version of %1 is available!</h3>"
                      "<p>%1 %2 is now available - you have %3. "
                      "Would you like to download it now?</p>"
@@ -82,7 +95,7 @@ UpdateDialog::UpdateDialog(const QString &platform, const QString &version,
   browser->document()->setDefaultStyleSheet(kStyleSheet);
   browser->setHtml(changelog);
 
-#if !defined(Q_OS_LINUX) || defined(FLATPAK) || defined(DEBUG_FLATPAK)
+#if ENABLE_UPDATE
   QCheckBox *download =
       new QCheckBox(tr("Automatically download and install updates"), this);
   download->setChecked(Settings::instance()
@@ -95,9 +108,8 @@ UpdateDialog::UpdateDialog(const QString &platform, const QString &version,
 #endif
 
   QDialogButtonBox *buttons = new QDialogButtonBox(this);
-#if !defined(Q_OS_LINUX) || defined(FLATPAK) || defined(DEBUG_FLATPAK)
+#if ENABLE_UPDATE
   buttons->addButton(tr("Install Update"), QDialogButtonBox::AcceptRole);
-#endif
 
   buttons->addButton(tr("Remind Me Later"), QDialogButtonBox::RejectRole);
   connect(buttons, &QDialogButtonBox::accepted, this, &UpdateDialog::accept);
@@ -115,13 +127,14 @@ UpdateDialog::UpdateDialog(const QString &platform, const QString &version,
   });
 
   connect(buttons, &QDialogButtonBox::rejected, this, &UpdateDialog::reject);
+#endif
 
   QHBoxLayout *l = new QHBoxLayout();
   QPushButton *supportButton =
       new QPushButton(QIcon(":/liberapay_icon_130890.png"), tr("Donate"), this);
   QSpacerItem *spacer =
       new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
-#if !defined(Q_OS_LINUX) || defined(FLATPAK) || defined(DEBUG_FLATPAK)
+#if ENABLE_UPDATE
   l->addWidget(download);
 #endif
   l->addItem(spacer);
