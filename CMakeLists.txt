@@ -53,6 +53,8 @@ option(DEBUG_FLATPAK "Building but using flatpak urls for testing" OFF)
 option(DISABLE_AUTOMATIC_UPDATE "Disable automatically updating Gittyup from the Gui instead of the package manager" OFF)
 if (${DISABLE_AUTOMATIC_UPDATE})
     message(FATAL_ERROR "Automatic update disabled")
+else()
+    message(FATAL_ERROR ${DISABLE_AUTOMATIC_UPDATE})
 endif()
 option(USE_SYSTEM_OPENSSL "Use the system-wide OpenSSL installation" OFF)
 option(
