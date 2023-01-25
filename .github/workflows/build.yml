@@ -87,7 +87,7 @@ jobs:
       if: github.ref_type != 'tag'
       run: >
         sed -i 's@desktop-file-name-suffix: ""@desktop-file-name-suffix: " (Development)"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
-        
+
     - name: Enable automatic update
       if: github.ref_type != 'tag'
       run: >
