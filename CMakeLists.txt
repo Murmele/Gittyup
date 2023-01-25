@@ -50,6 +50,7 @@ set(BUILD_SHARED_LIBS OFF)
 
 option(FLATPAK "Building for flatpak" OFF)
 option(DEBUG_FLATPAK "Building but using flatpak urls for testing" OFF)
+option(DISABLE_AUTOMATIC_UPDATE "Disable automatically updating Gittyup from the Gui instead of the package manager" OFF)
 option(USE_SYSTEM_OPENSSL "Use the system-wide OpenSSL installation" OFF)
 option(
   USE_SYSTEM_LIBGIT2
