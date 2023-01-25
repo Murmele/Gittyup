@@ -31,6 +31,7 @@
 #include "git2/branch.h"
 #include "git2/checkout.h"
 #include "git2/cherrypick.h"
+#include "git2/commit.h"
 #include "git2/filter.h"
 #include "git2/global.h"
 #include "git2/ignore.h"
@@ -52,6 +53,7 @@
 #include <QStandardPaths>
 #include <QTextCodec>
 #include <QVector>
+#include <QDebug>
 
 #ifdef Q_OS_UNIX
 #include <pwd.h>
@@ -602,11 +604,40 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
   if (mergeHead.isValid())
     parents.append(mergeHead.commit());
 
-  // Create the commit.
-  git_oid id;
-  if (git_commit_create(&id, d->repo, "HEAD", author, committer, 0,
-                        message.toUtf8(), tree, parents.size(), parents.data()))
+  // Create the unsigned commit.
+  git_buf content = GIT_BUF_INIT_CONST(nullptr, 0);
+  if (git_commit_create_buffer(&content, d->repo, author, committer, 0,
+                               message.toUtf8(), tree, parents.size(),
+                               parents.data())) {
+    git_buf_dispose(&content);
     return Commit();
+  }
+
+  // GPG-Sign content if enabled.
+  const char *gpg_signature = nullptr; // TODO: Add wrapper and sign content
+
+  // Store the commit.
+  git_oid id;
+  int error = git_commit_create_with_signature(&id, d->repo, content.ptr,
+                                               gpg_signature, "gpgsig");
+  git_buf_dispose(&content);
+  if (error) {
+    return Commit();
+  }
+  git_commit *commit = nullptr;
+  git_commit_lookup(&commit, d->repo, &id);
+
+  // Update HEAD.
+  git_reference *ref = NULL, *ref_new = NULL;
+  git_reference_resolve(&ref, head());
+  error = git_reference_create(&ref_new, d->repo, git_reference_name(ref), &id,
+                               1, git_commit_summary(commit));
+  git_reference_free(ref);
+  git_reference_free(ref_new);
+  if (error) {
+    git_commit_free(commit);
+    return Commit();
+  }
 
   // Cleanup merge state.
   switch (state()) {
@@ -621,8 +652,6 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
       break;
   }
 
-  git_commit *commit = nullptr;
-  git_commit_lookup(&commit, d->repo, &id);
   emit d->notifier->referenceUpdated(head());
   return Commit(commit);
 }

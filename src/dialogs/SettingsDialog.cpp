@@ -109,6 +109,15 @@ public:
     mStoreCredentials =
         new QCheckBox(tr("Store credentials in secure storage"), this);
 
+    mAutoSignoffCommits =
+        new QCheckBox(tr("Automatically signoff on commits"), this);
+
+    mGpgSignCommits = new QCheckBox(tr("Sign all commits"), this);
+
+    mGpgSignPushes = new QCheckBox(tr("Sign all pushes"), this);
+
+    mGpgSignTags = new QCheckBox(tr("Sign all tags"), this);
+
     QLabel *privacy = new QLabel(tr("<a href='view'>View privacy policy</a>"));
     connect(privacy, &QLabel::linkActivated,
             [] { AboutDialog::openSharedInstance(AboutDialog::Privacy); });
@@ -122,6 +131,10 @@ public:
     form->addRow(QString(), mAutoPrune);
     form->addRow(tr("Language:"), mNoTranslation);
     form->addRow(tr("Credentials:"), mStoreCredentials);
+    form->addRow(tr("Auto Signoff:"), mAutoSignoffCommits);
+    form->addRow(tr("Sign Commits:"), mGpgSignCommits);
+    form->addRow(tr("Sign Pushes:"), mGpgSignPushes);
+    form->addRow(tr("Sign Tags:"), mGpgSignTags);
     form->addRow(QString(), privacy);
 
     mSingleInstance =
@@ -186,6 +199,26 @@ public:
       delete CredentialHelper::instance();
     });
 
+    connect(mAutoSignoffCommits, &QCheckBox::toggled, [](bool checked) {
+      git::Config config = git::Config::global();
+      config.setValue("format.signOff", checked);
+    });
+
+    connect(mGpgSignCommits, &QCheckBox::toggled, [](bool checked) {
+      git::Config config = git::Config::global();
+      config.setValue("commit.gpgSign", checked);
+    });
+
+    connect(mGpgSignPushes, &QCheckBox::toggled, [](bool checked) {
+      git::Config config = git::Config::global();
+      config.setValue("push.gpgSign", checked);
+    });
+
+    connect(mGpgSignTags, &QCheckBox::toggled, [](bool checked) {
+      git::Config config = git::Config::global();
+      config.setValue("tag.gpgSign", checked);
+    });
+
     connect(mSingleInstance, &QCheckBox::toggled, [](bool checked) {
       Settings::instance()->setValue(Setting::Id::AllowSingleInstanceOnly,
                                      checked);
@@ -215,6 +248,10 @@ public:
         settings->value(Setting::Id::DontTranslate).toBool());
     mStoreCredentials->setChecked(
         settings->value(Setting::Id::StoreCredentials).toBool());
+    mAutoSignoffCommits->setChecked(config.value<bool>("format.signOff"));
+    mGpgSignCommits->setChecked(config.value<bool>("commit.gpgSign"));
+    mGpgSignPushes->setChecked(config.value<bool>("push.gpgSign"));
+    mGpgSignTags->setChecked(config.value<bool>("tag.gpgSign"));
 
     mSingleInstance->setChecked(
         settings->value(Setting::Id::AllowSingleInstanceOnly).toBool());
@@ -231,6 +268,10 @@ private:
   QCheckBox *mAutoPrune;
   QCheckBox *mNoTranslation;
   QCheckBox *mStoreCredentials;
+  QCheckBox *mAutoSignoffCommits;
+  QCheckBox *mGpgSignCommits;
+  QCheckBox *mGpgSignPushes;
+  QCheckBox *mGpgSignTags;
   QCheckBox *mSingleInstance;
 };
 
