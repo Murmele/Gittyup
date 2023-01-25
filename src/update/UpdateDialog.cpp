@@ -127,7 +127,14 @@ UpdateDialog::UpdateDialog(const QString &platform, const QString &version,
   });
 
   connect(buttons, &QDialogButtonBox::rejected, this, &UpdateDialog::reject);
-#endif
+#else
+  // Skip version automatically, because the user has no control to update
+  Settings *settings = Settings::instance();
+  QStringList skipped =
+      settings->value(Setting::Id::SkippedUpdates).toStringList();
+  if (!skipped.contains(version))
+    settings->setValue(Setting::Id::SkippedUpdates, skipped << version);
+#endif // ENABLE_UPDATE
 
   QHBoxLayout *l = new QHBoxLayout();
   QPushButton *supportButton =
@@ -136,7 +143,7 @@ UpdateDialog::UpdateDialog(const QString &platform, const QString &version,
       new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
 #if ENABLE_UPDATE
   l->addWidget(download);
-#endif
+#endif // ENABLE_UPDATE
   l->addItem(spacer);
   l->addWidget(supportButton);
   connect(supportButton, &QPushButton::pressed, []() {
