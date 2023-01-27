@@ -44,7 +44,8 @@ void ViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
   // Draw badges.
   QString status = index.data(TreeModel::StatusRole).toString();
   if (!status.isEmpty()) {
-    QSize size = Badge::size(painter->font());
+    QSize size =
+        Badge::size(painter->font(), Badge::Label(Badge::Label::Type::Status));
     int width = size.width();
     int height = size.height();
 
@@ -55,7 +56,9 @@ void ViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
       int x = opt.rect.x() + opt.rect.width();
       int y = opt.rect.y() + (opt.rect.height() / 2);
       QRect rect(x - width, y - (height / 2), width, height);
-      Badge::paint(painter, {Badge::Label(status.at(i))}, rect, &opt);
+      Badge::paint(painter,
+                   {Badge::Label(Badge::Label::Type::Status, status.at(i))},
+                   rect, &opt);
 
       // Adjust rect.
       opt.rect.adjust(0, 0, -width - 3, 0);
@@ -69,6 +72,9 @@ QSize ViewDelegate::sizeHint(const QStyleOptionViewItem &option,
                              const QModelIndex &index) const {
   // Increase spacing.
   QSize size = QItemDelegate::sizeHint(option, index);
-  size.setHeight(Badge::size(option.font).height() + 4);
+  size.setHeight(
+      Badge::size(option.font, Badge::Label(Badge::Label::Type::Status))
+          .height() +
+      4);
   return size;
 }

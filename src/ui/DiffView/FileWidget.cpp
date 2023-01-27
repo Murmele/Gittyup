@@ -67,8 +67,9 @@ _FileWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
 
   // Add LFS buttons.
   if (lfs) {
-    Badge *lfsBadge =
-        new Badge({Badge::Label(FileWidget::tr("LFS"), true)}, this);
+    Badge *lfsBadge = new Badge(
+        {Badge::Label(Badge::Label::Type::LFS, FileWidget::tr("LFS"), true)},
+        this);
     buttons->addWidget(lfsBadge);
 
     QToolButton *lfsLockButton = new QToolButton(this);
@@ -186,8 +187,8 @@ _FileWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
 
 void _FileWidget::Header::updatePatch(const git::Patch &patch) {
   auto status = patch.status();
-  QList<Badge::Label> labels = {
-      Badge::Label(QChar(git::Diff::statusChar(status)))};
+  QList<Badge::Label> labels = {Badge::Label(
+      Badge::Label::Type::Status, QChar(git::Diff::statusChar(status)))};
 
   git::Patch::LineStats lineStats = patch.lineStats();
   mStats->setStats(lineStats);
@@ -248,13 +249,16 @@ void _FileWidget::Header::updatePatch(const git::Patch &patch) {
     }
 
     if (!ours.isEmpty() && ours == theirs) {
-      labels.append(Badge::Label(tr("both: %1").arg(ours)));
+      labels.append(
+          Badge::Label(Badge::Label::Type::Conflict, tr("both: %1").arg(ours)));
     } else {
       if (!ours.isEmpty()) {
-        labels.append(Badge::Label(tr("ours: %1").arg(ours)));
+        labels.append(Badge::Label(Badge::Label::Type::Conflict,
+                                   tr("ours: %1").arg(ours)));
       }
       if (!theirs.isEmpty()) {
-        labels.append(Badge::Label(tr("theirs: %1").arg(theirs)));
+        labels.append(Badge::Label(Badge::Label::Type::Conflict,
+                                   tr("theirs: %1").arg(theirs)));
       }
     }
   }

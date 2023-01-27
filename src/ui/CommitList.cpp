@@ -1024,12 +1024,14 @@ private:
 
     if (mRepo.isHeadDetached()) {
       git::Reference head = mRepo.head();
-      mRefs[head.target().id()].append({head.name(), true});
+      mRefs[head.target().id()].append(
+          {Badge::Label::Type::Ref, head.name(), true});
     }
 
     foreach (const git::Reference &ref, mRepo.refs()) {
       if (git::Commit target = ref.target())
-        mRefs[target.id()].append({ref.name(), ref.isHead(), ref.isTag()});
+        mRefs[target.id()].append(
+            {Badge::Label::Type::Ref, ref.name(), ref.isHead(), ref.isTag()});
     }
   }
 
