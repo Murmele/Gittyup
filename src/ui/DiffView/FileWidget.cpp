@@ -30,7 +30,7 @@ namespace {
 bool disclosure = false;
 }
 
-_FileWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
+_FileWidget::Header::Header(const git::Diff &diff, git::Patch &patch,
                             bool binary, bool lfs, bool submodule,
                             QWidget *parent)
     : QFrame(parent), mDiff(diff), mPatch(patch), mSubmodule(submodule) {
@@ -185,7 +185,7 @@ _FileWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
   updateCheckState();
 }
 
-void _FileWidget::Header::updatePatch(const git::Patch &patch) {
+void _FileWidget::Header::updatePatch(git::Patch &patch) {
   auto status = patch.status();
   QList<Badge::Label> labels = {Badge::Label(
       Badge::Label::Type::Status, QChar(git::Diff::statusChar(status)))};
@@ -337,10 +337,10 @@ void _FileWidget::Header::updateCheckState() {
 //###############      FileWidget ###########################################
 //###############################################################################
 
-FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
-                       const git::Patch &patch, const git::Patch &staged,
-                       const QModelIndex modelIndex, const QString &name,
-                       const QString &path, bool submodule, QWidget *parent)
+FileWidget::FileWidget(DiffView *view, const git::Diff &diff, git::Patch &patch,
+                       const git::Patch &staged, const QModelIndex modelIndex,
+                       const QString &name, const QString &path, bool submodule,
+                       QWidget *parent)
     : QWidget(parent), mView(view), mDiff(diff), mPatch(patch),
       mModelIndex(modelIndex) {
   auto stageState = static_cast<git::Index::StagedState>(
@@ -524,7 +524,7 @@ git::Patch::ConflictResolution _FileWidget::Header::resolution() const {
   return mResolution;
 }
 
-void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged,
+void FileWidget::updatePatch(git::Patch &patch, const git::Patch &staged,
                              const QString &name, const QString &path,
                              bool submodule) {
   mHeader->updatePatch(patch);
@@ -582,7 +582,7 @@ QWidget *FileWidget::addImage(DisclosureButton *button, const git::Patch patch,
   return images;
 }
 
-HunkWidget *FileWidget::addHunk(const git::Diff &diff, const git::Patch &patch,
+HunkWidget *FileWidget::addHunk(const git::Diff &diff, git::Patch &patch,
                                 const git::Patch &staged, int index, bool lfs,
                                 bool submodule) {
   HunkWidget *hunk =

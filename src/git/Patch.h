@@ -45,7 +45,7 @@ public:
   bool isBinary() const;
   bool isLfsPointer() const;
 
-  Blob blob(Diff::File file) const;
+  Blob blob(Diff::File file);
 
   LineStats lineStats() const;
   /*!
@@ -54,7 +54,7 @@ public:
    * \brief print
    * \return
    */
-  QList<QString> print() const;
+  QList<QString> print();
 
   /*!
    * \brief count
@@ -106,7 +106,7 @@ public:
    * \brief populatePreimage
    * \param image Populated preimage
    */
-  void populatePreimage(QList<QList<QByteArray>> &image) const;
+  void populatePreimage(QList<QList<QByteArray>> &image);
   /*!
    * Splits the content of fileContent into lines and stores the content in
    * image \brief populatePreimage \param image Populated preimage \param
@@ -124,7 +124,7 @@ public:
    * \return edited file
    */
   QByteArray apply(const QBitArray &hunks,
-                   const FilterList &filters = FilterList()) const;
+                   const FilterList &filters = FilterList());
   QByteArray apply(int hidx, QByteArray &hunkData, QByteArray fileContent,
                    const FilterList &filters = FilterList()) const;
 
@@ -168,6 +168,9 @@ private:
   };
 
   Patch(git_patch *patch);
+
+  Blob mOldBlob;
+  Blob mNewBlob;
 
   QSharedPointer<git_patch> d;
   QList<ConflictHunk> mConflicts;

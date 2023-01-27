@@ -28,9 +28,9 @@ class Header : public QFrame {
   Q_OBJECT
 
 public:
-  Header(const git::Diff &diff, const git::Patch &patch, bool binary, bool lfs,
+  Header(const git::Diff &diff, git::Patch &patch, bool binary, bool lfs,
          bool submodule, QWidget *parent = nullptr);
-  void updatePatch(const git::Patch &patch);
+  void updatePatch(git::Patch &patch);
   QCheckBox *check() const;
 
   DisclosureButton *disclosureButton() const;
@@ -86,12 +86,12 @@ class FileWidget : public QWidget {
   Q_OBJECT
 
 public:
-  FileWidget(DiffView *view, const git::Diff &diff, const git::Patch &patch,
+  FileWidget(DiffView *view, const git::Diff &diff, git::Patch &patch,
              const git::Patch &staged, const QModelIndex modelIndex,
              const QString &name, const QString &path, bool submodule,
              QWidget *parent = nullptr);
   bool isEmpty();
-  void updatePatch(const git::Patch &patch, const git::Patch &staged,
+  void updatePatch(git::Patch &patch, const git::Patch &staged,
                    const QString &name, const QString &path, bool submodule);
   /*!
    * Update hunks after index change and emits the current stage state of the
@@ -105,7 +105,7 @@ public:
 
   QWidget *addImage(DisclosureButton *button, const git::Patch patch,
                     bool lfs = false);
-  HunkWidget *addHunk(const git::Diff &diff, const git::Patch &patch,
+  HunkWidget *addHunk(const git::Diff &diff, git::Patch &patch,
                       const git::Patch &staged, int index, bool lfs,
                       bool submodule);
   void setStageState(git::Index::StagedState state);

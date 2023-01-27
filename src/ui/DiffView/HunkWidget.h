@@ -22,7 +22,7 @@ namespace _HunkWidget {
 class Header : public QFrame {
   Q_OBJECT
 public:
-  Header(const git::Diff &diff, const git::Patch &patch, int index, bool lfs,
+  Header(const git::Diff &diff, git::Patch &patch, int index, bool lfs,
          bool submodule, QWidget *parent = nullptr);
   QCheckBox *check() const;
 
@@ -61,7 +61,7 @@ class HunkWidget : public QFrame {
   Q_OBJECT
 
 public:
-  HunkWidget(DiffView *view, const git::Diff &diff, const git::Patch &patch,
+  HunkWidget(DiffView *view, const git::Diff &diff, git::Patch &patch,
              const git::Patch &staged, int index, bool lfs, bool submodule,
              QWidget *parent = nullptr);
   _HunkWidget::Header *header() const;
