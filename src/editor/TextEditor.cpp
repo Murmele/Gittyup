@@ -182,22 +182,6 @@ void TextEditor::applySettings() {
   // Missing newline style.
   styleSetFont(EofNewline, italic);
 
-  // Remote comment styles
-  Theme *theme = Application::theme();
-  styleSetFont(CommentBody, regular);
-  styleSetFore(CommentBody, theme->remoteComment(Theme::Comment::Body));
-  styleSetBack(CommentBody, theme->remoteComment(Theme::Comment::Background));
-
-  styleSetFont(CommentAuthor, bold);
-  styleSetFore(CommentAuthor, theme->remoteComment(Theme::Comment::Author));
-  styleSetBack(CommentAuthor, theme->remoteComment(Theme::Comment::Background));
-
-  styleSetFont(CommentTimestamp, regular);
-  styleSetFore(CommentTimestamp,
-               theme->remoteComment(Theme::Comment::Timestamp));
-  styleSetBack(CommentTimestamp,
-               theme->remoteComment(Theme::Comment::Background));
-
   // Emit own signal.
   emit settingsChanged();
 
@@ -633,6 +617,25 @@ void TextEditor::applyThemeAndSettings() {
   setProperty("lexer.lpeg.theme", theme->name());
   setProperty("lexer.lpeg.theme.mode", dark ? "dark" : "light");
   setCaretFore(text);
+
+  QFont regular = font();
+  QFont bold = regular;
+  bold.setBold(true);
+
+  // Remote comment styles
+  styleSetFont(CommentBody, regular);
+  styleSetFore(CommentBody, theme->remoteComment(Theme::Comment::Body));
+  styleSetBack(CommentBody, theme->remoteComment(Theme::Comment::Background));
+
+  styleSetFont(CommentAuthor, bold);
+  styleSetFore(CommentAuthor, theme->remoteComment(Theme::Comment::Author));
+  styleSetBack(CommentAuthor, theme->remoteComment(Theme::Comment::Background));
+
+  styleSetFont(CommentTimestamp, regular);
+  styleSetFore(CommentTimestamp,
+			   theme->remoteComment(Theme::Comment::Timestamp));
+  styleSetBack(CommentTimestamp,
+			   theme->remoteComment(Theme::Comment::Background));
 
   // Apply default settings.
   applySettings();
