@@ -13,13 +13,15 @@ public:
     QString value{""};
   };
   static const QString cursorPositionString;
+  static const QString filesPosition;
 
-  TemplateButton(git::Config config, QWidget *parent = nullptr);
+  TemplateButton(QWidget *parent = nullptr);
   QMenu *menu() const;
   void showMenu();
   void storeTemplates();
   QList<Template> loadTemplates();
   void updateMenu();
+  const QList<Template> &templates();
 signals:
   void templateChanged(QString &str);
 
@@ -28,7 +30,6 @@ private:
 
   QMenu *mMenu{nullptr};
   QList<Template> mTemplates;
-  git::Config mConfig;
 };
 
 #endif

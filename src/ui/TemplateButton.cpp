@@ -4,18 +4,22 @@
 
 #include <QMenu>
 #include <QTranslator>
+#include <QSettings>
 
 namespace {
-QString configTemplate = "Configure templates"; // TODO: translation
-const QString kTemplatesKey = "templates.template";
-const QString kTemplatesRegexp = ".*_[0-9]*";
+const QString configTemplate = "Configure templates"; // TODO: translation
+const QString kTemplatesKey = "templates";
 const QString separator = ":";
 } // namespace
 
 const QString TemplateButton::cursorPositionString = QStringLiteral("%|");
+// Showing the position where the files shall be placed
+// The number regex dertermines how many filenames shall be shown and if
+// there are more it will be replaced by ...
+const QString TemplateButton::filesPosition =
+    QStringLiteral("${files:([0-9]*)}");
 
-TemplateButton::TemplateButton(git::Config config, QWidget *parent)
-    : QToolButton(parent), mConfig(config) {
+TemplateButton::TemplateButton(QWidget *parent) : QToolButton(parent) {
   setPopupMode(QToolButton::InstantPopup);
   mMenu = new QMenu(this);
 
@@ -58,55 +62,45 @@ void TemplateButton::updateMenu() {
   setMenu(mMenu);
 }
 
+const QList<TemplateButton::Template> &TemplateButton::templates() {
+  return mTemplates;
+}
+
 void TemplateButton::storeTemplates() {
-  /*
-   * Workaround, because reading all variables in one backend is not possible
-   * with this library. Cleaner would be to have: [Templates] T1 = value of
-   * template 1 T2 = value of template 2
-   *
-   * Actual implementation (name and value are separated by a :):
-   * [Templates]
-   *  template = T1:value of template 1
-   *  template = T2:value of template 2
-   */
+  QSettings settings;
+  settings.beginGroup(kTemplatesKey);
 
   // delete old templates
   QList<TemplateButton::Template> old = loadTemplates();
   for (auto templ : old)
-    assert(mConfig.remove(kTemplatesKey, templ.name + separator + ".*"));
+    settings.remove(templ.name);
 
   for (auto templ : mTemplates) {
     QString value = templ.value;
     value = value.replace("\n", "\\n");
     value = value.replace("\t", "\\t");
-    mConfig.setValue(kTemplatesKey, templ.name + separator + ".*",
-                     templ.name + separator + value);
+    settings.setValue(templ.name, value);
   }
+  settings.endGroup();
 }
 
 QList<TemplateButton::Template> TemplateButton::loadTemplates() {
-  QStringList list = mConfig.value(kTemplatesKey, "", QStringList());
+  QSettings settings;
+  settings.beginGroup(kTemplatesKey);
+
+  QStringList list = settings.allKeys();
   QList<TemplateButton::Template> templates;
 
-  for (auto entry : list) {
-    QStringList name_val = entry.split(separator);
-    if (name_val.length() == 0)
-      continue;
-
-    QString name(name_val[0]);
-    QString value;
-    for (int i = 1; i < name_val.length(); i++) {
-      value.append(name_val[i]);
-      if (i < name_val.length() - 1)
-        value.append(separator);
-    }
-
+  for (auto templateName : list) {
+    QString value = settings.value(templateName).toString();
     value = value.replace("\\n", "\n");
     value = value.replace("\\t", "\t");
     Template t;
-    t.name = name;
+    t.name = templateName;
     t.value = value;
     templates.append(t);
   }
+
+  settings.endGroup();
   return templates;
 }
