@@ -277,6 +277,16 @@ jobs:
         run: |
           cd build/release
           ninja package
+          
+      # version is exported from cmake to file
+      - name: Retrieve version
+        run: |
+          VER=$(cat build/release/VERSION.txt)
+          echo "VERSION=$VER" >> $GITHUB_ENV
+
+      - name: Print version
+        run: |
+            echo ${{ env.VERSION }}
 
       # Command copied from flathub build process
       - name: Validate appdata file
