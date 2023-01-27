@@ -100,17 +100,17 @@ public:
 
     // Connect signals after initializing fields.
     connect(mName, &QLineEdit::textChanged, this, [this](const QString &text) {
-      git::Config config = mRepo.config();
+      git::Config config = mRepo.gitConfig();
       config.setValue("user.name", text);
     });
 
     connect(mEmail, &QLineEdit::textChanged, this, [this](const QString &text) {
-      git::Config config = mRepo.config();
+      git::Config config = mRepo.gitConfig();
       config.setValue("user.email", text);
     });
 
     connect(mFetch, &QCheckBox::toggled, view, [this, view](bool checked) {
-      git::Config config = mRepo.config();
+      git::Config config = mRepo.appConfig();
       config.setValue("autofetch.enable", checked);
       view->startFetchTimer();
     });
@@ -118,28 +118,28 @@ public:
     using Signal = void (QSpinBox::*)(int);
     auto signal = static_cast<Signal>(&QSpinBox::valueChanged);
     connect(mFetchMinutes, signal, this, [this](int value) {
-      git::Config config = mRepo.config();
+      git::Config config = mRepo.appConfig();
       config.setValue("autofetch.minutes", value);
     });
 
     connect(mPushCommit, &QCheckBox::toggled, this, [this](bool checked) {
-      git::Config config = mRepo.config();
+      git::Config config = mRepo.appConfig();
       config.setValue("autopush.enable", checked);
     });
 
     connect(mPullUpdate, &QCheckBox::toggled, this, [this](bool checked) {
-      git::Config config = mRepo.config();
+      git::Config config = mRepo.appConfig();
       config.setValue("autoupdate.enable", checked);
     });
 
     connect(mAutoPrune, &QCheckBox::toggled, this, [this](bool checked) {
-      git::Config config = mRepo.config();
+      git::Config config = mRepo.appConfig();
       config.setValue("autoprune.enable", checked);
     });
   }
 
   void init() {
-    git::Config config = mRepo.config();
+    git::Config config = mRepo.gitConfig();
     mName->setText(config.value<QString>("user.name"));
     mEmail->setText(config.value<QString>("user.email"));
 
@@ -158,6 +158,7 @@ public:
     git::Config app = mRepo.appConfig();
     mFetch->setChecked(app.value<bool>("autofetch.enable", fetch));
     mFetchMinutes->setValue(app.value<int>("autofetch.minutes", minutes));
+    mFetchMinutes->setEnabled(mFetch->isChecked());
     mPushCommit->setChecked(app.value<bool>("autopush.enable", push));
     mPullUpdate->setChecked(app.value<bool>("autoupdate.enable", update));
     mAutoPrune->setChecked(app.value<bool>("autoprune.enable", prune));
@@ -605,7 +606,7 @@ public:
     QLineEdit *urlLineEdit =
         new QLineEdit(map.value("Endpoint").section(" ", 0, 0));
     connect(urlLineEdit, &QLineEdit::textChanged, [repo](const QString &text) {
-      git::Config config = repo.config();
+      git::Config config = repo.gitConfig();
       config.setValue("lfs.url", text);
     });
 
@@ -614,7 +615,7 @@ public:
     pruneOffsetDays->setValue(map.value("PruneOffsetDays").toInt());
     auto signal = QOverload<int>::of(&QSpinBox::valueChanged);
     connect(pruneOffsetDays, signal, [repo](int value) {
-      git::Config config = repo.config();
+      git::Config config = repo.gitConfig();
       config.setValue("lfs.pruneoffsetdays", value);
     });
     QHBoxLayout *pruneOffsetLayout = new QHBoxLayout;
@@ -628,7 +629,7 @@ public:
     bool fetchRecentEnabled = map.value("FetchRecentAlways").contains("true");
     fetchRecentAlways->setChecked(fetchRecentEnabled);
     connect(fetchRecentAlways, &QCheckBox::toggled, [repo](bool checked) {
-      git::Config config = repo.config();
+      git::Config config = repo.gitConfig();
       config.setValue("lfs.fetchrecentalways", checked);
     });
 
@@ -637,7 +638,7 @@ public:
     fetchRecentRefsDays->setValue(map.value("FetchRecentRefsDays").toInt());
     fetchRecentRefsDays->setEnabled(fetchRecentEnabled);
     connect(fetchRecentRefsDays, signal, [repo](int value) {
-      git::Config config = repo.config();
+      git::Config config = repo.gitConfig();
       config.setValue("lfs.fetchrecentrefsdays", value);
     });
     connect(fetchRecentAlways, &QCheckBox::toggled, this,
@@ -655,7 +656,7 @@ public:
         map.value("FetchRecentCommitsDays").toInt());
     fetchRecentCommitsDays->setEnabled(fetchRecentEnabled);
     connect(fetchRecentCommitsDays, signal, [repo](int value) {
-      git::Config config = repo.config();
+      git::Config config = repo.gitConfig();
       config.setValue("lfs.fetchrecentcommitsdays", value);
     });
     connect(fetchRecentAlways, &QCheckBox::toggled, this,
