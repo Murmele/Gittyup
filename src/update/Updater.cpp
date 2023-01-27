@@ -127,7 +127,7 @@ void Updater::update(bool spontaneous) {
       QList<QByteArray> tokens = line.split(' ');
       if (tokens.size() > 1 && tokens.first() == "###") {
         QByteArray version = tokens.at(1).mid(1); // Strip 'v' prefix.
-        if (QVersionNumber::fromString(version) < appVersion)
+        if (QVersionNumber::fromString(version) <= appVersion)
           break;
         versions.append(version);
       }
