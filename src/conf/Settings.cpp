@@ -233,7 +233,7 @@ QDir Settings::confDir() {
 QDir Settings::l10nDir() {
   QDir dir = confDir();
   if (!dir.cd("l10n"))
-    dir = QDir(L10N_DIR);  // For debugging search in source dir
+    dir = QDir(L10N_DIR); // For debugging search in source dir
 
   qDebug() << "l10n dir: " << dir;
   return dir;

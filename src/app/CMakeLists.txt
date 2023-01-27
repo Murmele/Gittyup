@@ -208,10 +208,16 @@ execute_process(COMMAND
 else()
   # Windows and UNIX must be ./ otherwise it is interpreted as absolute path
   if(UNIX)
-        install(FILES ${CMAKE_SOURCE_DIR}/rsrc/linux/com.github.Murmele.Gittyup.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications RENAME ${GITTYUP_NAME}.desktop)
-        if (${GENERATE_APPDATA})
-            install(FILES ${APPDATA} DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo RENAME ${GITTYUP_NAME}.appdata.xml)
-        endif()
+    install(
+      FILES ${CMAKE_SOURCE_DIR}/rsrc/linux/com.github.Murmele.Gittyup.desktop
+      DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+      RENAME ${GITTYUP_NAME}.desktop)
+    if(${GENERATE_APPDATA})
+      install(
+        FILES ${APPDATA}
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
+        RENAME ${GITTYUP_NAME}.appdata.xml)
+    endif()
   endif()
 
   # Install config files.
