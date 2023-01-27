@@ -50,6 +50,7 @@ set(BUILD_SHARED_LIBS OFF)
 
 option(FLATPAK "Building for flatpak" OFF)
 option(DEBUG_FLATPAK "Building but using flatpak urls for testing" OFF)
+option(ENABLE_UPDATE_OVER_GUI "Enable updating from the Gittyup gui" ON)
 option(USE_SYSTEM_OPENSSL "Use the system-wide OpenSSL installation" OFF)
 option(
   USE_SYSTEM_LIBGIT2
@@ -106,6 +107,10 @@ if(FLATPAK)
     COMPONENTS XcbQpa
     REQUIRED)
   add_compile_definitions(FLATPAK)
+endif()
+
+if(ENABLE_UPDATE_OVER_GUI)
+  add_compile_definitions(ENABLE_UPDATE_OVER_GUI)
 endif()
 
 if(DEBUG_FLATPAK)
