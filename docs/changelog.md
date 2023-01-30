@@ -1,14 +1,16 @@
 ### v9.9.9 - 2023-01-22
 
-Release description
+Current unreleased version
 
 #### Added
 
 * Colorized status badges
+* Template: use first template as default template for the commit message
 
 #### Changed
 
-* Placeholder REMOVE when adding the first change
+* Fix external diff with Flatpak
+* Fix storing repository settings correctly, because otherwise they are not applied
 
 ----
 
