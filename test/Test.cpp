@@ -10,7 +10,7 @@
 #include "Test.h"
 #include "git/Config.h"
 #include "ui/RepoView.h"
-//#include <JlCompress.h>
+// #include <JlCompress.h>
 #include <exception>
 #include <QFileInfo>
 #include "zip.h"

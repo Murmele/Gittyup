@@ -50,7 +50,6 @@ public:
     TerminalName,
     TerminalPath,
     DontTranslate,
-    StoreCredentials,
     AllowSingleInstanceOnly,
     CheckForUpdatesAutomatically,
     InstallUpdatesAutomatically,
