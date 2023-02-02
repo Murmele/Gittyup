@@ -103,7 +103,7 @@ Use an existing tag as template for your next tag. So you never have to look whi
 ![Tag selection](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/tag_selection.png)
 
 ### Commit message template
-Create you commit messages according a defined template
+Create you commit messages according a defined template. The first template is automatically applied to the commit message editor.
 
 ![Commit message template selection](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/CommitMessageTemplateSelection.png)
 
