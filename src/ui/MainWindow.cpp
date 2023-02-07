@@ -32,6 +32,7 @@
 #include <QSettings>
 #include <QTimeLine>
 #include <QToolButton>
+#include "../util/Debug.h"
 
 namespace {
 
@@ -358,6 +359,7 @@ bool MainWindow::restoreWindows() {
 }
 
 MainWindow *MainWindow::open(const QString &path, bool warnOnInvalid) {
+  DebugRefresh("Open project: " << path);
   if (path.isEmpty())
     return nullptr;
 
