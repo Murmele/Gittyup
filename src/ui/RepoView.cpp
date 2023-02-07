@@ -1306,7 +1306,6 @@ void RepoView::merge(MergeFlags flags, const git::AnnotatedCommit &upstream,
 
   if (flags & NoCommit) {
     refresh(false);
-    // selectHead();
     return;
   }
 
@@ -2935,7 +2934,7 @@ bool RepoView::checkForConflicts(LogEntry *parent, const QString &action) {
     entry->addEntry(LogEntry::Hint, abort.arg(action));
   }
 
-  refresh(false); // TODO do something else
+  refresh(false);
   return true;
 }
 

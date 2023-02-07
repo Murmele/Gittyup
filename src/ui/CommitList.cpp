@@ -1208,11 +1208,7 @@ void CommitList::cancelStatus() {
 }
 
 void CommitList::setReference(const git::Reference &ref) {
-  // storeSelection(); // If it will not be called because resetWalker was
-  // suppressed
   static_cast<CommitModel *>(mModel)->setReference(ref);
-  // restoreSelection(); // If it will not be called because resetWalker was
-  // suppressed
   if (!isSuppressResetWalker())
     updateModel();
   setFocus();
