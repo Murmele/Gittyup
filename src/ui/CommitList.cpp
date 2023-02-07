@@ -100,8 +100,6 @@ public:
     resetSettings();
   }
 
-  void restoreSelection(bool restore) { mRestoreSelection = restore; }
-
   git::Reference reference() const { return mRef; }
 
   git::Diff status() const {
@@ -558,7 +556,6 @@ private:
 
   // walker settings
   bool mSuppressResetWalker{false};
-  bool mRestoreSelection{true};
   bool mRefsAll = true;
   bool mSortDate = true;
   bool mCleanStatus = true;
@@ -1129,8 +1126,6 @@ CommitList::CommitList(Index *index, QWidget *parent)
     // Select the first commit if the selection was cleared.
     if (selectedIndexes().isEmpty())
       selectFirstCommit();
-
-    model->restoreSelection(true);
 
     // Notify main window.
     emit statusChanged(visible);
