@@ -166,6 +166,8 @@ void TestFileContextMenu::testDiscardSubmodule() {
   QVERIFY(button->isEnabled());
   emit button->clicked(true);
 
+  QTest::qWait(1000); // Wait until submodule discarded
+
   // original text
   //  {"file.txt", "File.txt\n"},
   //  {"file2.txt", "file2.txt\n"},
