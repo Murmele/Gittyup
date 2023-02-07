@@ -264,12 +264,7 @@ RepoView *MainWindow::addTab(const git::Repository &repo) {
   }
 
   // Start status diff.
-  view->refresh();
-
-  // Select head after the view has been added.
-  view->selectHead();
-  view->selectFirstCommit();
-
+  view->refresh(false);
   return view;
 }
 

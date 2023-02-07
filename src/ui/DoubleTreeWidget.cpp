@@ -449,7 +449,7 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
     loadSelection();
 
   DebugRefresh("finished, time: " << QDateTime::currentDateTime()
-                        << "Counter: " << mSetDiffCounter);
+                                  << "Counter: " << mSetDiffCounter);
 }
 
 void DoubleTreeWidget::find() { mEditor->find(); }
