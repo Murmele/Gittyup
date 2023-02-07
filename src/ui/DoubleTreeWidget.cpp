@@ -481,6 +481,19 @@ void DoubleTreeWidget::loadSelection() {
 
   if (mSelectedFile.filename != "") {
     index = mDiffTreeModel->index(mSelectedFile.filename);
+
+    if (!index.isValid()) {
+      // If index is anymore valid, because of removed file,
+      // select the parent if possible
+      auto list = mSelectedFile.filename.split(
+          QStringLiteral("/")); // TODO: check also on windows
+      list.removeLast();
+      while (!index.isValid() && !list.isEmpty()) {
+        const QString s = list.join(QStringLiteral("/"));
+        index = mDiffTreeModel->index(s);
+        list.removeLast();
+      }
+    }
     state = static_cast<Qt::CheckState>(
         mDiffTreeModel->data(index, Qt::CheckStateRole).toInt());
   }
