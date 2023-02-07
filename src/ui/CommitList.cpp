@@ -36,6 +36,7 @@
 #include <QStyledItemDelegate>
 #include <QTextLayout>
 #include <QtConcurrent>
+#include "util/Debug.h"
 
 namespace {
 
@@ -1547,6 +1548,8 @@ void CommitList::mousePressEvent(QMouseEvent *event) {
 
   if (mStar.isValid() || mCancel.isValid())
     return;
+
+  DebugRefresh("time: " << QDateTime::currentDateTime());
 
   QListView::mousePressEvent(event);
 }

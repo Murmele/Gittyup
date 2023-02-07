@@ -19,6 +19,7 @@
 #include "conf/Settings.h"
 #include "DiffView/DiffView.h"
 #include "git/Index.h"
+#include "util/Debug.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -382,6 +383,11 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
                                const QString &pathspec) {
   Q_UNUSED(file)
   Q_UNUSED(pathspec)
+
+  mSetDiffCounter++;
+
+  DebugRefresh("time: " << QDateTime::currentDateTime()
+                        << "Counter: " << mSetDiffCounter);
 
   mDiff = diff;
 
