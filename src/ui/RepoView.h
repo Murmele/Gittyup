@@ -278,7 +278,7 @@ public:
   void updateSubmodules(
       const QList<git::Submodule> &submodules = QList<git::Submodule>(),
       bool recursive = true, bool init = false, bool checkout_force = false,
-      LogEntry *parent = nullptr);
+      LogEntry *parent = nullptr, bool restoreSelection = true);
   bool openSubmodule(const git::Submodule &submodule);
 
   // config
@@ -386,7 +386,8 @@ private:
                           bool checkout_force, LogEntry *parent);
   void updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
                              bool recursive = true, bool init = false,
-                             bool checkout_force = false);
+                             bool checkout_force = false,
+                             bool restoreSelection = true);
 
   QList<SubmoduleInfo>
   submoduleResetInfoList(const git::Repository &repo,

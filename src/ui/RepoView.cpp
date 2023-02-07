@@ -2258,11 +2258,14 @@ void RepoView::reset(const git::Commit &commit, git_reset_t type,
   QString text = tr("%1 to %2").arg(head.name(), commit.link());
   LogEntry *entry = addLogEntry(text, title);
 
-  if (!commit.reset(type))
+  if (!commit.reset(type, QStringList(), false))
     error(entry, commitToAmend ? tr("amend") : tr("reset"), head.name());
 
   updateSubmodules(mRepo.submodules(), true, false,
-                   (type == GIT_RESET_HARD) ? true : false, entry);
+                   (type == GIT_RESET_HARD) ? true : false, entry,
+                   type == git_reset_t::GIT_RESET_HARD);
+  if (mRepo.submodules().isEmpty())
+    refresh(type == git_reset_t::GIT_RESET_HARD);
 }
 
 void RepoView::resetSubmodules(const QList<git::Submodule> &submodules,
@@ -2394,7 +2397,7 @@ RepoView::submoduleResetInfoList(const git::Repository &repo,
 
 void RepoView::updateSubmodules(const QList<git::Submodule> &submodules,
                                 bool recursive, bool init, bool checkout_force,
-                                LogEntry *parent) {
+                                LogEntry *parent, bool restoreSelection) {
   if (mWatcher) {
     // Queue update. synchrone
     connect(mWatcher, &QFutureWatcher<git::Result>::finished, mWatcher,
@@ -2412,7 +2415,8 @@ void RepoView::updateSubmodules(const QList<git::Submodule> &submodules,
   // Start updating asynchronously.
   QList<SubmoduleInfo> infos =
       submoduleUpdateInfoList(mRepo, submodules, init, checkout_force, parent);
-  updateSubmodulesAsync(infos, recursive, init, checkout_force);
+  updateSubmodulesAsync(infos, recursive, init, checkout_force,
+                        restoreSelection);
 }
 
 /*!
@@ -2457,9 +2461,10 @@ QList<RepoView::SubmoduleInfo> RepoView::submoduleUpdateInfoList(
 
 void RepoView::updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
                                      bool recursive, bool init,
-                                     bool checkout_force) {
+                                     bool checkout_force,
+                                     bool restoreSelection) {
   if (submodules.isEmpty()) {
-    refresh(true);
+    refresh(restoreSelection);
     return;
   }
 
@@ -2471,7 +2476,8 @@ void RepoView::updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
 
   mWatcher = new QFutureWatcher<git::Result>(this);
   connect(mWatcher, &QFutureWatcher<git::Result>::finished, mWatcher,
-          [this, init, recursive, checkout_force, tail, info, entry] {
+          [this, init, recursive, checkout_force, tail, info, entry,
+           restoreSelection] {
             entry->setBusy(false);
 
             git::Result result = mWatcher->result();
@@ -2501,7 +2507,7 @@ void RepoView::updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
 
             // Restart with smaller list.
             updateSubmodulesAsync(prefix + tail, recursive, init,
-                                  checkout_force);
+                                  checkout_force, restoreSelection);
           });
 
   QString url = submodule.url();

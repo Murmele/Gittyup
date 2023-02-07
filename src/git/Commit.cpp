@@ -251,7 +251,8 @@ bool Commit::amend(const Signature &author, const Signature &committer,
   return !error;
 }
 
-bool Commit::reset(git_reset_t type, const QStringList &paths) const {
+bool Commit::reset(git_reset_t type, const QStringList &paths,
+                   bool triggerReferenceUpdated) const {
   QVector<char *> rawPaths;
   QVector<QByteArray> storage;
   git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
@@ -271,8 +272,9 @@ bool Commit::reset(git_reset_t type, const QStringList &paths) const {
   Repository repo = this->repo();
   int state = repo.state();
   int error = git_reset(repo, d.data(), type, &opts);
-  emit repo.notifier()->referenceUpdated(repo.head(),
-                                         type == git_reset_t::GIT_RESET_HARD);
+  if (triggerReferenceUpdated)
+    emit repo.notifier()->referenceUpdated(repo.head(),
+                                            type == git_reset_t::GIT_RESET_HARD);
   if (repo.state() != state) {
     Patch::clearConflictResolutions(repo);
     emit repo.notifier()->stateChanged();

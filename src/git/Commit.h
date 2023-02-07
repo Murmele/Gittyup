@@ -70,7 +70,8 @@ public:
 
   // Reset HEAD to this commit.
   bool reset(git_reset_t type = GIT_RESET_MIXED,
-             const QStringList &paths = QStringList()) const;
+             const QStringList &paths = QStringList(),
+             bool triggerReferenceUpdated = true) const;
 
   // favorite commits
   bool isStarred() const;

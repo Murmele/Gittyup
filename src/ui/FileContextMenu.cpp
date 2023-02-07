@@ -338,8 +338,8 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
           }
           view->updateSubmodules(submodules, true, false, true);
 
-          // FIXME: Work dir changed?
-          view->refresh(); // TODO: check that refresh is called only once!
+          if (submodules.isEmpty())
+            view->refresh();
         });
 
         dialog->open();
