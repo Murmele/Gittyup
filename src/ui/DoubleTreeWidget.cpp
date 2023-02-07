@@ -386,9 +386,8 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
 
   mSetDiffCounter++;
 
-  DebugRefresh("DoubleTreeWidget::setDiff: time: "
-               << QDateTime::currentDateTime()
-               << "Counter: " << mSetDiffCounter);
+  DebugRefresh("time: " << QDateTime::currentDateTime()
+                        << "Counter: " << mSetDiffCounter);
 
   mDiff = diff;
 

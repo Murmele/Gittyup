@@ -1586,6 +1586,8 @@ void CommitList::mousePressEvent(QMouseEvent *event) {
   if (mStar.isValid() || mCancel.isValid())
     return;
 
+  DebugRefresh("time: " << QDateTime::currentDateTime());
+
   QListView::mousePressEvent(event);
 }
 

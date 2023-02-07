@@ -2780,8 +2780,8 @@ void RepoView::refresh(bool restoreSelection) {
     DebugRefresh("Head name: " << mRepo.head().name());
   else
     DebugRefresh("Head invalid");
-  DebugRefresh("RepoView::refresh: time: " << QDateTime::currentDateTime()
-                                           << " Set diff counter: " << counter);
+  DebugRefresh("time: " << QDateTime::currentDateTime()
+                        << " Set diff counter: " << counter);
   emit mRepo.notifier()->referenceUpdated(mRepo.head(), restoreSelection);
 }
 

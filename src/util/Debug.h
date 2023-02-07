@@ -23,7 +23,7 @@
 
 #define DebugRefresh(x)                                                        \
   do {                                                                         \
-    qDebug() << Q_FUNC_INFO << x;                                              \
+    qDebug() << Q_FUNC_INFO << QStringLiteral(": ") << x;                      \
   } while (false)
 
 #else
