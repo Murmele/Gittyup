@@ -65,6 +65,9 @@ option(USE_SYSTEM_LUA "Use the system-wide Lua installation" OFF)
 option(USE_SYSTEM_HUNSPELL "Use the system-wide hunspell installation" OFF)
 option(USE_SYSTEM_CMARK "Use the system-wide cmark installation" OFF)
 option(ENABLE_TESTS "Enable Gittyup Unittests" ON)
+option(DEBUG_MESSAGES "Enable general debug messages" ON)
+option(DEBUG_MESSAGES_REFRESH "Enable debug messages to debug the refresh flow"
+       ON)
 
 set(LUA_MODULES_PATH
     CACHE
@@ -97,6 +100,13 @@ endif()
 option(DEBUG_OUTPUT "Print debug output" ON)
 if(NOT DEBUG_OUTPUT)
   add_compile_definitions(QT_NO_DEBUG_OUTPUT)
+endif()
+
+if(DEBUG_MESSAGES)
+  add_compile_definitions(DEBUG)
+endif()
+if(DEBUG_MESSAGES_REFRESH)
+  add_compile_definitions(DEBUG_REFRESH)
 endif()
 
 find_package(
