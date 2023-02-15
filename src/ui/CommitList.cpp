@@ -151,7 +151,7 @@ public:
 
   void suppressResetWalker(bool suppress) { mSuppressResetWalker = suppress; }
 
-  bool isSuppressResetWalker() { return mSuppressResetWalker; }
+  bool isResetWalkerSuppressed() { return mSuppressResetWalker; }
 
   void setReference(const git::Reference &ref) {
     mRef = ref;
@@ -1209,7 +1209,7 @@ void CommitList::cancelStatus() {
 
 void CommitList::setReference(const git::Reference &ref) {
   static_cast<CommitModel *>(mModel)->setReference(ref);
-  if (!isSuppressResetWalker())
+  if (!isResetWalkerSuppressed())
     updateModel();
   setFocus();
 }
@@ -1320,8 +1320,8 @@ void CommitList::resetReference(const git::Reference &ref) {
   static_cast<CommitModel *>(mModel)->resetReference(ref);
 }
 
-bool CommitList::isSuppressResetWalker() {
-  return static_cast<CommitModel *>(mModel)->isSuppressResetWalker();
+bool CommitList::isResetWalkerSuppressed() {
+  return static_cast<CommitModel *>(mModel)->isResetWalkerSuppressed();
 }
 
 void CommitList::resetSettings() {
