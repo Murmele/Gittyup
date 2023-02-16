@@ -3,8 +3,7 @@
 
 #include <QDebug>
 
-#ifdef DEBUG
-
+#ifdef DEBUG_OUTPUT_GENERAL
 #define Debug(x)                                                               \
   do {                                                                         \
     qDebug() << x;                                                             \
@@ -13,7 +12,7 @@
 #define Debug(x)
 #endif
 
-#ifdef DEBUG_REFRESH
+#ifdef DEBUG_OUTPUT_REFRESH
 #define DebugRefresh(x)                                                        \
   do {                                                                         \
     qDebug() << Q_FUNC_INFO << QStringLiteral(": ") << x;                      \
