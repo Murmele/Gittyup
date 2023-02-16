@@ -242,8 +242,8 @@ public:
     foreach (auto helper, availableHelpers) {
       mAvailableStores->addItem(helper);
     }
-    mAvailableStores->setCurrentText(currentHelper);
     mAvailableStores->setEditable(true);
+    mAvailableStores->setCurrentText(currentHelper);
 
     mSingleInstance->setChecked(
         settings->value(Setting::Id::AllowSingleInstanceOnly).toBool());
