@@ -346,6 +346,12 @@ void DiffView::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 bool DiffView::canFetchMore() {
+  if (!mFiles.isEmpty()) {
+    FileWidget *lastFile = mFiles.last();
+    if (lastFile->canFetchMore())
+      return true;
+  }
+
   auto dtw = dynamic_cast<DoubleTreeWidget *>(
       mParent); // for an unknown reason parent() and p are not the same
   assert(dtw);
@@ -358,81 +364,112 @@ bool DiffView::canFetchMore() {
  * Fetch maxNewFiles more patches
  * use a while loop with canFetchMore() to get all
  */
-void DiffView::fetchMore() {
-  const int maxNewFiles = 8;
+void DiffView::fetchMore(int fetchWidgets) {
   QVBoxLayout *layout = static_cast<QVBoxLayout *>(widget()->layout());
 
   // Add widgets.
   RepoView *view = RepoView::parentView(this);
-  int addedFiles = 0;
+  int addedWidgets = 0;
 
-  auto dtw = dynamic_cast<DoubleTreeWidget *>(mParent);
-  // QList<int> patchIndices =
-  // mDiffTreeModel->patchIndices(dtw->selectedIndex());
-  QList<QModelIndex> indexList = dtw->selectedIndices();
-  QList<QModelIndex> indices;
-  for (auto index : indexList) {
-    QList<QModelIndex> addList = mDiffTreeModel->modelIndices(index);
-    for (auto add : addList) {
-      if (!indices.contains(add))
-        indices.append(add);
+  // Fetch all files
+  bool fetchAll = fetchWidgets < 0 ? true : false;
+  if (fetchWidgets < 0)
+    fetchWidgets = 4;
+
+  // First load all hunks of last file before loading new files
+  bool fetchFiles = true;
+  if (!mFiles.isEmpty()) {
+    FileWidget *lastFile = mFiles.last();
+    while (lastFile->canFetchMore() &&
+           ((verticalScrollBar()->maximum() - verticalScrollBar()->value() <
+             height() / 2) ||
+            fetchAll)) {
+      addedWidgets += lastFile->fetchMore(fetchAll ? -1 : 1);
+
+      // Load hunk(s) and update scrollbar
+      QApplication::processEvents();
+
+      // Running the eventloop may trigger a view refresh
+      if (mFiles.isEmpty())
+        return;
     }
+
+    // Stop loading files
+    if (verticalScrollBar()->maximum() - verticalScrollBar()->value() >
+        height() / 2)
+      fetchFiles = false;
   }
-  int count = indices.count();
 
-  for (int i = mFiles.count(); i < count && addedFiles < maxNewFiles; ++i) {
-
-    int pidx = indices[i].data(DiffTreeModel::PatchIndexRole).toInt();
-    addedFiles++;
-    git::Patch patch = mDiff.patch(pidx);
-    if (!patch.isValid()) {
-      // This diff is stale. Refresh the view.
-      QTimer::singleShot(0, view, &RepoView::refresh);
-      return;
-    }
-
-    auto state = static_cast<git::Index::StagedState>(
-        indices[i].data(Qt::CheckStateRole).toInt());
-
-    git::Patch staged;
-    const int index = mStagedPatches.value(patch.name(), -1);
-    if (index != -1)
-      staged = mStagedDiff.patch(index);
-
-    git::Repository repo = view->repo();
-    QString name = patch.name();
-    QString path = repo.workdir().filePath(name);
-    bool submodule = repo.lookupSubmodule(name).isValid();
-    FileWidget *file = new FileWidget(this, mDiff, patch, staged, indices[i],
-                                      name, path, submodule, widget());
-    file->setStageState(state);
-    mFileWidgetLayout->addWidget(file);
-
-    mFiles.append(file);
-
-    if (file->isEmpty()) {
-      DisclosureButton *button = file->header()->disclosureButton();
-      button->setChecked(false);
-      button->setEnabled(false);
-    }
-
-    // Respond to diagnostic signal.
-    connect(file, &FileWidget::diagnosticAdded, this,
-            &DiffView::diagnosticAdded);
-    connect(file, &FileWidget::stageStateChanged,
-            [this](const QModelIndex index, int state) {
-              /*emit fileStageStateChanged(state);*/
-              mDiffTreeModel->setData(index, state, Qt::CheckStateRole);
-            });
-    connect(file, &FileWidget::discarded, [this](const QModelIndex &index) {
-      RepoView *view = RepoView::parentView(this);
-      if (!mDiffTreeModel->discard(index)) {
-        QString name = index.data(Qt::DisplayRole).toString();
-        LogEntry *parent = view->addLogEntry(name, FileWidget::tr("Discard"));
-        view->error(parent, FileWidget::tr("discard"), name);
+  if (fetchFiles) {
+    auto dtw = dynamic_cast<DoubleTreeWidget *>(mParent);
+    // QList<int> patchIndices =
+    // mDiffTreeModel->patchIndices(dtw->selectedIndex());
+    QList<QModelIndex> indexList = dtw->selectedIndices();
+    QList<QModelIndex> indices;
+    for (auto index : indexList) {
+      QList<QModelIndex> addList = mDiffTreeModel->modelIndices(index);
+      for (auto add : addList) {
+        if (!indices.contains(add))
+          indices.append(add);
       }
-      view->refresh();
-    });
+    }
+    int count = indices.count();
+
+    for (int i = mFiles.count(); i < count && addedWidgets < fetchWidgets;
+         ++i) {
+
+      int pidx = indices[i].data(DiffTreeModel::PatchIndexRole).toInt();
+      git::Patch patch = mDiff.patch(pidx);
+      if (!patch.isValid()) {
+        // This diff is stale. Refresh the view.
+        QTimer::singleShot(0, view, &RepoView::refresh);
+        return;
+      }
+
+      auto state = static_cast<git::Index::StagedState>(
+          indices[i].data(Qt::CheckStateRole).toInt());
+
+      git::Patch staged;
+      const int index = mStagedPatches.value(patch.name(), -1);
+      if (index != -1)
+        staged = mStagedDiff.patch(index);
+
+      git::Repository repo = view->repo();
+      QString name = patch.name();
+      QString path = repo.workdir().filePath(name);
+      bool submodule = repo.lookupSubmodule(name).isValid();
+      FileWidget *file = new FileWidget(this, mDiff, patch, staged, indices[i],
+                                        name, path, submodule, widget());
+      file->setStageState(state);
+      mFileWidgetLayout->addWidget(file);
+      addedWidgets += file->hunks().count();
+
+      mFiles.append(file);
+
+      if (file->isEmpty()) {
+        DisclosureButton *button = file->header()->disclosureButton();
+        button->setChecked(false);
+        button->setEnabled(false);
+      }
+
+      // Respond to diagnostic signal.
+      connect(file, &FileWidget::diagnosticAdded, this,
+              &DiffView::diagnosticAdded);
+      connect(file, &FileWidget::stageStateChanged,
+              [this](const QModelIndex index, int state) {
+                /*emit fileStageStateChanged(state);*/
+                mDiffTreeModel->setData(index, state, Qt::CheckStateRole);
+              });
+      connect(file, &FileWidget::discarded, [this](const QModelIndex &index) {
+        RepoView *view = RepoView::parentView(this);
+        if (!mDiffTreeModel->discard(index)) {
+          QString name = index.data(Qt::DisplayRole).toString();
+          LogEntry *parent = view->addLogEntry(name, FileWidget::tr("Discard"));
+          view->error(parent, FileWidget::tr("discard"), name);
+        }
+        view->refresh();
+      });
+    }
   }
 
   // Finish layout.

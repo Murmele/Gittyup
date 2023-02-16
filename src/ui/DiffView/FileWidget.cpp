@@ -341,7 +341,7 @@ FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
                        const git::Patch &patch, const git::Patch &staged,
                        const QModelIndex modelIndex, const QString &name,
                        const QString &path, bool submodule, QWidget *parent)
-    : QWidget(parent), mView(view), mDiff(diff), mPatch(patch),
+    : QWidget(parent), mView(view), mDiff(diff), mPatch(patch), mStaged(staged),
       mModelIndex(modelIndex) {
   auto stageState = static_cast<git::Index::StagedState>(
       mModelIndex.data(Qt::CheckStateRole).toInt());
@@ -497,6 +497,7 @@ FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
 }
 
 void FileWidget::updateHunks(git::Patch stagedPatch) {
+  mStaged = stagedPatch;
   for (auto hunk : mHunks)
     hunk->load(stagedPatch, true);
 }
@@ -527,6 +528,8 @@ git::Patch::ConflictResolution _FileWidget::Header::resolution() const {
 void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged,
                              const QString &name, const QString &path,
                              bool submodule) {
+  mPatch = patch;
+  mStaged = staged;
   mHeader->updatePatch(patch);
 
   bool lfs = patch.isLfsPointer();
@@ -550,15 +553,22 @@ void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged,
       stagedHunks.insert(staged.lineNumber(i, 0, git::Diff::OldFile));
   }
 
-  // Add diff hunks.
-  int hunkCount = patch.count();
-  for (int hidx = 0; hidx < hunkCount; ++hidx) {
-    HunkWidget *hunk = addHunk(mDiff, patch, staged, hidx, lfs, submodule);
-    int startLine = patch.lineNumber(hidx, 0, git::Diff::OldFile);
-    // hunk->header()->check()->setChecked(stagedHunks.contains(startLine)); //
-    // not correct, because it could also only a part of the hunk staged (single
-    // lines)
-    mHunkLayout->addWidget(hunk);
+  if (mDiff.isStatusDiff()) {
+    // Partially fetching not supported yet, because then a rework
+    // on the linestaging must be done
+    // Add diff hunks.
+    int hunkCount = patch.count();
+    for (int hidx = 0; hidx < hunkCount; ++hidx) {
+      HunkWidget *hunk = addHunk(mDiff, patch, staged, hidx, lfs, submodule);
+      int startLine = patch.lineNumber(hidx, 0, git::Diff::OldFile);
+      // hunk->header()->check()->setChecked(stagedHunks.contains(startLine));
+      // // not correct, because it could also only a part of the hunk staged
+      // (single lines)
+      mHunkLayout->addWidget(hunk);
+    }
+  } else {
+    if (canFetchMore())
+      fetchMore();
   }
 }
 
@@ -712,6 +722,47 @@ void FileWidget::discardHunk() {
 
   // FIXME: Work dir changed?
   RepoView::parentView(this)->refresh();
+}
+
+bool FileWidget::canFetchMore() const {
+  return mHunks.count() < mPatch.count();
+}
+
+/*!
+ * \brief DiffView::fetchMore
+ * Fetch count more patches
+ * use a while loop with canFetchMore() to get all
+ */
+int FileWidget::fetchMore(int count) {
+  int counter = 0;
+  RepoView *view = RepoView::parentView(this);
+  git::Repository repo = view->repo();
+
+  // Add widgets.
+  int patchCount = mPatch.count();
+  int hunksCount = mHunks.count();
+
+  // Fetch all hunks
+  if (count < 0)
+    count = patchCount;
+
+  bool lfs = mPatch.isLfsPointer();
+  QString name = mPatch.name();
+  bool submodule = repo.lookupSubmodule(name).isValid();
+
+  for (int i = hunksCount; i < patchCount && i < (hunksCount + count); ++i) {
+    HunkWidget *hunk = addHunk(mDiff, mPatch, mStaged, i, lfs, submodule);
+    mHunkLayout->addWidget(hunk);
+    counter++;
+  }
+  return counter;
+}
+
+void FileWidget::fetchAll(int index) {
+  // Load all patches up to and including index.
+  int hunksCount = mHunks.count();
+  while ((index < 0 || hunksCount <= index) && canFetchMore())
+    fetchMore();
 }
 
 void FileWidget::discard() {
