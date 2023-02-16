@@ -112,8 +112,6 @@ public:
   int fetchMore(int count = 4);
   void fetchAll(int index);
 
-  git::Patch patch() const { return mPatch; }
-
   void setStageState(git::Index::StagedState state);
   QModelIndex modelIndex();
 
