@@ -628,8 +628,8 @@ void TestRebase::abortMR() {
                                  int count) {
             QVERIFY(rebase.isValid());
             QCOMPARE(count, 1);
-              QCOMPARE(before.message(), "File.txt changed by second
-              branch\n"); rebaseAboutToRebase++;
+            QCOMPARE(before.message(), "File.txt changed by secondbranch\n");
+            rebaseAboutToRebase++;
           });
   connect(mRepo.notifier(), &git::RepositoryNotifier::rebaseCommitInvalid,
           []() { QVERIFY(false); }); // Should not be called
