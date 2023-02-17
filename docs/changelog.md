@@ -11,6 +11,7 @@ Current unreleased version
 
 * Fix external diff with Flatpak
 * Fix storing repository settings correctly, because otherwise they are not applied
+* Fix language support. Languages can now be switched by adding LANG=<language> in front of the executable
 
 ----
 
