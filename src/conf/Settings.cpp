@@ -45,14 +45,6 @@ QVariant lookup(const QVariantMap &root, const QString &key) {
 }
 
 QString promptKey(Prompt::Kind kind) { return Prompt::key(kind); }
-
-QDir rootDir() {
-  QDir dir(QCoreApplication::applicationDirPath());
-  dir.cdUp();
-
-  return dir;
-}
-
 } // namespace
 
 Settings::Settings(QObject *parent) : QObject(parent) {
@@ -204,6 +196,13 @@ void Settings::setLastPath(const QString &lastPath) {
   setValue(kLastPathKey, lastPath);
 }
 
+QDir Settings::rootDir() {
+  QDir dir(QCoreApplication::applicationDirPath());
+  dir.cdUp();
+
+  return dir;
+}
+
 QDir Settings::appDir() {
   QDir dir(QCoreApplication::applicationDirPath());
 
@@ -224,8 +223,9 @@ QDir Settings::confDir() {
   QDir dir(SRC_CONF_DIR);
 #else
   QDir dir = rootDir();
-  if (!dir.cd("Gittyup"))
-    dir = QDir(CONF_DIR);
+  if (!dir.cd("Gittyup")) {
+    dir.cd(CONF_DIR);
+  }
 #endif
   return dir;
 }
@@ -235,8 +235,10 @@ QDir Settings::l10nDir() {
   QDir dir = QDir(SRC_L10N_DIR);
 #else
   QDir dir = confDir();
-  if (!dir.cd("l10n"))
-    dir = QDir(L10N_DIR); // For debugging search in source dir
+  if (!dir.cd("l10n")) {
+    dir = rootDir();
+    dir.cd(L10N_DIR);
+  }
 #endif
   return dir;
 }
@@ -252,8 +254,10 @@ QDir Settings::lexerDir() {
   QDir dir(SRC_SCINTILLUA_LEXERS_DIR);
 #else
   QDir dir = confDir();
-  if (!dir.cd("lexers"))
-    dir = QDir(SCINTILLUA_LEXERS_DIR);
+  if (!dir.cd("lexers")) {
+    dir = rootDir();
+    dir.cd(SCINTILLUA_LEXERS_DIR);
+  }
 #endif
   return dir;
 }

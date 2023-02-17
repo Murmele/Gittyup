@@ -102,6 +102,7 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
   // Register types that are queued at runtime.
   qRegisterMetaType<git::Id>();
 
+  qDebug() << QString("Root dir: %1").arg(Settings::rootDir().absolutePath());
   qDebug() << QString("App dir: %1").arg(Settings::appDir().absolutePath());
   qDebug() << QString("Doc dir: %1").arg(Settings::docDir().absolutePath());
   qDebug() << QString("Conf dir: %1").arg(Settings::confDir().absolutePath());
