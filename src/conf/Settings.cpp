@@ -219,16 +219,25 @@ QDir Settings::appDir() {
 QDir Settings::docDir() { return confDir(); }
 
 QDir Settings::confDir() {
+
+#if !defined(NDEBUG)
+  QDir dir(DEV_CONF_DIR);
+#else
   QDir dir = rootDir();
   if (!dir.cd("Resources"))
     dir = QDir(CONF_DIR);
+#endif
   return dir;
 }
 
 QDir Settings::l10nDir() {
+#if !defined(NDEBUG)
+  QDir dir = QDir(DEV_L10N_DIR);
+#else
   QDir dir = confDir();
   if (!dir.cd("l10n"))
     dir = QDir(L10N_DIR); // For debugging search in source dir
+#endif
   return dir;
 }
 
@@ -239,9 +248,13 @@ QDir Settings::dictionariesDir() {
 }
 
 QDir Settings::lexerDir() {
+#if !defined(NDEBUG)
+  QDir dir(DEV_SCINTILLUA_LEXERS_DIR);
+#else
   QDir dir = confDir();
   if (!dir.cd("lexers"))
-    dir = QDir(SCINTILLUA_LEXERS_DIR); // For debugging search in source dir
+    dir = QDir(SCINTILLUA_LEXERS_DIR);
+#endif
   return dir;
 }
 

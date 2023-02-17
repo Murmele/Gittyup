@@ -61,3 +61,6 @@ set_target_properties(scintilla PROPERTIES AUTOMOC ON)
 set(SCINTILLUA_LEXERS_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/scintillua/lexers
     CACHE INTERNAL "")
+set(DEV_SCINTILLUA_LEXERS_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/scintillua/lexers
+    CACHE INTERNAL "")
