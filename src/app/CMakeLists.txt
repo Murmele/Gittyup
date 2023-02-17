@@ -18,7 +18,7 @@ file(GLOB CONFIG_FILES ${CONF_DIR}/*.lua)
 file(GLOB DICTIONARIES ${CONF_DIR}/dictionaries/*.aff
      ${CONF_DIR}/dictionaries/*.dic ${CONF_DIR}/dictionaries/*.txt)
 file(GLOB THEMES ${CONF_DIR}/themes/*.lua)
-file(GLOB SCINTILLUA_LEXERS ${SCINTILLUA_LEXERS_DIR}/*.lua)
+file(GLOB SCINTILLUA_LEXERS ${SRC_SCINTILLUA_LEXERS_DIR}/*.lua)
 file(GLOB LUA_PLUGINS ${CONF_DIR}/plugins/*.lua ${CONF_DIR}/plugins/*.txt)
 
 # Build resources.

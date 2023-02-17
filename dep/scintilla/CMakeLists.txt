@@ -58,9 +58,7 @@ target_link_libraries(scintilla Qt5::Widgets lexilla)
 
 set_target_properties(scintilla PROPERTIES AUTOMOC ON)
 
-set(SCINTILLUA_LEXERS_DIR
-    ${CMAKE_CURRENT_SOURCE_DIR}/scintillua/lexers
-    CACHE INTERNAL "")
-set(DEV_SCINTILLUA_LEXERS_DIR
+set(SCINTILLUA_LEXERS_DIR ${RESOURCES_DIR}/lexers)
+set(SRC_SCINTILLUA_LEXERS_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/scintillua/lexers
     CACHE INTERNAL "")

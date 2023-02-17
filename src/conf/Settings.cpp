@@ -221,7 +221,7 @@ QDir Settings::docDir() { return confDir(); }
 QDir Settings::confDir() {
 
 #if !defined(NDEBUG)
-  QDir dir(DEV_CONF_DIR);
+  QDir dir(SRC_CONF_DIR);
 #else
   QDir dir = rootDir();
   if (!dir.cd("Resources"))
@@ -232,7 +232,7 @@ QDir Settings::confDir() {
 
 QDir Settings::l10nDir() {
 #if !defined(NDEBUG)
-  QDir dir = QDir(DEV_L10N_DIR);
+  QDir dir = QDir(SRC_L10N_DIR);
 #else
   QDir dir = confDir();
   if (!dir.cd("l10n"))
@@ -249,7 +249,7 @@ QDir Settings::dictionariesDir() {
 
 QDir Settings::lexerDir() {
 #if !defined(NDEBUG)
-  QDir dir(DEV_SCINTILLUA_LEXERS_DIR);
+  QDir dir(SRC_SCINTILLUA_LEXERS_DIR);
 #else
   QDir dir = confDir();
   if (!dir.cd("lexers"))
