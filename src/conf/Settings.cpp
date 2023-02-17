@@ -224,7 +224,8 @@ QDir Settings::confDir() {
 #else
   QDir dir = rootDir();
   if (!dir.cd("Gittyup")) {
-    dir.cd(CONF_DIR);
+    if (!dir.cd(CONF_DIR))
+        dir = SRC_CONF_DIR;
   }
 #endif
   return dir;
@@ -237,7 +238,8 @@ QDir Settings::l10nDir() {
   QDir dir = confDir();
   if (!dir.cd("l10n")) {
     dir = rootDir();
-    dir.cd(L10N_DIR);
+    if (!dir.cd(L10N_DIR))
+        dir = SRC_L10N_DIR;
   }
 #endif
   return dir;
@@ -256,7 +258,8 @@ QDir Settings::lexerDir() {
   QDir dir = confDir();
   if (!dir.cd("lexers")) {
     dir = rootDir();
-    dir.cd(SCINTILLUA_LEXERS_DIR);
+    if (!dir.cd(SCINTILLUA_LEXERS_DIR))
+        dir = SRC_SCINTILLUA_LEXERS_DIR;
   }
 #endif
   return dir;
