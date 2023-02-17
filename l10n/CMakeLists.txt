@@ -43,11 +43,18 @@ foreach(LANGUAGE ${LANGUAGES})
   endif()
 endforeach()
 
-foreach(QM_FILE ${QM_FILES} ${QT_QM_FILES})
+foreach(QM_FILE ${QT_QM_FILES})
   if(EXISTS ${QM_FILE})
     install(
       FILES ${QM_FILE}
       DESTINATION ${L10N_INSTALL_DIR}
       COMPONENT ${GITTYUP_NAME})
   endif()
+endforeach()
+
+foreach(QM_FILE ${QM_FILES})
+    install(
+      FILES ${QM_FILE}
+      DESTINATION ${L10N_INSTALL_DIR}
+      COMPONENT ${GITTYUP_NAME})
 endforeach()
