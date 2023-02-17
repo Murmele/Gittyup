@@ -153,19 +153,10 @@ endif()
 
 add_dependencies(gittyup indexer relauncher)
 
-if(FLATPAK)
-  # Install application.
-  install(
-    TARGETS gittyup
-    DESTINATION bin # otherwise the executable will not be found by flatpak
-    COMPONENT ${GITTYUP_NAME})
-else()
-  # Install application.
-  install(
-    TARGETS gittyup
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT ${GITTYUP_NAME})
-endif()
+install(
+  TARGETS gittyup
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT ${GITTYUP_NAME})
 
 if(APPLE)
   get_target_property(QT_LIBRARY Qt5::Core LOCATION)
