@@ -35,16 +35,8 @@ else()
     set_target_properties(indexer PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()
 
-  if(FLATPAK)
-    # Install application.
-    install(
-      TARGETS indexer
-      DESTINATION ./bin # otherwise the executable will not be found by flatpak
-      COMPONENT ${GITTYUP_NAME})
-  else()
-    install(
-      TARGETS indexer
-      DESTINATION ${CMAKE_INSTALL_BINDIR}
-      COMPONENT ${GITTYUP_NAME})
-  endif()
+  install(
+    TARGETS indexer
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT ${GITTYUP_NAME})
 endif()
