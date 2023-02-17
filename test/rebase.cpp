@@ -690,7 +690,7 @@ void TestRebase::abortMR() {
   QCOMPARE(mRepo.rebaseOngoing(), false);
 
   QTest::qWait(1000); // wait until detailview will be updated, after updating
-                     // status is finished
+                      // status is finished
 
   // Check that buttons are visible
   QCOMPARE(continueRebaseButton->isVisible(), false);
