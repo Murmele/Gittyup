@@ -41,7 +41,7 @@ elseif(UNIX)
   else()
     install(
       TARGETS relauncher
-      DESTINATION .
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
       COMPONENT ${GITTYUP_NAME})
   endif()
 endif()

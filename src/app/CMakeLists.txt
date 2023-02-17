@@ -162,7 +162,7 @@ else()
   # Install application.
   install(
     TARGETS gittyup
-    DESTINATION .
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
     COMPONENT ${GITTYUP_NAME})
 endif()
 

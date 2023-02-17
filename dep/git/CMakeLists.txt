@@ -14,7 +14,7 @@ if(NOT USE_SYSTEM_GIT)
     if(NOT APPLE)
       install(
         TARGETS ${TARGET}
-        DESTINATION .
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
         COMPONENT ${GITTYUP_NAME})
     endif()
   endmacro()
