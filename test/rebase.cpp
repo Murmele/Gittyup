@@ -233,7 +233,7 @@ void TestRebase::conflictingRebase() {
   // Checkout correct branch
   repoView->checkout(branch);
 
-  QTest::qWait(10000);
+  QTest::qWait(1000);
 
   // Rebase on main
   git::Reference mainBranch = mRepo.lookupRef(QString("refs/heads/main"));
@@ -628,7 +628,7 @@ void TestRebase::abortMR() {
                                  int count) {
             QVERIFY(rebase.isValid());
             QCOMPARE(count, 1);
-            QCOMPARE(before.message(), "File.txt changed by secondbranch\n");
+            QCOMPARE(before.message(), "File.txt changed by second branch\n");
             rebaseAboutToRebase++;
           });
   connect(mRepo.notifier(), &git::RepositoryNotifier::rebaseCommitInvalid,
