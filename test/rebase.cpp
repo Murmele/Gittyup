@@ -249,7 +249,7 @@ void TestRebase::conflictingRebase() {
   QCOMPARE(rebaseConflict, 1);
 
   // Check that buttons are visible
-  QTest::qWait(5000);
+  QTest::qWait(100);
   QCOMPARE(continueRebaseButton->isVisible(), true);
   QCOMPARE(abortRebaseButton->isVisible(), true);
 
