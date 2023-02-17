@@ -224,7 +224,7 @@ QDir Settings::confDir() {
   QDir dir(SRC_CONF_DIR);
 #else
   QDir dir = rootDir();
-  if (!dir.cd("Resources"))
+  if (!dir.cd("Gittyup"))
     dir = QDir(CONF_DIR);
 #endif
   return dir;
