@@ -106,7 +106,7 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
   qDebug() << QString("App dir: %1").arg(Settings::appDir().absolutePath());
   qDebug() << QString("Doc dir: %1").arg(Settings::docDir().absolutePath());
   qDebug() << QString("Conf dir: %1").arg(Settings::confDir().absolutePath());
-  qDebug() << QString("l18n dir: %1").arg(Settings::l10nDir().absolutePath());
+  qDebug() << QString("l10n dir: %1").arg(Settings::l10nDir().absolutePath());
   qDebug() << QString("dictionaries dir: %1")
                   .arg(Settings::dictionariesDir().absolutePath());
   qDebug() << QString("lexer dir: %1").arg(Settings::lexerDir().absolutePath());

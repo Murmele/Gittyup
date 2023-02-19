@@ -53,8 +53,8 @@ foreach(QM_FILE ${QT_QM_FILES})
 endforeach()
 
 foreach(QM_FILE ${QM_FILES})
-    install(
-      FILES ${QM_FILE}
-      DESTINATION ${L10N_INSTALL_DIR}
-      COMPONENT ${GITTYUP_NAME})
+  install(
+    FILES ${QM_FILE}
+    DESTINATION ${L10N_INSTALL_DIR}
+    COMPONENT ${GITTYUP_NAME})
 endforeach()
