@@ -155,7 +155,8 @@ add_dependencies(gittyup indexer relauncher)
 
 install(
   TARGETS gittyup
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  DESTINATION
+    $<IF:$<PLATFORM_ID:Darwin>,${CONTENTS_DIR},${CMAKE_INSTALL_BINDIR}>
   COMPONENT ${GITTYUP_NAME})
 
 if(APPLE)
@@ -164,7 +165,7 @@ if(APPLE)
   get_filename_component(RPATH ${QT_FRAMEWORK} DIRECTORY)
 
   # Fixup relauncher RPATH.
-  set(RELAUNCHER ${GITTYUP_NAME}.app/Contents/MacOS/relauncher)
+  set(RELAUNCHER ${CONTENTS_DIR}/MacOS/relauncher)
   install(
     CODE "execute_process(COMMAND
 		${CMAKE_INSTALL_NAME_TOOL} -delete_rpath \"${RPATH}\"
@@ -181,7 +182,7 @@ execute_process(COMMAND
     COMPONENT ${GITTYUP_NAME})
 
   # Fixup indexer RPATH.
-  set(INDEXER ${GITTYUP_NAME}.app/Contents/MacOS/indexer)
+  set(INDEXER ${CONTENTS_DIR}/MacOS/indexer)
   install(
     CODE "execute_process(COMMAND
 		${CMAKE_INSTALL_NAME_TOOL} -delete_rpath \"${RPATH}\"
