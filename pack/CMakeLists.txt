@@ -20,6 +20,8 @@ if(WIN32)
   set(INSTALL_LIBDIR ${CMAKE_INSTALL_BINDIR})
 elseif(NOT APPLE)
   set(INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
+else()
+  set(INSTALL_LIBDIR ${CONTENTS_DIR})
 endif()
 
 if(FLATPAK)
@@ -40,7 +42,7 @@ elseif(NOT USE_SYSTEM_QT)
 
     install(
       FILES ${PLUGIN}
-      DESTINATION $<${MAC}:${CONTENTS_DIR}/>Plugins/${DIR_NAME}
+      DESTINATION ${INSTALL_LIBDIR}/Plugins/${DIR_NAME}
       PERMISSIONS
         OWNER_READ
         OWNER_WRITE
@@ -191,7 +193,8 @@ if(NOT APPLE)
     set(QT_CONF ${CONF_DIR}/qt.conf)
     install(
       FILES ${QT_CONF}
-      DESTINATION $<${MAC}:${RESOURCES_DIR}/>.
+      DESTINATION
+        $<${MAC}:${RESOURCES_DIR}>$<$<PLATFORM_ID:Windows>:${INSTALL_LIBDIR}>
       COMPONENT ${GITTYUP_NAME})
   endif()
 endif()
