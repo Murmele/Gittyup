@@ -37,7 +37,6 @@ else()
 
   install(
     TARGETS indexer
-    DESTINATION
-      $<IF:$<PLATFORM_ID:Darwin>,${CONTENTS_DIR},${CMAKE_INSTALL_BINDIR}>
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
     COMPONENT ${GITTYUP_NAME})
 endif()
