@@ -16,6 +16,12 @@ else()
                  QComposePlatformInputContextPlugin)
 endif()
 
+if(WIN32)
+  set(INSTALL_LIBDIR ${CMAKE_INSTALL_BINDIR})
+elseif(NOT APPLE)
+  set(INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
+endif()
+
 if(FLATPAK)
   qt_import_plugins(gittyup INCLUDE ${QT_PLUGINS})
 elseif(NOT USE_SYSTEM_QT)
@@ -99,7 +105,7 @@ elseif(NOT USE_SYSTEM_QT)
 
       install(
         FILES ${QT_LIBRARY}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        DESTINATION ${INSTALL_LIBDIR}
         PERMISSIONS
           OWNER_READ
           OWNER_WRITE
@@ -165,7 +171,7 @@ if(NOT APPLE)
 
       install(
         FILES ${SSL_LIB}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        DESTINATION ${INSTALL_LIBDIR}
         PERMISSIONS
           OWNER_READ
           OWNER_WRITE
