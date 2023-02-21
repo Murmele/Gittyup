@@ -12,8 +12,15 @@
 
 #include "DetailView.h"
 
+#include <QModelIndex>
+
 class BlameEditor;
 class ColumnView;
+class TreeModel;
+class QLineEdit;
+class QListWidget;
+class QLabel;
+class QListWidgetItem;
 
 namespace git {
 class Diff;
@@ -41,13 +48,25 @@ public:
 protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
 
+private slots:
+  void search(const QString &pattern);
+  void setFile(const QListWidgetItem *);
+
 private:
   void edit(const QModelIndex &index);
+  void searchFiles(const QRegularExpression &re,
+                   const QModelIndex &parent = QModelIndex());
   void loadEditorContent(const QModelIndex &index);
 
   void selectFile(const QString &name);
 
+  QLabel *mLabelSearch;
+  QLineEdit *mSearch;
+  QListWidget *mSearchResults;
   ColumnView *mView;
+  TreeModel *mModel;
   BlameEditor *mEditor;
+
+  bool mSuppressIndexChange{false};
 };
 #endif
