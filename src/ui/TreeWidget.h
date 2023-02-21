@@ -21,6 +21,7 @@ class QLineEdit;
 class QListWidget;
 class QLabel;
 class QListWidgetItem;
+class QCheckBox;
 
 namespace git {
 class Diff;
@@ -49,18 +50,19 @@ protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
 
 private slots:
-  void search(const QString &pattern);
+  void search();
   void setFile(const QListWidgetItem *);
 
 private:
   void edit(const QModelIndex &index);
-  void searchFiles(const QRegularExpression &re,
+  void searchFiles(const QRegularExpression &re, bool regex,
                    const QModelIndex &parent = QModelIndex());
   void loadEditorContent(const QModelIndex &index);
 
   void selectFile(const QString &name);
 
   QLabel *mLabelSearch;
+  QCheckBox *mcbRegex;
   QLineEdit *mSearch;
   QListWidget *mSearchResults;
   ColumnView *mView;

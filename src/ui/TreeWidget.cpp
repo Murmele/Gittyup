@@ -28,6 +28,7 @@
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QCheckBox>
 
 namespace {
 
@@ -53,9 +54,12 @@ TreeWidget::TreeWidget(const git::Repository &repo, QWidget *parent)
   mLabelSearch = new QLabel(tr("Search:"), this);
   mSearch = new QLineEdit(this);
   connect(mSearch, &QLineEdit::textChanged, this, &TreeWidget::search);
+  mcbRegex = new QCheckBox(tr("Regex"), this);
+  connect(mcbRegex, &QCheckBox::clicked, this, &TreeWidget::search);
   QHBoxLayout *l = new QHBoxLayout();
   l->addWidget(mLabelSearch);
   l->addWidget(mSearch);
+  l->addWidget(mcbRegex);
 
   mSearchResults = new QListWidget(this);
   connect(mSearchResults, &QListWidget::currentItemChanged, this,
@@ -156,7 +160,8 @@ void TreeWidget::edit(const QModelIndex &index) {
   RepoView::parentView(this)->edit(index.data(Qt::EditRole).toString());
 }
 
-void TreeWidget::search(const QString &pattern) {
+void TreeWidget::search() {
+  const QString pattern = mSearch->text();
   const bool search = !pattern.isEmpty();
   mView->setVisible(!search);
   mSearchResults->setVisible(search);
@@ -164,24 +169,27 @@ void TreeWidget::search(const QString &pattern) {
   if (!search)
     return;
 
+  bool regex = mcbRegex->isChecked();
+
   QRegularExpression re(pattern, QRegularExpression::CaseInsensitiveOption);
   mSuppressIndexChange = true;
   mSearchResults->clear();
-  searchFiles(re);
+  searchFiles(re, regex);
   mSuppressIndexChange = false;
 }
 
-void TreeWidget::searchFiles(const QRegularExpression &re,
+void TreeWidget::searchFiles(const QRegularExpression &re, bool regex,
                              const QModelIndex &parent) {
   for (int row = 0; row < mModel->rowCount(parent); row++) {
     const auto index = mModel->index(row, 0, QModelIndex(parent));
     if (mModel->rowCount(index) > 0) {
       // folder
-      searchFiles(re, index);
+      searchFiles(re, regex, index);
     } else {
       // file
       const QString name = mModel->data(index, Qt::EditRole).toString();
-      if (re.match(name).hasMatch()) {
+      if ((!regex && name.contains(re.pattern())) ||
+          (regex && re.match(name).hasMatch())) {
         QListWidgetItem *item = new QListWidgetItem(name, mSearchResults);
         item->setData(Qt::UserRole, index);
         mSearchResults->addItem(item);
