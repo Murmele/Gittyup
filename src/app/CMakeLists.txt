@@ -155,8 +155,7 @@ add_dependencies(gittyup indexer relauncher)
 
 install(
   TARGETS gittyup
-  DESTINATION
-    $<IF:$<PLATFORM_ID:Darwin>,.,${CMAKE_INSTALL_BINDIR}>
+  DESTINATION $<IF:$<PLATFORM_ID:Darwin>,.,${CMAKE_INSTALL_BINDIR}>
   COMPONENT ${GITTYUP_NAME})
 
 if(APPLE)

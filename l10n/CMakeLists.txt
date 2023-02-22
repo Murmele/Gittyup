@@ -39,7 +39,7 @@ foreach(LANGUAGE ${LANGUAGES})
       TARGET translations
       POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E make_directory
-              ${L10N_INSTALL_DIR}/${LANGUAGE}.lproj)
+              ${DIR}/${RESOURCES_DIR}/${LANGUAGE}.lproj)
   endif()
 endforeach()
 
