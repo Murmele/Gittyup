@@ -280,11 +280,11 @@ if(WIN32)
   set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
       "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}
     WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' '' 'Open with Gittyup'
-    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' 'Icon' ${WINREGSTR_EXECUTABLE_PATH}
-    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup\\\\command' '' '${WINREGSTR_EXECUTABLE_PATH} \\\"%V\\\"'
+    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_NAME}.exe\\\"'
+    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_NAME}.exe\\\" \\\"%V\\\"'
     WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' '' 'Open with Gittyup'
-    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' 'Icon' '${WINREGSTR_EXECUTABLE_PATH}'
-    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup\\\\command' '' '${WINREGSTR_EXECUTABLE_PATH} \\\"%L\\\"'"
+    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_NAME}.exe\\\"'
+    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_NAME}.exe\\\" \\\"%L\\\"'"
   )
   set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
       "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}
