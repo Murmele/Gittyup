@@ -236,7 +236,7 @@ elseif(WIN32)
   set(CPACK_NSIS_CREATE_ICONS_EXTRA
       "CreateShortCut \
     \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\${GITTYUP_NAME}.lnk\\\" \
-    \\\"$INSTDIR\\\\${GITTYUP_NAME}.exe\\\"")
+    \\\"$INSTDIR\\\\bin\\\\${GITTYUP_NAME}.exe\\\"")
   set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
   set(CPACK_NSIS_MUI_FINISHPAGE_RUN ${GITTYUP_NAME}.exe)
 
@@ -278,11 +278,11 @@ if(WIN32)
   set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
       "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}
     WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' '' 'Open with Gittyup'
-    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\gittyup.exe\\\"'
-    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\gittyup.exe\\\" \\\"%V\\\"'
+    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\bin\\\\${GITTYUP_NAME}.exe\\\"'
+    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\bin\\\\${GITTYUP_NAME}.exe\\\" \\\"%V\\\"'
     WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' '' 'Open with Gittyup'
-    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\gittyup.exe\\\"'
-    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\gittyup.exe\\\" \\\"%L\\\"'"
+    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\bin\\\\${GITTYUP_NAME}.exe\\\"'
+    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\bin\\\\${GITTYUP_NAME}.exe\\\" \\\"%L\\\"'"
   )
   set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
       "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}
