@@ -62,10 +62,8 @@ target_compile_definitions(
   PUBLIC GITTYUP_NAME="${GITTYUP_NAME}"
          GITTYUP_VERSION="${GITTYUP_VERSION}"
          GITTYUP_IDENTIFIER="${GITTYUP_IDENTIFIER}"
-         GITTYUP_DBUS_INTERFACE_NAME
-         "${GITTYUP_IDENTIFIER}.Application"
-         GITTYUP_DBUS_OBJECT_PATH
-         "/com/github/Murmele/Gittyup/Application"
+         GITTYUP_DBUS_INTERFACE_NAME="${GITTYUP_IDENTIFIER}.Application"
+         GITTYUP_DBUS_OBJECT_PATH="/com/github/Murmele/Gittyup/Application"
   PRIVATE QT_TRANSLATIONS_DIR="${QT_TRANSLATIONS_DIR}"
           BUILD_DESCRIPTION="${BUILD_DESCRIPTION}")
 
