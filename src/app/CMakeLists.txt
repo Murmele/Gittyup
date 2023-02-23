@@ -92,7 +92,6 @@ add_executable(
   ${ACKNOWLEDGMENTS_HTML}
   ${PRIVACY_HTML}
   ${PLUGIN_HTML})
-set_target_properties(gittyup PROPERTIES OUTPUT_NAME ${GITTYUP_NAME})
 
 if(GENERATE_APPDATA)
   add_custom_target(
@@ -108,8 +107,10 @@ endif()
 target_link_libraries(gittyup app)
 
 set_target_properties(
-  gittyup PROPERTIES OUTPUT_NAME ${GITTYUP_EXECUTABLE_NAME}
-                     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+  gittyup
+  PROPERTIES OUTPUT_NAME ${GITTYUP_EXECUTABLE_NAME}
+             MACOSX_BUNDLE_BUNDLE_NAME ${GITTYUP_NAME}
+             RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 if(WIN32)
   target_link_libraries(app Dbghelp.lib)
