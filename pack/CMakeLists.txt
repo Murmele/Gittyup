@@ -220,7 +220,7 @@ if(APPLE AND CODESIGN_IDENTITY)
     CODE "execute_process(COMMAND
       codesign --deep --timestamp --options runtime
         -s \"${CODESIGN_IDENTITY}\"
-        \${CMAKE_INSTALL_PREFIX}/${GITTYUP_NAME}.app
+        \${CMAKE_INSTALL_PREFIX}/${GITTYUP_EXECUTABLE_NAME}.app
     )"
     COMPONENT ${GITTYUP_NAME})
 endif()

@@ -138,7 +138,7 @@ if(APPLE)
 endif()
 
 if(APPLE)
-  set(CONTENTS_DIR ${GITTYUP_NAME}.app/Contents)
+  set(CONTENTS_DIR ${GITTYUP_EXECUTABLE_NAME}.app/Contents)
   set(RESOURCES_DIR ${CONTENTS_DIR}/Resources)
   set(L10N_INSTALL_DIR ${RESOURCES_DIR}/l10n)
 elseif(UNIX)
