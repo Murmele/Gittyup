@@ -3,6 +3,8 @@ project(Gittyup)
 
 # Set name and version.
 set(GITTYUP_NAME "Gittyup")
+set(GITTYUP_EXECUTABLE_NAME "gittyup")
+set(GITTYUP_IDENTIFIER "com.github.Murmele.Gittyup")
 set(GITTYUP_VERSION_MAJOR 1)
 set(GITTYUP_VERSION_MINOR 2)
 set(GITTYUP_VERSION_PATCH 2)

@@ -59,7 +59,13 @@ endif()
 
 target_compile_definitions(
   app
-  PUBLIC GITTYUP_NAME="${GITTYUP_NAME}" GITTYUP_VERSION="${GITTYUP_VERSION}"
+  PUBLIC GITTYUP_NAME="${GITTYUP_NAME}"
+         GITTYUP_VERSION="${GITTYUP_VERSION}"
+         GITTYUP_IDENTIFIER="${GITTYUP_IDENTIFIER}"
+         GITTYUP_DBUS_INTERFACE_NAME
+         "${GITTYUP_IDENTIFIER}.Application"
+         GITTYUP_DBUS_OBJECT_PATH
+         "/com/github/Murmele/Gittyup/Application"
   PRIVATE QT_TRANSLATIONS_DIR="${QT_TRANSLATIONS_DIR}"
           BUILD_DESCRIPTION="${BUILD_DESCRIPTION}")
 
@@ -104,8 +110,8 @@ endif()
 target_link_libraries(gittyup app)
 
 set_target_properties(
-  gittyup PROPERTIES OUTPUT_NAME ${GITTYUP_NAME} RUNTIME_OUTPUT_DIRECTORY
-                                                 ${CMAKE_BINARY_DIR})
+  gittyup PROPERTIES OUTPUT_NAME ${GITTYUP_EXECUTABLE_NAME}
+                     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 if(WIN32)
   target_link_libraries(app Dbghelp.lib)
@@ -116,10 +122,11 @@ elseif(APPLE)
                MACOSX_BUNDLE_INFO_PLIST ${RSRC_DIR}/Info.plist.in
                MACOSX_BUNDLE_ICON_FILE ${GITTYUP_NAME}
                MACOSX_BUNDLE_BUNDLE_NAME ${GITTYUP_NAME}
+               MACOSX_BUNDLE_EXECUTABLE_NAME ${GITTYUP_EXECUTABLE_NAME}
                MACOSX_BUNDLE_BUNDLE_VERSION ${GITTYUP_VERSION}
                MACOSX_BUNDLE_LONG_VERSION_STRING ${GITTYUP_VERSION}
                MACOSX_BUNDLE_SHORT_VERSION_STRING ${GITTYUP_VERSION}
-               MACOSX_BUNDLE_GUI_IDENTIFIER "com.Murmele.Gittyup")
+               MACOSX_BUNDLE_GUI_IDENTIFIER ${GITTYUP_IDENTIFIER})
 
   # Copy config files into bundle.
   set_source_files_properties(
@@ -202,12 +209,12 @@ else()
     install(
       FILES ${CMAKE_SOURCE_DIR}/rsrc/linux/com.github.Murmele.Gittyup.desktop
       DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
-      RENAME ${GITTYUP_NAME}.desktop)
+      RENAME ${GITTYUP_EXECUTABLE_NAME}.desktop)
     if(${GENERATE_APPDATA})
       install(
         FILES ${APPDATA}
         DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
-        RENAME ${GITTYUP_NAME}.appdata.xml)
+        RENAME ${GITTYUP_EXECUTABLE_NAME}.appdata.xml)
     endif()
   endif()
 

@@ -205,13 +205,13 @@ if(UNIX AND NOT APPLE)
       FILES ${RSRC_DIR}/Gittyup.iconset/icon_${icon}x${icon}.png
       DESTINATION share/icons/hicolor/${icon}x${icon}/apps
       COMPONENT ${GITTYUP_NAME}
-      RENAME ${GITTYUP_NAME}.png)
+      RENAME ${GITTYUP_EXECUTABLE_NAME}.png)
   endforeach()
   install(
     FILES ${RSRC_DIR}/Gittyup.iconset/gittyup_logo.svg
     DESTINATION share/icons/hicolor/scalable/apps
     COMPONENT ${GITTYUP_NAME}
-    RENAME ${GITTYUP_NAME}.svg)
+    RENAME ${GITTYUP_EXECUTABLE_NAME}.svg)
 endif()
 
 # Sign bundle on macOS.
@@ -236,9 +236,10 @@ elseif(WIN32)
   set(CPACK_NSIS_CREATE_ICONS_EXTRA
       "CreateShortCut \
     \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\${GITTYUP_NAME}.lnk\\\" \
-    \\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_NAME}.exe\\\"")
+    \\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\""
+  )
   set(CPACK_NSIS_EXECUTABLES_DIRECTORY ${CMAKE_INSTALL_BINDIR})
-  set(CPACK_NSIS_MUI_FINISHPAGE_RUN ${GITTYUP_NAME}.exe)
+  set(CPACK_NSIS_MUI_FINISHPAGE_RUN ${GITTYUP_EXECUTABLE_NAME}.exe)
 
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     install(
@@ -275,16 +276,14 @@ set(CPACK_INSTALL_CMAKE_PROJECTS ${CMAKE_BINARY_DIR} ${GITTYUP_NAME}
 
 # Add Context Menu Shortcuts
 if(WIN32)
-  set(WINREGSTR_EXECUTABLE_PATH
-      '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_NAME}.exe\\\"')
   set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
       "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}
     WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' '' 'Open with Gittyup'
-    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_NAME}.exe\\\"'
-    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_NAME}.exe\\\" \\\"%V\\\"'
+    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\"'
+    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\" \\\"%V\\\"'
     WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' '' 'Open with Gittyup'
-    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_NAME}.exe\\\"'
-    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_NAME}.exe\\\" \\\"%L\\\"'"
+    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\"'
+    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\" \\\"%L\\\"'"
   )
   set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
       "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}

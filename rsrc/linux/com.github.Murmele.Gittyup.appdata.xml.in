@@ -45,7 +45,7 @@
   <url type="donation">https://liberapay.com/Gittyup/donate</url>
 
   <provides>
-    <binary>Gittyup</binary>
+    <binary>gittyup</binary>
     <id>com.github.Murmele.Gittyup</id>
   </provides>
 

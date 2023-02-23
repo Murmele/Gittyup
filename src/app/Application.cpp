@@ -323,9 +323,9 @@ static MainWindow *openOrSwitch(QDir repo) {
 }
 
 #if defined(Q_OS_LINUX)
-#define DBUS_SERVICE_NAME "com.github.Murmele.Gittyup"
-#define DBUS_INTERFACE_NAME "com.github.Murmele.Gittyup.Application"
-#define DBUS_OBJECT_PATH "/com/github/Murmele/Gittyup/Application"
+#define DBUS_SERVICE_NAME GITTYUP_IDENTIFIER
+#define DBUS_INTERFACE_NAME GITTYUP_DBUS_INTERFACE_NAME
+#define DBUS_OBJECT_PATH GITTYUP_DBUS_OBJECT_PATH
 
 DBusGittyup::DBusGittyup(QObject *parent) : QObject(parent) {}
 
