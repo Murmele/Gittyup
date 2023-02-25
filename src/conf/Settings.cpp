@@ -45,18 +45,6 @@ QVariant lookup(const QVariantMap &root, const QString &key) {
 }
 
 QString promptKey(Prompt::Kind kind) { return Prompt::key(kind); }
-
-QDir rootDir() {
-  QDir dir(QCoreApplication::applicationDirPath());
-
-#ifdef Q_OS_MAC
-  dir.cdUp(); // Contents
-#endif
-  qDebug() << "Root dir: " << dir;
-
-  return dir;
-}
-
 } // namespace
 
 Settings::Settings(QObject *parent) : QObject(parent) {
@@ -208,6 +196,13 @@ void Settings::setLastPath(const QString &lastPath) {
   setValue(kLastPathKey, lastPath);
 }
 
+QDir Settings::rootDir() {
+  QDir dir(QCoreApplication::applicationDirPath());
+  dir.cdUp();
+
+  return dir;
+}
+
 QDir Settings::appDir() {
   QDir dir(QCoreApplication::applicationDirPath());
 
@@ -223,48 +218,62 @@ QDir Settings::appDir() {
 QDir Settings::docDir() { return confDir(); }
 
 QDir Settings::confDir() {
+
+#if !defined(NDEBUG)
+  QDir dir(SRC_CONF_DIR);
+#else
   QDir dir = rootDir();
-  if (!dir.cd("Resources"))
-    dir = QDir(CONF_DIR);
-  qDebug() << "Conf dir: " << dir;
+  if (!dir.cd("Resources")) {
+    if (!dir.cd(CONF_DIR))
+      dir = SRC_CONF_DIR;
+  }
+#endif
   return dir;
 }
 
 QDir Settings::l10nDir() {
+#if !defined(NDEBUG)
+  QDir dir = QDir(SRC_L10N_DIR);
+#else
   QDir dir = confDir();
-  if (!dir.cd("l10n"))
-    dir = QDir(L10N_DIR);
-
-  qDebug() << "l10n dir: " << dir;
+  if (!dir.cd("l10n")) {
+    dir = rootDir();
+    if (!dir.cd(L10N_DIR))
+      dir = SRC_L10N_DIR;
+  }
+#endif
   return dir;
 }
 
 QDir Settings::dictionariesDir() {
   QDir dir = confDir();
   dir.cd("dictionaries");
-  qDebug() << "Dictionaries dir: " << dir;
   return dir;
 }
 
 QDir Settings::lexerDir() {
+#if !defined(NDEBUG)
+  QDir dir(SRC_SCINTILLUA_LEXERS_DIR);
+#else
   QDir dir = confDir();
-  if (!dir.cd("lexers"))
-    dir = QDir(SCINTILLUA_LEXERS_DIR);
-  qDebug() << "Lexers dir: " << dir;
+  if (!dir.cd("lexers")) {
+    dir = rootDir();
+    if (!dir.cd(SCINTILLUA_LEXERS_DIR))
+      dir = SRC_SCINTILLUA_LEXERS_DIR;
+  }
+#endif
   return dir;
 }
 
 QDir Settings::themesDir() {
   QDir dir = confDir();
   dir.cd("themes");
-  qDebug() << "Theme dir: " << dir;
   return dir;
 }
 
 QDir Settings::pluginsDir() {
   QDir dir = confDir();
   dir.cd("plugins");
-  qDebug() << "Plugins dir: " << dir;
   return dir;
 }
 

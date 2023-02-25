@@ -314,7 +314,7 @@ jobs:
         uses: GabrielBB/xvfb-action@v1
         with:
           working-directory: build/release
-          run: ninja check
+          run: ninja check --verbose
 
       - name: Test (Windows)
         if: matrix.env.ninja_platform == 'win'

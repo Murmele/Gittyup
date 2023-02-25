@@ -102,6 +102,19 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
   // Register types that are queued at runtime.
   qRegisterMetaType<git::Id>();
 
+  qDebug() << QString("Root dir: %1").arg(Settings::rootDir().absolutePath());
+  qDebug() << QString("App dir: %1").arg(Settings::appDir().absolutePath());
+  qDebug() << QString("Doc dir: %1").arg(Settings::docDir().absolutePath());
+  qDebug() << QString("Conf dir: %1").arg(Settings::confDir().absolutePath());
+  qDebug() << QString("l10n dir: %1").arg(Settings::l10nDir().absolutePath());
+  qDebug() << QString("dictionaries dir: %1")
+                  .arg(Settings::dictionariesDir().absolutePath());
+  qDebug() << QString("lexer dir: %1").arg(Settings::lexerDir().absolutePath());
+  qDebug()
+      << QString("themes dir: %1").arg(Settings::themesDir().absolutePath());
+  qDebug() << QString("pluginsDir dir: %1")
+                  .arg(Settings::pluginsDir().absolutePath());
+
   // Connect updater signals.
   connect(Updater::instance(), &Updater::sslErrors, this,
           &Application::handleSslErrors);
@@ -310,9 +323,9 @@ static MainWindow *openOrSwitch(QDir repo) {
 }
 
 #if defined(Q_OS_LINUX)
-#define DBUS_SERVICE_NAME "com.github.Murmele.Gittyup"
-#define DBUS_INTERFACE_NAME "com.github.Murmele.Gittyup.Application"
-#define DBUS_OBJECT_PATH "/com/github/Murmele/Gittyup/Application"
+#define DBUS_SERVICE_NAME GITTYUP_IDENTIFIER
+#define DBUS_INTERFACE_NAME GITTYUP_DBUS_INTERFACE_NAME
+#define DBUS_OBJECT_PATH GITTYUP_DBUS_OBJECT_PATH
 
 DBusGittyup::DBusGittyup(QObject *parent) : QObject(parent) {}
 

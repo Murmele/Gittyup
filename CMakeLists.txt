@@ -3,6 +3,8 @@ project(Gittyup)
 
 # Set name and version.
 set(GITTYUP_NAME "Gittyup")
+set(GITTYUP_EXECUTABLE_NAME "gittyup")
+set(GITTYUP_IDENTIFIER "com.github.Murmele.Gittyup")
 set(GITTYUP_VERSION_MAJOR 1)
 set(GITTYUP_VERSION_MINOR 2)
 set(GITTYUP_VERSION_PATCH 2)
@@ -133,6 +135,18 @@ if(APPLE)
     set_target_properties(Qt5::${QT_MODULE} PROPERTIES IMPORTED_LOCATION_DEBUG
                                                        ${LOCATION})
   endforeach()
+endif()
+
+if(APPLE)
+  set(CONTENTS_DIR ${GITTYUP_EXECUTABLE_NAME}.app/Contents)
+  set(RESOURCES_DIR ${CONTENTS_DIR}/Resources)
+  set(L10N_INSTALL_DIR ${RESOURCES_DIR}/l10n)
+elseif(UNIX)
+  set(L10N_INSTALL_DIR ${CMAKE_INSTALL_LOCALEDIR}/${GITTYUP_NAME})
+  set(RESOURCES_DIR ${CMAKE_INSTALL_DATADIR}/${GITTYUP_NAME})
+else()
+  set(L10N_INSTALL_DIR Resources/l10n)
+  set(RESOURCES_DIR Resources)
 endif()
 
 add_subdirectory(dep)

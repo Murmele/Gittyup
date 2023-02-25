@@ -2,7 +2,6 @@ set(CONF_DIR ${CMAKE_SOURCE_DIR}/conf)
 set(RSRC_DIR ${CMAKE_SOURCE_DIR}/rsrc)
 
 set(MAC $<PLATFORM_ID:Darwin>)
-set(CONTENTS_DIR ${GITTYUP_NAME}.app/Contents)
 
 # Install Qt plugins.
 set(QT_PLUGINS QJpegPlugin)
@@ -15,6 +14,14 @@ elseif(WIN32)
 else()
   set(QT_PLUGINS ${QT_PLUGINS} QXcbIntegrationPlugin
                  QComposePlatformInputContextPlugin)
+endif()
+
+if(WIN32)
+  set(INSTALL_LIBDIR ${CMAKE_INSTALL_BINDIR})
+elseif(NOT APPLE)
+  set(INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
+else()
+  set(INSTALL_LIBDIR ${CONTENTS_DIR})
 endif()
 
 if(FLATPAK)
@@ -35,7 +42,7 @@ elseif(NOT USE_SYSTEM_QT)
 
     install(
       FILES ${PLUGIN}
-      DESTINATION $<${MAC}:${CONTENTS_DIR}/>Plugins/${DIR_NAME}
+      DESTINATION ${INSTALL_LIBDIR}/Plugins/${DIR_NAME}
       PERMISSIONS
         OWNER_READ
         OWNER_WRITE
@@ -100,7 +107,7 @@ elseif(NOT USE_SYSTEM_QT)
 
       install(
         FILES ${QT_LIBRARY}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        DESTINATION ${INSTALL_LIBDIR}
         PERMISSIONS
           OWNER_READ
           OWNER_WRITE
@@ -166,7 +173,7 @@ if(NOT APPLE)
 
       install(
         FILES ${SSL_LIB}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        DESTINATION ${INSTALL_LIBDIR}
         PERMISSIONS
           OWNER_READ
           OWNER_WRITE
@@ -186,16 +193,25 @@ if(NOT APPLE)
     set(QT_CONF ${CONF_DIR}/qt.conf)
     install(
       FILES ${QT_CONF}
-      DESTINATION $<${MAC}:${CONTENTS_DIR}/Resources/>.
+      DESTINATION
+        $<${MAC}:${RESOURCES_DIR}>$<$<PLATFORM_ID:Windows>:${INSTALL_LIBDIR}>
       COMPONENT ${GITTYUP_NAME})
   endif()
 endif()
 
 if(UNIX AND NOT APPLE)
+  foreach(icon 16 32 64 128 256 512)
+    install(
+      FILES ${RSRC_DIR}/Gittyup.iconset/icon_${icon}x${icon}.png
+      DESTINATION share/icons/hicolor/${icon}x${icon}/apps
+      COMPONENT ${GITTYUP_NAME}
+      RENAME ${GITTYUP_EXECUTABLE_NAME}.png)
+  endforeach()
   install(
-    DIRECTORY ${RSRC_DIR}/Gittyup.iconset
-    DESTINATION "Resources"
-    COMPONENT ${GITTYUP_NAME})
+    FILES ${RSRC_DIR}/Gittyup.iconset/gittyup_logo.svg
+    DESTINATION share/icons/hicolor/scalable/apps
+    COMPONENT ${GITTYUP_NAME}
+    RENAME ${GITTYUP_EXECUTABLE_NAME}.svg)
 endif()
 
 # Sign bundle on macOS.
@@ -204,7 +220,7 @@ if(APPLE AND CODESIGN_IDENTITY)
     CODE "execute_process(COMMAND
       codesign --deep --timestamp --options runtime
         -s \"${CODESIGN_IDENTITY}\"
-        \${CMAKE_INSTALL_PREFIX}/${GITTYUP_NAME}.app
+        \${CMAKE_INSTALL_PREFIX}/${GITTYUP_EXECUTABLE_NAME}.app
     )"
     COMPONENT ${GITTYUP_NAME})
 endif()
@@ -220,9 +236,10 @@ elseif(WIN32)
   set(CPACK_NSIS_CREATE_ICONS_EXTRA
       "CreateShortCut \
     \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\${GITTYUP_NAME}.lnk\\\" \
-    \\\"$INSTDIR\\\\${GITTYUP_NAME}.exe\\\"")
-  set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
-  set(CPACK_NSIS_MUI_FINISHPAGE_RUN ${GITTYUP_NAME}.exe)
+    \\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\""
+  )
+  set(CPACK_NSIS_EXECUTABLES_DIRECTORY ${CMAKE_INSTALL_BINDIR})
+  set(CPACK_NSIS_MUI_FINISHPAGE_RUN ${GITTYUP_EXECUTABLE_NAME}.exe)
 
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     install(
@@ -262,11 +279,11 @@ if(WIN32)
   set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
       "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}
     WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' '' 'Open with Gittyup'
-    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\gittyup.exe\\\"'
-    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\gittyup.exe\\\" \\\"%V\\\"'
+    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\"'
+    WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\" \\\"%V\\\"'
     WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' '' 'Open with Gittyup'
-    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\gittyup.exe\\\"'
-    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\gittyup.exe\\\" \\\"%L\\\"'"
+    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup' 'Icon' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\"'
+    WriteRegStr HKCR 'Directory\\\\shell\\\\Gittyup\\\\command' '' '\\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\" \\\"%L\\\"'"
   )
   set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
       "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}
@@ -277,13 +294,18 @@ endif(WIN32)
 set(CPACK_PACKAGE_FILE_NAME ${PACKAGE_FILE_NAME})
 set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/pack)
 set(CPACK_PACKAGE_INSTALL_DIRECTORY ${GITTYUP_NAME})
-set(CPACK_PACKAGE_VENDOR "Scientific Toolworks, Inc.")
+set(CPACK_PACKAGE_VENDOR "Gittyup Contributors")
 set(CPACK_PACKAGE_VERSION_MAJOR ${GITTYUP_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${GITTYUP_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${GITTYUP_VERSION_PATCH})
 
 if(WIN32)
   set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/LICENSE.md)
+else()
+  install(
+    FILES ${CMAKE_SOURCE_DIR}/LICENSE.md
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/Gittyup
+    RENAME LICENSE)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
