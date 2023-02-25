@@ -6,6 +6,7 @@ Current unreleased version
 
 * Colorized status badges
 * Template: use first template as default template for the commit message
+* Search function for the treeview
 
 #### Changed
 
