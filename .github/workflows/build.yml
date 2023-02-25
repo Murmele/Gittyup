@@ -64,10 +64,16 @@ jobs:
         owner: 'flathub'
         repository: 'com.github.Murmele.Gittyup'
 
+    # just until the new release is out
+    - name: Checkout restructureCMake
+      run: |
+        cd com.github.Murmele.Gittyup
+        git checkout restructureCMake
+
     - name: Replace git tag by the commit id on which it runs
       if: github.ref_type != 'tag'
       run: >
-        sed -i 's@tag: gittyup_v[1-9]*.[0-9]*.[0-9]*@commit: "${{ (github.event.pull_request && github.event.pull_request.head.sha) || github.sha }}"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@tag: .*@commit: "${{ (github.event.pull_request && github.event.pull_request.head.sha) || github.sha }}"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
 
     - name: Use correct git tag
       if: github.ref_type == 'tag'
