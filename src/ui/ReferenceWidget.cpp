@@ -173,25 +173,27 @@ ReferenceWidget::ReferenceWidget(const git::Repository &repo,
     if (!currentReference().isValid())
       select(mRepo.head());
   });
+}
 
-  // Update the label when the reference changes.
-  connect(this, &ReferenceWidget::referenceChanged,
-          [this](const git::Reference &ref) {
-            if (!ref.isValid()) {
-              mLabel->setText(QString());
-              return;
-            }
+/*!
+ * \brief ReferenceWidget::updateReference
+ * Update Label
+ * \param ref
+ */
+void ReferenceWidget::updateLabel(const git::Reference &ref) {
+  if (!ref.isValid()) {
+    mLabel->setText(QString());
+    return;
+  }
 
-            QPalette palette = this->palette();
-            QString enabled = palette.color(QPalette::Text).name();
-            QString disabled = palette.color(QPalette::BrightText).name();
+  QPalette palette = this->palette();
+  QString enabled = palette.color(QPalette::Text).name();
+  QString disabled = palette.color(QPalette::BrightText).name();
 
-            QString kind = ReferenceView::kindString(ref);
-            QString link = kLinkFmt.arg(enabled, ref.name());
-            QString name = ref.isHead() ? kBoldFmt.arg(link) : link;
-            mLabel->setText(
-                kind.isEmpty() ? name : kNameFmt.arg(disabled, kind, name));
-          });
+  QString kind = ReferenceView::kindString(ref);
+  QString link = kLinkFmt.arg(enabled, ref.name());
+  QString name = ref.isHead() ? kBoldFmt.arg(link) : link;
+  mLabel->setText(kind.isEmpty() ? name : kNameFmt.arg(disabled, kind, name));
 }
 
 git::Reference ReferenceWidget::currentReference() const {
@@ -200,9 +202,16 @@ git::Reference ReferenceWidget::currentReference() const {
   return (!all || (ref.isValid() && ref.isStash())) ? ref : mRepo.head();
 }
 
-void ReferenceWidget::select(const git::Reference &ref) {
+/*!
+ * \brief ReferenceWidget::select
+ * \param ref
+ * \param suppress
+ */
+void ReferenceWidget::select(const git::Reference &ref, bool suppress) {
   if (!ref.isValid()) {
-    emit referenceChanged(git::Reference());
+    updateLabel(ref);
+    if (!suppress)
+      emit referenceChanged(git::Reference());
     return;
   }
 
@@ -211,7 +220,9 @@ void ReferenceWidget::select(const git::Reference &ref) {
     return;
 
   if (index == mView->currentIndex()) {
-    emit referenceChanged(ref);
+    updateLabel(ref);
+    if (!suppress)
+      emit referenceChanged(ref);
     return;
   }
 

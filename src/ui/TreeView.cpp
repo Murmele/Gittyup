@@ -11,6 +11,7 @@
 #include "ColumnView.h"
 #include "ViewDelegate.h"
 #include "TreeModel.h"
+#include "Debug.h"
 #include <QFormLayout>
 #include <QItemDelegate>
 #include <QLabel>
@@ -164,8 +165,8 @@ void TreeView::handleSelectionChange(const QItemSelection &selected,
 }
 
 void TreeView::setCollapseCount(int value) {
-  qDebug() << "Name: " << mName << "Current Collapsed: " << mCollapseCount
-           << "; New Collapsed: " << value;
+  Debug("Name: " << mName << "Current Collapsed: " << mCollapseCount
+                 << "; New Collapsed: " << value);
   assert(value >= 0);
   mCollapseCount = value;
   emit collapseCountChanged(mCollapseCount);
@@ -208,11 +209,11 @@ int TreeView::countCollapsed(QModelIndex parent, bool recursive) {
       // Count only if the item is expanded and if recursive is on
       count += countCollapsed(idx);
     }
-    qDebug() << "Name: " << mName << " Row: " << i << ": " << data.toString()
-             << "; Count: " << count;
+    Debug("Name: " << mName << " Row: " << i << ": " << data.toString()
+                   << "; Count: " << count);
   }
 
-  qDebug() << "Name: " << mName << ", countCollapsed():" << count;
+  Debug("Name: " << mName << ", countCollapsed():" << count);
   return count;
 }
 
@@ -243,8 +244,8 @@ void TreeView::collapseAll() {
 void TreeView::itemExpanded(const QModelIndex &index) {
   if (mSupressItemExpandStateChanged)
     return;
-  qDebug() << "Expanded: Name: " << mName
-           << ", Index data: " << index.data().toString();
+  Debug("Expanded: Name: " << mName
+                           << ", Index data: " << index.data().toString());
   setCollapseCount(mCollapseCount - 1 + countCollapsed(index, false));
 }
 
@@ -252,8 +253,8 @@ void TreeView::itemCollapsed(const QModelIndex &index) {
   if (mSupressItemExpandStateChanged)
     return;
 
-  qDebug() << "Collapsed: Name: " << mName
-           << ", Index data: " << index.data().toString();
+  Debug("Collapsed: Name: " << mName
+                            << ", Index data: " << index.data().toString());
   // one item was collapsed, but all collapsed items below this item must be
   // subtracted
   setCollapseCount(mCollapseCount + 1 - countCollapsed(index, false));

@@ -26,11 +26,14 @@ public:
                   QWidget *parent = nullptr);
 
   git::Reference currentReference() const;
-  void select(const git::Reference &ref);
+  void select(const git::Reference &ref, bool suppress = false);
 
 signals:
   void referenceChanged(const git::Reference &ref);
   void referenceSelected(const git::Reference &ref);
+
+private:
+  void updateLabel(const git::Reference &ref);
 
 private:
   QLabel *mLabel;

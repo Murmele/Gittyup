@@ -16,6 +16,7 @@
 #include "TreeProxy.h"
 #include "TreeView.h"
 #include "ViewDelegate.h"
+#include "Debug.h"
 #include "conf/Settings.h"
 #include "DiffView/DiffView.h"
 #include "git/Index.h"
@@ -301,7 +302,7 @@ QModelIndex DoubleTreeWidget::selectedIndex() const {
 
 static void addNodeToMenu(const git::Index &index, QStringList &files,
                           const Node *node, bool staged, bool statusDiff) {
-  qDebug() << "DoubleTreeWidgetr addNodeToMenu()" << node->name();
+  Debug("DoubleTreeWidgetr addNodeToMenu()" << node->name());
 
   if (node->hasChildren()) {
     for (auto child : node->children()) {
@@ -383,6 +384,11 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
   Q_UNUSED(file)
   Q_UNUSED(pathspec)
 
+  mSetDiffCounter++;
+
+  DebugRefresh("time: " << QDateTime::currentDateTime()
+                        << "Counter: " << mSetDiffCounter);
+
   mDiff = diff;
 
   // Remember selection.
@@ -441,6 +447,9 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
   // Restore selection.
   if (diff.isValid())
     loadSelection();
+
+  DebugRefresh("finished, time: " << QDateTime::currentDateTime()
+                                  << "Counter: " << mSetDiffCounter);
 }
 
 void DoubleTreeWidget::find() { mEditor->find(); }
@@ -474,6 +483,19 @@ void DoubleTreeWidget::loadSelection() {
 
   if (mSelectedFile.filename != "") {
     index = mDiffTreeModel->index(mSelectedFile.filename);
+
+    if (!index.isValid()) {
+      // If index is anymore valid, because of removed file,
+      // select the parent if possible
+      auto list = mSelectedFile.filename.split(
+          QStringLiteral("/")); // TODO: check also on windows
+      list.removeLast();
+      while (!index.isValid() && !list.isEmpty()) {
+        const QString s = list.join(QStringLiteral("/"));
+        index = mDiffTreeModel->index(s);
+        list.removeLast();
+      }
+    }
     state = static_cast<Qt::CheckState>(
         mDiffTreeModel->data(index, Qt::CheckStateRole).toInt());
   }

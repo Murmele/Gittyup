@@ -233,6 +233,8 @@ void TestRebase::conflictingRebase() {
   // Checkout correct branch
   repoView->checkout(branch);
 
+  QTest::qWait(100);
+
   // Rebase on main
   git::Reference mainBranch = mRepo.lookupRef(QString("refs/heads/main"));
   QVERIFY(mainBranch.isValid());
@@ -261,14 +263,14 @@ void TestRebase::conflictingRebase() {
           -1); // just write something to resolve the conflict
   f.close();
 
-  QTest::qWait(1000);
+  QTest::qWait(100);
 
   refreshTriggered = 0;
   repoView->continueRebase();  // should fail
   QCOMPARE(rebaseConflict, 2); // User tries to continue without staging
   QCOMPARE(refreshTriggered, 1);
 
-  QTest::qWait(1000); // Wait until refresh is done
+  QTest::qWait(100); // Wait until refresh is done
 
   // Staging the file
   auto filewidgets = repoView->findChildren<FileWidget *>();
@@ -297,6 +299,8 @@ void TestRebase::conflictingRebase() {
 
   // Check that rebase was really finished
   QCOMPARE(mRepo.rebaseOngoing(), false);
+
+  QTest::qWait(100); // Wait until refresh finished
 
   // Check that buttons are visible
   QCOMPARE(continueRebaseButton->isVisible(), false);
@@ -489,7 +493,7 @@ void TestRebase::startRebaseContinueInCLI() {
   //    EXECUTE_GIT_COMMAND(path, "rebase --continue", 1)
 
   //    Test::refresh(repoView);  // TODO: must be called, because when changing
-  //    externally the repoView will not be notified. QTest::qWait(1000);
+  //    externally the repoView will not be notified. QTest::qWait(100);
 
   //    // Does not work, because libgit2 does not detect interactive rebases
   //    QCOMPARE(repoView->isRebaseContinueVisible(), false);
@@ -685,6 +689,9 @@ void TestRebase::abortMR() {
   // Check that rebase was really finished
   QCOMPARE(mRepo.rebaseOngoing(), false);
 
+  QTest::qWait(1000); // wait until detailview will be updated, after updating
+                      // status is finished
+
   // Check that buttons are visible
   QCOMPARE(continueRebaseButton->isVisible(), false);
   QCOMPARE(abortRebaseButton->isVisible(), false);
@@ -826,6 +833,8 @@ void TestRebase::commitDuringRebase() {
 
   // Check that rebase was really finished
   QCOMPARE(mRepo.rebaseOngoing(), false);
+
+  QTest::qWait(10); // Wait until refresh is finished
 
   // Check that buttons are visible
   QCOMPARE(continueRebaseButton->isVisible(), false);

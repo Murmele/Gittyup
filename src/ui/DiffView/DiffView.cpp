@@ -422,7 +422,7 @@ void DiffView::fetchMore(int fetchWidgets) {
       git::Patch patch = mDiff.patch(pidx);
       if (!patch.isValid()) {
         // This diff is stale. Refresh the view.
-        QTimer::singleShot(0, view, &RepoView::refresh);
+        QTimer::singleShot(0, [view]() { view->refresh(); });
         return;
       }
 

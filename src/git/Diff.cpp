@@ -9,9 +9,9 @@
 
 #include "Diff.h"
 #include "Patch.h"
+#include "Debug.h"
 #include "git2/patch.h"
 #include <algorithm>
-#include <QDebug>
 
 bool containsPath(QString &str, QString &occurence, Qt::CaseSensitivity cs) {
   if (str.contains(occurence, cs)) {
@@ -114,7 +114,7 @@ QByteArray Diff::print() {
         diff.append(line);
     }
   }
-  qDebug() << QString(diff);
+  Debug(QString(diff));
   return diff;
 }
 

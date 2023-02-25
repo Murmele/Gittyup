@@ -49,8 +49,11 @@ public:
   void selectFirstCommit(bool spontaneous = false);
   bool selectRange(const QString &range, const QString &file = QString(),
                    bool spontaneous = false);
+  void suppressResetWalker(bool suppress);
+  bool isResetWalkerSuppressed();
 
   void resetSettings();
+  void resetReference(const git::Reference &ref);
 
   void setModel(QAbstractItemModel *model) override;
 
@@ -92,6 +95,8 @@ private:
 
   QAbstractListModel *mList;
   QAbstractListModel *mModel;
+
+  bool mRestoreSelection{true};
 
   QString mSelectedRange;
 };

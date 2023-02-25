@@ -32,6 +32,7 @@
 #include <QSettings>
 #include <QTimeLine>
 #include <QToolButton>
+#include "util/Debug.h"
 
 namespace {
 
@@ -263,12 +264,7 @@ RepoView *MainWindow::addTab(const git::Repository &repo) {
   }
 
   // Start status diff.
-  view->refresh();
-
-  // Select head after the view has been added.
-  view->selectHead();
-  view->selectFirstCommit();
-
+  view->refresh(false);
   return view;
 }
 
@@ -358,6 +354,7 @@ bool MainWindow::restoreWindows() {
 }
 
 MainWindow *MainWindow::open(const QString &path, bool warnOnInvalid) {
+  DebugRefresh("Open project: " << path);
   if (path.isEmpty())
     return nullptr;
 

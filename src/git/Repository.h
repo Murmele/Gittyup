@@ -316,7 +316,7 @@ signals:
   void referenceAdded(const Reference &ref);
   void referenceAboutToBeRemoved(const Reference &ref);
   void referenceRemoved(const QString &name);
-  void referenceUpdated(const Reference &ref);
+  void referenceUpdated(const Reference &ref, bool restoreSelection = false);
 
   void remoteAboutToBeAdded(const QString &name);
   void remoteAdded(const Remote &remote);

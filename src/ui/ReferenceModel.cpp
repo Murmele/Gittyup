@@ -1,11 +1,11 @@
 #include "ReferenceModel.h"
+#include "Debug.h"
 #include "git/Signature.h"
 #include "git/Tag.h"
 #include "git/Branch.h"
 #include "git/TagRef.h"
 
 #include <QDateTime>
-#include <QDebug>
 
 namespace {
 const QString kNowrapFmt = "<span style='white-space: nowrap'>%1</span>";
@@ -87,7 +87,7 @@ void ReferenceModel::update() {
   if (mKinds & ReferenceView::LocalBranches) {
     QList<git::Reference> branches;
     foreach (const git::Branch &branch, mRepo.branches(GIT_BRANCH_LOCAL)) {
-      qDebug() << "ReferenceView: Local branches: " << branch.name();
+      Debug("ReferenceView: Local branches: " << branch.name());
       const bool branchOnCommit =
           !mCommit.isValid() || branch.annotatedCommit().commit() == mCommit;
       if ((!(mKinds & ReferenceView::ExcludeHead) || !branch.isHead()) &&
@@ -121,7 +121,7 @@ void ReferenceModel::update() {
     QList<git::Reference> remotes;
     foreach (const git::Branch &branch, mRepo.branches(GIT_BRANCH_REMOTE)) {
       // Filter remote HEAD branches.
-      qDebug() << "ReferenceView: Remote branches: " << branch.name();
+      Debug("ReferenceView: Remote branches: " << branch.name());
       const bool remoteOnCommit =
           !mCommit.isValid() || branch.annotatedCommit().commit() == mCommit;
       if (!branch.name().endsWith("HEAD") && remoteOnCommit)
@@ -139,7 +139,7 @@ void ReferenceModel::update() {
   if (mKinds & ReferenceView::Tags) {
     QList<git::Reference> tags;
     foreach (const git::TagRef &tag, mRepo.tags()) {
-      qDebug() << "ReferenceView: Tags: " << tag.name();
+      Debug("ReferenceView: Tags: " << tag.name());
       const bool tagOnCommit =
           !mCommit.isValid() || tag.annotatedCommit().commit() == mCommit;
       if (tagOnCommit)

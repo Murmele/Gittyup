@@ -20,7 +20,9 @@
 #include "ReferenceWidget.h"
 #include "RemoteCallbacks.h"
 #include "SearchField.h"
+#include "DoubleTreeWidget.h"
 #include "ToolBar.h"
+#include "Debug.h"
 #include "app/Application.h"
 #include "conf/Settings.h"
 #include "dialogs/AmendDialog.h"
@@ -246,8 +248,9 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
   connect(notifier, &git::RepositoryNotifier::referenceUpdated, this,
           [this](const git::Reference &ref) {
             if (ref.isValid() && ref.isHead()) {
-              mRefs->select(ref);
-
+              mCommits->suppressResetWalker(true);
+              mRefs->select(ref, false);
+              mCommits->suppressResetWalker(false);
               // Invalidate submodule cache when the HEAD changes.
               mRepo.invalidateSubmoduleCache();
             }
@@ -305,7 +308,7 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
   // Refresh the diff when a whole directory is added to the index.
   // FIXME: This is a workaround.
   connect(notifier, &git::RepositoryNotifier::directoryStaged, this,
-          &RepoView::refresh, Qt::QueuedConnection);
+          QOverload<>::of(&RepoView::refresh), Qt::QueuedConnection);
   connect(notifier, &git::RepositoryNotifier::directoryAboutToBeStaged, this,
           [this](const QString &dir, int count, bool &allow) {
             if (!Settings::instance()->prompt(Prompt::Kind::Directories))
@@ -842,7 +845,7 @@ void RepoView::startIndexing() {
 #endif
   QFileInfo check_file(indexer_cmd);
   if (!check_file.isFile()) {
-    qDebug() << "No indexer found: " << indexer_cmd;
+    Debug("No indexer found: " << indexer_cmd);
   }
   mIndexer.start(indexer_cmd, args);
 }
@@ -1138,6 +1141,7 @@ void RepoView::pull(MergeFlags flags, const git::Remote &rmt, bool tags,
 void RepoView::merge(MergeFlags flags, const git::Reference &ref,
                      const git::AnnotatedCommit &commit, LogEntry *parent,
                      const std::function<void()> &callback) {
+  DebugRefresh("");
   git::Reference head = mRepo.head();
 
   git::AnnotatedCommit upstream;
@@ -1301,8 +1305,7 @@ void RepoView::merge(MergeFlags flags, const git::AnnotatedCommit &upstream,
     return;
 
   if (flags & NoCommit) {
-    refresh();
-    selectHead();
+    refresh(false);
     return;
   }
 
@@ -1396,13 +1399,13 @@ void RepoView::mergeAbort(LogEntry *parent) {
 
   addLogEntry(text, tr("Abort"), parent);
   mDetails->setCommitMessage(QString());
-  refresh();
+  refresh(false);
 }
 
 void RepoView::abortRebase() {
   mRepo.rebaseAbort();
   mRebase = nullptr;
-  refresh();
+  refresh(false);
 }
 
 void RepoView::continueRebase() {
@@ -1461,7 +1464,7 @@ void RepoView::rebaseConflict(const git::Rebase rebase) {
     mRebase->addEntry(tr("Please resolve conflicts before continue"),
                       tr("Conflict"));
   }
-  refresh();
+  refresh(false);
 }
 
 void RepoView::rebaseCommitSuccess(const git::Rebase rebase,
@@ -2079,7 +2082,7 @@ void RepoView::stash(const QString &message) {
   }
 
   entry->setText(msg(commit));
-  refresh();
+  refresh(false);
 }
 
 void RepoView::applyStash(int index) {
@@ -2093,7 +2096,7 @@ void RepoView::applyStash(int index) {
     return;
   }
 
-  refresh();
+  refresh(false);
 }
 
 void RepoView::dropStash(int index) {
@@ -2117,7 +2120,7 @@ void RepoView::popStash(int index) {
     return;
   }
 
-  refresh();
+  refresh(false);
 }
 
 void RepoView::promptToAddTag(const git::Commit &commit) {
@@ -2255,11 +2258,14 @@ void RepoView::reset(const git::Commit &commit, git_reset_t type,
   QString text = tr("%1 to %2").arg(head.name(), commit.link());
   LogEntry *entry = addLogEntry(text, title);
 
-  if (!commit.reset(type))
+  if (!commit.reset(type, QStringList(), false))
     error(entry, commitToAmend ? tr("amend") : tr("reset"), head.name());
 
   updateSubmodules(mRepo.submodules(), true, false,
-                   (type == GIT_RESET_HARD) ? true : false, entry);
+                   (type == GIT_RESET_HARD) ? true : false, entry,
+                   type == git_reset_t::GIT_RESET_HARD);
+  if (mRepo.submodules().isEmpty())
+    refresh(type == git_reset_t::GIT_RESET_HARD);
 }
 
 void RepoView::resetSubmodules(const QList<git::Submodule> &submodules,
@@ -2298,7 +2304,7 @@ void RepoView::resetSubmodules(const QList<git::Submodule> &submodules,
 void RepoView::resetSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
                                     bool recursive, git_reset_t type) {
   if (submodules.isEmpty()) {
-    refresh();
+    refresh(true);
     return;
   }
 
@@ -2391,7 +2397,7 @@ RepoView::submoduleResetInfoList(const git::Repository &repo,
 
 void RepoView::updateSubmodules(const QList<git::Submodule> &submodules,
                                 bool recursive, bool init, bool checkout_force,
-                                LogEntry *parent) {
+                                LogEntry *parent, bool restoreSelection) {
   if (mWatcher) {
     // Queue update. synchrone
     connect(mWatcher, &QFutureWatcher<git::Result>::finished, mWatcher,
@@ -2409,7 +2415,8 @@ void RepoView::updateSubmodules(const QList<git::Submodule> &submodules,
   // Start updating asynchronously.
   QList<SubmoduleInfo> infos =
       submoduleUpdateInfoList(mRepo, submodules, init, checkout_force, parent);
-  updateSubmodulesAsync(infos, recursive, init, checkout_force);
+  updateSubmodulesAsync(infos, recursive, init, checkout_force,
+                        restoreSelection);
 }
 
 /*!
@@ -2454,9 +2461,10 @@ QList<RepoView::SubmoduleInfo> RepoView::submoduleUpdateInfoList(
 
 void RepoView::updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
                                      bool recursive, bool init,
-                                     bool checkout_force) {
+                                     bool checkout_force,
+                                     bool restoreSelection) {
   if (submodules.isEmpty()) {
-    refresh();
+    refresh(restoreSelection);
     return;
   }
 
@@ -2468,7 +2476,8 @@ void RepoView::updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
 
   mWatcher = new QFutureWatcher<git::Result>(this);
   connect(mWatcher, &QFutureWatcher<git::Result>::finished, mWatcher,
-          [this, init, recursive, checkout_force, tail, info, entry] {
+          [this, init, recursive, checkout_force, tail, info, entry,
+           restoreSelection] {
             entry->setBusy(false);
 
             git::Result result = mWatcher->result();
@@ -2498,7 +2507,7 @@ void RepoView::updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
 
             // Restart with smaller list.
             updateSubmodulesAsync(prefix + tail, recursive, init,
-                                  checkout_force);
+                                  checkout_force, restoreSelection);
           });
 
   QString url = submodule.url();
@@ -2705,7 +2714,7 @@ void RepoView::openTerminal() {
   child.setArguments(QStringList() << "-c" << terminalCmd);
 #endif
   child.setWorkingDirectory(mRepo.workdir().absolutePath());
-  qDebug() << "Execute Terminal: Arguments: " << child.arguments();
+  Debug("Execute Terminal: Arguments: " << child.arguments());
   child.startDetached();
 #endif
 }
@@ -2722,7 +2731,7 @@ void RepoView::ignore(const QString &name) {
   QTextStream(&file) << name << "\n";
   file.close();
 
-  refresh();
+  refresh(true);
 }
 
 EditorWindow *RepoView::newEditor() {
@@ -2764,9 +2773,21 @@ EditorWindow *RepoView::openEditor(const QString &path, int line,
   return window;
 }
 
-void RepoView::refresh() {
+void RepoView::refresh() { refresh(true); }
+
+void RepoView::refresh(bool restoreSelection) {
   // Fake head update.
-  emit mRepo.notifier()->referenceUpdated(mRepo.head());
+  uint32_t counter = 0;
+  auto dtw = findChild<DoubleTreeWidget *>();
+  if (dtw)
+    counter = dtw->setDiffCounter();
+  if (mRepo.head().isValid())
+    DebugRefresh("Head name: " << mRepo.head().name());
+  else
+    DebugRefresh("Head invalid");
+  DebugRefresh("time: " << QDateTime::currentDateTime()
+                        << " Set diff counter: " << counter);
+  emit mRepo.notifier()->referenceUpdated(mRepo.head(), restoreSelection);
 }
 
 void RepoView::setPathspec(const QString &path) {
@@ -2882,6 +2903,7 @@ void RepoView::resumeLogTimer(bool suspended) {
 }
 
 bool RepoView::checkForConflicts(LogEntry *parent, const QString &action) {
+  DebugRefresh("Has conflicts: " << mRepo.index().hasConflicts());
   // Check for conflicts.
   if (!mRepo.index().hasConflicts())
     return false;
@@ -2918,7 +2940,7 @@ bool RepoView::checkForConflicts(LogEntry *parent, const QString &action) {
     entry->addEntry(LogEntry::Hint, abort.arg(action));
   }
 
-  refresh();
+  refresh(false);
   return true;
 }
 

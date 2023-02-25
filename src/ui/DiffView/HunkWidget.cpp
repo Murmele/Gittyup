@@ -1,5 +1,6 @@
 #include "HunkWidget.h"
 #include "Line.h"
+#include "Debug.h"
 #include "git/Diff.h"
 #include "DiffView.h"
 #include "DisclosureButton.h"
@@ -703,14 +704,14 @@ void HunkWidget::load(git::Patch &staged, bool force) {
     return;
   }
 
-  qDebug() << "Diff Header:";
+  Debug("Diff Header:");
   for (int i = 0; i < mPatch.count(); i++) {
-    qDebug() << mPatch.header(i);
+    Debug(mPatch.header(i));
   }
 
-  qDebug() << "Staged Header:";
+  Debug("Staged Header:");
   for (int i = 0; i < mStaged.count(); i++) {
-    qDebug() << mStaged.header(i);
+    Debug(mStaged.header(i));
   }
 
   // Load hunk.
@@ -804,21 +805,21 @@ void HunkWidget::load(git::Patch &staged, bool force) {
 void HunkWidget::setEditorLineInfos(QList<Line> &lines,
                                     Account::FileComments &comments,
                                     int width) {
-  qDebug() << "Patch lines:" << lines.count();
+  Debug("Patch lines:" << lines.count());
   for (int i = 0; i < lines.count(); i++) {
-    qDebug() << i << ") " << lines[i].print()
-             << "Content: " << mPatch.lineContent(mIndex, i);
+    Debug(i << ") " << lines[i].print()
+            << "Content: " << mPatch.lineContent(mIndex, i));
   }
 
-  qDebug() << "Staged linesStaged:" << mStaged.count();
+  Debug("Staged linesStaged:" << mStaged.count());
   for (int i = 0; i < mStaged.count(); i++) {
-    qDebug() << "Staged patch No. " << i;
+    Debug("Staged patch No. " << i);
     for (int lidx = 0; lidx < mStaged.lineCount(i); lidx++) {
       auto origin = mStaged.lineOrigin(i, lidx);
       int oldLineStaged = mStaged.lineNumber(i, lidx, git::Diff::OldFile);
       int newLineStaged = mStaged.lineNumber(i, lidx, git::Diff::NewFile);
       auto line = Line(origin, oldLineStaged, newLineStaged);
-      qDebug() << lidx << ") " << line.print() << mStaged.lineContent(i, lidx);
+      Debug(lidx << ") " << line.print() << mStaged.lineContent(i, lidx));
     }
   }
 
@@ -871,7 +872,7 @@ void HunkWidget::setEditorLineInfos(QList<Line> &lines,
   bool first_staged_patch_match = false;
   for (int lidx = 0; lidx < count; ++lidx) {
     const Line &line = lines.at(lidx);
-    qDebug() << "Line Content: " << mPatch.lineContent(mIndex, lidx);
+    Debug("Line Content: " << mPatch.lineContent(mIndex, lidx));
     const auto lineOrigin = line.origin();
     marker = -1;
     staged = false;

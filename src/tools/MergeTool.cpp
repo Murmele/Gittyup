@@ -12,12 +12,12 @@
 #include "git/Config.h"
 #include "git/Index.h"
 #include "git/Repository.h"
+#include "Debug.h"
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
 #include <QProcess>
 #include <QTemporaryFile>
-#include <QDebug>
 
 MergeTool::MergeTool(const QString &file, const git::Blob &localBlob,
                      const git::Blob &remoteBlob, const git::Blob &baseBlob,
@@ -116,11 +116,11 @@ bool MergeTool::start() {
   arguments.append("sh");
   arguments.append("-c");
   arguments.append(command);
-  // qDebug() << "Command: " << "flatpak-spawn";
+  // Debug("Command: " << "flatpak-spawn");
   process->start("flatpak-spawn", arguments);
-  // qDebug() << "QProcess Arguments: " << process->arguments();
+  // Debug("QProcess Arguments: " << process->arguments());
   if (!process->waitForStarted()) {
-    qDebug() << "MergeTool starting failed";
+    Debug("MergeTool starting failed");
     return false;
   }
 #else
