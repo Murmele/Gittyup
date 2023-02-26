@@ -38,9 +38,18 @@ jobs:
     runs-on: ubuntu-latest
     container:
       # image: bilelmoussaoui/flatpak-github-actions:kde-5.15-21.08
-      image: exactlyonekas/gittyup-flatpak-builder:latest
+      image: archlinux:latest
       options: --privileged
     steps:
+
+    - name: Update
+      run: |
+        pacman --noconfirm -Suy
+        pacman --noconfirm -S flatpak flatpak-builder xorg-server-xvfb
+        flatpak install --assumeyes org.kde.Sdk//5.15-21.08
+        flatpak install --assumeyes org.freedesktop.Sdk.Extension.golang//21.08
+        flatpak install --assumeyes org.kde.Platform//5.15-21.08
+
     - name: Show environment variables
       run: >
         echo IS_RELEASE: ${{ env.IS_RELEASE }}
