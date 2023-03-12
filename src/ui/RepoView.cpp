@@ -1621,7 +1621,7 @@ void RepoView::promptToForcePush(const git::Remote &remote,
                                  const git::Reference &src) {
   // FIXME: Check if force is really required?
 
-  QString title = tr("Force Push?");
+  QString title = tr("Force Push to %1?").arg(remote.name());
   QString text = tr("Are you sure you want to force push?");
   QMessageBox *dialog = new QMessageBox(QMessageBox::Warning, title, text,
                                         QMessageBox::Cancel, this);
@@ -1761,11 +1761,13 @@ void RepoView::push(const git::Remote &rmt, const git::Reference &src,
               QString hint1 =
                   tr("You may want to integrate remote commits first by "
                      "<a href='action:pull'>pulling</a>. Then "
-                     "<a href='action:push'>push</a> again.");
+                     "<a href='action:push?to=%1'>push</a> again.")
+                      .arg(remote.name());
               QString hint2 =
                   tr("If you really want the remote to lose commits, you may "
-                     "be able to <a href='action:push?force=true'>force "
-                     "push</a>.");
+                     "be able to <a href='action:push?to=%1&force=true'>force "
+                     "push</a>.")
+                      .arg(remote.name());
               errorEntry->addEntry(LogEntry::Hint, hint1);
               errorEntry->addEntry(LogEntry::Warning, hint2);
             }
