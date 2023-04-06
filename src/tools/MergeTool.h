@@ -10,16 +10,23 @@
 #ifndef MERGETOOL_H
 #define MERGETOOL_H
 
+#include <QString>
+#include <QVector>
 #include "ExternalTool.h"
 #include "git/Blob.h"
+
+class QObject;
+namespace git {
+  class Diff;
+  class Repository;
+};
 
 class MergeTool : public ExternalTool {
   Q_OBJECT
 
 public:
-  MergeTool(const QString &file, const git::Blob &localBlob,
-            const git::Blob &remoteBlob, const git::Blob &baseBlob,
-            QObject *parent = nullptr);
+  MergeTool(const QStringList &files, const git::Diff &diff,
+            const git::Repository &repo, QObject *parent);
 
   bool isValid() const override;
 
@@ -29,9 +36,12 @@ public:
   bool start() override;
 
 protected:
-  git::Blob mLocalBlob;
-  git::Blob mRemoteBlob;
-  git::Blob mBaseBlob;
+
+private:
+  QVector<QString> mMergeFiles;
+  QVector<git::Blob> mLocalEditedBlobs;
+  QVector<git::Blob> mRemoteEditedBlobs;
+  QVector<git::Blob> mBaseBlobs;
 };
 
 #endif

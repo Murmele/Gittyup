@@ -95,24 +95,37 @@ bool ShowTool::openFileManager(QString path) {
 #endif
 }
 
-ShowTool::ShowTool(const QString &file, QObject *parent)
-    : ExternalTool(file, parent) {}
+ShowTool::ShowTool(const QStringList &files, const git::Diff &diff,
+           const git::Repository &repo, QObject *parent)
+    : ExternalTool(files, diff, repo, parent) {}
 
 ExternalTool::Kind ShowTool::kind() const { return Show; }
 
 QString ShowTool::name() const { return tr("Show in %1").arg(tr(NAME)); }
 
 bool ShowTool::start() {
+
+  foreach (const QString &file, mFiles) {
 #if defined(Q_OS_MAC)
-  return QProcess::startDetached(
-      "/usr/bin/osascript", {"-e", "tell application \"Finder\"", "-e",
-                             QString("reveal POSIX file \"%1\"").arg(mFile),
-                             "-e", "activate", "-e", "end tell"});
+    if (!QProcess::startDetached(
+        "/usr/bin/osascript", {"-e", "tell application \"Finder\"", "-e",
+                               QString("reveal POSIX file \"%1\"").arg(file),
+                               "-e", "activate", "-e", "end tell"})) {
+       return false;
+    }
 #elif defined(Q_OS_WIN)
-  return QProcess::startDetached("explorer.exe",
-                                 {"/select,", QDir::toNativeSeparators(mFile)});
+    if (!QProcess::startDetached("explorer.exe",
+                                 {"/select,", 
+                                  QDir::toNativeSeparators(file)})) {
+      return false;
+    }
 #else
-  QFileInfo info(mFile);
-  return openFileManager(info.isDir() ? info.filePath() : info.path());
+    QFileInfo info(file);
+    if (!openFileManager(info.isDir() ? info.filePath() : info.path())) {
+      return false;
+    }
 #endif
+  }
+
+  return true;
 }
