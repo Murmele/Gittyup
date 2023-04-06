@@ -12,11 +12,8 @@
 
 #include <QObject>
 #include <QString>
-
-namespace git {
-class Diff;
-class Repository;
-} // namespace git
+#include "git/Diff.h"
+#include "git/Repository.h"
 
 class ExternalTool : public QObject {
   Q_OBJECT
@@ -40,7 +37,8 @@ public:
     }
   };
 
-  ExternalTool(const QString &file, QObject *parent = nullptr);
+  ExternalTool(const QStringList &files, const git::Diff &diff,
+               const git::Repository &repo, QObject *parent);
 
   virtual bool isValid() const;
 
@@ -49,19 +47,19 @@ public:
 
   virtual bool start() = 0;
 
+  bool isConflicted(const QString &file) const;
+
   static QString lookupCommand(const QString &key, bool &shell);
   static QList<Info> readGlobalTools(const QString &key);
   static QList<Info> readBuiltInTools(const QString &key);
-
-  static ExternalTool *create(const QString &file, const git::Diff &diff,
-                              const git::Repository &repo,
-                              QObject *parent = nullptr);
 
 signals:
   void error(Error error);
 
 protected:
-  QString mFile;
+  QStringList mFiles;
+  git::Diff mDiff;
+  git::Repository mRepo;
 };
 
 #endif

@@ -19,6 +19,8 @@
 #include "host/Repository.h"
 #include "tools/EditTool.h"
 #include "tools/ShowTool.h"
+#include "tools/DiffTool.h"
+#include "tools/MergeTool.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QDir>
@@ -82,57 +84,34 @@ void handlePath(const git::Repository &repo, const QString &path,
 FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
                                  const git::Index &index, QWidget *parent)
     : QMenu(parent), mView(view), mFiles(files) {
-  // Show diff and merge tools for the currently selected diff.
   git::Diff diff = view->diff();
-  git::Repository repo = view->repo();
-
   if (!diff.isValid())
     return;
 
+  auto errFunc = [this](ExternalTool::Error error) {
+    if (error != ExternalTool::BashNotFound)
+      return;
+
+    QString title = tr("Bash Not Found");
+    QString text = tr("Bash was not found on your PATH.");
+    QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok,
+                    this);
+    msg.setInformativeText(
+        tr("Bash is required to execute external tools."));
+    msg.exec();
+  };
+
+  git::Repository repo = view->repo();
+
   // Create external tools.
-  QList<ExternalTool *> showTools;
-  QList<ExternalTool *> editTools;
-  QList<ExternalTool *> diffTools;
-  QList<ExternalTool *> mergeTools;
-  foreach (const QString &file, files) {
-    // Convert to absolute path.
-    QString path = repo.workdir().filePath(file);
-
-    // Add show tool.
-    showTools.append(new ShowTool(path, this));
-
-    // Add edit tool.
-    editTools.append(new EditTool(path, this));
-
-    // Add diff or merge tool.
-    if (ExternalTool *tool = ExternalTool::create(file, diff, repo, this)) {
-      switch (tool->kind()) {
-        case ExternalTool::Diff:
-          diffTools.append(tool);
-          break;
-
-        case ExternalTool::Merge:
-          mergeTools.append(tool);
-          break;
-
-        default:
-          Q_ASSERT(false);
-          break;
-      }
-
-      connect(tool, &ExternalTool::error, [this](ExternalTool::Error error) {
-        if (error != ExternalTool::BashNotFound)
-          return;
-
-        QString title = tr("Bash Not Found");
-        QString text = tr("Bash was not found on your PATH.");
-        QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok,
-                        this);
-        msg.setInformativeText(
-            tr("Bash is required to execute external tools."));
-        msg.exec();
-      });
-    }
+  QList<ExternalTool *> showTools, editTools, diffTools, mergeTools;
+  attachTool(new ShowTool(files, diff, repo, this), showTools);
+  attachTool(new EditTool(files, diff, repo, this), editTools);
+  if (diff.isConflicted()) {
+    attachTool(new MergeTool(files, diff, repo, this), mergeTools);
+  } 
+  else {
+    attachTool(new DiffTool(files, diff, repo, this), diffTools);
   }
 
   // Add external tool actions.
@@ -195,7 +174,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     // Navigate
     QMenu *navigate = addMenu(tr("Navigate to"));
     QAction *nextAct = navigate->addAction(tr("Next Revision"));
-    connect(nextAct, &QAction::triggered, [view, file] {
+    QMenu::connect(nextAct, &QAction::triggered, [view, file] {
       if (git::Commit next = view->nextRevision(file)) {
         view->selectCommit(next, file);
       } else {
@@ -204,7 +183,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     });
 
     QAction *prevAct = navigate->addAction(tr("Previous Revision"));
-    connect(prevAct, &QAction::triggered, [view, file] {
+    QMenu::connect(prevAct, &QAction::triggered, [view, file] {
       if (git::Commit prev = view->previousRevision(file)) {
         view->selectCommit(prev, file);
       } else {
@@ -327,7 +306,7 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
         QString text = tr("Discard Changes");
         QPushButton *discard = dialog->addButton(text, QMessageBox::AcceptRole);
         discard->setObjectName("DiscardButton");
-        connect(discard, &QPushButton::clicked, [view, modified, submodules] {
+        QMenu::connect(discard, &QPushButton::clicked, [view, modified, submodules] {
           git::Repository repo = view->repo();
           int strategy = GIT_CHECKOUT_FORCE;
           if (modified.count() &&
@@ -354,7 +333,7 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
   // Ignore
   QAction *ignore = addAction(tr("Ignore"));
   ignore->setObjectName("IgnoreAction");
-  connect(ignore, &QAction::triggered, this, &FileContextMenu::ignoreFile);
+  QMenu::connect(ignore, &QAction::triggered, this, &FileContextMenu::ignoreFile);
   foreach (const QString &file, files) {
     int index = diff.indexOf(file);
     if (index < 0)
@@ -472,7 +451,7 @@ void FileContextMenu::ignoreFile() {
   d->setAttribute(Qt::WA_DeleteOnClose);
 
   auto *view = mView;
-  connect(d, &QDialog::accepted, [d, view]() {
+  QMenu::connect(d, &QDialog::accepted, [d, view]() {
     auto ignore = d->ignoreText();
     if (!ignore.isEmpty())
       view->ignore(ignore);
@@ -540,4 +519,23 @@ void FileContextMenu::addExternalToolsAction(
       break;
     }
   }
+}
+
+void FileContextMenu::attachTool(ExternalTool *tool, 
+                                 QList<ExternalTool *> &tools)
+{
+  tools.append(tool);
+
+  QMenu::connect(tool, &ExternalTool::error, [this](ExternalTool::Error error) {
+    if (error != ExternalTool::BashNotFound)
+      return;
+
+    QString title = tr("Bash Not Found");
+    QString text = tr("Bash was not found on your PATH.");
+    QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok,
+                    this);
+    msg.setInformativeText(
+        tr("Bash is required to execute external tools."));
+    msg.exec();
+  });
 }
