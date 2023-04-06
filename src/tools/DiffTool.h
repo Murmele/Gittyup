@@ -10,15 +10,22 @@
 #ifndef DIFFTOOL_H
 #define DIFFTOOL_H
 
+#include <QString>
 #include "ExternalTool.h"
-#include "git/Blob.h"
+
+class QObject;
+namespace git {
+class Diff;
+class Repository;
+class Blob;
+};
 
 class DiffTool : public ExternalTool {
   Q_OBJECT
 
 public:
-  DiffTool(const QString &file, const git::Blob &localBlob,
-           const git::Blob &remoteBlob, QObject *parent = nullptr);
+  DiffTool(const QStringList &files, const git::Diff &diff,
+           const git::Repository &repo, QObject *parent);
 
   bool isValid() const override;
 
@@ -28,8 +35,10 @@ public:
   bool start() override;
 
 protected:
-  git::Blob mLocalBlob;
-  git::Blob mRemoteBlob;
+
+private:
+  bool getBlob(const QString &file, const git::Diff::File &version,
+               git::Blob &blob) const;
 };
 
 #endif

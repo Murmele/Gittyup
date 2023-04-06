@@ -12,13 +12,21 @@
 
 #include "ExternalTool.h"
 
+class QObject;
+namespace git {
+  class Diff;
+  class Repository;
+};
+
+
 class ShowTool : public ExternalTool {
   Q_OBJECT
 
 public:
   static bool openFileManager(QString path);
 
-  ShowTool(const QString &file, QObject *parent = nullptr);
+  ShowTool(const QStringList &files, const git::Diff &diff,
+           const git::Repository &repo, QObject *parent);
 
   Kind kind() const override;
   QString name() const override;

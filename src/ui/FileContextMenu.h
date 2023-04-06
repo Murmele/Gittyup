@@ -14,6 +14,7 @@
 #include "git/Index.h"
 #include "git/Commit.h"
 #include <QMenu>
+#include <QList>
 
 class ExternalTool;
 class RepoView;
@@ -36,6 +37,7 @@ private:
                                 const QStringList &files);
   void handleCommits(const QList<git::Commit> &commits,
                      const QStringList &files);
+  void attachTool(ExternalTool *tool, QList<ExternalTool *> &tools);
 
   RepoView *mView;
   QStringList mFiles;
