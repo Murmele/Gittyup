@@ -94,9 +94,11 @@ bool GitCredential::store(const QString &url, const QString &username,
 
 QString GitCredential::command() const {
   QString name = QString("git-credential-%1").arg(mName);
+  QDir appDir = QCoreApplication::applicationDirPath();
+  appDir.cd("credential-helpers");
+
   // Prefer credential helpers directly installed into Gittyup's app dir
-  QString candidate = QStandardPaths::findExecutable(
-      name, QStringList(QCoreApplication::applicationDirPath()));
+  QString candidate = QStandardPaths::findExecutable(name, QStringList(appDir.path()));
   if (!candidate.isEmpty()) {
     return candidate;
   }
