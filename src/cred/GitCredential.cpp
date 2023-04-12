@@ -98,7 +98,8 @@ QString GitCredential::command() const {
   appDir.cd("credential-helpers");
 
   // Prefer credential helpers directly installed into Gittyup's app dir
-  QString candidate = QStandardPaths::findExecutable(name, QStringList(appDir.path()));
+  QString candidate =
+      QStandardPaths::findExecutable(name, QStringList(appDir.path()));
   if (!candidate.isEmpty()) {
     return candidate;
   }

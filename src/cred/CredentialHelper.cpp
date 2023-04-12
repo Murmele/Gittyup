@@ -44,8 +44,7 @@ CredentialHelper *CredentialHelper::instance() {
         auto path =
             QString::fromLocal8Bit(qgetenv("HOME") + "/.git-credentials");
         instance = new Store(path);
-      }
-      else {
+      } else {
         instance = new GitCredential(helperName);
       }
     }
