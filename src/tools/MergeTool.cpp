@@ -137,7 +137,7 @@ bool MergeTool::start() {
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
     QStringList arguments = {"--host", "--env=LOCAL=" + local->fileName(),
                              "--env=REMOTE=" + remote->fileName(),
-                             "--env=MERGED=" + mFile, 
+                             "--env=MERGED=" + mMergeFiles[i], 
                              "--env=BASE=" + basePath};
     arguments.append("sh");
     arguments.append("-c");
