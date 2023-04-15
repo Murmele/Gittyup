@@ -21,6 +21,7 @@
 #include "git/Repository.h"
 #include "git/Config.h"
 #include "git/Submodule.h"
+#include "qmap.h"
 #include <QApplication>
 #include <QCloseEvent>
 #include <QGuiApplication>
@@ -54,6 +55,8 @@ public:
   QString name() const { return mPath.section('/', -mSections); }
 
   void increment() { ++mSections; }
+  int sections() const { return mSections; }
+  void setSections(int sections) { mSections = sections; }
 
 private:
   QString mPath;
@@ -462,25 +465,31 @@ void MainWindow::warnInvalidRepo(const QString &path) {
 }
 
 void MainWindow::updateTabNames() {
-  QList<TabName> names;
+  TabWidget *tabs = tabWidget();
+  QHash<QString, QList<int>> names;
+  QList<TabName> fullNames;
+
   for (int i = 0; i < count(); ++i) {
     TabName name(view(i)->repo().workdir().path());
-    auto functor = [&name](const TabName &rhs) {
-      return (name.name() == rhs.name());
-    };
-
-    QList<TabName>::iterator it, end = names.end();
-    while ((it = std::find_if(names.begin(), end, functor)) != end) {
-      it->increment();
-      name.increment();
-    }
-
-    names.append(name);
+    names[name.name()].append(i);
+    fullNames.append(name);
   }
 
-  TabWidget *tabs = tabWidget();
-  for (int i = 0; i < count(); ++i)
-    tabs->setTabText(i, names.at(i).name());
+  QHash<QString, QList<int>>::key_iterator first;
+  while ((first = names.keyBegin()) != names.keyEnd()) {
+    auto key = *first;
+    auto ids = names.take(key);
+
+    if (ids.count() == 1) {
+      tabs->setTabText(ids.first(), key);
+    } else {
+      for (auto id : ids) {
+        auto &name = fullNames[id];
+        name.increment();
+        names[name.name()].append(id);
+      }
+    }
+  }
 }
 
 void MainWindow::updateInterface() {
