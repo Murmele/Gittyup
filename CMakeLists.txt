@@ -15,7 +15,7 @@ set(GITTYUP_VERSION
 string(TIMESTAMP CURR_YEAR "%Y")
 add_compile_definitions(CURR_YEAR=${CURR_YEAR})
 configure_file(${CMAKE_SOURCE_DIR}/LICENSE.md.in ${CMAKE_SOURCE_DIR}/LICENSE.md
-               @ONLY)
+               @ONLY NEWLINE_STYLE UNIX)
 
 # Write version to file so it can be used also from external, for example in the
 # github manifest

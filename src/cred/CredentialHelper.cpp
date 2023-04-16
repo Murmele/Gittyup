@@ -10,7 +10,6 @@
 #include "CredentialHelper.h"
 #include "Cache.h"
 #include "GitCredential.h"
-#include "WinCred.h"
 #include "Store.h"
 #include "conf/Settings.h"
 #include "git/Config.h"
@@ -45,13 +44,7 @@ CredentialHelper *CredentialHelper::instance() {
         auto path =
             QString::fromLocal8Bit(qgetenv("HOME") + "/.git-credentials");
         instance = new Store(path);
-      }
-#if defined(Q_OS_WIN)
-      else if (helperName == winCredStoreName) {
-        instance = new WinCred;
-      }
-#endif
-      else {
+      } else {
         instance = new GitCredential(helperName);
       }
     }
