@@ -96,7 +96,7 @@ bool ShowTool::openFileManager(QString path) {
 }
 
 ShowTool::ShowTool(const QStringList &files, const git::Diff &diff,
-           const git::Repository &repo, QObject *parent)
+                   const git::Repository &repo, QObject *parent)
     : ExternalTool(files, diff, repo, parent) {}
 
 ExternalTool::Kind ShowTool::kind() const { return Show; }
@@ -107,16 +107,15 @@ bool ShowTool::start() {
 
   foreach (const QString &file, mFiles) {
 #if defined(Q_OS_MAC)
-    if (!QProcess::startDetached(
-        "/usr/bin/osascript", {"-e", "tell application \"Finder\"", "-e",
-                               QString("reveal POSIX file \"%1\"").arg(file),
-                               "-e", "activate", "-e", "end tell"})) {
-       return false;
+    if (!QProcess::startDetached("/usr/bin/osascript",
+                                 {"-e", "tell application \"Finder\"", "-e",
+                                  QString("reveal POSIX file \"%1\"").arg(file),
+                                  "-e", "activate", "-e", "end tell"})) {
+      return false;
     }
 #elif defined(Q_OS_WIN)
-    if (!QProcess::startDetached("explorer.exe",
-                                 {"/select,", 
-                                  QDir::toNativeSeparators(file)})) {
+    if (!QProcess::startDetached(
+            "explorer.exe", {"/select,", QDir::toNativeSeparators(file)})) {
       return false;
     }
 #else

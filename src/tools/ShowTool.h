@@ -14,10 +14,9 @@
 
 class QObject;
 namespace git {
-  class Diff;
-  class Repository;
-};
-
+class Diff;
+class Repository;
+}; // namespace git
 
 class ShowTool : public ExternalTool {
   Q_OBJECT

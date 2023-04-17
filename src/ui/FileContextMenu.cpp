@@ -94,10 +94,8 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
 
     QString title = tr("Bash Not Found");
     QString text = tr("Bash was not found on your PATH.");
-    QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok,
-                    this);
-    msg.setInformativeText(
-        tr("Bash is required to execute external tools."));
+    QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok, this);
+    msg.setInformativeText(tr("Bash is required to execute external tools."));
     msg.exec();
   };
 
@@ -109,8 +107,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
   attachTool(new EditTool(files, diff, repo, this), editTools);
   if (diff.isConflicted()) {
     attachTool(new MergeTool(files, diff, repo, this), mergeTools);
-  } 
-  else {
+  } else {
     attachTool(new DiffTool(files, diff, repo, this), diffTools);
   }
 
@@ -306,20 +303,21 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
         QString text = tr("Discard Changes");
         QPushButton *discard = dialog->addButton(text, QMessageBox::AcceptRole);
         discard->setObjectName("DiscardButton");
-        QMenu::connect(discard, &QPushButton::clicked, [view, modified, submodules] {
-          git::Repository repo = view->repo();
-          int strategy = GIT_CHECKOUT_FORCE;
-          if (modified.count() &&
-              !repo.checkout(git::Commit(), nullptr, modified, strategy)) {
-            QString text = tr("%1 files").arg(modified.size());
-            LogEntry *parent = view->addLogEntry(text, tr("Discard"));
-            view->error(parent, tr("discard"), text);
-          }
-          view->updateSubmodules(submodules, true, false, true);
+        QMenu::connect(
+            discard, &QPushButton::clicked, [view, modified, submodules] {
+              git::Repository repo = view->repo();
+              int strategy = GIT_CHECKOUT_FORCE;
+              if (modified.count() &&
+                  !repo.checkout(git::Commit(), nullptr, modified, strategy)) {
+                QString text = tr("%1 files").arg(modified.size());
+                LogEntry *parent = view->addLogEntry(text, tr("Discard"));
+                view->error(parent, tr("discard"), text);
+              }
+              view->updateSubmodules(submodules, true, false, true);
 
-          if (submodules.isEmpty())
-            view->refresh();
-        });
+              if (submodules.isEmpty())
+                view->refresh();
+            });
 
         dialog->open();
       });
@@ -333,7 +331,8 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
   // Ignore
   QAction *ignore = addAction(tr("Ignore"));
   ignore->setObjectName("IgnoreAction");
-  QMenu::connect(ignore, &QAction::triggered, this, &FileContextMenu::ignoreFile);
+  QMenu::connect(ignore, &QAction::triggered, this,
+                 &FileContextMenu::ignoreFile);
   foreach (const QString &file, files) {
     int index = diff.indexOf(file);
     if (index < 0)
@@ -521,9 +520,8 @@ void FileContextMenu::addExternalToolsAction(
   }
 }
 
-void FileContextMenu::attachTool(ExternalTool *tool, 
-                                 QList<ExternalTool *> &tools)
-{
+void FileContextMenu::attachTool(ExternalTool *tool,
+                                 QList<ExternalTool *> &tools) {
   tools.append(tool);
 
   QMenu::connect(tool, &ExternalTool::error, [this](ExternalTool::Error error) {
@@ -532,10 +530,8 @@ void FileContextMenu::attachTool(ExternalTool *tool,
 
     QString title = tr("Bash Not Found");
     QString text = tr("Bash was not found on your PATH.");
-    QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok,
-                    this);
-    msg.setInformativeText(
-        tr("Bash is required to execute external tools."));
+    QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok, this);
+    msg.setInformativeText(tr("Bash is required to execute external tools."));
     msg.exec();
   });
 }
