@@ -55,7 +55,7 @@ public:
   void setCommit(const git::Commit &commit);
 
 signals:
-    void checkedOut();
+  void checkedOut();
 
 protected:
   void showEvent(QShowEvent *event) override;
