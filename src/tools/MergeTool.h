@@ -17,9 +17,9 @@
 
 class QObject;
 namespace git {
-  class Diff;
-  class Repository;
-};
+class Diff;
+class Repository;
+}; // namespace git
 
 class MergeTool : public ExternalTool {
   Q_OBJECT
@@ -36,7 +36,6 @@ public:
   bool start() override;
 
 protected:
-
 private:
   QVector<QString> mMergeFiles;
   QVector<git::Blob> mLocalEditedBlobs;

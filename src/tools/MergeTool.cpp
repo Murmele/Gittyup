@@ -20,7 +20,7 @@
 #include <QTemporaryFile>
 
 MergeTool::MergeTool(const QStringList &files, const git::Diff &diff,
-            const git::Repository &repo, QObject *parent)
+                     const git::Repository &repo, QObject *parent)
     : ExternalTool(files, diff, repo, parent) {
 
   if (!mFiles.empty()) {
@@ -37,7 +37,8 @@ MergeTool::MergeTool(const QStringList &files, const git::Diff &diff,
 }
 
 bool MergeTool::isValid() const {
-  if (!ExternalTool::isValid()) return false;
+  if (!ExternalTool::isValid())
+    return false;
 
   int numBlobs = mLocalEditedBlobs.size();
   for (int i = 0; i < numBlobs; ++i) {
@@ -63,8 +64,8 @@ bool MergeTool::start() {
   int numMergeFiles = mMergeFiles.size();
   for (int i = 0; i < numMergeFiles; ++i) {
     // Write temporary files.
-    QString templatePath = QDir::temp().filePath(
-                                        QFileInfo(mMergeFiles[i]).fileName());
+    QString templatePath =
+        QDir::temp().filePath(QFileInfo(mMergeFiles[i]).fileName());
     QTemporaryFile *local = new QTemporaryFile(templatePath, this);
     if (!local->open())
       return false;
@@ -102,30 +103,29 @@ bool MergeTool::start() {
     process->setProcessChannelMode(
         QProcess::ProcessChannelMode::ForwardedChannels);
     git::Repository repo = mLocalEditedBlobs[i].repo();
-    auto signal = QOverload<int, QProcess::ExitStatus>::of(
-                                                      &QProcess::finished);
-    QObject::connect(process, signal, 
-      [this, repo, i, backupPath, process, &numMergeFiles] {
-      qDebug() << "Merge Process Exited!";
-      qDebug() << "Stdout: " << process->readAllStandardOutput();
-      qDebug() << "Stderr: " << process->readAllStandardError();
+    auto signal = QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished);
+    QObject::connect(
+        process, signal, [this, repo, i, backupPath, process, &numMergeFiles] {
+          qDebug() << "Merge Process Exited!";
+          qDebug() << "Stdout: " << process->readAllStandardOutput();
+          qDebug() << "Stderr: " << process->readAllStandardError();
 
-      QFileInfo merged(mMergeFiles[i]);
-      QFileInfo backup(backupPath);
-      git::Config config = git::Config::global();
-      bool modified = (merged.lastModified() > backup.lastModified());
-      if (!modified || !config.value<bool>("mergetool.keepBackup"))
-        QFile::remove(backupPath);
+          QFileInfo merged(mMergeFiles[i]);
+          QFileInfo backup(backupPath);
+          git::Config config = git::Config::global();
+          bool modified = (merged.lastModified() > backup.lastModified());
+          if (!modified || !config.value<bool>("mergetool.keepBackup"))
+            QFile::remove(backupPath);
 
-      if (modified) {
-        int length = repo.workdir().path().length();
-        repo.index().setStaged({mMergeFiles[i].mid(length + 1)}, true);
-      }
+          if (modified) {
+            int length = repo.workdir().path().length();
+            repo.index().setStaged({mMergeFiles[i].mid(length + 1)}, true);
+          }
 
-      if (--numMergeFiles) {
-        deleteLater();
-      }
-    });
+          if (--numMergeFiles) {
+            deleteLater();
+          }
+        });
 
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert("LOCAL", local->fileName());
@@ -137,7 +137,7 @@ bool MergeTool::start() {
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
     QStringList arguments = {"--host", "--env=LOCAL=" + local->fileName(),
                              "--env=REMOTE=" + remote->fileName(),
-                             "--env=MERGED=" + mMergeFiles[i], 
+                             "--env=MERGED=" + mMergeFiles[i],
                              "--env=BASE=" + basePath};
     arguments.append("sh");
     arguments.append("-c");

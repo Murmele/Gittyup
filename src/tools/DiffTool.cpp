@@ -16,14 +16,14 @@
 #include <QDebug>
 
 DiffTool::DiffTool(const QStringList &files, const git::Diff &diff,
-         const git::Repository &repo, QObject *parent)
+                   const git::Repository &repo, QObject *parent)
     : ExternalTool(files, diff, repo, parent) {}
 
 bool DiffTool::isValid() const {
   bool isValid = ExternalTool::isValid();
   foreach (const QString &file, mFiles) {
     git::Blob fileBlob;
-    isValid &= DiffTool::getBlob(file, git::Diff::OldFile, fileBlob) & 
+    isValid &= DiffTool::getBlob(file, git::Diff::OldFile, fileBlob) &
                fileBlob.isValid();
   };
   return isValid;
@@ -45,7 +45,8 @@ bool DiffTool::start() {
   foreach (const QString &file, mFiles) {
     ++i;
     git::Blob fileBlob;
-    if (!DiffTool::getBlob(file, git::Diff::OldFile, fileBlob)) continue;
+    if (!DiffTool::getBlob(file, git::Diff::OldFile, fileBlob))
+      continue;
 
     // Get the path to any file blob.
     QString blobMoniker;
@@ -53,7 +54,7 @@ bool DiffTool::start() {
       blobMoniker = file;
     } else {
       QString templatePath = QDir::temp().filePath(QFileInfo(file).fileName());
-      QTemporaryFile *temp= new QTemporaryFile(templatePath, this);
+      QTemporaryFile *temp = new QTemporaryFile(templatePath, this);
       if (!temp->open())
         return false;
 
@@ -121,10 +122,10 @@ bool DiffTool::start() {
 }
 
 bool DiffTool::getBlob(const QString &file, const git::Diff::File &version,
-                       git::Blob &blob) const
-{
+                       git::Blob &blob) const {
   int index = mDiff.indexOf(file);
-  if (index < 0) return false;
+  if (index < 0)
+    return false;
 
   blob = mRepo.lookupBlob(mDiff.id(index, version));
   return true;
