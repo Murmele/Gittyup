@@ -73,12 +73,6 @@ jobs:
         owner: 'flathub'
         repository: 'com.github.Murmele.Gittyup'
 
-    # just until the new release is out
-    - name: Checkout restructureCMake
-      run: |
-        cd com.github.Murmele.Gittyup
-        git checkout restructureCMake
-
     - name: Replace git tag by the commit id on which it runs
       if: github.ref_type != 'tag'
       run: >
