@@ -184,7 +184,7 @@ ReferenceView::ReferenceView(const git::Repository &repo, Kinds kinds,
               git::Reference ref =
                   index.data(Qt::UserRole).value<git::Reference>();
               if (ref.isValid() && !ref.isHead())
-                RepoView::parentView(this)->checkout(ref);
+                checkout(ref);
             });
   }
 
@@ -263,6 +263,12 @@ QString ReferenceView::kindString(const git::Reference &ref) {
   return QString();
 }
 
+void ReferenceView::checkout(git::Reference &ref)
+{
+    RepoView::parentView(this)->checkout(ref);
+    emit checkedOut();
+}
+
 void ReferenceView::showEvent(QShowEvent *event) {
   resetTabIndex();
   setFocus();
@@ -277,8 +283,8 @@ void ReferenceView::contextMenuEvent(QContextMenuEvent *event) {
     return;
 
   QMenu menu;
-  QAction *checkout = menu.addAction(tr("Checkout"), [this, ref] {
-    RepoView::parentView(this)->checkout(ref);
+  QAction *checkout = menu.addAction(tr("Checkout"), [this, &ref] {
+    this->checkout(ref);
   });
 
   RepoView *view = RepoView::parentView(this);

@@ -54,9 +54,14 @@ public:
 
   void setCommit(const git::Commit &commit);
 
+signals:
+    void checkedOut();
+
 protected:
   void showEvent(QShowEvent *event) override;
   void contextMenuEvent(QContextMenuEvent *event) override;
+
+  void checkout(git::Reference &ref);
 
 private:
   bool mPopup;
