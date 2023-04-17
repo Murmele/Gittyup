@@ -8,6 +8,7 @@
 //
 
 #include "GitCredential.h"
+#include <QStandardPaths>
 #include <QCoreApplication>
 #include <QDir>
 #include <QProcess>
@@ -92,6 +93,46 @@ bool GitCredential::store(const QString &url, const QString &username,
 }
 
 QString GitCredential::command() const {
-  QDir dir(QCoreApplication::applicationDirPath());
-  return dir.filePath(QString("git-credential-%1").arg(mName));
+  QString name = QString("git-credential-%1").arg(mName);
+  QDir appDir = QCoreApplication::applicationDirPath();
+  appDir.cd("credential-helpers");
+
+  // Prefer credential helpers directly installed into Gittyup's app dir
+  QString candidate =
+      QStandardPaths::findExecutable(name, QStringList(appDir.path()));
+  if (!candidate.isEmpty()) {
+    return candidate;
+  }
+
+  candidate = QStandardPaths::findExecutable(name);
+  if (!candidate.isEmpty()) {
+    return candidate;
+  }
+
+#ifdef Q_OS_WIN
+  // Look for GIT CLI installation path
+  QString gitPath = QStandardPaths::findExecutable("git");
+  if (!gitPath.isEmpty()) {
+    QDir gitDir = QFileInfo(gitPath).dir();
+    if (gitDir.dirName() == "cmd" || gitDir.dirName() == "bin") {
+      gitDir.cdUp();
+
+#ifdef Q_OS_WIN64
+      gitDir.cd("mingw64");
+#else
+      gitDir.cd("mingw32");
+#endif
+
+      gitDir.cd("bin");
+
+      candidate =
+          QStandardPaths::findExecutable(name, QStringList(gitDir.path()));
+      if (!candidate.isEmpty()) {
+        return candidate;
+      }
+    }
+  }
+#endif
+
+  return name;
 }
