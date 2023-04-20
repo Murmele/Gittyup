@@ -1,4 +1,4 @@
-### v1.3.0 - 2023-04-17
+### v1.3.0 - 2023-04-20
 
 Performance Improvement and feature release
 
