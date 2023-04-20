@@ -1,3 +1,28 @@
+### v1.3.0 - 2023-04-20
+
+Performance Improvement and feature release
+
+#### Added
+
+* Colorized status badges
+* Template: use first template as default template for the commit message
+* Search function for the treeview
+* Reworked credential store: add possibility to choose between different methods to store credentials
+
+#### Changed
+
+* Fix external diff in Flatpak build
+* Fix windows credentials
+* Fix force push to correct remote
+* Fix tab title if more than three times a repository with the same name is opened
+* Fix storing repository settings correctly, because otherwise they are not applied
+* Fix language support
+* Improved refresh velocity
+* Fix storing and restoring current opened file when Gittyup refreshes
+* Improved velocity for files with many hunks
+
+----
+
 ### v1.2.2 - 2023-01-22
 
 Bug fix release

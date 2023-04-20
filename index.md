@@ -33,6 +33,25 @@ Remember to search for existing issues before creating a new one.
 If you still need help, check out our Matrix channel
 [Gittyup:martix.org](https://matrix.to/#/#Gittyup:matrix.org).
 
+Multi language support
+======================
+
+Gittyup supports the following languages:
+- English (en)
+- German (de)
+- Spanisch (es)
+- Japanese (ja)
+- Portuguese (pt)
+- Portuguese Brazil (pt_BR)
+- Chinese (zh_CN)
+- Russian (ru)
+
+By default the system language is used. To switch to another language execute the application with the following command
+```
+LANG=<lang> <executable>
+```
+
+
 Features
 ========
 
@@ -84,7 +103,7 @@ Use an existing tag as template for your next tag. So you never have to look whi
 ![Tag selection](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/tag_selection.png)
 
 ### Commit message template
-Create you commit messages according a defined template
+Create you commit messages according a defined template. The first template is automatically applied to the commit message editor.
 
 ![Commit message template selection](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/CommitMessageTemplateSelection.png)
 
