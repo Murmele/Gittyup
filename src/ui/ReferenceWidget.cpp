@@ -132,6 +132,9 @@ ReferenceWidget::ReferenceWidget(const git::Repository &repo,
   mView = new ReferenceView(repo, kinds, false, this);
   mView->setSelectionModel(new SelectionModel(mView->model(), repo));
 
+  // Close the drop-down list of branches if it has just been checked out.
+  connect(mView, &ReferenceView::checkedOut, [button] { button->click(); });
+
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->setSpacing(0);
