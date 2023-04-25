@@ -1,6 +1,6 @@
-### v9.9.9 - 2023-01-22
+### v1.3.0 - 2023-04-20
 
-Current unreleased version
+Performance Improvement and feature release
 
 #### Added
 
@@ -11,10 +11,14 @@ Current unreleased version
 
 #### Changed
 
-* Fix external diff with Flatpak
+* Fix external diff in Flatpak build
+* Fix windows credentials
+* Fix force push to correct remote
+* Fix tab title if more than three times a repository with the same name is opened
 * Fix storing repository settings correctly, because otherwise they are not applied
 * Fix language support
 * Improved refresh velocity
+* Fix storing and restoring current opened file when Gittyup refreshes
 * Improved velocity for files with many hunks
 
 ----
