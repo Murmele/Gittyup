@@ -20,7 +20,7 @@
 #include <QTemporaryFile>
 
 MergeTool::MergeTool(const QStringList &files, const git::Diff &diff,
-            const git::Repository &repo, QObject *parent)
+                     const git::Repository &repo, QObject *parent)
     : ExternalTool(files, diff, repo, parent) {
 
   if (!mFiles.empty()) {
@@ -37,7 +37,8 @@ MergeTool::MergeTool(const QStringList &files, const git::Diff &diff,
 }
 
 bool MergeTool::isValid() const {
-  if (!ExternalTool::isValid()) return false;
+  if (!ExternalTool::isValid())
+    return false;
 
   int numBlobs = mLocalEditedBlobs.size();
   for (int i = 0; i < numBlobs; ++i) {
@@ -63,8 +64,8 @@ bool MergeTool::start() {
   int numMergeFiles = mMergeFiles.size();
   for (int i = 0; i < numMergeFiles; ++i) {
     // Write temporary files.
-    QString templatePath = QDir::temp().filePath(
-                                        QFileInfo(mMergeFiles[i]).fileName());
+    QString templatePath =
+        QDir::temp().filePath(QFileInfo(mMergeFiles[i]).fileName());
     QTemporaryFile *local = new QTemporaryFile(templatePath, this);
     if (!local->open())
       return false;
@@ -127,17 +128,18 @@ bool MergeTool::start() {
       }
     });
 
+    QString fullFilePath = mRepo.workdir().filePath(mMergeFiles[i]);
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert("LOCAL", local->fileName());
     env.insert("REMOTE", remote->fileName());
-    env.insert("MERGED", mMergeFiles[i]);
+    env.insert("MERGED", fullFilePath);
     env.insert("BASE", basePath);
     process->setProcessEnvironment(env);
 
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
     QStringList arguments = {"--host", "--env=LOCAL=" + local->fileName(),
                              "--env=REMOTE=" + remote->fileName(),
-                             "--env=MERGED=" + mMergeFiles[i], 
+                             "--env=MERGED=" + fullFilePath,
                              "--env=BASE=" + basePath};
     arguments.append("sh");
     arguments.append("-c");
