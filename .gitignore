@@ -1,4 +1,5 @@
 build
+.cache
 .DS_Store
 .project
 .vscode/
@@ -6,3 +7,5 @@ CMakeLists.txt.user
 cmake-build-debug/
 cmake-build-release/
 .idea/
+compile_commands.json
+

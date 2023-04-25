@@ -14,6 +14,7 @@
 #include "ExternalTool.h"
 
 class QObject;
+class QString;
 namespace git {
 class Diff;
 class Repository;
@@ -39,6 +40,9 @@ protected:
 private:
   bool getBlob(const QString &file, const git::Diff::File &version,
                git::Blob &blob) const;
+
+  QString makeBlobTempFullFilePath(const QString &filePathAndName,
+                                   const git::Blob &fileBlob);
 };
 
 #endif
