@@ -170,14 +170,21 @@ QModelIndex DiffTreeModel::index(Node *n) const {
 }
 
 QModelIndex DiffTreeModel::index(const QString &name) const {
-  auto list = name.split("/");
-  if (list.length() == 0)
-    return QModelIndex();
+  if (mListView) {
+    for (auto c : mRoot->children()) {
+      if (c->name() == name)
+        return index(c);
+    }
+  } else {
+    auto list = name.split("/");
+    if (list.length() == 0)
+      return QModelIndex();
 
-  for (auto c : mRoot->children()) {
-    auto n = c->child(list, 0);
-    if (n)
-      return index(n);
+    for (auto c : mRoot->children()) {
+      auto n = c->child(list, 0);
+      if (n)
+        return index(n);
+    }
   }
 
   return QModelIndex();
