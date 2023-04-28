@@ -53,8 +53,38 @@ void DiffTreeModel::setDiff(const git::Diff &diff) {
 void DiffTreeModel::refresh(const QStringList &paths) {
   for (auto path : paths) {
     auto index = this->index(path);
-    emit dataChanged(index, index, {Qt::CheckStateRole});
+    handleDataChanged(index, Qt::CheckStateRole);
   }
+}
+
+void DiffTreeModel::handleDataChanged(const QModelIndex &index, int role) {
+  if (!index.isValid())
+    return;
+
+  // childs
+  if (hasChildren(index)) {
+    // emit dataChanged() for all files in the folder
+    // all children changed too. TODO: only the tracked files should emit a
+    // signal
+    int count = rowCount(index);
+    for (int row = 0; row < count; row++) {
+      QModelIndex child = this->index(row, 0, index);
+      emit dataChanged(child, child, {role});
+    }
+  }
+  // parents
+  // recursive approach to emit signal dataChanged also for the parents.
+  // Because when a file in a folder is staged, the state of the folder
+  // changes too
+  QModelIndex parent = this->parent(index);
+  while (parent.isValid()) {
+    emit dataChanged(parent, parent, {role});
+    parent = this->parent(parent);
+  }
+
+  // file/folder it self
+  // emit dataChanged() for folder or file it self
+  emit dataChanged(index, index, {role});
 }
 
 int DiffTreeModel::rowCount(const QModelIndex &parent) const {
@@ -140,14 +170,21 @@ QModelIndex DiffTreeModel::index(Node *n) const {
 }
 
 QModelIndex DiffTreeModel::index(const QString &name) const {
-  auto list = name.split("/");
-  if (list.length() == 0)
-    return QModelIndex();
+  if (mListView) {
+    for (auto c : mRoot->children()) {
+      if (c->name() == name)
+        return index(c);
+    }
+  } else {
+    auto list = name.split("/");
+    if (list.length() == 0)
+      return QModelIndex();
 
-  for (auto c : mRoot->children()) {
-    auto n = c->child(list, 0);
-    if (n)
-      return index(n);
+    for (auto c : mRoot->children()) {
+      auto n = c->child(list, 0);
+      if (n)
+        return index(n);
+    }
   }
 
   return QModelIndex();
@@ -325,30 +362,7 @@ bool DiffTreeModel::setData(const QModelIndex &index, const QVariant &value,
           (void)state;
       }
 
-      // childs
-      if (hasChildren(index)) {
-        // emit dataChanged() for all files in the folder
-        // all children changed too. TODO: only the tracked files should emit a
-        // signal
-        int count = rowCount(index);
-        for (int row = 0; row < count; row++) {
-          QModelIndex child = this->index(row, 0, index);
-          emit dataChanged(child, child, {role});
-        }
-      }
-      // parents
-      // recursive approach to emit signal dataChanged also for the parents.
-      // Because when a file in a folder is staged, the state of the folder
-      // changes too
-      QModelIndex parent = this->parent(index);
-      while (parent.isValid()) {
-        emit dataChanged(parent, parent, {role});
-        parent = this->parent(parent);
-      }
-
-      // file/folder it self
-      // emit dataChanged() for folder or file it self
-      emit dataChanged(index, index, {role});
+      handleDataChanged(index, role);
       emit checkStateChanged(index, value.toInt());
 
       return true;

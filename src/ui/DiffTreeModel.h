@@ -153,6 +153,9 @@ signals:
                         bool init, bool checkout_force);
 
 private:
+  void handleDataChanged(const QModelIndex &index, int role);
+
+private:
   Node *node(const QModelIndex &index) const;
 
   QFileIconProvider mIconProvider;
