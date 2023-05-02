@@ -216,6 +216,12 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
   splitter->addWidget(treeViewSplitter);
   splitter->setStretchFactor(0, 3);
   splitter->setStretchFactor(1, 1);
+  // prevent that diffview will be collapsed
+  // The problem is that the diffview is between two splitters
+  // and if the diffview is collapsed only the splitter of the
+  // commitlist is visible and is is not possible to get the
+  // diffview visible again.
+  splitter->setCollapsible(0, false);
   connect(splitter, &QSplitter::splitterMoved, this, [splitter] {
     QSettings().setValue(kSplitterKey, splitter->saveState());
   });
