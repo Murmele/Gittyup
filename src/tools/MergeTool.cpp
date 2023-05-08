@@ -40,8 +40,7 @@ bool MergeTool::isValid() const {
     return false;
 
   int numBlobs = mMerges.size();
-  for (int i = 0; i < numBlobs; ++i) {
-    const FileMerge &fileMerge = mMerges.at(i);
+  for (const FileMerge &fileMerge : mMerges) {
     if (!fileMerge.local.isValid() || !fileMerge.remote.isValid()) {
       return false;
     }
