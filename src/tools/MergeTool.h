@@ -38,10 +38,13 @@ public:
 protected:
 
 private:
-  QVector<QString> mMergeFiles;
-  QVector<git::Blob> mLocalEditedBlobs;
-  QVector<git::Blob> mRemoteEditedBlobs;
-  QVector<git::Blob> mBaseBlobs;
+  struct FileMerge {
+    QString name;
+    git::Blob local;
+    git::Blob remote;
+    git::Blob base;
+  };
+  QVector<FileMerge> mMerges;
 };
 
 #endif

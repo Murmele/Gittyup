@@ -88,19 +88,6 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
   if (!diff.isValid())
     return;
 
-  auto errFunc = [this](ExternalTool::Error error) {
-    if (error != ExternalTool::BashNotFound)
-      return;
-
-    QString title = tr("Bash Not Found");
-    QString text = tr("Bash was not found on your PATH.");
-    QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok,
-                    this);
-    msg.setInformativeText(
-        tr("Bash is required to execute external tools."));
-    msg.exec();
-  };
-
   git::Repository repo = view->repo();
 
   // Create external tools.
@@ -109,8 +96,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
   attachTool(new EditTool(files, diff, repo, this), editTools);
   if (diff.isConflicted()) {
     attachTool(new MergeTool(files, diff, repo, this), mergeTools);
-  } 
-  else {
+  } else {
     attachTool(new DiffTool(files, diff, repo, this), diffTools);
   }
 
@@ -174,7 +160,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     // Navigate
     QMenu *navigate = addMenu(tr("Navigate to"));
     QAction *nextAct = navigate->addAction(tr("Next Revision"));
-    QMenu::connect(nextAct, &QAction::triggered, [view, file] {
+    connect(nextAct, &QAction::triggered, [view, file] {
       if (git::Commit next = view->nextRevision(file)) {
         view->selectCommit(next, file);
       } else {
@@ -183,7 +169,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     });
 
     QAction *prevAct = navigate->addAction(tr("Previous Revision"));
-    QMenu::connect(prevAct, &QAction::triggered, [view, file] {
+    connect(prevAct, &QAction::triggered, [view, file] {
       if (git::Commit prev = view->previousRevision(file)) {
         view->selectCommit(prev, file);
       } else {
@@ -306,7 +292,7 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
         QString text = tr("Discard Changes");
         QPushButton *discard = dialog->addButton(text, QMessageBox::AcceptRole);
         discard->setObjectName("DiscardButton");
-        QMenu::connect(discard, &QPushButton::clicked, [view, modified, submodules] {
+        connect(discard, &QPushButton::clicked, [view, modified, submodules] {
           git::Repository repo = view->repo();
           int strategy = GIT_CHECKOUT_FORCE;
           if (modified.count() &&
@@ -333,7 +319,7 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
   // Ignore
   QAction *ignore = addAction(tr("Ignore"));
   ignore->setObjectName("IgnoreAction");
-  QMenu::connect(ignore, &QAction::triggered, this, &FileContextMenu::ignoreFile);
+  connect(ignore, &QAction::triggered, this, &FileContextMenu::ignoreFile);
   foreach (const QString &file, files) {
     int index = diff.indexOf(file);
     if (index < 0)
@@ -451,7 +437,7 @@ void FileContextMenu::ignoreFile() {
   d->setAttribute(Qt::WA_DeleteOnClose);
 
   auto *view = mView;
-  QMenu::connect(d, &QDialog::accepted, [d, view]() {
+  connect(d, &QDialog::accepted, [d, view]() {
     auto ignore = d->ignoreText();
     if (!ignore.isEmpty())
       view->ignore(ignore);
@@ -521,21 +507,18 @@ void FileContextMenu::addExternalToolsAction(
   }
 }
 
-void FileContextMenu::attachTool(ExternalTool *tool, 
-                                 QList<ExternalTool *> &tools)
-{
+void FileContextMenu::attachTool(ExternalTool *tool,
+                                 QList<ExternalTool *> &tools) {
   tools.append(tool);
 
-  QMenu::connect(tool, &ExternalTool::error, [this](ExternalTool::Error error) {
+  connect(tool, &ExternalTool::error, [this](ExternalTool::Error error) {
     if (error != ExternalTool::BashNotFound)
       return;
 
     QString title = tr("Bash Not Found");
     QString text = tr("Bash was not found on your PATH.");
-    QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok,
-                    this);
-    msg.setInformativeText(
-        tr("Bash is required to execute external tools."));
+    QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok, this);
+    msg.setInformativeText(tr("Bash is required to execute external tools."));
     msg.exec();
   });
 }

@@ -45,15 +45,15 @@ bool DiffTool::start() {
 
   int numFiles = mFiles.size();
   foreach (const QString &filePathAndName, mFiles) {
-    git::Blob fileBlob1, fileBlob2;
-    if (!getBlob(filePathAndName, git::Diff::OldFile, fileBlob1) ||
-        !getBlob(filePathAndName, git::Diff::NewFile, fileBlob2))
+    git::Blob filePathOld, filePathNew;
+    if (!getBlob(filePathAndName, git::Diff::OldFile, filePathOld) ||
+        !getBlob(filePathAndName, git::Diff::NewFile, filePathNew))
       continue;
 
     // Get the path to the file (either a full or relative path).
     QString otherPathAndName = filePathAndName;
-    if (fileBlob1.isValid()) {
-      otherPathAndName = makeBlobTempFullFilePath(filePathAndName, fileBlob1);
+    if (filePathOld.isValid()) {
+      otherPathAndName = makeBlobTempFullFilePath(filePathAndName, filePathOld);
       if (otherPathAndName.isEmpty())
         return false;
     }
@@ -75,7 +75,7 @@ bool DiffTool::start() {
     // Convert to absolute path.
     QString fullFilePath =
         isWorkDirDiff ? mRepo.workdir().filePath(filePathAndName)
-                      : makeBlobTempFullFilePath(filePathAndName, fileBlob2);
+                      : makeBlobTempFullFilePath(filePathAndName, filePathNew);
 
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
     QStringList arguments = {"--host", "--env=LOCAL=" + fullFilePath,
