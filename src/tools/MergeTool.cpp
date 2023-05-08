@@ -61,8 +61,7 @@ bool MergeTool::start() {
     return false;
 
   int numMergeFiles = mMerges.size();
-  for (int i = 0; i < numMergeFiles; ++i) {
-    const FileMerge &fileMerge = mMerges.at(i);
+  for (const FileMerge &fileMerge : mMerges) {
     // Write temporary files.
     QString templatePath =
         QDir::temp().filePath(QFileInfo(fileMerge.name).fileName());
