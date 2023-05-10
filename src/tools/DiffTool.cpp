@@ -80,7 +80,7 @@ bool DiffTool::start() {
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
     QStringList arguments = {"--host", "--env=LOCAL=" + fullFilePath,
                              "--env=REMOTE=" + otherPathAndName,
-                             "--env=MERGED=" + filePathAndName, 
+                             "--env=MERGED=" + filePathAndName,
                              "--env=BASE=" + filePathAndName};
     arguments.append("sh");
     arguments.append("-c");

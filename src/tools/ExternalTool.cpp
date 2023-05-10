@@ -40,11 +40,12 @@ void splitCommand(const QString &command, QString &program, QString &args) {
 } // namespace
 
 ExternalTool::ExternalTool(const QStringList &files, const git::Diff &diff,
-         const git::Repository &repo, QObject *parent)
-    : QObject(parent), mFiles(files), mDiff(diff), mRepo(repo) { }
+                           const git::Repository &repo, QObject *parent)
+    : QObject(parent), mFiles(files), mDiff(diff), mRepo(repo) {}
 
-bool ExternalTool::isValid() const { return !mFiles.isEmpty() && 
-                                            !mFiles.first().isEmpty(); }
+bool ExternalTool::isValid() const {
+  return !mFiles.isEmpty() && !mFiles.first().isEmpty();
+}
 
 QString ExternalTool::lookupCommand(const QString &key, bool &shell) {
   git::Config config = git::Config::global();
@@ -98,8 +99,7 @@ QList<ExternalTool::Info> ExternalTool::readBuiltInTools(const QString &key) {
   return tools;
 }
 
-bool ExternalTool::isConflicted(const QString &file) const
-{
+bool ExternalTool::isConflicted(const QString &file) const {
   if (!mDiff.isValid())
     return false;
 
