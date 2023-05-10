@@ -19,7 +19,7 @@ namespace git {
 class Diff;
 class Repository;
 class Blob;
-};
+}; // namespace git
 
 class DiffTool : public ExternalTool {
   Q_OBJECT
@@ -36,7 +36,6 @@ public:
   bool start() override;
 
 protected:
-
 private:
   bool getBlob(const QString &file, const git::Diff::File &version,
                git::Blob &blob) const;

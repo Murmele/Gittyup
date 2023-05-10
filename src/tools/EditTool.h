@@ -14,9 +14,9 @@
 
 class QObject;
 namespace git {
-  class Diff;
-  class Repository;
-};
+class Diff;
+class Repository;
+}; // namespace git
 
 class EditTool : public ExternalTool {
   Q_OBJECT

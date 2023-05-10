@@ -15,14 +15,16 @@
 #include <QUrl>
 
 EditTool::EditTool(const QStringList &files, const git::Diff &diff,
-           const git::Repository &repo, QObject *parent)
+                   const git::Repository &repo, QObject *parent)
     : ExternalTool(files, diff, repo, parent) {}
 
 bool EditTool::isValid() const {
-  if (!ExternalTool::isValid()) return false;
+  if (!ExternalTool::isValid())
+    return false;
 
   foreach (const QString file, mFiles) {
-    if (!QFileInfo(mRepo.workdir().filePath(file)).isFile()) return false;
+    if (!QFileInfo(mRepo.workdir().filePath(file)).isFile())
+      return false;
   }
   return true;
 }
