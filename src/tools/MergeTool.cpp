@@ -97,7 +97,7 @@ bool MergeTool::start() {
     }
 
     // Destroy this after process finishes.
-    QProcess *process = new QProcess(this);
+    QProcess *process = new QProcess();
     process->setProcessChannelMode(
         QProcess::ProcessChannelMode::ForwardedChannels);
     git::Repository repo = fileMerge.local.repo();
