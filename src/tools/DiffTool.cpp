@@ -59,7 +59,7 @@ bool DiffTool::start() {
     }
 
     // Destroy this after process finishes.
-    QProcess *process = new QProcess(this);
+    QProcess *process = new QProcess();
     process->setProcessChannelMode(
         QProcess::ProcessChannelMode::ForwardedChannels);
     auto signal = QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished);

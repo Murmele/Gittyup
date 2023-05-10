@@ -90,7 +90,7 @@ bool EditTool::start() {
   editor.remove("\"");
 
   // Destroy this after process finishes.
-  QProcess *process = new QProcess(this);
+  QProcess *process = new QProcess();
   auto signal = QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished);
   QObject::connect(process, signal, this, &ExternalTool::deleteLater);
 
