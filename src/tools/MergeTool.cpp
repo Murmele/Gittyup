@@ -121,7 +121,7 @@ bool MergeTool::start() {
             repo.index().setStaged({fileMerge.name.mid(length + 1)}, true);
           }
 
-          if (--numMergeFiles) {
+          if (--numMergeFiles == 0) {
             deleteLater();
           }
         });
