@@ -174,4 +174,39 @@ CommitToolBar::CommitToolBar(QWidget *parent) : QToolBar(parent) {
                                    checked);
     emit settingsChanged();
   });
+
+  menu->addSeparator();
+
+  QAction *author = menu->addAction(tr("Show Author"));
+  author->setCheckable(true);
+  author->setChecked(Settings::instance()
+                          ->value(Setting::Id::ShowCommitsAuthor, true)
+                          .toBool());
+  connect(author, &QAction::triggered, [this](bool checked) {
+    Settings::instance()->setValue(Setting::Id::ShowCommitsAuthor,
+                                   checked);
+    emit settingsChanged();
+  });
+
+  QAction *date = menu->addAction(tr("Show Date"));
+  date->setCheckable(true);
+  date->setChecked(Settings::instance()
+                         ->value(Setting::Id::ShowCommitsDate, true)
+                         .toBool());
+  connect(date, &QAction::triggered, [this](bool checked) {
+    Settings::instance()->setValue(Setting::Id::ShowCommitsDate,
+                                   checked);
+    emit settingsChanged();
+  });
+
+  QAction *id = menu->addAction(tr("Show Id"));
+  id->setCheckable(true);
+  id->setChecked(Settings::instance()
+                         ->value(Setting::Id::ShowCommitsId, true)
+                         .toBool());
+  connect(id, &QAction::triggered, [this](bool checked) {
+    Settings::instance()->setValue(Setting::Id::ShowCommitsId,
+                                   checked);
+    emit settingsChanged();
+  });
 }
