@@ -58,6 +58,9 @@ public:
     SshKeyFilePath,
     CommitMergeImmediately,
     ShowCommitsInCompactMode,
+    ShowCommitsAuthor,
+    ShowCommitsDate,
+    ShowCommitsId,
     ShowChangedFilesAsList,
     ShowChangedFilesInSingleView,
   };
