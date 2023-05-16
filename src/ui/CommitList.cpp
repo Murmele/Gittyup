@@ -626,14 +626,13 @@ public:
                        ->value(Setting::Id::ShowCommitsInCompactMode)
                        .toBool();
     bool showAuthor = Settings::instance()
-                      ->value(Setting::Id::ShowCommitsAuthor, true)
-                      .toBool();
+                          ->value(Setting::Id::ShowCommitsAuthor, true)
+                          .toBool();
     bool showDate = Settings::instance()
-                      ->value(Setting::Id::ShowCommitsDate, true)
-                      .toBool();
-    bool showId = Settings::instance()
-                      ->value(Setting::Id::ShowCommitsId, true)
-                      .toBool();
+                        ->value(Setting::Id::ShowCommitsDate, true)
+                        .toBool();
+    bool showId =
+        Settings::instance()->value(Setting::Id::ShowCommitsId, true).toBool();
     LayoutConstants constants = layoutConstants(compact);
 
     // Draw background.
@@ -858,7 +857,8 @@ public:
           painter->drawText(rect, Qt::AlignLeft, name);
           painter->restore();
           const QFontMetrics boldFm(bold);
-          rect.setX(rect.x() + boldFm.horizontalAdvance(name) + constants.hMargin);
+          rect.setX(rect.x() + boldFm.horizontalAdvance(name) +
+                    constants.hMargin);
         }
 
         // Draw message.
@@ -884,13 +884,13 @@ public:
         }
 
         // Draw date.
-        if (showDate && rect.width() > fm.horizontalAdvance(name) + timestampWidth + 8) {
+        if (showDate &&
+            rect.width() > fm.horizontalAdvance(name) + timestampWidth + 8) {
           painter->save();
           painter->setPen(bright);
           if (showAuthor) {
             painter->drawText(rect, Qt::AlignRight, timestamp);
-          }
-          else {
+          } else {
             painter->drawText(rect, Qt::AlignLeft, timestamp);
           }
           painter->restore();
@@ -916,18 +916,17 @@ public:
           QString leftText = "";
 
           if (showDate && showAuthor) {
-            refsRect.setY(refsRect.y() + constants.lineSpacing + constants.vMargin);
+            refsRect.setY(refsRect.y() + constants.lineSpacing +
+                          constants.vMargin);
             if (showId) {
               leftText = id;
             }
           } else {
             if (showDate) {
               leftText = timestamp;
-            }
-            else if (showAuthor) {
+            } else if (showAuthor) {
               leftText = name;
-            }
-            else if (showId) {
+            } else if (showId) {
               leftText = id;
             }
           }
@@ -936,9 +935,12 @@ public:
         }
 
         int numOptional = 0;
-        if (showId) ++numOptional;
-        if (showAuthor) ++numOptional;
-        if (showDate) ++numOptional;
+        if (showId)
+          ++numOptional;
+        if (showAuthor)
+          ++numOptional;
+        if (showDate)
+          ++numOptional;
         if (numOptional > 1) {
           rect.setY(rect.y() + constants.lineSpacing + constants.vMargin);
         }
