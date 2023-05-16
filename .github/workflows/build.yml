@@ -5,7 +5,7 @@ name: Gittyup
 on:
   push:
     branches:
-    - master
+    - latest
     tags:
     - 'gittyup_v*'
   pull_request:
@@ -335,12 +335,12 @@ jobs:
     # https://github.com/marvinpinto/actions/issues/177
     needs: [flatpak, build]
     runs-on: ubuntu-latest # does not matter which
-    # a prerelase is created when pushing to master
+    # a prerelase is created when pushing to latest
     # a release is created when a tag will be set
     # last condition is the same as IS_RELEASE,
     # but environment variables cannot be used outside of steps
     # so it was copied to here too
-    if: ${{ github.ref == 'refs/heads/master' || (github.event_name == 'push' && github.ref_type == 'tag' && startswith(github.ref_name, 'gittyup_v'))  }}
+    if: ${{ github.ref == 'refs/heads/latest' || (github.event_name == 'push' && github.ref_type == 'tag' && startswith(github.ref_name, 'gittyup_v'))  }}
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v3
