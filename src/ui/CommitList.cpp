@@ -625,6 +625,14 @@ public:
     bool compact = Settings::instance()
                        ->value(Setting::Id::ShowCommitsInCompactMode)
                        .toBool();
+    bool showAuthor = Settings::instance()
+                          ->value(Setting::Id::ShowCommitsAuthor, true)
+                          .toBool();
+    bool showDate = Settings::instance()
+                        ->value(Setting::Id::ShowCommitsDate, true)
+                        .toBool();
+    bool showId =
+        Settings::instance()->value(Setting::Id::ShowCommitsId, true).toBool();
     LayoutConstants constants = layoutConstants(compact);
 
     // Draw background.
@@ -799,18 +807,20 @@ public:
         rect.setWidth(rect.width() - star.width());
 
         // Draw commit id.
-        QString id = commit.id().toString().left(kShortIdSize);
-        int idWidth = maxShortIdWidth(fm);
+        if (showId) {
+          QString id = commit.id().toString().left(kShortIdSize);
+          int idWidth = maxShortIdWidth(fm);
 
-        QRect commitRect = rect;
-        commitRect.setX(commitRect.x() + commitRect.width() - idWidth);
-        painter->save();
-        painter->drawText(commitRect, Qt::AlignLeft, id);
-        painter->restore();
-        rect.setWidth(rect.width() - idWidth - constants.hMargin);
+          QRect commitRect = rect;
+          commitRect.setX(commitRect.x() + commitRect.width() - idWidth);
+          painter->save();
+          painter->drawText(commitRect, Qt::AlignLeft, id);
+          painter->restore();
+          rect.setWidth(rect.width() - idWidth - constants.hMargin);
+        }
 
         // Draw date. Only if it is not the same as previous?
-        if (rect.width() > minWidthDesc + timestampWidth + 8 &&
+        if (showDate && rect.width() > minWidthDesc + timestampWidth + 8 &&
             totalWidth > minDisplayWidthDate) {
           painter->save();
           painter->setPen(bright);
@@ -837,6 +847,20 @@ public:
           badgesWidth = Badge::paint(painter, refs, ref, &opt, Qt::AlignLeft);
         rect.setX(badgesWidth); // Comes right after the badges
 
+        // Draw Name.
+        if (showAuthor) {
+          QString name = commit.author().name();
+          painter->save();
+          QFont bold = opt.font;
+          bold.setBold(true);
+          painter->setFont(bold);
+          painter->drawText(rect, Qt::AlignLeft, name);
+          painter->restore();
+          const QFontMetrics boldFm(bold);
+          rect.setX(rect.x() + boldFm.horizontalAdvance(name) +
+                    constants.hMargin);
+        }
+
         // Draw message.
         painter->save();
         painter->setPen(bright);
@@ -846,37 +870,79 @@ public:
         painter->restore();
 
       } else {
-        // Draw Name.
-        QString name = commit.author().name();
-        painter->save();
-        QFont bold = opt.font;
-        bold.setBold(true);
-        painter->setFont(bold);
-        painter->drawText(rect, Qt::AlignLeft, name);
-        painter->restore();
 
-        // Draw date.
-        if (rect.width() > fm.horizontalAdvance(name) + timestampWidth + 8) {
+        // Draw Name.
+        QString name = "";
+        if (showAuthor) {
+          name = commit.author().name();
           painter->save();
-          painter->setPen(bright);
-          painter->drawText(rect, Qt::AlignRight, timestamp);
+          QFont bold = opt.font;
+          bold.setBold(true);
+          painter->setFont(bold);
+          painter->drawText(rect, Qt::AlignLeft, name);
           painter->restore();
         }
 
-        rect.setY(rect.y() + constants.lineSpacing + constants.vMargin);
+        // Draw date.
+        if (showDate &&
+            rect.width() > fm.horizontalAdvance(name) + timestampWidth + 8) {
+          painter->save();
+          painter->setPen(bright);
+          if (showAuthor) {
+            painter->drawText(rect, Qt::AlignRight, timestamp);
+          } else {
+            painter->drawText(rect, Qt::AlignLeft, timestamp);
+          }
+          painter->restore();
+        }
 
         // Draw id.
-        QString id = commit.shortId();
-        painter->save();
-        painter->drawText(rect, Qt::AlignLeft, id);
-        painter->restore();
+        QString id = "";
+        if (showId) {
+          QRect idRect = rect;
+          if (showAuthor || showDate) {
+            idRect.setY(idRect.y() + constants.lineSpacing + constants.vMargin);
+          }
+          id = commit.shortId();
+          painter->save();
+          painter->drawText(idRect, Qt::AlignLeft, id);
+          painter->restore();
+        }
 
         // Draw references.
         QList<Badge::Label> refs = mRefs.value(commit.id());
         if (!refs.isEmpty()) {
           QRect refsRect = rect;
-          refsRect.setX(refsRect.x() + fm.boundingRect(id).width() + 6);
+          QString leftText = "";
+
+          if (showDate && showAuthor) {
+            refsRect.setY(refsRect.y() + constants.lineSpacing +
+                          constants.vMargin);
+            if (showId) {
+              leftText = id;
+            }
+          } else {
+            if (showDate) {
+              leftText = timestamp;
+            } else if (showAuthor) {
+              leftText = name;
+            } else if (showId) {
+              leftText = id;
+            }
+          }
+          refsRect.setX(refsRect.x() + fm.boundingRect(leftText).width() + 6);
           Badge::paint(painter, refs, refsRect, &opt);
+        }
+
+        int numOptional = 0;
+        if (showId)
+          ++numOptional;
+        if (showAuthor)
+          ++numOptional;
+        if (showDate)
+          ++numOptional;
+        if (numOptional > 1) {
+          rect.setY(rect.y() + constants.lineSpacing + constants.vMargin);
         }
 
         rect.setY(rect.y() + constants.lineSpacing + constants.vMargin);
