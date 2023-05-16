@@ -179,10 +179,11 @@ void TestTreeView::discardFiles() {
 
   auto *menu = doubleTree->findChild<FileContextMenu *>();
   QVERIFY(menu);
-  QCOMPARE(menu->mFiles.count(), 1);
+  auto files = menu->mAccumFiles.getFiles();
+  QCOMPARE(files.count(), 1);
   // only folder1/file.txt shall get discarded.
   // folder1/file2.txt shall not discarded!
-  QCOMPARE(menu->mFiles.at(0), "folder1/file.txt");
+  QCOMPARE(files.at(0), "folder1/file.txt");
 
   // From here on everything is tested in TestFileContextMenu
 }
