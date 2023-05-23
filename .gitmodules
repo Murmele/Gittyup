@@ -1,6 +1,6 @@
 [submodule "dep/libgit2/libgit2"]
 	path = dep/libgit2/libgit2
-	url = https://github.com/stinb/libgit2.git
+	url = https://github.com/libgit2/libgit2.git
 [submodule "dep/libssh2/libssh2"]
 	path = dep/libssh2/libssh2
 	url = https://github.com/libssh2/libssh2.git
