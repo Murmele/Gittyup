@@ -56,9 +56,12 @@ TreeWidget::TreeWidget(const git::Repository &repo, QWidget *parent)
   connect(mSearch, &QLineEdit::textChanged, this, &TreeWidget::search);
   mcbRegex = new QCheckBox(tr("Regex"), this);
   connect(mcbRegex, &QCheckBox::clicked, this, &TreeWidget::search);
+  mcbCaseSensitive = new QCheckBox(tr("Case Sensitive"), this);
+  connect(mcbCaseSensitive, &QCheckBox::clicked, this, &TreeWidget::search);
   QHBoxLayout *l = new QHBoxLayout();
   l->addWidget(mLabelSearch);
   l->addWidget(mSearch);
+  l->addWidget(mcbCaseSensitive);
   l->addWidget(mcbRegex);
 
   mSearchResults = new QListWidget(this);
@@ -170,25 +173,30 @@ void TreeWidget::search() {
     return;
 
   bool regex = mcbRegex->isChecked();
+  bool caseSensitive = mcbCaseSensitive->isChecked();
 
-  QRegularExpression re(pattern, QRegularExpression::CaseInsensitiveOption);
+  QRegularExpression re(
+      pattern, caseSensitive ? QRegularExpression::NoPatternOption
+                             : QRegularExpression::CaseInsensitiveOption);
   mSuppressIndexChange = true;
   mSearchResults->clear();
-  searchFiles(re, regex);
+  searchFiles(re, regex, caseSensitive);
   mSuppressIndexChange = false;
 }
 
 void TreeWidget::searchFiles(const QRegularExpression &re, bool regex,
-                             const QModelIndex &parent) {
+                             bool caseSensitive, const QModelIndex &parent) {
   for (int row = 0; row < mModel->rowCount(parent); row++) {
     const auto index = mModel->index(row, 0, QModelIndex(parent));
     if (mModel->rowCount(index) > 0) {
       // folder
-      searchFiles(re, regex, index);
+      searchFiles(re, regex, caseSensitive, index);
     } else {
       // file
       const QString name = mModel->data(index, Qt::EditRole).toString();
-      if ((!regex && name.contains(re.pattern())) ||
+      if ((!regex &&
+           name.contains(re.pattern(), caseSensitive ? Qt::CaseSensitive
+                                                     : Qt::CaseInsensitive)) ||
           (regex && re.match(name).hasMatch())) {
         QListWidgetItem *item = new QListWidgetItem(name, mSearchResults);
         item->setData(Qt::UserRole, index);
