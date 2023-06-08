@@ -55,7 +55,7 @@ private slots:
 
 private:
   void edit(const QModelIndex &index);
-  void searchFiles(const QRegularExpression &re, bool regex,
+  void searchFiles(const QRegularExpression &re, bool regex, bool caseSensitive,
                    const QModelIndex &parent = QModelIndex());
   void loadEditorContent(const QModelIndex &index);
 
@@ -63,6 +63,7 @@ private:
 
   QLabel *mLabelSearch;
   QCheckBox *mcbRegex;
+  QCheckBox *mcbCaseSensitive;
   QLineEdit *mSearch;
   QListWidget *mSearchResults;
   ColumnView *mView;
