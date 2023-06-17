@@ -516,7 +516,7 @@
     <message>
         <location filename="../src/ui/DetailView.cpp" line="395"/>
         <source>Parents:</source>
-        <translation type="unfinished"></translation>
+        <translation>Padres:</translation>
     </message>
 </context>
 <context>
@@ -583,33 +583,33 @@
         <location filename="../src/ui/DetailView.cpp" line="828"/>
         <location filename="../src/ui/DetailView.cpp" line="853"/>
         <source>Spell Check Language</source>
-        <translation type="unfinished"></translation>
+        <translation>Idioma del Corrector Ortográfico</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="829"/>
         <source>The dictionary &apos;%1&apos; is invalid</source>
-        <translation type="unfinished"></translation>
+        <translation>El diccionario &apos;%1&apos; es inválido</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="830"/>
         <source>Spell checking is disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>La corrección ortográfica está deshabilitada.</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="831"/>
         <source>The choosen dictionary &apos;%1.dic&apos; is not a valid hunspell dictionary.</source>
-        <translation type="unfinished"></translation>
+        <translation>El diccionario elegido &apos;%1.dic&apos; no es un diccionario hunspell válido.</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="837"/>
         <location filename="../src/ui/DetailView.cpp" line="894"/>
         <source>Invalid dictionary &apos;%1.dic&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>Diccionario inválido, &apos;%1.dic&apos;</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="859"/>
         <source>Edit User Dictionary</source>
-        <translation type="unfinished"></translation>
+        <translation>Editar el Dicccionario de Usuario</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="916"/>
@@ -738,12 +738,12 @@
     <message>
         <location filename="../src/ui/CommitList.cpp" line="1503"/>
         <source>Delete Tag %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Borrar Etiqueta %1</translation>
     </message>
     <message>
         <location filename="../src/ui/CommitList.cpp" line="1513"/>
         <source>Delete Branch %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Borrar Rama %1</translation>
     </message>
     <message>
         <location filename="../src/ui/CommitList.cpp" line="1521"/>
@@ -758,7 +758,7 @@
     <message>
         <location filename="../src/ui/CommitList.cpp" line="1551"/>
         <source>Squash...</source>
-        <translation type="unfinished"></translation>
+        <translation>Aplastar...</translation>
     </message>
     <message>
         <location filename="../src/ui/CommitList.cpp" line="1568"/>
@@ -1148,17 +1148,17 @@
     <message>
         <location filename="../src/ui/DiffView.cpp" line="297"/>
         <source>Edit Working Copy</source>
-        <translation type="unfinished"></translation>
+        <translation>Editar Copia de Trabajo</translation>
     </message>
     <message>
         <location filename="../src/ui/DiffView.cpp" line="308"/>
         <source>Edit New Revision</source>
-        <translation type="unfinished"></translation>
+        <translation>Editar Revisión Nueva</translation>
     </message>
     <message>
         <location filename="../src/ui/DiffView.cpp" line="323"/>
         <source>Edit Old Revision</source>
-        <translation type="unfinished"></translation>
+        <translation>Editar Revisión Anterior</translation>
     </message>
 </context>
 <context>
@@ -1699,7 +1699,7 @@
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="118"/>
         <source>No translation</source>
-        <translation type="unfinished"></translation>
+        <translation>No traducir</translation>
     </message>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="131"/>
@@ -1737,7 +1737,7 @@
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="137"/>
         <source>Language:</source>
-        <translation type="unfinished"></translation>
+        <translation>Idioma:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="138"/>
@@ -2507,12 +2507,12 @@ Ejemplos
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="502"/>
         <source>Squash...</source>
-        <translation type="unfinished"></translation>
+        <translation>Aplastar</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="503"/>
         <source>Ctrl+Shift+Q</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+Shift+Q</translation>
     </message>
     <message>
         <location filename="../src/ui/MenuBar.cpp" line="517"/>
@@ -2743,7 +2743,7 @@ Ejemplos
         <location filename="../src/dialogs/MergeDialog.cpp" line="52"/>
         <location filename="../src/dialogs/MergeDialog.cpp" line="155"/>
         <source>Squash</source>
-        <translation type="unfinished"></translation>
+        <translation>Aplastar</translation>
     </message>
     <message>
         <location filename="../src/dialogs/MergeDialog.cpp" line="53"/>
@@ -2773,17 +2773,17 @@ Ejemplos
     <message>
         <location filename="../src/dialogs/MergeDialog.cpp" line="138"/>
         <source>Choose a reference to merge into &apos;%1&apos;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Escoje una referencia para fusionar en &apos;%1&apos;.</translation>
     </message>
     <message>
         <location filename="../src/dialogs/MergeDialog.cpp" line="140"/>
         <source>Choose a reference to rebase &apos;%1&apos; on.</source>
-        <translation type="unfinished"></translation>
+        <translation>Escoje una referencia para reorganizar en &apos;%1&apos;.</translation>
     </message>
     <message>
         <location filename="../src/dialogs/MergeDialog.cpp" line="142"/>
         <source>Choose a reference to squash into &apos;%1&apos;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Escoje una referencia para aplastas en &apos;%1&apos;.</translation>
     </message>
     <message>
         <source>Choose a reference to merge into &lt;b&gt;%1&lt;/b&gt;.</source>
@@ -2807,12 +2807,12 @@ Ejemplos
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="667"/>
         <source>Path to SSH config file:</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruta al fichero de configuración SSH:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="668"/>
         <source>Path to default / fallback SSH key file:</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruta a la clave SSH por Defecto/Respaldo:</translation>
     </message>
 </context>
 <context>
@@ -3065,7 +3065,7 @@ Ejemplos
     <message>
         <location filename="../src/ui/ReferenceView.cpp" line="569"/>
         <source>Squash...</source>
-        <translation type="unfinished"></translation>
+        <translation>Aplastar...</translation>
     </message>
 </context>
 <context>
@@ -3250,17 +3250,17 @@ Ejemplos
     <message>
         <location filename="../src/dialogs/CloneDialog.cpp" line="46"/>
         <source>Enter the URL of the remote repository or browse for a local directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Ingrese la URL del repositorio remoto o explorea un directorio local</translation>
     </message>
     <message>
         <location filename="../src/dialogs/CloneDialog.cpp" line="74"/>
         <source>...</source>
-        <translation type="unfinished">...</translation>
+        <translation>...</translation>
     </message>
     <message>
         <location filename="../src/dialogs/CloneDialog.cpp" line="76"/>
         <source>Choose Directory</source>
-        <translation type="unfinished">Escoger Directorio</translation>
+        <translation>Escoger Directorio</translation>
     </message>
     <message>
         <location filename="../src/dialogs/CloneDialog.cpp" line="98"/>
@@ -3443,7 +3443,7 @@ Ejemplos
     <message>
         <location filename="../src/ui/RepoView.cpp" line="408"/>
         <source>stage</source>
-        <translation type="unfinished"></translation>
+        <translation>preparar</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="415"/>
@@ -3510,7 +3510,7 @@ Ejemplos
     <message>
         <location filename="../src/ui/RepoView.cpp" line="764"/>
         <source>initialize</source>
-        <translation type="unfinished"></translation>
+        <translation>inicializar</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="768"/>
@@ -3525,7 +3525,7 @@ Ejemplos
     <message>
         <location filename="../src/ui/RepoView.cpp" line="775"/>
         <source>deinitialize</source>
-        <translation type="unfinished"></translation>
+        <translation>desinicializar</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="779"/>
@@ -3653,7 +3653,7 @@ Ejemplos
     <message>
         <location filename="../src/ui/RepoView.cpp" line="1211"/>
         <source>The repository is empty.</source>
-        <translation type="unfinished"></translation>
+        <translation>El repositorio está vacío.</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="1218"/>
@@ -3778,7 +3778,7 @@ Ejemplos
         <location filename="../src/ui/RepoView.cpp" line="1525"/>
         <location filename="../src/ui/RepoView.cpp" line="2626"/>
         <source>squash</source>
-        <translation type="unfinished"></translation>
+        <translation>aplastar</translation>
     </message>
     <message>
         <location filename="../src/ui/RepoView.cpp" line="1534"/>
@@ -4329,12 +4329,12 @@ Esto revierte la confirmación %2.</translation>
     <message>
         <location filename="../src/conf/Settings.cpp" line="222"/>
         <source>Prompt to stage directories</source>
-        <translation type="unfinished"></translation>
+        <translation>Preguntar al preparar directorios</translation>
     </message>
     <message>
         <location filename="../src/conf/Settings.cpp" line="225"/>
         <source>Prompt to stage large files</source>
-        <translation type="unfinished"></translation>
+        <translation>Preguntar al preparar ficheros pesados</translation>
     </message>
 </context>
 <context>
@@ -4392,7 +4392,7 @@ Esto revierte la confirmación %2.</translation>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="864"/>
         <source>Misc</source>
-        <translation type="unfinished"></translation>
+        <translation>Varios</translation>
     </message>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="873"/>
@@ -4405,17 +4405,17 @@ Esto revierte la confirmación %2.</translation>
     <message>
         <location filename="../src/tools/ShowTool.cpp" line="19"/>
         <source>Finder</source>
-        <translation type="unfinished"></translation>
+        <translation>Buscador</translation>
     </message>
     <message>
         <location filename="../src/tools/ShowTool.cpp" line="21"/>
         <source>Explorer</source>
-        <translation type="unfinished"></translation>
+        <translation>Explorador</translation>
     </message>
     <message>
         <location filename="../src/tools/ShowTool.cpp" line="23"/>
         <source>Default File Browser</source>
-        <translation type="unfinished"></translation>
+        <translation>Explorador por defecto</translation>
     </message>
     <message>
         <location filename="../src/tools/ShowTool.cpp" line="37"/>
@@ -4728,32 +4728,32 @@ Esto revierte la confirmación %2.</translation>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="529"/>
         <source>Replace...</source>
-        <translation type="unfinished"></translation>
+        <translation>Reemplazar...</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="530"/>
         <source>Replace All...</source>
-        <translation type="unfinished"></translation>
+        <translation>Reemplazar Todo...</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="560"/>
         <source>Ignore</source>
-        <translation type="unfinished">Ignorar</translation>
+        <translation>Ignorar</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="579"/>
         <source>Ignore All</source>
-        <translation type="unfinished"></translation>
+        <translation>Ignorar Todo</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="585"/>
         <source>Add to User Dictionary</source>
-        <translation type="unfinished"></translation>
+        <translation>Añador al Diccionario de Usuario</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="599"/>
         <source>Do not Ignore</source>
-        <translation type="unfinished"></translation>
+        <translation>No Ignorar</translation>
     </message>
 </context>
 <context>
@@ -4809,12 +4809,12 @@ Esto revierte la confirmación %2.</translation>
     <message>
         <location filename="../src/ui/ToolBar.cpp" line="806"/>
         <source>Merge</source>
-        <translation type="unfinished">Fusionar</translation>
+        <translation>Fusionar</translation>
     </message>
     <message>
         <location filename="../src/ui/ToolBar.cpp" line="811"/>
         <source>Rebase</source>
-        <translation type="unfinished">Reorganizar</translation>
+        <translation>Reorganizar</translation>
     </message>
     <message>
         <location filename="../src/ui/ToolBar.cpp" line="821"/>
