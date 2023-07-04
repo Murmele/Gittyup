@@ -105,9 +105,12 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
   });
   QAction *hideUntrackedFiles = new QAction(tr("Hide Untracked Files"));
   hideUntrackedFiles->setCheckable(true);
-  hideUntrackedFiles->setChecked(RepoView::parentView(parent)->repo().appConfig().value<bool>("untracked.hide", false));
+  hideUntrackedFiles->setChecked(
+      RepoView::parentView(parent)->repo().appConfig().value<bool>(
+          "untracked.hide", false));
   connect(hideUntrackedFiles, &QAction::triggered, this, [this](bool checked) {
-    RepoView::parentView(this)->repo().appConfig().setValue("untracked.hide", checked);
+    RepoView::parentView(this)->repo().appConfig().setValue("untracked.hide",
+                                                            checked);
     RepoView::parentView(this)->refresh();
   });
   contextMenu->addAction(singleTree);
