@@ -3,20 +3,20 @@
 git submodule init
 git submodule update
 
+# Install Qt
+sudo add-apt-repository ppa:beineri/opt-qt-5.15.2-focal -y
+sudo apt-get update -qq
+sudo apt-get -y install qt515base qt515tools libgl1-mesa-dev
+source /opt/qt*/bin/qt*-env.sh
+
+# Install ninja
+sudo pip install ninja
+
 # Build OpenSSL; why does it need a private (self-built) version?
 cd dep/openssl/openssl
 ./config -fPIC
 make -j $(npoc)
 cd ..
-
-# Install Qt
-sudo add-apt-repository ppa:beineri/opt-qt-5.15.2-focal -y
-sudo apt-get update -qq
-sudo apt-get -y install qt515base qt515tools libgl1-mesa-dev
-. /opt/qt*/bin/qt*-env.sh
-
-# Install ninja
-sudo pip install ninja
 
 # Build
 mkdir -p build/release
