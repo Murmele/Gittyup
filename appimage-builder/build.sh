@@ -22,7 +22,6 @@ cd ..
 mkdir -p build/release
 cd build/release
 cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/ ../..
-ninja
 DESTDIR=./appdir ninja install ; find ./appdir
 rm -rf ./appdir/usr/include/
 
