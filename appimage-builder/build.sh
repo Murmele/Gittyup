@@ -13,7 +13,7 @@ cd ..
 sudo add-apt-repository ppa:beineri/opt-qt-5.15.2-focal -y
 sudo apt-get update -qq
 sudo apt-get -y install qt515base qt515tools libgl1-mesa-dev
-source /opt/qt*/bin/qt*-env.sh
+. /opt/qt*/bin/qt*-env.sh
 
 # Install ninja
 sudo pip install ninja
