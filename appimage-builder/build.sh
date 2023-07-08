@@ -6,7 +6,7 @@ git submodule update
 # Install Qt
 sudo add-apt-repository ppa:beineri/opt-qt-5.15.2-focal -y
 sudo apt-get update -qq
-sudo apt-get -y install qt515base qt515tools libgl1-mesa-dev ca-certificates
+sudo apt-get -y install qt515base qt515tools libgl1-mesa-dev ca-certificates wget
 set +e ; source /opt/qt*/bin/qt*-env.sh ; set -e
 
 # Install ninja
@@ -29,7 +29,7 @@ rm -rf ./appdir/usr/include/
 
 # Deploy dependencies into AppDir
 # FIXME: Remove the need for "--no-check-certificate"
-wget -c --no-check-certificate https://github.com/$(wget -q https://github.com/probonopd/go-appimage/releases/expanded_assets/continuous --no-check-certificate -O - | grep "appimagetool-.*-x86_64.AppImage" | head -n 1 | cut -d '"' -f 2)
+wget --no-check-certificate -c https://github.com/$(wget --no-check-certificate -q https://github.com/probonopd/go-appimage/releases/expanded_assets/continuous -O - | grep "appimagetool-.*-x86_64.AppImage" | head -n 1 | cut -d '"' -f 2)
 chmod +x appimagetool-*.AppImage
 LD_LIBRARY_PATH=/opt/qt515/lib/ ./appimagetool-*.AppImage -s deploy ./appdir/usr/share/applications/*.desktop --appimage-extract-and-run # Bundle EVERYTHING
 
