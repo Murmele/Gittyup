@@ -16,13 +16,15 @@ sudo pip install ninja
 cd dep/openssl/openssl
 ./config -fPIC
 make -j $(npoc)
-cd ..
+cd ../../..
 
 # Build
 mkdir -p build/release
 cd build/release
 cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/ ../..
-DESTDIR=./appdir ninja install ; find ./appdir
+ninja
+DESTDIR=./appdir ninja install
+find ./appdir
 rm -rf ./appdir/usr/include/
 
 # Deploy dependencies into AppDir
