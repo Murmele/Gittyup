@@ -28,7 +28,8 @@ find ./appdir
 rm -rf ./appdir/usr/include/
 
 # Deploy dependencies into AppDir
-wget -c https://github.com/$(wget -q https://github.com/probonopd/go-appimage/releases/expanded_assets/continuous -O - | grep "appimagetool-.*-x86_64.AppImage" | head -n 1 | cut -d '"' -f 2)
+# FIXME: Remove the need for "--no-check-certificate"
+wget -c https://github.com/$(wget -q https://github.com/probonopd/go-appimage/releases/expanded_assets/continuous --no-check-certificate -O - | grep "appimagetool-.*-x86_64.AppImage" | head -n 1 | cut -d '"' -f 2)
 chmod +x appimagetool-*.AppImage
 LD_LIBRARY_PATH=/opt/qt515/lib/ ./appimagetool-*.AppImage -s deploy ./appdir/usr/share/applications/*.desktop --appimage-extract-and-run # Bundle EVERYTHING
 
