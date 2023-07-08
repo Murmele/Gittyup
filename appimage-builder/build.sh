@@ -26,7 +26,7 @@ ninja
 DESTDIR=./appdir ninja install
 find ./appdir
 rm -rf ./appdir/usr/include/
-strip ./appdir/usr/bin/cmark ./appdir/bin/gittyup ./appdir/bin/indexer ./appdir/bin/relauncher
+strip ./appdir/usr/bin/cmark ./appdir/usr/bin/gittyup ./appdir/usr/bin/indexer ./appdir/usr/bin/relauncher
 
 # Deploy dependencies into AppDir
 # FIXME: Remove the need for "--no-check-certificate"
