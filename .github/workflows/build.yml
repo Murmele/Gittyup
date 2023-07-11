@@ -352,14 +352,13 @@ jobs:
           DESTDIR=AppDir ninja install
 
           export QTDIR=$RUNNER_WORKSPACE/Qt/${{ matrix.qt.version }}/${{ matrix.env.qt_arch }}
-          export LD_LIBRARY_PATH=$QTDIR/lib
 
           rm -rf ./AppDir/usr/include/
           strip ./AppDir/usr/bin/cmark ./AppDir/usr/bin/gittyup ./AppDir/usr/bin/indexer ./AppDir/usr/bin/relauncher
 
           wget -c https://github.com/$(wget -q https://github.com/probonopd/go-appimage/releases/expanded_assets/continuous -O - | grep "appimagetool-.*-x86_64.AppImage" | head -n 1 | cut -d '"' -f 2)
           chmod +x appimagetool-*.AppImage
-          QTDIR=$QTDIR LD_LIBRARY_PATH=$QTDIR/lib/ ./appimagetool-*.AppImage -s deploy ./AppDir/usr/share/applications/*.desktop --appimage-extract-and-run # Bundle EVERYTHING
+          QTDIR=$QTDIR ./appimagetool-*.AppImage -s deploy ./AppDir/usr/share/applications/*.desktop --appimage-extract-and-run # Bundle EVERYTHING
 
           # Modify the AppDir: move ld-linux into the same directory as the payload application
           # and change AppRun accordingly; so that, e.g., Qt qApp->applicationDirPath() works
@@ -369,10 +368,10 @@ jobs:
           rm ./AppDir/usr/share/metainfo/gittyup.appdata.xml
           VERSION=$(cat ./Version.txt)
           VERSION="$VERSION" ./appimagetool-*.AppImage ./AppDir # turn AppDir into AppImage
-          ls -lh Gittyup-*
+          #ls -lh Gittyup-*
 
       - name: Publish Appimage
-        if: matrix.env.ninja_platform == 'linux'
+        if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
         uses: actions/upload-artifact@v3
         with:
           path: build/release/*.AppImage
