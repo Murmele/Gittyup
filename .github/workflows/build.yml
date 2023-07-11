@@ -141,7 +141,7 @@ jobs:
             openssl_arch: linux-x86_64
             ld_library_arch: linux-x86-64
             cmake_flags: "-DGENERATE_APPDATA=ON -DCMAKE_INSTALL_PREFIX=/usr -DUSE_SYSTEM_QT=ON -DENABLE_UPDATE_OVER_GUI=OFF"
-            pack: 1
+            pack: 0
             cmake_env: {}
 
           - name: macos
