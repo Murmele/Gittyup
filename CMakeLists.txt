@@ -11,6 +11,11 @@ set(GITTYUP_VERSION_PATCH 0)
 set(GITTYUP_VERSION
     "${GITTYUP_VERSION_MAJOR}.${GITTYUP_VERSION_MINOR}.${GITTYUP_VERSION_PATCH}"
 )
+set(GITTYUP_MATRIX_URL "https://matrix.to/#/#Gittyup:matrix.org")
+set(GITTYUP_BUGTRACKER_URL "https://github.com/Murmele/Gittyup/issues)
+
+add_compile_definitions(GITTYUP_MATRIX_URL="${GITTYUP_MATRIX_URL}")
+add_compile_definitions(GITTYUP_BUGTRACKER_URL="${GITTYUP_BUGTRACKER_URL}")
 
 string(TIMESTAMP CURR_YEAR "%Y")
 add_compile_definitions(CURR_YEAR=${CURR_YEAR})

@@ -26,7 +26,6 @@
 namespace {
 
 const QString kLinkFmt = "<a href='%1'>%2</a>";
-const QString kSupportLink = "https://matrix.to/#/#Gittyup:matrix.org";
 const QString kVideoLink = "TODO";
 
 class DefaultWidget : public QFrame {
@@ -100,7 +99,7 @@ public:
     // TODO: uncomment as soon as we have videos
     // layout->addWidget(addLink(tr("View getting started videos"),
     // kVideoLink));
-    layout->addWidget(addLink(tr("Contact us for support"), kSupportLink));
+    layout->addWidget(addLink(tr("Contact us for support"), GITTYUP_MATRIX_URL));
   }
 
 private:

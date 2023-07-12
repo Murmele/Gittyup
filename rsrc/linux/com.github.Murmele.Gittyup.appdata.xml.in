@@ -40,8 +40,8 @@
   </screenshots>
 
   <url type="homepage">https://murmele.github.io/Gittyup</url>
-  <url type="bugtracker">https://github.com/Murmele/Gittyup/issues</url>
-  <url type="help">https://matrix.to/#/#Gittyup:matrix.org</url>
+  <url type="bugtracker">@GITTYUP_BUGTRACKER_URL@</url>
+  <url type="help">@GITTYUP_MATRIX_URL@</url>
   <url type="donation">https://liberapay.com/Gittyup/donate</url>
 
   <provides>
