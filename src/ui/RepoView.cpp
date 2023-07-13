@@ -188,8 +188,8 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
             searchField->setPlaceholderText(tr("Search"));
             if (status == QProcess::CrashExit) {
               QString text =
-                  tr("The indexer worker process crashed. If this problem "
-                     "persists please contact us at %1.").format(GITTYUP_MATRIX_URL);
+                  tr("The indexer worker process crashed (%1). If this problem "
+                     "persists please contact us at %2.").format(code).format(GITTYUP_MATRIX_URL);
               addLogEntry(text, tr("Indexer Crashed"));
             }
 
