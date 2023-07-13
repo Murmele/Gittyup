@@ -365,8 +365,6 @@ jobs:
           mv ./AppDir/lib64/ld-${{ matrix.env.ld_library_arch }}.so.2 ./AppDir/usr/bin/
           sed -i -e 's@^LD_LINUX.*@LD_LINUX=$(find "$HERE/usr/bin" -name "ld-*.so.*" | head -n 1)@g' ./AppDir/AppRun
 
-          rm ./AppDir/lib/x86_64-linux-gnu/libxcb-glx.so.0
-
           rm ./AppDir/usr/share/metainfo/gittyup.appdata.xml
           VERSION=$(cat ./Version.txt)
           VERSION="$VERSION" ./appimagetool-*.AppImage ./AppDir # turn AppDir into AppImage
