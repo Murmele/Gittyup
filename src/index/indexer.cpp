@@ -490,25 +490,7 @@ public:
 } // namespace
 
 int main(int argc, char *argv[]) {
-#ifdef Q_OS_WIN
-  // Install exception filter.
-  defaultFilter = SetUnhandledExceptionFilter(&exceptionFilter);
-#endif
 
-  QCoreApplication app(argc, argv);
-
-  QCommandLineParser parser;
-  parser.addHelpOption();
-  parser.addPositionalArgument("repo", "path to repository", "repo");
-  parser.addOption({{"l", "log"}, "Write indexer progress to log."});
-  parser.addOption({{"v", "verbose"}, "Print indexer progress to stdout."});
-  parser.addOption({{"n", "notify"}, "Notify when data is written to disk."});
-  parser.addOption({{"b", "background"}, "Start with background priority."});
-  parser.process(app);
-
-  QStringList args = parser.positionalArguments();
-  if (args.isEmpty())
-    parser.showHelp(1);
 
   return 0;
 }
