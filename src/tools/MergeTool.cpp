@@ -83,9 +83,9 @@ bool MergeTool::start() {
   git::Repository repo = mLocalBlob.repo();
   auto signal = QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished);
   QObject::connect(process, signal, [this, repo, backupPath, process] {
-    qDebug() << "Merge Process Exited!";
-    qDebug() << "Stdout: " << process->readAllStandardOutput();
-    qDebug() << "Stderr: " << process->readAllStandardError();
+    Debug("Merge Process Exited!");
+    Debug("Stdout: " << process->readAllStandardOutput());
+    Debug("Stderr: " << process->readAllStandardError());
 
     QFileInfo merged(mFile);
     QFileInfo backup(backupPath);
