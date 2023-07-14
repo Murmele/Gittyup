@@ -23,6 +23,7 @@
 #include "DoubleTreeWidget.h"
 #include "ToolBar.h"
 #include "Debug.h"
+#include "ProjectInformation.h"
 #include "app/Application.h"
 #include "conf/Settings.h"
 #include "dialogs/AmendDialog.h"
