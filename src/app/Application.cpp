@@ -133,8 +133,6 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
   // Set debug menu option.
   MenuBar::setDebugMenuVisible(parser.isSet("debug-menu"));
 
-  if (MenuBar::isDebugMenuVisible())
-    Debug::isLogging(); // cache logging from settings
   Debug(QString("Root dir: %1").arg(Settings::rootDir().absolutePath()));
   Debug(QString("App dir: %1").arg(Settings::appDir().absolutePath()));
   Debug(QString("Doc dir: %1").arg(Settings::docDir().absolutePath()));
