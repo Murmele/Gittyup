@@ -14,9 +14,6 @@ set(GITTYUP_VERSION
 set(GITTYUP_MATRIX_URL "https://matrix.to/#/#Gittyup:matrix.org")
 set(GITTYUP_BUGTRACKER_URL "https://github.com/Murmele/Gittyup/issues")
 
-add_compile_definitions(GITTYUP_MATRIX_URL="${GITTYUP_MATRIX_URL}")
-add_compile_definitions(GITTYUP_BUGTRACKER_URL="${GITTYUP_BUGTRACKER_URL}")
-
 string(TIMESTAMP CURR_YEAR "%Y")
 add_compile_definitions(CURR_YEAR=${CURR_YEAR})
 configure_file(${CMAKE_SOURCE_DIR}/LICENSE.md.in ${CMAKE_SOURCE_DIR}/LICENSE.md
@@ -25,6 +22,16 @@ configure_file(${CMAKE_SOURCE_DIR}/LICENSE.md.in ${CMAKE_SOURCE_DIR}/LICENSE.md
 # Write version to file so it can be used also from external, for example in the
 # github manifest
 file(WRITE "${CMAKE_BINARY_DIR}/Version.txt" ${GITTYUP_VERSION})
+
+# add_compile_definitions(GITTYUP_MATRIX_URL="${GITTYUP_MATRIX_URL}") does not
+# work, because hashes are not allowed
+set(PROJECT_INFORMATION_HEADER "${CMAKE_BINARY_DIR}/ProjectInformation.h")
+file(WRITE ${PROJECT_INFORMATION_HEADER} "// General Project Informations\n")
+file(APPEND ${PROJECT_INFORMATION_HEADER}
+     "#define GITTYUP_MATRIX_URL \"${GITTYUP_MATRIX_URL}\"\n")
+# add_compile_definitions(GITTYUP_BUGTRACKER_URL="${GITTYUP_BUGTRACKER_URL}")
+file(APPEND ${PROJECT_INFORMATION_HEADER}
+     "#define GITTYUP_BUGTRACKER_URL \"${GITTYUP_BUGTRACKER_URL}\"\n")
 
 set(DEV_BUILD
     ""

@@ -16,6 +16,7 @@
 #include "host/Account.h"
 #include "ui/MainWindow.h"
 #include "ui/RepoView.h"
+#include "ProjectInformation.h"
 #include <QFileDialog>
 #include <QFrame>
 #include <QHBoxLayout>
@@ -99,7 +100,8 @@ public:
     // TODO: uncomment as soon as we have videos
     // layout->addWidget(addLink(tr("View getting started videos"),
     // kVideoLink));
-    layout->addWidget(addLink(tr("Contact us for support"), GITTYUP_MATRIX_URL));
+    layout->addWidget(
+        addLink(tr("Contact us for support"), GITTYUP_MATRIX_URL));
   }
 
 private:

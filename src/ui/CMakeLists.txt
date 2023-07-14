@@ -57,7 +57,8 @@ add_library(
 
 target_compile_definitions(ui PRIVATE BUILD_DESCRIPTION="${BUILD_DESCRIPTION}")
 
-target_include_directories(ui PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(ui PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
+                                      ${CMAKE_BINARY_DIR})
 
 target_link_libraries(
   ui

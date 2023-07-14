@@ -36,7 +36,8 @@ target_compile_definitions(
   dialogs PRIVATE GITTYUP_BUILD_DATE="${GITTYUP_BUILD_DATE}"
                   GITTYUP_BUILD_REVISION="${GITTYUP_BUILD_REVISION}")
 
-target_include_directories(dialogs PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(dialogs PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
+                                           ${CMAKE_BINARY_DIR})
 
 target_link_libraries(
   dialogs

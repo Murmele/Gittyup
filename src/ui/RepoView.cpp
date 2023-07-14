@@ -189,7 +189,9 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
             if (status == QProcess::CrashExit) {
               QString text =
                   tr("The indexer worker process crashed (%1). If this problem "
-                     "persists please contact us at %2.").format(code).format(GITTYUP_MATRIX_URL);
+                     "persists please contact us at %2.")
+                      .arg(code)
+                      .arg(GITTYUP_MATRIX_URL);
               addLogEntry(text, tr("Indexer Crashed"));
             }
 
