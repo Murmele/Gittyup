@@ -510,51 +510,5 @@ int main(int argc, char *argv[]) {
   if (args.isEmpty())
     parser.showHelp(1);
 
-  // Initialize global git state.
-  RepoInit init;
-  (void)init;
-
-  git::Repository repo = git::Repository::open(args.first());
-  if (!repo.isValid())
-    parser.showHelp(1);
-
-  // Set empty index to prevent going to the index on disk.
-  repo.setIndex(git::Index::create());
-
-  // Set output file.
-  QFile *out = nullptr;
-  if (parser.isSet("log")) {
-    out = new QFile(Index::indexDir(repo).filePath(kLogFile), &app);
-    if (!out->open(QIODevice::WriteOnly | QIODevice::Append)) {
-      delete out;
-      out = nullptr;
-    }
-  } else if (parser.isSet("verbose")) {
-    out = new QFile(&app);
-    if (!out->open(stdout, QIODevice::WriteOnly | QIODevice::Append)) {
-      delete out;
-      out = nullptr;
-    }
-  }
-
-  // Set priority.
-  if (parser.isSet("background")) {
-#ifdef Q_OS_WIN
-    SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
-#else
-    setpriority(PRIO_PROCESS, 0, 15);
-#endif
-  }
-
-  // Try to lock the index for writing.
-  QLockFile lock(Index::lockFile(repo));
-  lock.setStaleLockTime(Index::staleLockTime());
-  if (!lock.tryLock())
-    return 0;
-
-  // Start the indexer.
-  Index index(repo);
-  Indexer indexer(index, out, parser.isSet("notify"));
-  app.installNativeEventFilter(&indexer);
-  return indexer.start() ? app.exec() : 0;
+  return 0;
 }
