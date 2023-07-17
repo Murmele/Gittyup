@@ -39,6 +39,7 @@
 #include "log/LogEntry.h"
 #include "log/LogView.h"
 #include "update/Updater.h"
+#include "util/Debug.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QCloseEvent>
@@ -872,6 +873,12 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
     connect(remote, &QAction::triggered,
             [](bool checked) { git::Remote::setLoggingEnabled(checked); });
 
+    QAction *debugMessages = debug->addAction(tr("Log Debug Messages"));
+    debugMessages->setCheckable(true);
+    debugMessages->setChecked(Debug::isLogging());
+    connect(debugMessages, &QAction::triggered,
+            [](bool checked) { Debug::setLogging(checked); });
+
     debug->addSeparator();
 
     QAction *diffs = debug->addAction(tr("Load All Diffs"));
@@ -1138,6 +1145,7 @@ QList<RepoView *> MenuBar::views() const {
 }
 
 void MenuBar::setDebugMenuVisible(bool visible) { sDebugMenuVisible = visible; }
+bool MenuBar::isDebugMenuVisible() { return sDebugMenuVisible; }
 
 MenuBar *MenuBar::instance(QWidget *widget) {
 #ifdef Q_OS_MAC
