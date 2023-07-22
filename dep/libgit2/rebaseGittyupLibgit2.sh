@@ -12,7 +12,17 @@ git fetch --all
 for branch in ${branches[@]}; do
 	echo $branch
 	git checkout -B $branch "origin/$branch"
+	RESULT=$?
+	if [ $RESULT -gt 0 ]; then
+	  echo "Unable to checkout branch: $branch : Exitcode: $RESULT"
+	  exit 1
+	fi
 	git rebase upstream/main
+	RESULT=$?
+	if [ $RESULT -gt 0 ]; then
+	  echo "Unable to rebase branch: $branch : Exitcode: $RESULT"
+	  exit 1
+	fi
 done
 
 git checkout Gittyup
@@ -20,6 +30,11 @@ git reset --hard upstream/main
 
 for branch in ${branches[@]}; do
 	git merge --no-edit $branch
+	RESULT=$?
+	if [ $RESULT -gt 0 ]; then
+	  echo "Unable to merge branch: $branch : Exitcode: $RESULT"
+	  exit 1
+	fi
 done
 
 git push --force origin
