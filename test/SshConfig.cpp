@@ -10,6 +10,7 @@
 #include "Test.h"
 #include "git/Remote.h"
 #include "git2/buffer.h"
+#include "git2/remote.h"
 #include "qtestcase.h"
 
 class Callbacks : public git::Remote::Callbacks {
@@ -39,10 +40,16 @@ private slots:
 private:
   static QString transformUrl(const QString &url, const QString config) {
     auto callbacks = Callbacks(url, config);
+    git_remote *remote{nullptr};
+    git_remote_create(&remote, nullptr, "test", url.toUtf8());
 
-    // git::Remote remote();
-    // Callbacks::remoteReady(*remote, 0, &callbacks);
-    return ""; // remote.url();
+    if (!remote)
+      return QStringLiteral("Remote nullptr");
+    Callbacks::remoteReady(remote, 0, &callbacks);
+    const char *urlNew = git_remote_url(remote);
+    QString u = QString::fromUtf8(urlNew);
+    git_remote_free(remote);
+    return u;
   }
 };
 
