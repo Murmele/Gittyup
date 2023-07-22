@@ -966,9 +966,7 @@ void MenuBar::updateCutCopyPaste() {
   mFindSelection->setEnabled(false);
 
   QWidget *widget = QApplication::focusWidget();
-  Debug("Starting reading clipboard");
   bool canPaste = !QApplication::clipboard()->text().isEmpty();
-  Debug("Finished reading clipboard");
   if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
     mCut->setEnabled(!editor->selectionEmpty() && !editor->readOnly());
     mCopy->setEnabled(!editor->selectionEmpty());
