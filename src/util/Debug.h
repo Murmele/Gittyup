@@ -7,13 +7,15 @@ namespace Debug {
 
 void setLogging(bool enable);
 bool isLogging();
+qint64 runTime();
 }; // namespace Debug
 
 #ifdef DEBUG_OUTPUT_GENERAL
 #define Debug(x)                                                               \
   do {                                                                         \
-    if (Debug::isLogging())                                                    \
-      qDebug() << x;                                                           \
+    if (Debug::isLogging()) {                                                  \
+      qDebug() << QString::number(runTime()) << ": " << x;                     \
+	}                                                                          \
   } while (false)
 #else
 #define Debug(x)
