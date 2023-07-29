@@ -191,7 +191,7 @@ sudo apt install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
 sudo apt install qttools5-dev
 sudo apt install ninja-build
 #Change to your gittyup directory below
-cd ~/Nextcloud/Projects/gittyup
+cd <path to repository>/gittyup
 git fetch
 git submodule init
 git submodule update
