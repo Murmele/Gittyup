@@ -134,6 +134,9 @@ where `<path-to-qt>` points to the Qt install directory that contains
 **Build**
 
     ninja
+    
+### A Convenient Shell Script for Linux is available in the following location:
+`pack/build.sh`, and will install all the necessary prerequisites, and build a release version for immediate use.
 
 How to Install
 -----------------
