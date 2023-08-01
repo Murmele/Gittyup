@@ -137,7 +137,6 @@ where `<path-to-qt>` points to the Qt install directory that contains
 ```
     
 ### A Convenient Shell Script for Ubuntu is available [here](https://raw.githubusercontent.com/Murmele/Gittyup/master/pack/buildUbuntu.sh), and will install all the necessary prerequisites, and build a release version for immediate use.
-`pack/build.sh`, and will install all the necessary prerequisites, and build a release version for immediate use.
 
 How to Install
 -----------------
