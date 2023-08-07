@@ -16,7 +16,7 @@ QString RecentRepository::gitpath() const { return mPath; }
 
 QString RecentRepository::name() const {
   if (mPath.endsWith("/.git"))
-    return mPath.section('/', -mSections-1, -2);
+    return mPath.section('/', -mSections - 1, -2);
   else
     return mPath.section('/', -mSections, -1);
 }

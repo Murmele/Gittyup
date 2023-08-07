@@ -52,7 +52,10 @@ class TabName {
 public:
   TabName(const QString &path) : mPath(path) {}
 
-  QString name() const { return mPath.endsWith("/.git") ?  mPath.section('/', -mSections-1,-2)  : mPath.section('/', -mSections); }
+  QString name() const {
+    return mPath.endsWith("/.git") ? mPath.section('/', -mSections - 1, -2)
+                                   : mPath.section('/', -mSections);
+  }
 
   void increment() { ++mSections; }
   int sections() const { return mSections; }
@@ -257,7 +260,8 @@ RepoView *MainWindow::addTab(const git::Repository &repo) {
 
   emit tabs->tabAboutToBeInserted();
 
-  // NB : this seems to be useless, because overwritten by MainWindow::updateTabNames
+  // NB : this seems to be useless, because overwritten by
+  // MainWindow::updateTabNames
   QString tabTitle = dir.dirName();
   if (tabTitle == ".git")
     tabTitle = dir.path().section("/", -2, -2);

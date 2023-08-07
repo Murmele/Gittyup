@@ -57,7 +57,7 @@ void RecentRepositories::add(QString gitpath) {
   RecentRepository *repo = new RecentRepository(gitpath, this);
   auto it = std::remove_if(mRepos.begin(), end, [repo](RecentRepository *rhs) {
 #ifdef Q_OS_WIN
-    return repo-gitpath().compare(rhs->gitpath(), Qt::CaseInsensitive) == 0;
+    return repo - gitpath().compare(rhs->gitpath(), Qt::CaseInsensitive) == 0;
 #else
     return (repo->gitpath() == rhs->gitpath());
 #endif
