@@ -308,7 +308,7 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
       RecentRepository *repo = repos->repository(i);
       QAction *action = openRecent->addAction(repo->name());
       connect(action, &QAction::triggered,
-              [repo] { MainWindow::open(repo->path()); });
+              [repo] { MainWindow::open(repo->gitpath()); });
     }
   });
 

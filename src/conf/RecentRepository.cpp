@@ -9,13 +9,16 @@
 
 #include "RecentRepository.h"
 
-RecentRepository::RecentRepository(const QString &path, QObject *parent)
-    : QObject(parent), mPath(path) {}
+RecentRepository::RecentRepository(const QString &gitpath, QObject *parent)
+    : QObject(parent), mPath(gitpath) {}
 
-QString RecentRepository::path() const { return mPath; }
+QString RecentRepository::gitpath() const { return mPath; }
 
 QString RecentRepository::name() const {
-  return mPath.section('/', -mSections);
+  if (mPath.endsWith("/.git"))
+    return mPath.section('/', -mSections-1, -2);
+  else
+    return mPath.section('/', -mSections, -1);
 }
 
 void RecentRepository::increment() { ++mSections; }
