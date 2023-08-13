@@ -3,11 +3,14 @@
 
 #include <QDebug>
 
+extern int depth;
+QString createTabs();
+
 namespace Debug {
 
 void setLogging(bool enable);
 bool isLogging();
-}; // namespace Debug
+} // namespace Debug
 
 #ifdef DEBUG_OUTPUT_GENERAL
 #define Debug(x)                                                               \

@@ -16,6 +16,7 @@
 #include "Signature.h"
 #include "TagRef.h"
 #include "Tree.h"
+#include "trace.h"
 #include "git2/annotated_commit.h"
 #include "git2/diff.h"
 #include "git2/refs.h"
@@ -125,6 +126,7 @@ Signature Commit::committer() const {
 
 Diff Commit::diff(const git::Commit &commit, int contextLines,
                   bool ignoreWhitespace) const {
+  PERFTRACE("");
   Tree old;
   if (commit.isValid()) {
     old = commit.tree();

@@ -22,3 +22,11 @@ bool isLogging() {
   return logging;
 }
 }; // namespace Debug
+
+int depth = 0;
+QString createTabs() {
+  QString s;
+  for (int i=0; i < depth; i++)
+    s += "\t";
+  return s;
+}

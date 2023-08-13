@@ -14,6 +14,7 @@
 #include "git2/pathspec.h"
 #include "git2/revwalk.h"
 #include <QRegularExpression>
+#include "trace.h"
 
 namespace git {
 
@@ -49,6 +50,7 @@ bool RevWalk::push(const Reference &ref) {
 }
 
 Commit RevWalk::next(const QString &path) const {
+  PERFTRACE("Path:" + path);
   git_diff_options diffopts = GIT_DIFF_OPTIONS_INIT;
   diffopts.notify_cb = notify;
 
@@ -63,7 +65,12 @@ Commit RevWalk::next(const QString &path) const {
   }
 
   git_oid id;
-  while (!git_revwalk_next(&id, d.data())) {
+  int counter = 0;
+  while (1) {
+    PERFTRACE("while !git_revwalk_next(). d valid: " + QString::number((int)!d.isNull()));
+    if (git_revwalk_next(&id, d.data()))
+      break;
+    counter ++;
     git_commit *commit = nullptr;
     git_commit_lookup(&commit, git_revwalk_repository(d.data()), &id);
     Q_ASSERT(commit);

@@ -28,6 +28,7 @@
 #include "git/Signature.h"
 #include "git/TagRef.h"
 #include "git/Tree.h"
+#include "trace.h"
 #include <QAbstractListModel>
 #include <QApplication>
 #include <QMenu>
@@ -249,12 +250,16 @@ public:
     return mWalker.isValid();
   }
 
+  int counter = 0;
   void fetchMore(const QModelIndex &parent) {
     // Load commits.
+    PERFTRACE(QString::number(counter ++));
+    //PerfTracer tracer(QStringLiteral(": ") + QStringLiteral(""));
     int i = 0;
     QList<Row> rows;
     git::Commit commit = mWalker.next(mPathspec);
     while (commit.isValid()) {
+      PERFTRACE("while");
       // Add root commits.
       bool root = false;
       if (indexOf(commit) < 0) {
