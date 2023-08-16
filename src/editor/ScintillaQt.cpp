@@ -185,7 +185,7 @@ void ScintillaQt::paintEvent(QPaintEvent *event) {
 }
 
 void ScintillaQt::wheelEvent(QWheelEvent *event) {
-  if (event->orientation() == Qt::Horizontal) {
+  if (event->angleDelta().x() != 0) {
     if (horizontalScrollBarPolicy() == Qt::ScrollBarAlwaysOff)
       event->ignore();
     else
@@ -194,7 +194,7 @@ void ScintillaQt::wheelEvent(QWheelEvent *event) {
     if (QApplication::keyboardModifiers() & Qt::ControlModifier) {
       // Zoom! We play with the font sizes in the styles.
       // Number of steps/line is ignored, we just care if sizing up or down
-      if (event->delta() > 0) {
+      if (event->angleDelta().y() > 0) {
         KeyCommand(SCI_ZOOMIN);
       } else {
         KeyCommand(SCI_ZOOMOUT);
@@ -327,8 +327,7 @@ void ScintillaQt::keyPressEvent(QKeyEvent *event) {
 
     QString text = event->text();
     if (input && !text.isEmpty() && text[0].isPrint()) {
-      QByteArray utext = text.toUtf8();
-      AddCharUTF(utext.data(), utext.size());
+      InsertCharacter(text.toStdString(), CharacterSource::directInput);
     } else {
       event->ignore();
     }
@@ -355,7 +354,7 @@ static int modifierTranslated(int sciModifier) {
 void ScintillaQt::mousePressEvent(QMouseEvent *event) {
   Point pos = PointFromQPoint(event->pos());
 
-  if (event->button() == Qt::MidButton &&
+  if (event->button() == Qt::MiddleButton &&
       QApplication::clipboard()->supportsSelection()) {
     SelectionPosition selPos =
         SPositionFromLocation(pos, false, false, UserVirtualSpace());
@@ -522,7 +521,7 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
       const QByteArray oneChar = oneCharUTF16.toUtf8();
       const int oneCharLen = oneChar.length();
 
-      AddCharUTF(oneChar.data(), oneCharLen);
+      InsertCharacter(oneChar.toStdString(), CharacterSource::directInput);
       i += ucWidth;
     }
 
@@ -605,7 +604,7 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
       numBytes += oneCharLen;
       imeCharPos[i + 1] = numBytes;
 
-      AddCharUTF(oneChar.data(), oneCharLen);
+      InsertCharacter(oneChar.toStdString(), CharacterSource::directInput);
 
 #ifdef Q_OS_LINUX
       // Segment marked with imeCaretPos is for target input.
@@ -642,7 +641,7 @@ QVariant ScintillaQt::inputMethodQuery(Qt::InputMethodQuery query) const {
   int line = send(SCI_LINEFROMPOSITION, pos);
 
   switch (query) {
-    case Qt::ImMicroFocus: {
+    case Qt::ImCursorRectangle: {
       int startPos = (preeditPos >= 0) ? preeditPos : pos;
       Point pt =
           const_cast<ScintillaQt *>(this)->LocationFromPosition(startPos);

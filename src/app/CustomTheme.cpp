@@ -435,6 +435,8 @@ QColor CustomTheme::commitEditor(CommitEditor color) {
       return commitEditor.value("spellignore").value<QColor>();
     case CommitEditor::LengthWarning:
       return commitEditor.value("lengthwarning").value<QColor>();
+    default:
+      throw std::runtime_error("Not Implemented or invalid enum " + std::to_string(static_cast<int>(color)));
   }
 }
 
@@ -464,6 +466,8 @@ QColor CustomTheme::diff(Diff color) {
       return diff.value("warning").value<QColor>();
     case Diff::Error:
       return diff.value("error").value<QColor>();
+    default:
+      throw std::runtime_error("Not Implemented or invalid enum" + std::to_string(static_cast<int>(color)));
   }
 }
 
@@ -475,6 +479,8 @@ QColor CustomTheme::heatMap(HeatMap color) {
       return QColor(heatmap.value("hot").toString());
     case HeatMap::Cold:
       return QColor(heatmap.value("cold").toString());
+    default:
+      throw std::runtime_error("Not Implemented or invalid enum" + std::to_string(static_cast<int>(color)));
   }
 }
 
@@ -490,6 +496,8 @@ QColor CustomTheme::remoteComment(Comment color) {
       return QColor(comment.value("author").toString());
     case Comment::Timestamp:
       return QColor(comment.value("timestamp").toString());
+    default:
+      throw std::runtime_error("Not Implemented or invalid enum" + std::to_string(static_cast<int>(color)));
   }
 }
 

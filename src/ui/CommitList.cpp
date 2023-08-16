@@ -791,8 +791,8 @@ public:
       QDateTime date = commit.committer().date().toLocalTime();
       QString timestamp =
           (date.date() == QDate::currentDate())
-              ? date.time().toString(Qt::DefaultLocaleShortDate)
-              : date.date().toString(Qt::DefaultLocaleShortDate);
+              ? QLocale().toString(date.time(), QLocale::ShortFormat)
+              : QLocale().toString(date.date(), QLocale::ShortFormat);
       int timestampWidth = fm.horizontalAdvance(timestamp);
 
       if (compact) {

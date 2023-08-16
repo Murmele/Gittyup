@@ -44,7 +44,7 @@ void TestIndex::stageAddition() {
   // Add file and refresh.
   QFile file(mRepo->workdir().filePath("test"));
   QVERIFY(file.open(QFile::WriteOnly));
-  QTextStream(&file) << "This is a test." << endl;
+  QTextStream(&file) << "This is a test." << Qt::endl;
 
   RepoView *view = mWindow->currentView();
   refresh(view);
@@ -135,11 +135,11 @@ void TestIndex::stageDirectory() {
 
   QFile file1(dir.filePath("test1"));
   QVERIFY(file1.open(QFile::WriteOnly));
-  QTextStream(&file1) << "This is a test." << endl;
+  QTextStream(&file1) << "This is a test." << Qt::endl;
 
   QFile file2(dir.filePath("test2"));
   QVERIFY(file2.open(QFile::WriteOnly));
-  QTextStream(&file2) << "This is a test." << endl;
+  QTextStream(&file2) << "This is a test." << Qt::endl;
 
   RepoView *view = mWindow->currentView();
   refresh(view);

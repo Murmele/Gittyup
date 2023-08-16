@@ -147,14 +147,14 @@ void TestSubmodule::discardFile() {
   {
     QFile file(repo.workdir().filePath("README.md"));
     QVERIFY(file.open(QFile::WriteOnly));
-    QTextStream(&file) << "Changing readme of main repository" << endl;
+    QTextStream(&file) << "Changing readme of main repository" << Qt::endl;
     file.close();
   }
 
   {
     QFile file(repo.workdir().filePath("GittyupTestRepo/README.md"));
     QVERIFY(file.open(QFile::WriteOnly));
-    QTextStream(&file) << "Changing content of submodule readme" << endl;
+    QTextStream(&file) << "Changing content of submodule readme" << Qt::endl;
     file.close();
   }
 

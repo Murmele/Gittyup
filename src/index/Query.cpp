@@ -183,7 +183,7 @@ public:
     QList<git::Commit> commits = mLhs->commits(index);
     if (mKind == And) {
       // Remove commits that don't match the right hand side.
-      QSet<git::Commit> set = QSet<git::Commit>::fromList(rhs);
+      QSet<git::Commit> set(rhs.begin(), rhs.end());
       QMutableListIterator<git::Commit> it(commits);
       while (it.hasNext()) {
         if (!set.contains(it.next()))
@@ -191,7 +191,7 @@ public:
       }
     } else {
       // Add commits that aren't already in the result set.
-      QSet<git::Commit> set = QSet<git::Commit>::fromList(commits);
+      QSet<git::Commit> set(commits.begin(), commits.end());
       foreach (const git::Commit &commit, rhs) {
         if (!set.contains(commit))
           commits.append(commit);

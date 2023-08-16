@@ -916,7 +916,7 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
   addWidget(mode);
 
   using Signal = void (QButtonGroup::*)(int);
-  auto signal = static_cast<Signal>(&QButtonGroup::buttonClicked);
+  auto signal = static_cast<Signal>(&QButtonGroup::idClicked);
   connect(mModeGroup, signal, [this](int index) {
     currentView()->setViewMode(static_cast<RepoView::ViewMode>(index));
   });

@@ -1052,7 +1052,7 @@ QStringList Repository::lfsEnvironment() {
 
 Repository::LfsTracking Repository::lfsTracked() {
   QString output = lfsExecute({"track"});
-  QStringList lines = output.split('\n', QString::SkipEmptyParts);
+  QStringList lines = output.split('\n', Qt::SkipEmptyParts);
   if (!lines.isEmpty())
     lines.removeFirst();
 

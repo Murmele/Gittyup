@@ -413,7 +413,7 @@ public:
   virtual ~LexerLPeg() {}
 
   /** Destroys the lexer object. */
-  void SCI_METHOD Release() {
+  void SCI_METHOD Release() override {
     lua_getfield(L, LUA_REGISTRYINDEX, "sci_lexers");
     lua_pushlightuserdata(L, reinterpret_cast<void *>(this));
     lua_pushnil(L), lua_settable(L, -3), lua_pop(L, 1); // sci_lexers
@@ -429,7 +429,7 @@ public:
    * @param buffer The document interface.
    */
   void SCI_METHOD Lex(Sci_PositionU startPos, Sci_Position lengthDoc,
-                      int initStyle, IDocument *buffer) {
+                      int initStyle, IDocument *buffer) override {
     lua_pushlightuserdata(L, reinterpret_cast<void *>(&props));
     lua_setfield(L, LUA_REGISTRYINDEX, "sci_props");
     lua_pushlightuserdata(L, reinterpret_cast<void *>(buffer));
@@ -515,7 +515,7 @@ public:
    * @param buffer The document interface.
    */
   void SCI_METHOD Fold(Sci_PositionU startPos, Sci_Position lengthDoc,
-                       int initStyle, IDocument *buffer) {
+                       int initStyle, IDocument *buffer) override {
     lua_pushlightuserdata(L, reinterpret_cast<void *>(&props));
     lua_setfield(L, LUA_REGISTRYINDEX, "sci_props");
     lua_pushlightuserdata(L, reinterpret_cast<void *>(buffer));
@@ -552,7 +552,7 @@ public:
    * @param key The string keyword.
    * @param val The string value.
    */
-  Sci_Position SCI_METHOD PropertySet(const char *key, const char *value) {
+  Sci_Position SCI_METHOD PropertySet(const char *key, const char *value) override {
     const char *val = *value ? value : " ";
     props.Set(key, val, strlen(key), strlen(val)); // ensure property is cleared
     return -1;                                     // no need to re-lex
@@ -566,7 +566,7 @@ public:
    * @param arg The argument.
    * @return void *data
    */
-  void *SCI_METHOD PrivateCall(int code, void *arg) {
+  void *SCI_METHOD PrivateCall(int code, void *arg) override {
     switch (code) {
       case SCI_GETDIRECTFUNCTION:
         fn = reinterpret_cast<SciFnDirect>(arg);
@@ -603,12 +603,12 @@ public:
     }
   }
 
-  int SCI_METHOD Version() const { return 0; }
-  const char *SCI_METHOD PropertyNames() { return ""; }
-  int SCI_METHOD PropertyType(const char *) { return 0; }
-  const char *SCI_METHOD DescribeProperty(const char *) { return ""; }
-  const char *SCI_METHOD DescribeWordListSets() { return ""; }
-  Sci_Position SCI_METHOD WordListSet(int, const char *) { return -1; }
+  int SCI_METHOD Version() const override { return 0; }
+  const char *SCI_METHOD PropertyNames() override { return ""; }
+  int SCI_METHOD PropertyType(const char *) override { return 0; }
+  const char *SCI_METHOD DescribeProperty(const char *) override { return ""; }
+  const char *SCI_METHOD DescribeWordListSets() override { return ""; }
+  Sci_Position SCI_METHOD WordListSet(int, const char *) override { return -1; }
 
   int SCI_METHOD LineEndTypesSupported() noexcept override {
     return SC_LINE_END_TYPE_UNICODE;
@@ -636,7 +636,7 @@ public:
 
   int SCI_METHOD GetIdentifier() override { return 0; }
 
-  const char *SCI_METHOD PropertyGet(const char *key) { return ""; }
+  const char *SCI_METHOD PropertyGet(const char *key) override { return ""; }
 
   /** Constructs a new instance of the lexer. */
   static ILexer5 *LexerFactoryLPeg() { return new LexerLPeg(); }

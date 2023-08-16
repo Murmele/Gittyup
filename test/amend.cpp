@@ -94,7 +94,7 @@ void TestAmend::testAmendAddFile() {
     // Add file and refresh.
     QFile file(mRepo->workdir().filePath("test"));
     QVERIFY(file.open(QFile::WriteOnly));
-    QTextStream(&file) << "This will be a test." << endl;
+    QTextStream(&file) << "This will be a test." << Qt::endl;
 
     Test::refresh(view);
 
@@ -139,7 +139,7 @@ void TestAmend::testAmendAddFile() {
   {
     QFile file(mRepo->workdir().filePath("test"));
     QVERIFY(file.open(QFile::WriteOnly));
-    QTextStream(&file) << "Changes made" << endl;
+    QTextStream(&file) << "Changes made" << Qt::endl;
 
     Test::refresh(view);
 

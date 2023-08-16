@@ -105,7 +105,7 @@ void log(QFile *out, const QString &text) {
     return;
 
   QString time = QTime::currentTime().toString(Qt::ISODateWithMs);
-  QTextStream(out) << time << " - " << text << endl;
+  QTextStream(out) << time << " - " << text << Qt::endl;
 }
 
 void log(QFile *out, const QString &fmt, const git::Id &id) {
@@ -405,7 +405,7 @@ public:
     int count = 0;
     QList<git::Commit> commits;
     git::Commit commit = mWalker.next();
-    QSet<git::Id> ids = QSet<git::Id>::fromList(mIndex.ids());
+    QSet<git::Id> ids(mIndex.ids().begin(), mIndex.ids().end());
     while (commit.isValid() && count < 8192) {
       // Don't index merge commits.
       if (!commit.isMerge() && !ids.contains(commit.id())) {
@@ -440,7 +440,7 @@ public:
       // Write to disk.
       log(mOut, "start write");
       if (mIndex.write(mWatcher.result()) && mNotify)
-        QTextStream(stdout) << "write" << endl;
+        QTextStream(stdout) << "write" << Qt::endl;
       log(mOut, "end write");
 
       // Restart.

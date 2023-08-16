@@ -29,7 +29,7 @@ void print(QTextStream &out, const Lexer::Lexeme &lexeme, int indent = 0) {
   out << lexeme.text << " - " << lexeme.token;
   if (lexeme.token < kStyleNames.length())
     out << " (" << kStyleNames.at(lexeme.token) << ")";
-  out << endl;
+  out << Qt::endl;
 }
 
 void print(QTextStream &out, Lexer *lexer, int indent = 0) {
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     // Lex buffer.
     Lexer *lexer = lexers.value(name);
     if (lexer->lex(buffer)) {
-      out << name << " - " << arg << ":" << endl;
+      out << name << " - " << arg << ":" << Qt::endl;
       print(out, lexer);
     }
   }

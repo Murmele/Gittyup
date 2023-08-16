@@ -203,6 +203,9 @@ QString Account::helpText(Kind kind) {
     case Bitbucket:
     case Beanstalk:
       return QString();
+
+    default:
+      throw std::runtime_error("Unhandled case or invalid enum " + std::to_string(static_cast<int>(kind)));
   }
 }
 
@@ -218,6 +221,8 @@ QString Account::defaultUrl(Kind kind) {
       return Beanstalk::defaultUrl();
     case GitLab:
       return GitLab::defaultUrl();
+    default:
+      throw std::runtime_error("Unhandled case or invalid enum " + std::to_string(static_cast<int>(kind)));
   }
 }
 
@@ -257,6 +262,8 @@ QString Account::kindToString(Kind kind) {
       return "beanstalk";
     case GitLab:
       return "gitlab";
+    default:
+      throw std::runtime_error("Unhandled case or invalid enum " + std::to_string(static_cast<int>(kind)));
   }
 }
 

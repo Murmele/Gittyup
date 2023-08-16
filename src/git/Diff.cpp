@@ -108,10 +108,10 @@ QByteArray Diff::print() {
   QByteArray diff;
   for (auto file : data.files) {
     for (auto hunk : file.hunks) {
-      diff.append(hunk.header);
+      diff.append(hunk.header.toUtf8());
 
       for (auto line : hunk.lines)
-        diff.append(line);
+        diff.append(line.toUtf8());
     }
   }
   Debug(QString(diff));
@@ -197,6 +197,9 @@ void Diff::sort(SortRole role, Qt::SortOrder order) {
             return ascending ? (lhsStatus < rhsStatus)
                              : (rhsStatus < lhsStatus);
           }
+
+          default:
+            throw std::runtime_error("Unhandled case or invalid enum " + std::to_string(static_cast<int>(role)));
         }
       });
 }

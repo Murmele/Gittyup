@@ -882,7 +882,7 @@ void RepoView::setLogVisible(bool visible) {
 
   QTimeLine *timeline = new QTimeLine(250, this);
   timeline->setDirection(visible ? QTimeLine::Forward : QTimeLine::Backward);
-  timeline->setCurveShape(QTimeLine::LinearCurve);
+  timeline->setEasingCurve(QEasingCurve(QEasingCurve::Linear));
   timeline->setUpdateInterval(20);
 
   connect(timeline, &QTimeLine::valueChanged, this, [this, pos](qreal value) {
@@ -907,7 +907,7 @@ LogEntry *RepoView::error(LogEntry *parent, const QString &action,
                      ? tr("Unable to %1 - %2").arg(action, detail)
                      : tr("Unable to %1 '%2' - %3").arg(action, name, detail);
 
-  QStringList items = text.split("\\n", QString::KeepEmptyParts);
+  QStringList items = text.split("\\n", Qt::KeepEmptyParts);
   if (items.last() == "\n")
     items.removeLast();
 

@@ -491,7 +491,7 @@ Plugin::Plugin(const QString &file, const git::Repository &repo,
 
   // Print error messages to the console.
   connect(this, &Plugin::error, [](const QString &msg) {
-    QTextStream(stderr) << "plugin error: " << msg << endl;
+    QTextStream(stderr) << "plugin error: " << msg << Qt::endl;
   });
 
   // Load libraries.
@@ -612,6 +612,9 @@ QVariant Plugin::optionValue(const QString &key) const {
 
     case String:
       return config().value<QString>(kKeyFmt.arg(mName, key), value.toString());
+
+    default:
+      throw std::runtime_error("Not Implemented or invalid enum" + std::to_string(static_cast<int>(optionKind(key))));
   }
 }
 
