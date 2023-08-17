@@ -28,6 +28,8 @@ RenameBranchDialog::RenameBranchDialog(const git::Repository &repo,
   setAttribute(Qt::WA_DeleteOnClose);
 
   mName = new QLineEdit(branch.name(), this);
+  mName->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Preferred);
+  mName->setMinimumWidth(QFontMetrics(mName->font()).averageCharWidth() * 40);
 
   QFormLayout *form = new QFormLayout;
   form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
