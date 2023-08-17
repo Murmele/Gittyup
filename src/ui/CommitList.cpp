@@ -1496,34 +1496,65 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       menu.addAction(tr("New Branch..."),
                      [view, commit] { view->promptToCreateBranch(commit); });
 
-      bool separator = true;
-      foreach (const git::Reference &ref, commit.refs()) {
-        if (ref.isTag()) {
-          if (separator) {
-            menu.addSeparator();
-            separator = false;
-          }
-          menu.addAction(tr("Delete Tag %1").arg(ref.name()),
-                         [view, ref] { view->promptToDeleteTag(ref); });
+      // Operations on existing references; there may be 0, 1, or multiple of
+      // each type of reference on a commit.
+      QList<git::Reference> rename_branches;
+      QList<git::Reference> tags;
+      QList<git::Reference> delete_branches;
+      for(const git::Reference &ref : commit.refs()) {
+        if(ref.isTag()) {
+          tags.append(ref);
+          continue;
         }
-        if (ref.isLocalBranch()) {
-          if (separator) {
-            menu.addSeparator();
-            separator = false;
+        if(ref.isLocalBranch()) {
+          rename_branches.append(ref);
+          if(view->repo().head().name() != ref.name()) {
+            delete_branches.append(ref);
           }
-          menu.addAction(tr("Rename Branch %1").arg(ref.name()),
-                          [view, ref] { view->promptToRenameBranch(ref); });
-        }
-        if (ref.isLocalBranch() && (view->repo().head().name() != ref.name())) {
-          if (separator) {
-            menu.addSeparator();
-            separator = false;
-          }
-          menu.addAction(tr("Delete Branch %1").arg(ref.name()),
-                         [view, ref] { view->promptToDeleteBranch(ref); });
         }
       }
 
+      if(rename_branches.count() > 0 || delete_branches.count() > 0 || tags.count() > 0) {
+        menu.addSeparator();
+      }
+      // rename branches
+      if(rename_branches.count() > 1) {
+        auto renameMenu = menu.addMenu(tr("Rename Branch"));
+        for(const git::Reference &ref : rename_branches) {
+          renameMenu->addAction(ref.name(), [view, ref] { 
+                                view->promptToRenameBranch(ref); });
+        }
+      } else if(rename_branches.count() > 0) {
+        const git::Reference &ref(rename_branches.first());
+        menu.addAction(tr("Rename Branch %1").arg(ref.name()),
+                       [view, ref] { view->promptToRenameBranch(ref); });
+      }
+
+      // Delete branches
+      if(delete_branches.count() > 1) {
+        auto deleteMenu = menu.addMenu(tr("Delete Branch"));
+        for(const git::Reference &ref : delete_branches) {
+          deleteMenu->addAction(ref.name(), [view, ref] { 
+                                view->promptToDeleteBranch(ref); });
+        }
+      } else if(delete_branches.count() > 0) {
+        const git::Reference &ref(rename_branches.first());
+        menu.addAction(tr("Delete Branch %1").arg(ref.name()),
+                       [view, ref] { view->promptToDeleteBranch(ref); });
+      }
+
+      // Delete tags
+      if(tags.count() > 1) {
+        auto deleteMenu = menu.addMenu(tr("Delete Tag"));
+        for(const git::Reference &ref : tags) {
+          deleteMenu->addAction(ref.name(), [view, ref] { 
+                                view->promptToDeleteTag(ref); });
+        }
+      } else if(tags.count() > 0) {
+        const git::Reference &ref(tags.first());
+        menu.addAction(tr("Delete Tag %1").arg(ref.name()),
+                       [view, ref] { view->promptToDeleteTag(ref); });
+      }
       menu.addSeparator();
 
       menu.addAction(tr("Merge..."), [view, commit] {
