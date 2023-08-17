@@ -1506,6 +1506,14 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
           menu.addAction(tr("Delete Tag %1").arg(ref.name()),
                          [view, ref] { view->promptToDeleteTag(ref); });
         }
+        if (ref.isLocalBranch()) {
+          if (separator) {
+            menu.addSeparator();
+            separator = false;
+          }
+          menu.addAction(tr("Rename Branch %1").arg(ref.name()),
+                          [view, ref] { view->promptToRenameBranch(ref); });
+        }
         if (ref.isLocalBranch() && (view->repo().head().name() != ref.name())) {
           if (separator) {
             menu.addSeparator();

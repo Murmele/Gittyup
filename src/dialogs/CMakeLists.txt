@@ -24,6 +24,7 @@ add_library(
   RebaseConflictDialog.cpp
   RemoteDialog.cpp
   RemoteTableModel.cpp
+  RenameBranchDialog.cpp
   SettingsDialog.cpp
   StartDialog.cpp
   SubmoduleDelegate.cpp
