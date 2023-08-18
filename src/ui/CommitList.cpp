@@ -1426,6 +1426,24 @@ void CommitList::setModel(QAbstractItemModel *model) {
   restoreSelection();
 }
 
+/// @brief Helper function to add a list of items to a menu.
+/// A single item is added directly to the menu, whereas multiple items will
+/// be added to a sub-menu.
+static void addMenuEntries(QMenu &menu, const QString &operation,
+                           const QList<git::Reference>& items,
+                           std::function<void(const git::Reference&)>action) {
+  QMenu *submenu = &menu;
+  QString entryName(operation + " %1");
+  if(items.count() > 1) {
+    submenu = menu.addMenu(operation);
+    entryName = QString("%1");
+  }
+  for(const git::Reference &ref : items) {
+    submenu->addAction(entryName.arg(ref.name()),
+                       [action, ref] { action(ref); });
+  }
+}
+
 void CommitList::contextMenuEvent(QContextMenuEvent *event) {
   QModelIndex index = indexAt(event->pos());
   if (!index.isValid())
@@ -1496,8 +1514,8 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       menu.addAction(tr("New Branch..."),
                      [view, commit] { view->promptToCreateBranch(commit); });
 
-      // Operations on existing references; there may be 0, 1, or multiple of
-      // each type of reference on a commit.
+      // Add operations on existing references; there may be 0, 1, or multiple
+      // of each type of reference on a commit.
       QList<git::Reference> rename_branches;
       QList<git::Reference> tags;
       QList<git::Reference> delete_branches;
@@ -1519,41 +1537,14 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       if(rename_branches.count() > 0 || delete_branches.count() > 0 || tags.count() > 0) {
         menu.addSeparator();
       }
-      // rename branches
-      QMenu *submenu = &menu;
-      QString entryName(tr("Rename Branch %1"));
-      if(rename_branches.count() > 1) {
-        submenu = menu.addMenu(tr("Rename Branch"));
-        entryName = QString("%1");
-      }
-      for(const git::Reference &ref : rename_branches) {
-        submenu->addAction(entryName.arg(ref.name()),
-                           [view, ref] { view->promptToRenameBranch(ref); });
-      }
+      addMenuEntries(menu, tr("Rename Branch"), rename_branches,
+                     std::bind(&RepoView::promptToRenameBranch, view, std::placeholders::_1));
 
-      // Delete branches
-      submenu = &menu;
-      entryName = tr("Delete Branch %1");
-      if(delete_branches.count() > 1) {
-        submenu = menu.addMenu(tr("Delete Branch"));
-        entryName = QString("%1");
-      }
-      for(const git::Reference &ref : delete_branches) {
-        submenu->addAction(entryName.arg(ref.name()),
-                           [view, ref] { view->promptToDeleteBranch(ref); });
-      }
+      addMenuEntries(menu, tr("Delete Branch"), delete_branches,
+                     std::bind(&RepoView::promptToDeleteBranch, view, std::placeholders::_1));
 
-      // Delete tags
-      submenu = &menu;
-      entryName = tr("Delete Tag %1");
-      if(tags.count() > 1) {
-        submenu = menu.addMenu(tr("Delete Tag"));
-        entryName = QString("%1");
-      }
-      for(const git::Reference &ref : tags) {
-        submenu->addAction(entryName.arg(ref.name()),
-                           [view, ref] { view->promptToDeleteTag(ref); });
-      }
+      addMenuEntries(menu, tr("Delete Tag"), tags,
+                     std::bind(&RepoView::promptToDeleteTag, view, std::placeholders::_1));
       menu.addSeparator();
 
       menu.addAction(tr("Merge..."), [view, commit] {
@@ -1611,8 +1602,8 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       menu.addSeparator();
 
       git::Reference head = view->repo().head();
-      submenu = &menu;
-      entryName = tr("Checkout %1");
+      auto submenu = &menu;
+      auto entryName = tr("Checkout %1");
       if(all_branches.count() > 1) {
         submenu = menu.addMenu(tr("Checkout"));
         entryName = QString("%1");
