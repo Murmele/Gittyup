@@ -1,6 +1,3 @@
-//
-//          Copyright (c) 2023, Scientific Toolworks, Inc.
-//
 // This software is licensed under the MIT License. The LICENSE.md file
 // describes the conditions under which this software may be distributed.
 //
