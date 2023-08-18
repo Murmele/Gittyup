@@ -1501,15 +1501,17 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       QList<git::Reference> rename_branches;
       QList<git::Reference> tags;
       QList<git::Reference> delete_branches;
+      QList<git::Reference> all_branches; // used later
       for(const git::Reference &ref : commit.refs()) {
         if(ref.isTag()) {
           tags.append(ref);
-          continue;
-        }
-        if(ref.isLocalBranch()) {
-          rename_branches.append(ref);
-          if(view->repo().head().name() != ref.name()) {
-            delete_branches.append(ref);
+        } else if(ref.isBranch()) {
+          all_branches.append(ref);
+          if(ref.isLocalBranch()) {
+            rename_branches.append(ref);
+            if(view->repo().head().name() != ref.name()) {
+              delete_branches.append(ref);
+            }
           }
         }
       }
@@ -1612,10 +1614,15 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       menu.addSeparator();
 
       git::Reference head = view->repo().head();
-      foreach (const git::Reference &ref, commit.refs()) {
+      QMenu *checkoutMenu = &menu;
+      if(all_branches.count() > 1) {
+        checkoutMenu = menu.addMenu(tr("Checkout"));
+      }
+      //foreach (const git::Reference &ref, commit.refs()) {
+      for( const git::Reference &ref : all_branches) {
         if (ref.isLocalBranch()) {
           QAction *checkout =
-              menu.addAction(tr("Checkout %1").arg(ref.name()),
+              checkoutMenu->addAction(tr("Checkout %1").arg(ref.name()),
                              [view, ref] { view->checkout(ref); });
 
           checkout->setEnabled(head.isValid() &&
@@ -1623,7 +1630,7 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
                                !view->repo().isBare());
         } else if (ref.isRemoteBranch()) {
           QAction *checkout =
-              menu.addAction(tr("Checkout %1").arg(ref.name()),
+              checkoutMenu->addAction(tr("Checkout %1").arg(ref.name()),
                              [view, ref] { view->checkout(ref); });
 
           // Calculate local branch name in the same way as checkout() does
