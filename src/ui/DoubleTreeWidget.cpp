@@ -20,6 +20,7 @@
 #include "conf/Settings.h"
 #include "DiffView/DiffView.h"
 #include "git/Index.h"
+#include "git/Config.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -102,8 +103,19 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
                                    checked);
     RepoView::parentView(this)->refresh();
   });
+  QAction *hideUntrackedFiles = new QAction(tr("Hide Untracked Files"));
+  hideUntrackedFiles->setCheckable(true);
+  hideUntrackedFiles->setChecked(
+      RepoView::parentView(parent)->repo().appConfig().value<bool>(
+          "untracked.hide", false));
+  connect(hideUntrackedFiles, &QAction::triggered, this, [this](bool checked) {
+    RepoView::parentView(this)->repo().appConfig().setValue("untracked.hide",
+                                                            checked);
+    RepoView::parentView(this)->refresh();
+  });
   contextMenu->addAction(singleTree);
   contextMenu->addAction(listView);
+  contextMenu->addAction(hideUntrackedFiles);
   QHBoxLayout *buttonLayout = new QHBoxLayout();
   buttonLayout->addStretch();
   buttonLayout->addWidget(segmentedButton);
@@ -306,46 +318,24 @@ QModelIndex DoubleTreeWidget::selectedIndex() const {
   return QModelIndex();
 }
 
-static void addNodeToMenu(const git::Index &index, QStringList &files,
-                          const Node *node, bool staged, bool statusDiff) {
-  Debug("DoubleTreeWidgetr addNodeToMenu()" << node->name());
-
-  if (node->hasChildren()) {
-    for (auto child : node->children()) {
-      addNodeToMenu(index, files, child, staged, statusDiff);
-    }
-
-  } else {
-    auto path = node->path(true);
-
-    auto stageState = index.isStaged(path);
-
-    if ((staged && stageState != git::Index::Unstaged) ||
-        (!staged && stageState != git::Index::Staged) || !statusDiff) {
-      files.append(path);
-    }
-  }
-}
-
 void DoubleTreeWidget::showFileContextMenu(const QPoint &pos, RepoView *view,
                                            QTreeView *tree, bool staged) {
-  QStringList files;
-  QModelIndexList indexes = tree->selectionModel()->selectedIndexes();
+  QModelIndexList modelIndexes = tree->selectionModel()->selectedIndexes();
   const auto diff = view->diff();
   if (!diff.isValid())
     return;
 
-  const bool statusDiff = diff.isStatusDiff();
-  foreach (const QModelIndex &index, indexes) {
-    auto node = index.data(Qt::UserRole).value<Node *>();
-
-    addNodeToMenu(view->repo().index(), files, node, staged, statusDiff);
+  const git::Index repoIndex = view->repo().index();
+  AccumRepoFiles accumulatedFiles(staged, diff.isStatusDiff());
+  foreach (const QModelIndex &modelIndex, modelIndexes) {
+    auto node = modelIndex.data(Qt::UserRole).value<Node *>();
+    accumulatedFiles.add(repoIndex, node);
   }
 
-  if (files.isEmpty())
+  if (accumulatedFiles.getAllFiles().isEmpty())
     return;
 
-  auto menu = new FileContextMenu(view, files, git::Index(), tree);
+  auto menu = new FileContextMenu(view, accumulatedFiles, git::Index(), tree);
   menu->setAttribute(Qt::WA_DeleteOnClose);
   menu->popup(tree->mapToGlobal(pos));
 }

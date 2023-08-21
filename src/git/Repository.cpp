@@ -309,8 +309,11 @@ Diff Repository::status(const Index &index, Diff::Callbacks *callbacks,
 Diff Repository::diffTreeToIndex(const Tree &tree, const Index &index,
                                  bool ignoreWhitespace) const {
   git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
-  opts.flags |= GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS |
-                GIT_DIFF_INCLUDE_TYPECHANGE;
+  opts.flags |= GIT_DIFF_INCLUDE_TYPECHANGE;
+
+  if (!appConfig().value<bool>("untracked.hide", false))
+    opts.flags |= GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS;
+
   if (ignoreWhitespace)
     opts.flags |= GIT_DIFF_IGNORE_WHITESPACE;
 
@@ -323,8 +326,11 @@ Diff Repository::diffIndexToWorkdir(const Index &index,
                                     Diff::Callbacks *callbacks,
                                     bool ignoreWhitespace) const {
   git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
-  opts.flags |= (GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS |
-                 GIT_DIFF_DISABLE_MMAP | GIT_DIFF_INCLUDE_TYPECHANGE);
+  opts.flags |= (GIT_DIFF_DISABLE_MMAP | GIT_DIFF_INCLUDE_TYPECHANGE);
+
+  if (!appConfig().value<bool>("untracked.hide", false))
+    opts.flags |= GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS;
+
   if (ignoreWhitespace)
     opts.flags |= GIT_DIFF_IGNORE_WHITESPACE;
 

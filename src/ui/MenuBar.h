@@ -40,6 +40,7 @@ public:
   void updateWindow();
 
   static void setDebugMenuVisible(bool show);
+  static bool isDebugMenuVisible();
   static MenuBar *instance(QWidget *widget);
   /*!
    * \brief isMaximized
