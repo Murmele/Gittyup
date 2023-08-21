@@ -3,10 +3,17 @@
 
 #include <QDebug>
 
+namespace Debug {
+
+void setLogging(bool enable);
+bool isLogging();
+}; // namespace Debug
+
 #ifdef DEBUG_OUTPUT_GENERAL
 #define Debug(x)                                                               \
   do {                                                                         \
-    qDebug() << x;                                                             \
+    if (Debug::isLogging())                                                    \
+      qDebug() << x;                                                           \
   } while (false)
 #else
 #define Debug(x)
@@ -15,7 +22,8 @@
 #ifdef DEBUG_OUTPUT_REFRESH
 #define DebugRefresh(x)                                                        \
   do {                                                                         \
-    qDebug() << Q_FUNC_INFO << QStringLiteral(": ") << x;                      \
+    if (Debug::isLogging())                                                    \
+      qDebug() << Q_FUNC_INFO << QStringLiteral(": ") << x;                    \
   } while (false)
 #else
 #define DebugRefresh(x)

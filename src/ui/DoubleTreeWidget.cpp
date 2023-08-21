@@ -20,6 +20,7 @@
 #include "conf/Settings.h"
 #include "DiffView/DiffView.h"
 #include "git/Index.h"
+#include "git/Config.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -102,8 +103,19 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
                                    checked);
     RepoView::parentView(this)->refresh();
   });
+  QAction *hideUntrackedFiles = new QAction(tr("Hide Untracked Files"));
+  hideUntrackedFiles->setCheckable(true);
+  hideUntrackedFiles->setChecked(
+      RepoView::parentView(parent)->repo().appConfig().value<bool>(
+          "untracked.hide", false));
+  connect(hideUntrackedFiles, &QAction::triggered, this, [this](bool checked) {
+    RepoView::parentView(this)->repo().appConfig().setValue("untracked.hide",
+                                                            checked);
+    RepoView::parentView(this)->refresh();
+  });
   contextMenu->addAction(singleTree);
   contextMenu->addAction(listView);
+  contextMenu->addAction(hideUntrackedFiles);
   QHBoxLayout *buttonLayout = new QHBoxLayout();
   buttonLayout->addStretch();
   buttonLayout->addWidget(segmentedButton);
