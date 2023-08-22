@@ -93,9 +93,9 @@ Solving rebase conflicts and continuing after conflicts are solved
 
 ![Rebase Conflicts](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/RebaseConflicts.png)
 
-### Staring commits
+### Starring commits
 to find specific commits much faster
-![Staring commits](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/starring_commits.png)
+![Starring commits](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/starring_commits.png)
 
 ### Tag selection
 Use an existing tag as template for your next tag. So you never have to look which is your latest tag
