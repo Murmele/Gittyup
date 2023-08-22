@@ -7,6 +7,7 @@
 // Author: Jason Haslam
 //
 
+#include "qtsupport.h"
 #include "RemoteCallbacks.h"
 #include "conf/Settings.h"
 #include "cred/CredentialHelper.h"

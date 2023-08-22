@@ -8,6 +8,7 @@
 //
 
 #include "GitCredential.h"
+#include "qtsupport.h"
 #include <QStandardPaths>
 #include <QCoreApplication>
 #include <QDir>

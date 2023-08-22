@@ -8,6 +8,7 @@
 //
 
 #include "Plugin.h"
+#include "qtsupport.h"
 #include "conf/Settings.h"
 #include "editor/TextEditor.h"
 #include "git/Config.h"

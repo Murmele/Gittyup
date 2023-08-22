@@ -11,6 +11,7 @@
 #include "Branch.h"
 #include "Config.h"
 #include "Id.h"
+#include "qtsupport.h"
 #include "TagRef.h"
 #include "git2/buffer.h"
 #include "git2/clone.h"

@@ -17,6 +17,7 @@
 #include "MainWindow.h"
 #include "MenuBar.h"
 #include "PathspecWidget.h"
+#include "qtsupport.h"
 #include "ReferenceWidget.h"
 #include "RemoteCallbacks.h"
 #include "SearchField.h"

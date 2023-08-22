@@ -10,6 +10,7 @@
 #include "Settings.h"
 #include "ConfFile.h"
 #include "Debug.h"
+#include "qtsupport.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QSettings>

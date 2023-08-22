@@ -7,6 +7,7 @@
 // Author: Jason Haslam
 //
 
+#include "qtsupport.h"
 #include "Test.h"
 #include "ui/DoubleTreeWidget.h"
 #include "ui/MainWindow.h"

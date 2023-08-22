@@ -10,6 +10,7 @@
 #include "CredentialHelper.h"
 #include "Cache.h"
 #include "GitCredential.h"
+#include "qtsupport.h"
 #include "Store.h"
 #include "conf/Settings.h"
 #include "git/Config.h"

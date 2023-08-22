@@ -1,5 +1,6 @@
 #include "Test.h"
 
+#include "qtsupport.h"
 #include "git/Signature.h"
 #include "git/Reference.h"
 #include "git/Tree.h"

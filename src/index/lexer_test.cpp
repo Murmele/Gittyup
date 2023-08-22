@@ -9,6 +9,7 @@
 
 #include "GenericLexer.h"
 #include "LPegLexer.h"
+#include "qtsupport.h"
 #include "conf/Settings.h"
 #include <QCoreApplication>
 #include <QFile>

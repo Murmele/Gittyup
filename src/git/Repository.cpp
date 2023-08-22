@@ -18,6 +18,7 @@
 #include "FilterList.h"
 #include "Index.h"
 #include "Patch.h"
+#include "qtsupport.h"
 #include "Rebase.h"
 #include "Reference.h"
 #include "Remote.h"

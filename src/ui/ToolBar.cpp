@@ -10,6 +10,7 @@
 #include "ToolBar.h"
 #include "History.h"
 #include "MainWindow.h"
+#include "qtsupport.h"
 #include "RepoView.h"
 #include "SearchField.h"
 #include "app/Application.h"

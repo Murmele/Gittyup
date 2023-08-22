@@ -9,6 +9,7 @@
 
 #include "Test.h"
 
+#include "qtsupport.h"
 #include "dialogs/CloneDialog.h"
 #include "ui/MainWindow.h"
 #include "ui/RepoView.h"

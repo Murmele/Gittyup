@@ -7,6 +7,7 @@
 // Author: Shane Gramlich
 //
 
+#include "qtsupport.h"
 #include "Test.h"
 #include "ui/MainWindow.h"
 #include "ui/DetailView.h"

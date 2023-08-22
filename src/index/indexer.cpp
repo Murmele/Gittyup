@@ -10,6 +10,7 @@
 #include "Index.h"
 #include "GenericLexer.h"
 #include "LPegLexer.h"
+#include "qtsupport.h"
 #include "conf/Settings.h"
 #include "git/Config.h"
 #include "git/Index.h"
@@ -405,7 +406,12 @@ public:
     int count = 0;
     QList<git::Commit> commits;
     git::Commit commit = mWalker.next();
+
+    #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
     QSet<git::Id> ids(mIndex.ids().begin(), mIndex.ids().end());
+    #else
+    QSet<git::Id> ids = QSet<git::Id>::fromList(mIndex.ids());
+    #endif
     while (commit.isValid() && count < 8192) {
       // Don't index merge commits.
       if (!commit.isMerge() && !ids.contains(commit.id())) {
