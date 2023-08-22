@@ -443,7 +443,8 @@ QByteArray Index::fieldName(Index::Field field) {
     case Index::Pathspec:
       return "pathspec";
     default:
-      throw std::runtime_error("Unhandled case or invalid enum " + std::to_string(static_cast<int>(field)));
+      throw std::runtime_error("Unhandled case or invalid enum " +
+                               std::to_string(static_cast<int>(field)));
   }
 }
 

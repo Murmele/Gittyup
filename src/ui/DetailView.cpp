@@ -139,8 +139,8 @@ public:
     if (mSameAuthorCommitter)
       height = qMax(qMax(author.height(), committer.height()), date.height());
     else
-      height =
-          qMax(author.height(), date.height()) + committer.height() + mSpacing.y();
+      height = qMax(author.height(), date.height()) + committer.height() +
+               mSpacing.y();
     return QSize(width, height);
   }
 
@@ -153,8 +153,8 @@ public:
     if (mSameAuthorCommitter)
       height = qMax(qMax(author.height(), committer.height()), date.height());
     else
-      height =
-          qMax(author.height(), date.height()) + committer.height() + mSpacing.y();
+      height = qMax(author.height(), date.height()) + committer.height() +
+               mSpacing.y();
     return QSize(width, height);
   }
 
@@ -202,8 +202,9 @@ private:
 
     bool wrapped = (width() < sizeHint().width());
     int x = wrapped ? 0 : width() - mDate->width();
-    int y =
-        wrapped ? mAuthor->height() + mCommitter->height() + 2 * mSpacing.y() : 0;
+    int y = wrapped
+                ? mAuthor->height() + mCommitter->height() + 2 * mSpacing.y()
+                : 0;
     mDate->move(x, y);
     updateGeometry();
   }
@@ -351,7 +352,8 @@ public:
       QDate lastDate = last.committer().date().toLocalTime().date();
       QDate firstDate = first.committer().date().toLocalTime().date();
       QString lastDateStr = QLocale().toString(lastDate, QLocale::ShortFormat);
-      QString firstDateStr = QLocale().toString(firstDate, QLocale::ShortFormat);
+      QString firstDateStr =
+          QLocale().toString(firstDate, QLocale::ShortFormat);
       QString dateStr = (lastDate == firstDate)
                             ? lastDateStr
                             : kDateRangeFmt.arg(lastDateStr, firstDateStr);

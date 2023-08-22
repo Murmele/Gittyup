@@ -407,11 +407,11 @@ public:
     QList<git::Commit> commits;
     git::Commit commit = mWalker.next();
 
-    #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
     QSet<git::Id> ids(mIndex.ids().begin(), mIndex.ids().end());
-    #else
+#else
     QSet<git::Id> ids = QSet<git::Id>::fromList(mIndex.ids());
-    #endif
+#endif
     while (commit.isValid() && count < 8192) {
       // Don't index merge commits.
       if (!commit.isMerge() && !ids.contains(commit.id())) {

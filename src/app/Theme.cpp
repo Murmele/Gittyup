@@ -164,7 +164,8 @@ QColor Theme::commitEditor(CommitEditor color) {
     case CommitEditor::LengthWarning:
       return Qt::yellow;
     default:
-      throw std::runtime_error("Not Implemented or invalid enum" + std::to_string(static_cast<int>(color)));
+      throw std::runtime_error("Not Implemented or invalid enum" +
+                               std::to_string(static_cast<int>(color)));
   }
 }
 
@@ -193,8 +194,9 @@ QColor Theme::diff(Diff color) {
         return "#E8C080";
       case Diff::Error:
         return "#7E494B";
-    default:
-      throw std::runtime_error("Not Implemented or invalid enum" + std::to_string(static_cast<int>(color)));
+      default:
+        throw std::runtime_error("Not Implemented or invalid enum" +
+                                 std::to_string(static_cast<int>(color)));
     }
   }
 
@@ -222,7 +224,8 @@ QColor Theme::diff(Diff color) {
     case Diff::Error:
       return "#FF0000";
     default:
-      throw std::runtime_error("Not Implemented or invalid enum" + std::to_string(static_cast<int>(color)));
+      throw std::runtime_error("Not Implemented or invalid enum" +
+                               std::to_string(static_cast<int>(color)));
   }
 }
 
@@ -234,7 +237,8 @@ QColor Theme::heatMap(HeatMap color) {
       return mDark ? QPalette().color(QPalette::Inactive, QPalette::Highlight)
                    : QPalette().color(QPalette::Mid);
     default:
-      throw std::runtime_error("Not Implemented or invalid enum" + std::to_string(static_cast<int>(color)));
+      throw std::runtime_error("Not Implemented or invalid enum" +
+                               std::to_string(static_cast<int>(color)));
   }
 }
 
@@ -249,7 +253,8 @@ QColor Theme::remoteComment(Comment color) {
     case Comment::Timestamp:
       return QPalette().color(QPalette::WindowText);
     default:
-      throw std::runtime_error("Not Implemented or invalid enum" + std::to_string(static_cast<int>(color)));
+      throw std::runtime_error("Not Implemented or invalid enum" +
+                               std::to_string(static_cast<int>(color)));
   }
 }
 

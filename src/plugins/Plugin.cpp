@@ -615,7 +615,9 @@ QVariant Plugin::optionValue(const QString &key) const {
       return config().value<QString>(kKeyFmt.arg(mName, key), value.toString());
 
     default:
-      throw std::runtime_error("Not Implemented or invalid enum" + std::to_string(static_cast<int>(optionKind(key))));
+      throw std::runtime_error(
+          "Not Implemented or invalid enum" +
+          std::to_string(static_cast<int>(optionKind(key))));
   }
 }
 

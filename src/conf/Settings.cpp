@@ -173,7 +173,8 @@ QString Settings::promptDescription(Prompt::Kind kind) const {
       return tr("Prompt to stage large files");
 
     default:
-      throw std::runtime_error("Not Implemented or invalid enum" + std::to_string(static_cast<int>(kind)));
+      throw std::runtime_error("Not Implemented or invalid enum" +
+                               std::to_string(static_cast<int>(kind)));
   }
 }
 

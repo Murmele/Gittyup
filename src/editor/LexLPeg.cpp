@@ -552,7 +552,8 @@ public:
    * @param key The string keyword.
    * @param val The string value.
    */
-  Sci_Position SCI_METHOD PropertySet(const char *key, const char *value) override {
+  Sci_Position SCI_METHOD PropertySet(const char *key,
+                                      const char *value) override {
     const char *val = *value ? value : " ";
     props.Set(key, val, strlen(key), strlen(val)); // ensure property is cleared
     return -1;                                     // no need to re-lex

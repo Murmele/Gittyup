@@ -6,12 +6,11 @@
 #include <QTextStream>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-namespace Qt
-{
-    static auto endl = ::endl;
-    static auto KeepEmptyParts = QString::KeepEmptyParts;
-    static auto SkipEmptyParts = QString::SkipEmptyParts;
-}
+namespace Qt {
+static auto endl = ::endl;
+static auto KeepEmptyParts = QString::KeepEmptyParts;
+static auto SkipEmptyParts = QString::SkipEmptyParts;
+} // namespace Qt
 
 // QButtonGroup::buttonClicked is deprecated in favor of QButtonGroup::idClicked
 #define idClicked buttonClicked
