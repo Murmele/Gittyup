@@ -21,9 +21,8 @@ class RenameBranchDialog : public QDialog {
   Q_OBJECT
 
 public:
-  RenameBranchDialog(const git::Repository &repo,
-                  const git::Branch &branch,
-                  QWidget *parent = nullptr);
+  RenameBranchDialog(const git::Repository &repo, const git::Branch &branch,
+                     QWidget *parent = nullptr);
 
   QString name() const;
 

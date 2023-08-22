@@ -646,7 +646,8 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
   mRenameBranch = branch->addAction(tr("Rename Branch"));
   renameBranchHotkey.use(mRenameBranch);
   connect(mRenameBranch, &QAction::triggered, [this] {
-    this->view()->promptToRenameBranch(this->view()->reference()); });
+    this->view()->promptToRenameBranch(this->view()->reference());
+  });
 
   branch->addSeparator();
 

@@ -1430,15 +1430,15 @@ void CommitList::setModel(QAbstractItemModel *model) {
 /// A single item is added directly to the menu, whereas multiple items will
 /// be added to a sub-menu.
 static void addMenuEntries(QMenu &menu, const QString &operation,
-                           const QList<git::Reference>& items,
-                           std::function<void(const git::Reference&)>action) {
+                           const QList<git::Reference> &items,
+                           std::function<void(const git::Reference &)> action) {
   QMenu *submenu = &menu;
   QString entryName(operation + " %1");
-  if(items.count() > 1) {
+  if (items.count() > 1) {
     submenu = menu.addMenu(operation);
     entryName = QString("%1");
   }
-  for(const git::Reference &ref : items) {
+  for (const git::Reference &ref : items) {
     submenu->addAction(entryName.arg(ref.name()),
                        [action, ref] { action(ref); });
   }
@@ -1520,31 +1520,35 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       QList<git::Reference> tags;
       QList<git::Reference> delete_branches;
       QList<git::Reference> all_branches; // used later
-      for(const git::Reference &ref : commit.refs()) {
-        if(ref.isTag()) {
+      for (const git::Reference &ref : commit.refs()) {
+        if (ref.isTag()) {
           tags.append(ref);
-        } else if(ref.isBranch()) {
+        } else if (ref.isBranch()) {
           all_branches.append(ref);
-          if(ref.isLocalBranch()) {
+          if (ref.isLocalBranch()) {
             rename_branches.append(ref);
-            if(view->repo().head().name() != ref.name()) {
+            if (view->repo().head().name() != ref.name()) {
               delete_branches.append(ref);
             }
           }
         }
       }
 
-      if(rename_branches.count() > 0 || delete_branches.count() > 0 || tags.count() > 0) {
+      if (rename_branches.count() > 0 || delete_branches.count() > 0 ||
+          tags.count() > 0) {
         menu.addSeparator();
       }
       addMenuEntries(menu, tr("Rename Branch"), rename_branches,
-                     std::bind(&RepoView::promptToRenameBranch, view, std::placeholders::_1));
+                     std::bind(&RepoView::promptToRenameBranch, view,
+                               std::placeholders::_1));
 
       addMenuEntries(menu, tr("Delete Branch"), delete_branches,
-                     std::bind(&RepoView::promptToDeleteBranch, view, std::placeholders::_1));
+                     std::bind(&RepoView::promptToDeleteBranch, view,
+                               std::placeholders::_1));
 
-      addMenuEntries(menu, tr("Delete Tag"), tags,
-                     std::bind(&RepoView::promptToDeleteTag, view, std::placeholders::_1));
+      addMenuEntries(
+          menu, tr("Delete Tag"), tags,
+          std::bind(&RepoView::promptToDeleteTag, view, std::placeholders::_1));
       menu.addSeparator();
 
       menu.addAction(tr("Merge..."), [view, commit] {
@@ -1604,23 +1608,21 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       git::Reference head = view->repo().head();
       auto submenu = &menu;
       auto entryName = tr("Checkout %1");
-      if(all_branches.count() > 1) {
+      if (all_branches.count() > 1) {
         submenu = menu.addMenu(tr("Checkout"));
         entryName = QString("%1");
       }
-      for( const git::Reference &ref : all_branches) {
+      for (const git::Reference &ref : all_branches) {
         if (ref.isLocalBranch()) {
-          QAction *checkout =
-              submenu->addAction(entryName.arg(ref.name()),
-                                 [view, ref] { view->checkout(ref); });
+          QAction *checkout = submenu->addAction(
+              entryName.arg(ref.name()), [view, ref] { view->checkout(ref); });
 
           checkout->setEnabled(head.isValid() &&
                                head.qualifiedName() != ref.qualifiedName() &&
                                !view->repo().isBare());
         } else if (ref.isRemoteBranch()) {
-          QAction *checkout =
-              submenu->addAction(entryName.arg(ref.name()),
-                                 [view, ref] { view->checkout(ref); });
+          QAction *checkout = submenu->addAction(
+              entryName.arg(ref.name()), [view, ref] { view->checkout(ref); });
 
           // Calculate local branch name in the same way as checkout() does
           QString local = ref.name().section('/', 1);

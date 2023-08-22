@@ -25,7 +25,7 @@ RenameBranchDialog::RenameBranchDialog(const git::Repository &repo,
   setAttribute(Qt::WA_DeleteOnClose);
 
   mName = new QLineEdit(branch.name(), this);
-  mName->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Preferred);
+  mName->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
   mName->setMinimumWidth(QFontMetrics(mName->font()).averageCharWidth() * 40);
 
   QFormLayout *form = new QFormLayout;
@@ -51,9 +51,8 @@ RenameBranchDialog::RenameBranchDialog(const git::Repository &repo,
   });
 
   // Perform the rename when the button is clicked
-  connect(rename, &QPushButton::clicked, [this, branch] {
-    git::Branch(branch).rename(mName->text());
-  });
+  connect(rename, &QPushButton::clicked,
+          [this, branch] { git::Branch(branch).rename(mName->text()); });
 }
 
 QString RenameBranchDialog::name() const { return mName->text(); }
