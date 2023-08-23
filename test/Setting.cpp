@@ -23,9 +23,7 @@ private:
 
   template <class T, typename TId> QStringList settingsKeys() {
     QStringList settingsKeys;
-    foreach (const TId id, ids<TId>()) {
-      settingsKeys.append(T::key(id));
-    }
+    foreach (const TId id, ids<TId>()) { settingsKeys.append(T::key(id)); }
     return settingsKeys;
   }
 
