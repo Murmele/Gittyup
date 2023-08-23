@@ -132,8 +132,11 @@ where `<path-to-qt>` points to the Qt install directory that contains
 `bin`, `lib`, etc.
 
 **Build**
-
+```
     ninja
+```
+    
+### A Convenient Shell Script for Ubuntu is available [here](https://raw.githubusercontent.com/Murmele/Gittyup/master/pack/buildUbuntu.sh), and will install all the necessary prerequisites, and build a release version for immediate use.
 
 How to Install
 -----------------
@@ -176,7 +179,6 @@ function run_disown_silence(){
 }
 run_disown_silence flatpak run com.github.Murmele.Gittyup
 ```
-
 
 How to Contribute
 -----------------
