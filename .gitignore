@@ -5,4 +5,6 @@ build
 CMakeLists.txt.user
 cmake-build-debug/
 cmake-build-release/
+build
 .idea/
+.venv
