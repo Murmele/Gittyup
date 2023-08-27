@@ -93,7 +93,19 @@ Lexer::Lexeme GenericLexer::next() {
         }
         break;
 
-      default:
+      case Comment:      // fall through
+      case Keyword:      // fall through
+      case Operator:     // fall through
+      case Error:        // fall through
+      case Preprocessor: // fall through
+      case Constant:     // fall through
+      case Variable:     // fall through
+      case Function:     // fall through
+      case Class:        // fall through
+      case Type:         // fall through
+      case Label:        // fall through
+      case Regex:        // fall through
+      case Embedded:     // fall through
         Q_ASSERT(false);
     }
   }

@@ -439,6 +439,7 @@ void ScintillaQt::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void ScintillaQt::dragLeaveEvent(QDragLeaveEvent *event) {
+  Q_UNUSED(event);
   SetDragPosition(SelectionPosition(Sci::invalidPosition));
 }
 
@@ -567,7 +568,7 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
             indicator = SC_INDICATOR_CONVERTED;
             break;
 
-          default:
+          case QTextCharFormat::DashDotDotLine:
             indicator = SC_INDICATOR_UNKNOWN;
         }
 
@@ -690,9 +691,23 @@ QVariant ScintillaQt::inputMethodQuery(Qt::InputMethodQuery query) const {
       return buffer.constData();
     }
 
-    default:
-      return QVariant();
+    case Qt::ImEnabled:                // fall through
+    case Qt::ImAnchorPosition:         // fall through
+    case Qt::ImHints:                  // fall through
+    case Qt::ImMaximumTextLength:      // fall through
+    case Qt::ImPreferredLanguage:      // fall through
+    case Qt::ImAbsolutePosition:       // fall through
+    case Qt::ImTextBeforeCursor:       // fall through
+    case Qt::ImTextAfterCursor:        // fall through
+    case Qt::ImEnterKeyType:           // fall through
+    case Qt::ImAnchorRectangle:        // fall through
+    case Qt::ImInputItemClipRectangle: // fall through
+    case Qt::ImPlatformData:           // fall through
+    case Qt::ImQueryInput:             // fall through
+    case Qt::ImQueryAll:               // fall through
+      break;
   }
+  return QVariant();
 }
 
 void ScintillaQt::PasteFromMode(QClipboard::Mode clipboardMode) {

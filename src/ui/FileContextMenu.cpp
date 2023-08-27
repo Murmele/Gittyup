@@ -71,7 +71,14 @@ void handlePath(const git::Repository &repo, const QString &path,
         untracked.append(path);
         break;
 
-      default:
+      case GIT_DELTA_UNMODIFIED: // fall through
+      case GIT_DELTA_ADDED:      // fall through
+      case GIT_DELTA_RENAMED:    // fall through
+      case GIT_DELTA_COPIED:     // fall through
+      case GIT_DELTA_IGNORED:    // fall through
+      case GIT_DELTA_TYPECHANGE: // fall through
+      case GIT_DELTA_UNREADABLE: // fall through
+      case GIT_DELTA_CONFLICTED: // fall through
         break;
     }
   }
@@ -115,7 +122,8 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
           mergeTools.append(tool);
           break;
 
-        default:
+        case ExternalTool::Show: // fall through
+        case ExternalTool::Edit:
           Q_ASSERT(false);
           break;
       }

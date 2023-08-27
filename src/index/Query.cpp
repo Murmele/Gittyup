@@ -74,7 +74,23 @@ public:
           return (tmp < date);
         case Index::After:
           return (tmp > date);
-        default:
+        case Index::Id:         // fall through
+        case Index::Author:     // fall through
+        case Index::Email:      // fall through
+        case Index::Message:    // fall through
+        case Index::Date:       // fall through
+        case Index::Path:       // fall through
+        case Index::File:       // fall through
+        case Index::Scope:      // fall through
+        case Index::Context:    // fall through
+        case Index::Addition:   // fall through
+        case Index::Deletion:   // fall through
+        case Index::Any:        // fall through
+        case Index::Comment:    // fall through
+        case Index::String:     // fall through
+        case Index::Identifier: // fall through
+        case Index::Is:         // fall through
+        case Index::Pathspec:
           Q_ASSERT(false);
           return false;
       }

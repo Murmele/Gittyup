@@ -785,7 +785,7 @@ void HunkWidget::load(git::Patch &staged, bool force) {
         mHeader->theirsButton()->click();
         break;
 
-      default:
+      case git::Patch::Unresolved:
         break;
     }
   }

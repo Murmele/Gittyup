@@ -66,7 +66,13 @@ void print(QTextStream &out, Lexer *lexer, int indent = 0) {
         break;
 
       // Ignore everything else.
-      default:
+      case Lexer::Whitespace: // fall through
+      case Lexer::Nothing:    // fall through
+      case Lexer::Number:     // fall through
+      case Lexer::Operator:   // fall through
+      case Lexer::Error:      // fall through
+      case Lexer::Regex:      // fall through
+      case Lexer::Embedded:
         break;
     }
   }

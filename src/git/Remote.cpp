@@ -445,9 +445,10 @@ int Remote::Callbacks::transfer(const git_indexer_progress *stats,
     case Resolve:
       return cbs->resolve(stats->total_deltas, stats->indexed_deltas) ? 0 : -1;
 
-    default:
+    case Update:
       return 0;
   }
+  return 0;
 }
 
 int Remote::Callbacks::update(const char *name, const git_oid *a,

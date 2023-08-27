@@ -149,7 +149,22 @@ void index(const Lexer::Lexeme &lexeme, Intermediate::FieldMap &fields,
         case Lexer::Comment:
           field |= Index::Comment;
           break;
-        default:
+        case Lexer::Nothing:      // fall through
+        case Lexer::Whitespace:   // fall through
+        case Lexer::Number:       // fall through
+        case Lexer::Keyword:      // fall through
+        case Lexer::Identifier:   // fall through
+        case Lexer::Operator:     // fall through
+        case Lexer::Error:        // fall through
+        case Lexer::Preprocessor: // fall through
+        case Lexer::Constant:     // fall through
+        case Lexer::Variable:     // fall through
+        case Lexer::Function:     // fall through
+        case Lexer::Class:        // fall through
+        case Lexer::Type:         // fall through
+        case Lexer::Label:        // fall through
+        case Lexer::Regex:        // fall through
+        case Lexer::Embedded:     // fall through
           break;
       }
 
@@ -173,7 +188,13 @@ void index(const Lexer::Lexeme &lexeme, Intermediate::FieldMap &fields,
       break;
 
     // Ignore everything else.
-    default:
+    case Lexer::Nothing:    // fall through
+    case Lexer::Whitespace: // fall through
+    case Lexer::Number:     // fall through
+    case Lexer::Operator:   // fall through
+    case Lexer::Error:      // fall through
+    case Lexer::Regex:      // fall through
+    case Lexer::Embedded:   // fall through
       break;
   }
 }
@@ -456,10 +477,14 @@ public:
 
   bool nativeEventFilter(const QByteArray &type, void *message,
                          long *result) override {
+    Q_UNUSED(result);
 #ifdef Q_OS_WIN
     MSG *msg = static_cast<MSG *>(message);
     if (msg->message == WM_CLOSE)
       cancel();
+#else
+    Q_UNUSED(type);
+    Q_UNUSED(message);
 #endif
 
     return false;

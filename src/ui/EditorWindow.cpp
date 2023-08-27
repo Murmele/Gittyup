@@ -97,7 +97,27 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
       case QMessageBox::Save:
         editor->save();
         break;
-      default:
+      case QMessageBox::NoButton:
+      case QMessageBox::SaveAll:
+      case QMessageBox::Open:
+      case QMessageBox::Yes:
+      case QMessageBox::No:
+      case QMessageBox::Abort:
+      case QMessageBox::Retry:
+      case QMessageBox::Ignore:
+      case QMessageBox::Close:
+      case QMessageBox::Discard:
+      case QMessageBox::Help:
+      case QMessageBox::Apply:
+      case QMessageBox::Reset:
+      case QMessageBox::RestoreDefaults:
+      case QMessageBox::FirstButton:
+      case QMessageBox::YesAll:
+      case QMessageBox::NoAll:
+      case QMessageBox::Default:
+      case QMessageBox::Escape:
+      case QMessageBox::FlagMask:
+      case QMessageBox::ButtonMask:
         break;
     }
   }

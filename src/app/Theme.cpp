@@ -101,7 +101,14 @@ QColor Theme::badge(BadgeRole role, BadgeState state) {
         case BadgeState::Head:
           return QPalette().color(QPalette::HighlightedText);
 
-        default:
+        case BadgeState::Normal:       // fall through
+        case BadgeState::Conflicted:   // fall through
+        case BadgeState::Notification: // fall through
+        case BadgeState::Modified:     // fall through
+        case BadgeState::Added:        // fall through
+        case BadgeState::Deleted:      // fall through
+        case BadgeState::Untracked:    // fall through
+        case BadgeState::Renamed:
           return QPalette().color(QPalette::WindowText);
       }
 
@@ -163,10 +170,9 @@ QColor Theme::commitEditor(CommitEditor color) {
       return Qt::gray;
     case CommitEditor::LengthWarning:
       return Qt::yellow;
-    default:
-      throw std::runtime_error("Not Implemented or invalid enum" +
-                               std::to_string(static_cast<int>(color)));
   }
+  throw std::runtime_error("Not Implemented or invalid enum" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor Theme::diff(Diff color) {
@@ -194,10 +200,9 @@ QColor Theme::diff(Diff color) {
         return "#E8C080";
       case Diff::Error:
         return "#7E494B";
-      default:
-        throw std::runtime_error("Not Implemented or invalid enum" +
-                                 std::to_string(static_cast<int>(color)));
     }
+    throw std::runtime_error("Not Implemented or invalid enum" +
+                             std::to_string(static_cast<int>(color)));
   }
 
   switch (color) {
@@ -223,10 +228,9 @@ QColor Theme::diff(Diff color) {
       return "#FFFF00";
     case Diff::Error:
       return "#FF0000";
-    default:
-      throw std::runtime_error("Not Implemented or invalid enum" +
-                               std::to_string(static_cast<int>(color)));
   }
+  throw std::runtime_error("Not Implemented or invalid enum" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor Theme::heatMap(HeatMap color) {
@@ -236,10 +240,9 @@ QColor Theme::heatMap(HeatMap color) {
     case HeatMap::Cold:
       return mDark ? QPalette().color(QPalette::Inactive, QPalette::Highlight)
                    : QPalette().color(QPalette::Mid);
-    default:
-      throw std::runtime_error("Not Implemented or invalid enum" +
-                               std::to_string(static_cast<int>(color)));
   }
+  throw std::runtime_error("Not Implemented or invalid enum" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor Theme::remoteComment(Comment color) {
@@ -252,10 +255,9 @@ QColor Theme::remoteComment(Comment color) {
       return QPalette().color(QPalette::WindowText);
     case Comment::Timestamp:
       return QPalette().color(QPalette::WindowText);
-    default:
-      throw std::runtime_error("Not Implemented or invalid enum" +
-                               std::to_string(static_cast<int>(color)));
   }
+  throw std::runtime_error("Not Implemented or invalid enum" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor Theme::star() { return QPalette().color(QPalette::Highlight); }

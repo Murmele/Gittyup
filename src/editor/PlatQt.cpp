@@ -486,7 +486,8 @@ void Window::SetCursor(Cursor curs) {
       case cursorHand:
         shape = Qt::PointingHandCursor;
         break;
-      default:
+      case cursorInvalid: // fall through
+      case cursorReverseArrow:
         shape = Qt::ArrowCursor;
         break;
     }
