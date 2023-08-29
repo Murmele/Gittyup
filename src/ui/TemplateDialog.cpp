@@ -296,7 +296,7 @@ void TemplateDialog::exportTemplates(QString filename) {
   }
 
   QString templatesStr;
-  for (const auto tmpl : mNew) {
+  for (const auto &tmpl : mNew) {
     QString name = tmpl.name;
     QString value = tmpl.value;
     value = value.replace(QStringLiteral("\n"), QStringLiteral("\\n"));

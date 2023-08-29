@@ -696,7 +696,6 @@ public:
     initStyleOption(&opt);
 
     QColor color = opt.palette.buttonText().color();
-    QColor light = (isEnabled() && isActiveWindow()) ? color.lighter() : color;
 
     QPainter painter(this);
     painter.setPen(QPen(color, 1.0));
@@ -884,7 +883,7 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
 
   QAction *appConfigAction = configMenu->addAction(tr("Application settings"));
   connect(appConfigAction, &QAction::triggered,
-          [this] { SettingsDialog::openSharedInstance(); });
+          [] { SettingsDialog::openSharedInstance(); });
 
   addWidget(new Spacer(4, this));
 

@@ -1458,7 +1458,7 @@ void RepoView::rebaseAboutToRebase(const git::Rebase rebase,
   QString beforeText = before.link();
   QString step = tr("%1/%2").arg(currIndex).arg(rebase.count());
   QString text = tr("%1 - %2").arg(step, beforeText);
-  LogEntry *entry = mRebase->addEntry(text, tr("Apply"));
+  mRebase->addEntry(text, tr("Apply"));
 }
 
 void RepoView::rebaseConflict(const git::Rebase rebase) {
@@ -2788,14 +2788,15 @@ void RepoView::refresh() { refresh(true); }
 
 void RepoView::refresh(bool restoreSelection) {
   // Fake head update.
-  uint32_t counter = 0;
   auto dtw = findChild<DoubleTreeWidget *>();
-  if (dtw)
-    counter = dtw->setDiffCounter();
-  if (mRepo.head().isValid())
+  if (dtw) {
+    dtw->setDiffCounter();
+  }
+  if (mRepo.head().isValid()) {
     DebugRefresh("Head name: " << mRepo.head().name());
-  else
+  } else {
     DebugRefresh("Head invalid");
+  }
   DebugRefresh("time: " << QDateTime::currentDateTime()
                         << " Set diff counter: " << counter);
   emit mRepo.notifier()->referenceUpdated(mRepo.head(), restoreSelection);

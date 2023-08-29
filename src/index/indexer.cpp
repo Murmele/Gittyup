@@ -353,7 +353,7 @@ private:
   QFile *mOut;
 
   int mContextLines = 3;
-  int mTermLimit = 1000000;
+  quint32 mTermLimit = 1000000;
 };
 
 class Reduce {

@@ -85,7 +85,7 @@ _FileWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
 
     git::RepositoryNotifier *notifier = patch.repo().notifier();
     connect(notifier, &git::RepositoryNotifier::lfsLocksChanged, this,
-            [this, patch, lfsLockButton] {
+            [patch, lfsLockButton] {
               bool locked = patch.repo().lfsIsLocked(patch.name());
               lfsLockButton->setText(locked ? FileWidget::tr("Unlock")
                                             : FileWidget::tr("Lock"));
@@ -560,10 +560,7 @@ void FileWidget::updatePatch(const git::Patch &patch, const git::Patch &staged,
     int hunkCount = patch.count();
     for (int hidx = 0; hidx < hunkCount; ++hidx) {
       HunkWidget *hunk = addHunk(mDiff, patch, staged, hidx, lfs, submodule);
-      int startLine = patch.lineNumber(hidx, 0, git::Diff::OldFile);
-      // hunk->header()->check()->setChecked(stagedHunks.contains(startLine));
-      // // not correct, because it could also only a part of the hunk staged
-      // (single lines)
+      patch.lineNumber(hidx, 0, git::Diff::OldFile);
       mHunkLayout->addWidget(hunk);
     }
   } else {
@@ -786,7 +783,7 @@ void FileWidget::discard() {
                              : FileWidget::tr("Discard Changes");
   QPushButton *discard = dialog->addButton(button, QMessageBox::AcceptRole);
   connect(discard, &QPushButton::clicked,
-          [this, untracked] { emit discarded(mModelIndex); });
+          [this] { emit discarded(mModelIndex); });
 
   dialog->exec();
 }

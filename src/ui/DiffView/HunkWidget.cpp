@@ -497,8 +497,6 @@ void HunkWidget::unstageSelected(int startLine, int end, bool emitSignal) {
 
 void HunkWidget::discardDialog(int startLine, int end) {
   QString name = mPatch.name();
-  int line = mPatch.lineNumber(mIndex, 0, git::Diff::NewFile);
-
   QString title = HunkWidget::tr("Discard selected lines?");
   QString text =
       mPatch.isUntracked()

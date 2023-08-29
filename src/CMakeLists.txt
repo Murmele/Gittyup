@@ -1,6 +1,13 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_compile_options(-Werror=switch)
+# Uncomment to compile with more warnings
+#add_compile_options(-Wall)
+# Uncomment to compile with even more warnings
+#add_compile_options(-Wextra)
+# TODO: currently there are too many unused parameters which overwhelms the
+#       warning output with `-Wall`. So let's leave fixing these for later.
+add_compile_options(-Wno-unused-parameter)
 
 add_subdirectory(util)
 add_subdirectory(cli)

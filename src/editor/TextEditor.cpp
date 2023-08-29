@@ -43,8 +43,6 @@ QPixmap stagedUnstagedIcon(const bool &checked, const QColor &background,
       QRect(QPoint(0, 0), QSize(fontHeight - 2, fontHeight - 2)));
 }
 
-const float textHeightFactorCheckBoxSize = 2.0;
-
 } // namespace
 
 extern LexerModule lmLPeg;

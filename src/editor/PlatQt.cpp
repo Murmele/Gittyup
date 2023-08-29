@@ -128,7 +128,7 @@ void SurfaceImpl::Polygon(Point *pts, size_t npts, ColourDesired fore,
   PenColour(fore);
 
   QVarLengthArray<QPoint, 8> qpts(npts);
-  for (int i = 0; i < npts; i++)
+  for (size_t i = 0; i < npts; i++)
     qpts[i] = QPoint(pts[i].x, pts[i].y);
 
   QPainter *painter = GetPainter();
@@ -306,7 +306,7 @@ void SurfaceImpl::MeasureWidths(Font &font, std::string_view s,
   QTextLine tl = tlay.createLine();
   tlay.endLayout();
 
-  int i = 0;
+  size_t i = 0;
   int ui = 0;
   int fit = su.size();
   const unsigned char *us = reinterpret_cast<const unsigned char *>(s.data());
@@ -468,9 +468,6 @@ void Window::SetCursor(Cursor curs) {
       case cursorText:
         shape = Qt::IBeamCursor;
         break;
-      case cursorArrow:
-        shape = Qt::ArrowCursor;
-        break;
       case cursorUp:
         shape = Qt::UpArrowCursor;
         break;
@@ -486,8 +483,7 @@ void Window::SetCursor(Cursor curs) {
       case cursorHand:
         shape = Qt::PointingHandCursor;
         break;
-      case cursorInvalid: // fall through
-      case cursorReverseArrow:
+      default:
         shape = Qt::ArrowCursor;
         break;
     }

@@ -520,7 +520,6 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
       const unsigned int ucWidth = commitStr.at(i).isHighSurrogate() ? 2 : 1;
       const QString oneCharUTF16 = commitStr.mid(i, ucWidth);
       const QByteArray oneChar = oneCharUTF16.toUtf8();
-      const int oneCharLen = oneChar.length();
 
       InsertCharacter(oneChar.toStdString(), CharacterSource::directInput);
       i += ucWidth;

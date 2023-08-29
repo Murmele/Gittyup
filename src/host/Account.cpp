@@ -30,8 +30,10 @@ const QString kThemeIconFmt = ":/%1_%2.png";
 } // namespace
 
 Account::Account(const QString &username)
-    : mMgr(new QNetworkAccessManager()), mUsername(username),
-      mError(new AccountError(this)), mProgress(new AccountProgress(this)) {
+    : mUsername(username),
+      mError(new AccountError(this)),
+      mProgress(new AccountProgress(this)),
+      mMgr(new QNetworkAccessManager()) {
   QObject::connect(
       mMgr, &QNetworkAccessManager::sslErrors,
       [this](QNetworkReply *reply, const QList<QSslError> &errors) {

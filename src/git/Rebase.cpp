@@ -36,8 +36,8 @@ const git_rebase_operation *Rebase::operation(size_t index) {
 }
 
 bool Rebase::hasNext() const {
-  int index = currentIndex();
-  int count = git_rebase_operation_entrycount(d.data());
+  size_t index = currentIndex();
+  size_t count = git_rebase_operation_entrycount(d.data());
   return (count > 0 && (index == GIT_REBASE_NO_OPERATION || index < count - 1));
 }
 

@@ -182,7 +182,7 @@ bool Index::write(PostingMap map) {
       quint32 postCount = readVInt(postIn);
       bool end = (newIt == newEnd || newIt.key() != it->key);
       postings.reserve(postCount + (!end ? newIt.value().size() : 0));
-      for (int i = 0; i < postCount; ++i) {
+      for (quint32 i = 0; i < postCount; ++i) {
         quint32 proxPos;
         Posting posting;
         posting.id = readVInt(postIn);
@@ -243,7 +243,7 @@ QList<git::Commit> Index::commits(const QString &filter) const {
   // Sort by commit date.
   QList<git::Commit> commits = query->commits(this);
   std::sort(commits.begin(), commits.end(),
-            [this](const git::Commit &lhs, const git::Commit &rhs) {
+            [](const git::Commit &lhs, const git::Commit &rhs) {
               return (lhs.committer().date() > rhs.committer().date());
             });
 
@@ -288,7 +288,7 @@ QList<Index::Posting> Index::postings(const Term &term, bool positional) const {
   // Read list.
   QList<Posting> postings;
   quint32 postCount = readVInt(in);
-  for (int i = 0; i < postCount; ++i) {
+  for (quint32 i = 0; i < postCount; ++i) {
     quint32 proxPos;
     Posting posting;
     posting.id = readVInt(in);
@@ -331,7 +331,7 @@ QList<Index::Posting> Index::postings(const Predicate &pred,
 
     // Read list.
     quint32 postCount = readVInt(in);
-    for (int i = 0; i < postCount; ++i) {
+    for (quint32 i = 0; i < postCount; ++i) {
       quint32 proxPos;
       Posting posting;
       posting.id = readVInt(in);
@@ -373,7 +373,7 @@ QMap<Index::Field, QStringList> Index::fieldMap(const QString &prefix) const {
     // Read list.
     QString name = it->key;
     quint32 postCount = readVInt(in);
-    for (int i = 0; i < postCount; ++i) {
+    for (quint32 i = 0; i < postCount; ++i) {
       quint8 field;
       quint32 proxPos;
       readVInt(in); // Discard id.
@@ -508,7 +508,7 @@ void Index::readPositions(QDataStream &in, QVector<quint32> &positions) {
   quint32 prev = 0;
   quint32 count = readVInt(in);
   positions.reserve(count);
-  for (int i = 0; i < count; ++i) {
+  for (quint32 i = 0; i < count; ++i) {
     // Convert to absolute from delta.
     quint32 position = prev + readVInt(in);
     positions.append(position);

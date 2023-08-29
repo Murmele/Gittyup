@@ -1239,6 +1239,7 @@ git::Diff CommitList::selectedDiff() const {
   DebugRefresh("Selected indices count: " << indexes.count());
   for (const auto &index : indexes) {
     const auto &id = index.data(CommitRole).value<git::Commit>().shortId();
+    (void)id; // Unused in release builds
     DebugRefresh("Commit: " << id);
   }
   if (indexes.isEmpty())

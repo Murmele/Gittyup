@@ -488,7 +488,7 @@ QStringList Repository::existingTags() const {
 
   QStringList list;
 
-  for (int i = 0; i < array.count; i++) {
+  for (size_t i = 0; i < array.count; i++) {
     list.append(array.strings[i]);
   }
 
@@ -746,7 +746,7 @@ QList<Remote> Repository::remotes() const {
     return QList<Remote>();
 
   QList<Remote> remotes;
-  for (int i = 0; i < names.count; ++i) {
+  for (size_t i = 0; i < names.count; ++i) {
     if (Remote remote = lookupRemote(names.strings[i]))
       remotes.append(remote);
   }
@@ -934,7 +934,6 @@ void Repository::rebaseContinue(const QString &commitMessage) {
     }
   }
   // Loop over rebase operations.
-  int count = r.count();
   while (r.hasNext()) {
     git::Commit before = r.next();
     if (!before.isValid()) {
