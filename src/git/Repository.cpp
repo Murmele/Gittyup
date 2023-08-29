@@ -629,6 +629,7 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
       break;
 
     default:
+      // no-op
       break;
   }
 

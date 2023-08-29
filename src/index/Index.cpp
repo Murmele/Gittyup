@@ -442,10 +442,9 @@ QByteArray Index::fieldName(Index::Field field) {
       return "after";
     case Index::Pathspec:
       return "pathspec";
-    default:
-      throw std::runtime_error("Unhandled case or invalid enum " +
-                               std::to_string(static_cast<int>(field)));
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(field)));
 }
 
 QDir Index::indexDir(const git::Repository &repo) {

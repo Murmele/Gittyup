@@ -197,11 +197,9 @@ void Diff::sort(SortRole role, Qt::SortOrder order) {
             return ascending ? (lhsStatus < rhsStatus)
                              : (rhsStatus < lhsStatus);
           }
-
-          default:
-            throw std::runtime_error("Unhandled case or invalid enum " +
-                                     std::to_string(static_cast<int>(role)));
         }
+        throw std::runtime_error("unreachable; value=" +
+                                  std::to_string(static_cast<int>(role)));
       });
 }
 

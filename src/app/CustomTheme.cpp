@@ -73,55 +73,7 @@ public:
         CustomTheme::drawCloseButton(option, painter);
         break;
 
-      case PE_Frame:                           // fall through
-      case PE_FrameDefaultButton:              // fall through
-      case PE_FrameDockWidget:                 // fall through
-      case PE_FrameFocusRect:                  // fall through
-      case PE_FrameGroupBox:                   // fall through
-      case PE_FrameLineEdit:                   // fall through
-      case PE_FrameMenu:                       // fall through
-      case PE_FrameStatusBarItem:              // fall through
-      case PE_FrameTabWidget:                  // fall through
-      case PE_FrameWindow:                     // fall through
-      case PE_FrameButtonBevel:                // fall through
-      case PE_FrameButtonTool:                 // fall through
-      case PE_FrameTabBarBase:                 // fall through
-      case PE_PanelButtonCommand:              // fall through
-      case PE_PanelButtonBevel:                // fall through
-      case PE_PanelButtonTool:                 // fall through
-      case PE_PanelMenuBar:                    // fall through
-      case PE_PanelToolBar:                    // fall through
-      case PE_PanelLineEdit:                   // fall through
-      case PE_IndicatorArrowDown:              // fall through
-      case PE_IndicatorArrowLeft:              // fall through
-      case PE_IndicatorArrowRight:             // fall through
-      case PE_IndicatorArrowUp:                // fall through
-      case PE_IndicatorBranch:                 // fall through
-      case PE_IndicatorButtonDropDown:         // fall through
-      case PE_IndicatorItemViewItemCheck:      // fall through
-      case PE_IndicatorDockWidgetResizeHandle: // fall through
-      case PE_IndicatorHeaderArrow:            // fall through
-      case PE_IndicatorMenuCheckMark:          // fall through
-      case PE_IndicatorProgressChunk:          // fall through
-      case PE_IndicatorRadioButton:            // fall through
-      case PE_IndicatorSpinDown:               // fall through
-      case PE_IndicatorSpinMinus:              // fall through
-      case PE_IndicatorSpinPlus:               // fall through
-      case PE_IndicatorSpinUp:                 // fall through
-      case PE_IndicatorToolBarHandle:          // fall through
-      case PE_IndicatorToolBarSeparator:       // fall through
-      case PE_PanelTipLabel:                   // fall through
-      case PE_IndicatorTabTear:                // fall through
-      case PE_PanelScrollAreaCorner:           // fall through
-      case PE_Widget:                          // fall through
-      case PE_IndicatorColumnViewArrow:        // fall through
-      case PE_IndicatorItemViewItemDrop:       // fall through
-      case PE_PanelItemViewItem:               // fall through
-      case PE_PanelItemViewRow:                // fall through
-      case PE_PanelStatusBar:                  // fall through
-      case PE_PanelMenu:                       // fall through
-      case PE_IndicatorTabTearRight:           // fall through
-      case PE_CustomBase:                      // fall through
+      default:
         baseStyle()->drawPrimitive(elem, option, painter, widget);
         break;
     }
@@ -484,7 +436,7 @@ QColor CustomTheme::commitEditor(CommitEditor color) {
     case CommitEditor::LengthWarning:
       return commitEditor.value("lengthwarning").value<QColor>();
   }
-  throw std::runtime_error("Not Implemented or invalid enum " +
+  throw std::runtime_error("unreachable; value=" +
                            std::to_string(static_cast<int>(color)));
 }
 
@@ -515,7 +467,7 @@ QColor CustomTheme::diff(Diff color) {
     case Diff::Error:
       return diff.value("error").value<QColor>();
   }
-  throw std::runtime_error("Not Implemented or invalid enum" +
+  throw std::runtime_error("unreachable; value=" +
                            std::to_string(static_cast<int>(color)));
 }
 
@@ -527,10 +479,9 @@ QColor CustomTheme::heatMap(HeatMap color) {
       return QColor(heatmap.value("hot").toString());
     case HeatMap::Cold:
       return QColor(heatmap.value("cold").toString());
-    default:
-      throw std::runtime_error("Not Implemented or invalid enum" +
-                               std::to_string(static_cast<int>(color)));
   }
+  throw std::runtime_error("unreachable; value=" +
+                            std::to_string(static_cast<int>(color)));
 }
 
 QColor CustomTheme::remoteComment(Comment color) {
@@ -545,10 +496,9 @@ QColor CustomTheme::remoteComment(Comment color) {
       return QColor(comment.value("author").toString());
     case Comment::Timestamp:
       return QColor(comment.value("timestamp").toString());
-    default:
-      throw std::runtime_error("Not Implemented or invalid enum" +
-                               std::to_string(static_cast<int>(color)));
   }
+  throw std::runtime_error("unreachable; value=" +
+                            std::to_string(static_cast<int>(color)));
 }
 
 QColor CustomTheme::star() {

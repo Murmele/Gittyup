@@ -171,11 +171,9 @@ QString Settings::promptDescription(Prompt::Kind kind) const {
 
     case Prompt::Kind::LargeFiles:
       return tr("Prompt to stage large files");
-
-    default:
-      throw std::runtime_error("Not Implemented or invalid enum" +
-                               std::to_string(static_cast<int>(kind)));
   }
+  throw std::runtime_error("unreachable; value=" +
+                            std::to_string(static_cast<int>(kind)));
 }
 
 void Settings::setHotkey(const QString &action, const QString &hotkey) {

@@ -108,7 +108,7 @@ QColor Theme::badge(BadgeRole role, BadgeState state) {
         case BadgeState::Added:        // fall through
         case BadgeState::Deleted:      // fall through
         case BadgeState::Untracked:    // fall through
-        case BadgeState::Renamed:
+        case BadgeState::Renamed:      // fall through
           return QPalette().color(QPalette::WindowText);
       }
 
@@ -171,7 +171,7 @@ QColor Theme::commitEditor(CommitEditor color) {
     case CommitEditor::LengthWarning:
       return Qt::yellow;
   }
-  throw std::runtime_error("Not Implemented or invalid enum" +
+  throw std::runtime_error("unreachable; value=" +
                            std::to_string(static_cast<int>(color)));
 }
 
@@ -201,7 +201,7 @@ QColor Theme::diff(Diff color) {
       case Diff::Error:
         return "#7E494B";
     }
-    throw std::runtime_error("Not Implemented or invalid enum" +
+    throw std::runtime_error("unreachable; value=" +
                              std::to_string(static_cast<int>(color)));
   }
 
@@ -229,7 +229,7 @@ QColor Theme::diff(Diff color) {
     case Diff::Error:
       return "#FF0000";
   }
-  throw std::runtime_error("Not Implemented or invalid enum" +
+  throw std::runtime_error("unreachable; value=" +
                            std::to_string(static_cast<int>(color)));
 }
 
@@ -241,7 +241,7 @@ QColor Theme::heatMap(HeatMap color) {
       return mDark ? QPalette().color(QPalette::Inactive, QPalette::Highlight)
                    : QPalette().color(QPalette::Mid);
   }
-  throw std::runtime_error("Not Implemented or invalid enum" +
+  throw std::runtime_error("unreachable; value=" +
                            std::to_string(static_cast<int>(color)));
 }
 
@@ -256,7 +256,7 @@ QColor Theme::remoteComment(Comment color) {
     case Comment::Timestamp:
       return QPalette().color(QPalette::WindowText);
   }
-  throw std::runtime_error("Not Implemented or invalid enum" +
+  throw std::runtime_error("unreachable; value=" +
                            std::to_string(static_cast<int>(color)));
 }
 

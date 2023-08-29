@@ -435,6 +435,7 @@ void Patch::apply(QList<QList<QByteArray>> &image, int hidx, int start_line,
         break;
 
       default:
+        // no-op
         break;
     }
   }
