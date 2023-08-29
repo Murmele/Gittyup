@@ -1186,6 +1186,7 @@ CommitList::CommitList(Index *index, QWidget *parent)
   connect(model, &CommitModel::statusFinished, [this, model](bool visible) {
     mRestoreSelection = true; // Reset to default
     // Fake a selection notification if the diff is visible and selected.
+    // FIXME: Should we reference `model` or `this->mModel` here?
     if (visible && selectionModel()->isSelected(mModel->index(0, 0)))
       resetSelection();
 
