@@ -1,4 +1,4 @@
-### vX.X.X - 2023-04-20 (WIP)
+### vX.X.X - 2023-04-20 (DEV)
 
 Description
 
