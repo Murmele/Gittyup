@@ -173,7 +173,7 @@ QString Settings::promptDescription(Prompt::Kind kind) const {
       return tr("Prompt to stage large files");
   }
   throw std::runtime_error("unreachable; value=" +
-                            std::to_string(static_cast<int>(kind)));
+                           std::to_string(static_cast<int>(kind)));
 }
 
 void Settings::setHotkey(const QString &action, const QString &hotkey) {

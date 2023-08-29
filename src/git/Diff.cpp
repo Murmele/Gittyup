@@ -199,7 +199,7 @@ void Diff::sort(SortRole role, Qt::SortOrder order) {
           }
         }
         throw std::runtime_error("unreachable; value=" +
-                                  std::to_string(static_cast<int>(role)));
+                                 std::to_string(static_cast<int>(role)));
       });
 }
 

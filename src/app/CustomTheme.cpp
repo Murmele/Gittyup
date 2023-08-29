@@ -481,7 +481,7 @@ QColor CustomTheme::heatMap(HeatMap color) {
       return QColor(heatmap.value("cold").toString());
   }
   throw std::runtime_error("unreachable; value=" +
-                            std::to_string(static_cast<int>(color)));
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor CustomTheme::remoteComment(Comment color) {
@@ -498,7 +498,7 @@ QColor CustomTheme::remoteComment(Comment color) {
       return QColor(comment.value("timestamp").toString());
   }
   throw std::runtime_error("unreachable; value=" +
-                            std::to_string(static_cast<int>(color)));
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor CustomTheme::star() {

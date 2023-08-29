@@ -615,7 +615,7 @@ QVariant Plugin::optionValue(const QString &key) const {
       return config().value<QString>(kKeyFmt.arg(mName, key), value.toString());
   }
   throw std::runtime_error("unreachable; value=" +
-                            std::to_string(static_cast<int>(optionKind(key))));
+                           std::to_string(static_cast<int>(optionKind(key))));
 }
 
 Plugin::OptionKind Plugin::optionKind(const QString &key) const {

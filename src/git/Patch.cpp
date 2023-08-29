@@ -265,7 +265,8 @@ QByteArray Patch::lineContent(int hidx, int ln) const {
 
   const git_diff_line *line = nullptr;
   int result = git_patch_get_line_in_hunk(&line, d.data(), hidx, ln);
-  return (GIT_OK == result) ? QByteArray(line->content, line->content_len) : QByteArray();
+  return (GIT_OK == result) ? QByteArray(line->content, line->content_len)
+                            : QByteArray();
 }
 
 Patch::ConflictResolution Patch::conflictResolution(int hidx) {
