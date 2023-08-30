@@ -192,6 +192,9 @@ static Hotkey configureBranchesHotkey = HotkeyManager::registerHotkey(
 static Hotkey newBranchHotkey =
     HotkeyManager::registerHotkey(nullptr, "branch/new", "Branch/New");
 
+static Hotkey renameBranchHotkey =
+    HotkeyManager::registerHotkey(nullptr, "branch/rename", "Branch/Rename");
+
 static Hotkey checkoutCurrentHotkey = HotkeyManager::registerHotkey(
     "Ctrl+Shift+Alt+H", "branch/checkoutCurrent", "Branch/Checkout Current");
 
@@ -640,6 +643,12 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
   connect(mNewBranch, &QAction::triggered,
           [this] { view()->promptToCreateBranch(); });
 
+  mRenameBranch = branch->addAction(tr("Rename Branch"));
+  renameBranchHotkey.use(mRenameBranch);
+  connect(mRenameBranch, &QAction::triggered, [this] {
+    this->view()->promptToRenameBranch(this->view()->reference());
+  });
+
   branch->addSeparator();
 
   mCheckoutCurrent = branch->addAction(tr("Checkout Current"));
@@ -1050,6 +1059,7 @@ void MenuBar::updateBranch() {
   mCheckoutCurrent->setEnabled(ref.isValid() && head.isValid() &&
                                ref.qualifiedName() != head.qualifiedName());
   mCheckout->setEnabled(head.isValid() && !view->repo().isBare());
+  mRenameBranch->setEnabled(ref.isLocalBranch());
   mNewBranch->setEnabled(head.isValid());
 
   mMerge->setEnabled(head.isValid());

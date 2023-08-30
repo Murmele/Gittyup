@@ -33,6 +33,7 @@
 #include "dialogs/NewBranchDialog.h"
 #include "dialogs/RebaseConflictDialog.h"
 #include "dialogs/RemoteDialog.h"
+#include "dialogs/RenameBranchDialog.h"
 #include "dialogs/SettingsDialog.h"
 #include "dialogs/TagDialog.h"
 #include "editor/TextEditor.h"
@@ -2048,6 +2049,13 @@ git::Branch RepoView::createBranch(const QString &name,
 void RepoView::promptToDeleteBranch(const git::Reference &ref) {
   DeleteBranchDialog *dialog = new DeleteBranchDialog(ref, this);
   dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->open();
+}
+
+void RepoView::promptToRenameBranch(const git::Branch &branch) {
+  Q_ASSERT(branch.isValid() && branch.isLocalBranch());
+  RenameBranchDialog *dialog = new RenameBranchDialog(mRepo, branch, this);
+  // The dialog contains the code which performs the rename
   dialog->open();
 }
 
