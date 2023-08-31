@@ -50,6 +50,9 @@ void RecentRepositories::remove(int index) {
   emit repositoryRemoved();
 }
 
+/*!
+ * gitpath: path to the git repository, does not neccesarly need to be the workdir
+ */
 void RecentRepositories::add(QString gitpath) {
   emit repositoryAboutToBeAdded();
 
