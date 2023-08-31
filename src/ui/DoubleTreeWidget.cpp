@@ -15,7 +15,6 @@
 #include "StatePushButton.h"
 #include "TreeProxy.h"
 #include "TreeView.h"
-#include "ViewDelegate.h"
 #include "Debug.h"
 #include "conf/Settings.h"
 #include "DiffView/DiffView.h"
@@ -98,6 +97,7 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
   listView->setChecked(Settings::instance()
                            ->value(Setting::Id::ShowChangedFilesAsList, false)
                            .toBool());
+  RepoView::parentView(this)->refresh();
   connect(listView, &QAction::triggered, this, [this](bool checked) {
     Settings::instance()->setValue(Setting::Id::ShowChangedFilesAsList,
                                    checked);
@@ -160,13 +160,8 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
             repoView->updateSubmodules(submodules, recursive, init,
                                        force_checkout);
           });
-  TreeProxy *treewrapperStaged = new TreeProxy(true, this);
-  treewrapperStaged->setSourceModel(mDiffTreeModel);
-  stagedFiles->setModel(treewrapperStaged);
-  stagedFiles->setHeaderHidden(true);
-  ViewDelegate *stagedDelegate = new ViewDelegate();
-  stagedDelegate->setDrawArrow(false);
-  stagedFiles->setItemDelegateForColumn(0, stagedDelegate);
+
+  stagedFiles->setModel(new TreeProxy(true, mDiffTreeModel, this));
 
   QHBoxLayout *hBoxLayout = new QHBoxLayout();
   QLabel *label = new QLabel(kStagedFiles);
@@ -192,13 +187,7 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
             showFileContextMenu(pos, repoView, unstagedFiles, false);
           });
 
-  TreeProxy *treewrapperUnstaged = new TreeProxy(false, this);
-  treewrapperUnstaged->setSourceModel(mDiffTreeModel);
-  unstagedFiles->setModel(treewrapperUnstaged);
-  unstagedFiles->setHeaderHidden(true);
-  ViewDelegate *unstagedDelegate = new ViewDelegate();
-  unstagedDelegate->setDrawArrow(false);
-  unstagedFiles->setItemDelegateForColumn(0, unstagedDelegate);
+  unstagedFiles->setModel(new TreeProxy(false, mDiffTreeModel, this));
 
   hBoxLayout = new QHBoxLayout();
   mUnstagedCommitedFiles = new QLabel(kUnstagedFiles);

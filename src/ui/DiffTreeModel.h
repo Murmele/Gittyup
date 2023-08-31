@@ -14,7 +14,8 @@
 #include "git/Index.h"
 #include "git/Tree.h"
 #include "git/Repository.h"
-#include <QAbstractItemModel>
+#include <QStandardItemModel>
+#include <QAbstractListModel>
 #include <QFileIconProvider>
 #include "git/Index.h"
 
@@ -80,7 +81,7 @@ private:
  * This Treemodel is similar to the normal tree model, but handles only the
  * files in the diff it self and not the complete tree
  */
-class DiffTreeModel : public QAbstractItemModel {
+class DiffTreeModel : public QStandardItemModel {
   Q_OBJECT
 
 public:
@@ -157,6 +158,7 @@ private:
 
 private:
   Node *node(const QModelIndex &index) const;
+  QVariant getDisplayRole(const QModelIndex &index) const;
 
   QFileIconProvider mIconProvider;
 

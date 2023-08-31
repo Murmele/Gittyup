@@ -1,4 +1,5 @@
 build
+.cache
 .DS_Store
 .project
 .vscode/
@@ -8,3 +9,5 @@ cmake-build-release/
 build
 .idea/
 .venv
+compile_commands.json
+
