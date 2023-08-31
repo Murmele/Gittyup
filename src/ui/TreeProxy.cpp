@@ -23,8 +23,10 @@ const QString kLinkFmt = "<a href='%1'>%2</a>";
 
 } // namespace
 
-TreeProxy::TreeProxy(bool staged, QObject *parent)
-    : QSortFilterProxyModel(parent), mStaged(staged) {}
+TreeProxy::TreeProxy(bool staged, QAbstractItemModel *model, QObject *parent)
+    : mStaged(staged), QSortFilterProxyModel(parent) {
+  setSourceModel(model);
+}
 
 TreeProxy::~TreeProxy() {}
 

@@ -16,19 +16,24 @@
 #include <QSortFilterProxyModel>
 #include <QFileIconProvider>
 
+class QAbstractItemModel;
 class TreeModel;
 
 class TreeProxy : public QSortFilterProxyModel {
   Q_OBJECT
 
 public:
-  TreeProxy(bool staged, QObject *parent = nullptr);
+  TreeProxy(bool staged, QAbstractItemModel *model, QObject *parent);
   virtual ~TreeProxy();
   bool setData(const QModelIndex &index, const QVariant &value,
                int role = Qt::EditRole, bool ignoreIndexChanges = false);
   bool staged() { return mStaged; }
 
   void enableFilter(bool enable) { mFilter = enable; }
+
+  int columnCount(const QModelIndex &parent = QModelIndex()) const override {
+    return sourceModel()->columnCount();
+  }
 
 private:
   using QSortFilterProxyModel::setData;
