@@ -791,8 +791,8 @@ public:
       QDateTime date = commit.committer().date().toLocalTime();
       QString timestamp =
           (date.date() == QDate::currentDate())
-              ? date.time().toString(Qt::DefaultLocaleShortDate)
-              : date.date().toString(Qt::DefaultLocaleShortDate);
+              ? QLocale().toString(date.time(), QLocale::ShortFormat)
+              : QLocale().toString(date.date(), QLocale::ShortFormat);
       int timestampWidth = fm.horizontalAdvance(timestamp);
 
       if (compact) {
@@ -1186,6 +1186,7 @@ CommitList::CommitList(Index *index, QWidget *parent)
   connect(model, &CommitModel::statusFinished, [this, model](bool visible) {
     mRestoreSelection = true; // Reset to default
     // Fake a selection notification if the diff is visible and selected.
+    // FIXME: Should we reference `model` or `this->mModel` here?
     if (visible && selectionModel()->isSelected(mModel->index(0, 0)))
       resetSelection();
 
@@ -1239,6 +1240,7 @@ git::Diff CommitList::selectedDiff() const {
   DebugRefresh("Selected indices count: " << indexes.count());
   for (const auto &index : indexes) {
     const auto &id = index.data(CommitRole).value<git::Commit>().shortId();
+    (void)id; // Unused in release builds
     DebugRefresh("Commit: " << id);
   }
   if (indexes.isEmpty())

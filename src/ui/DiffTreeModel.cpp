@@ -430,10 +430,7 @@ void Node::addChild(const QStringList &pathPart, int patchIndex,
 
 git::Index::StagedState
 Node::stageState(const git::Index &idx, ParentStageState searchingState) const {
-  if (!hasChildren())
-    return idx.isStaged(path(true));
-
-  git::Index::StagedState childState;
+  git::Index::StagedState childState = idx.isStaged(path(true));
   for (auto child : mChildren) {
 
     childState = child->stageState(idx, searchingState);

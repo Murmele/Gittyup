@@ -266,7 +266,8 @@ QVariant ReferenceModel::data(const QModelIndex &index, int role) const {
         QString email = QString("&lt;%1&gt;").arg(signature.email());
         lines.append(kNowrapFmt.arg(QString("%1 %2").arg(name, email)));
 
-        QString date = signature.date().toString(Qt::DefaultLocaleLongDate);
+        QString date =
+            QLocale().toString(signature.date(), QLocale::LongFormat);
         lines.append(kNowrapFmt.arg(date));
       }
 

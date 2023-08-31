@@ -364,7 +364,7 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
 
   mRedo = edit->addAction(tr("Redo"));
   redoHotkey.use(mRedo);
-  connect(mRedo, &QAction::triggered, [this] {
+  connect(mRedo, &QAction::triggered, [] {
     QWidget *widget = QApplication::focusWidget();
     if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
       editor->redo();
@@ -984,6 +984,7 @@ void MenuBar::updateCutCopyPaste() {
     mPaste->setEnabled(canPaste);
     mFindSelection->setEnabled(editor->hasSelectedText());
   } else if (LogView *logView = qobject_cast<LogView *>(widget)) {
+    (void)logView; // unused
     mCopy->setEnabled(true);
   }
 }

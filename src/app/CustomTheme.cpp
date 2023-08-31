@@ -436,6 +436,8 @@ QColor CustomTheme::commitEditor(CommitEditor color) {
     case CommitEditor::LengthWarning:
       return commitEditor.value("lengthwarning").value<QColor>();
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor CustomTheme::diff(Diff color) {
@@ -465,6 +467,8 @@ QColor CustomTheme::diff(Diff color) {
     case Diff::Error:
       return diff.value("error").value<QColor>();
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor CustomTheme::heatMap(HeatMap color) {
@@ -476,6 +480,8 @@ QColor CustomTheme::heatMap(HeatMap color) {
     case HeatMap::Cold:
       return QColor(heatmap.value("cold").toString());
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor CustomTheme::remoteComment(Comment color) {
@@ -491,6 +497,8 @@ QColor CustomTheme::remoteComment(Comment color) {
     case Comment::Timestamp:
       return QColor(comment.value("timestamp").toString());
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor CustomTheme::star() {

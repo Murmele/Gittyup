@@ -65,7 +65,7 @@ Updater::Download::~Download() { delete mFile; }
 Updater::Updater(QObject *parent) : QObject(parent) {
   // Set up connections.
   connect(&mMgr, &QNetworkAccessManager::sslErrors, this, &Updater::sslErrors);
-  connect(this, &Updater::upToDate, [this] {
+  connect(this, &Updater::upToDate, [] {
     UpToDateDialog dialog;
     dialog.exec();
   });

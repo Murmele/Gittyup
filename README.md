@@ -194,6 +194,15 @@ branch. Create pull requests against the `master` branch. Follow the
 [seven guidelines](https://chris.beams.io/posts/git-commit/) to writing a
 great commit message.
 
+Prior to committing a change, please use `cl-format.sh` to ensure your code
+adheres to the formatting conventions for this project. You can also use the
+`setup-env.sh` script to install a pre-commit hook which will automatically
+run `clang-format` against all modified files.
+
+Prior to pushing a change, please ensure you run the unit tests to avoid any
+regressions. These are found in `<build-dir>/test` and can be run using
+`ctest`.
+
 License
 -------
 

@@ -709,7 +709,7 @@ SideBar::SideBar(TabWidget *tabs, QWidget *parent) : QWidget(parent) {
   QAction *clone = plusMenu->addAction(tr("Clone Repository"));
   connect(clone, &QAction::triggered, [this] {
     CloneDialog *dialog = new CloneDialog(CloneDialog::Clone, this);
-    connect(dialog, &CloneDialog::accepted, [this, dialog] {
+    connect(dialog, &CloneDialog::accepted, [dialog] {
       if (MainWindow *window = MainWindow::open(dialog->path()))
         window->currentView()->addLogEntry(dialog->message(),
                                            dialog->messageTitle());
@@ -733,7 +733,7 @@ SideBar::SideBar(TabWidget *tabs, QWidget *parent) : QWidget(parent) {
   QAction *init = plusMenu->addAction(tr("Initialize New Repository"));
   connect(init, &QAction::triggered, [this] {
     CloneDialog *dialog = new CloneDialog(CloneDialog::Init, this);
-    connect(dialog, &CloneDialog::accepted, [this, dialog] {
+    connect(dialog, &CloneDialog::accepted, [dialog] {
       if (MainWindow *window = MainWindow::open(dialog->path()))
         window->currentView()->addLogEntry(dialog->message(),
                                            dialog->messageTitle());
@@ -811,7 +811,7 @@ SideBar::SideBar(TabWidget *tabs, QWidget *parent) : QWidget(parent) {
 
   QAction *clear = contextMenu->addAction(tr("Clear All Recent"));
   connect(clear, &QAction::triggered,
-          [this] { RecentRepositories::instance()->clear(); });
+          [] { RecentRepositories::instance()->clear(); });
 
   QAction *showFullPath = contextMenu->addAction(tr("Show Full Path"));
   bool recentChecked = settings.value("start/recent/fullpath").toBool();

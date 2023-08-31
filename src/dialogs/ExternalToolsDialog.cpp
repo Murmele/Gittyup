@@ -85,7 +85,7 @@ QVBoxLayout *ExternalToolsDialog::createUserDefinedLayout(const QString &type) {
     table->resizeColumnsToContents();
   });
 
-  connect(footer, &Footer::minusClicked, [this, table, model] {
+  connect(footer, &Footer::minusClicked, [table, model] {
     QModelIndexList indexes = table->selectionModel()->selectedRows(0);
     foreach (const QModelIndex &index, indexes)
       model->remove(index.data(Qt::DisplayRole).toString());

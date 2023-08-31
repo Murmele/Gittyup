@@ -41,7 +41,7 @@ class PathspecWidget;
 class ReferenceWidget;
 class RemoteCallbacks;
 class ToolBar;
-class ContributorInfo;
+struct ContributorInfo;
 
 namespace git {
 class Result;

@@ -31,6 +31,7 @@ public:
   void enableFilter(bool enable) { mFilter = enable; }
 
 private:
+  using QSortFilterProxyModel::setData;
   bool filterAcceptsRow(int source_row,
                         const QModelIndex &source_parent) const override;
   bool mStaged{

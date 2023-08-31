@@ -321,7 +321,7 @@ void ReferenceView::contextMenuEvent(QContextMenuEvent *event) {
     git::Remote remote = ref.repo().defaultRemote();
     if (remote.isValid()) {
       menu.addAction(tr("Push Tag to %1").arg(remote.name()),
-                     [this, ref, view, remote] { view->push(remote, ref); });
+                     [ref, view, remote] { view->push(remote, ref); });
     }
   }
 

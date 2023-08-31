@@ -38,6 +38,7 @@
 #include <QNetworkRequest>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPoint>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QStackedWidget>
@@ -121,7 +122,8 @@ public:
     mDate = new QLabel(this);
     mDate->setTextInteractionFlags(kTextFlags);
 
-    mSpacing = style()->pixelMetric(QStyle::PM_DefaultLayoutSpacing);
+    mSpacing.setX(style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing));
+    mSpacing.setY(style()->pixelMetric(QStyle::PM_LayoutVerticalSpacing));
   }
 
   void moveEvent(QMoveEvent *event) override { updateLayout(); }
@@ -132,13 +134,13 @@ public:
     QSize date = mDate->sizeHint();
     QSize author = mAuthor->sizeHint();
     QSize committer = mCommitter->sizeHint();
-    int width = author.width() + date.width() + mSpacing;
+    int width = author.width() + date.width() + mSpacing.x();
     int height;
     if (mSameAuthorCommitter)
       height = qMax(qMax(author.height(), committer.height()), date.height());
     else
-      height =
-          qMax(author.height(), date.height()) + committer.height() + mSpacing;
+      height = qMax(author.height(), date.height()) + committer.height() +
+               mSpacing.y();
     return QSize(width, height);
   }
 
@@ -151,8 +153,8 @@ public:
     if (mSameAuthorCommitter)
       height = qMax(qMax(author.height(), committer.height()), date.height());
     else
-      height =
-          qMax(author.height(), date.height()) + committer.height() + mSpacing;
+      height = qMax(author.height(), date.height()) + committer.height() +
+               mSpacing.y();
     return QSize(width, height);
   }
 
@@ -165,8 +167,8 @@ public:
     bool wrapped = (width < sizeHint().width());
     int unwrappedHeight = mSameAuthorCommitter
                               ? qMax(committer, qMax(author, date))
-                              : qMax(author + committer + mSpacing, date);
-    return wrapped ? (author + committer + date + 2 * mSpacing)
+                              : qMax(author + committer + mSpacing.y(), date);
+    return wrapped ? (author + committer + date + 2 * mSpacing.y())
                    : unwrappedHeight;
   }
 
@@ -196,12 +198,13 @@ private:
   void updateLayout() {
     mAuthor->move(0, 0);
     if (mCommitter->isVisible())
-      mCommitter->move(0, mAuthor->height() + mSpacing);
+      mCommitter->move(0, mAuthor->height() + mSpacing.y());
 
     bool wrapped = (width() < sizeHint().width());
     int x = wrapped ? 0 : width() - mDate->width();
-    int y =
-        wrapped ? mAuthor->height() + mCommitter->height() + 2 * mSpacing : 0;
+    int y = wrapped
+                ? mAuthor->height() + mCommitter->height() + 2 * mSpacing.y()
+                : 0;
     mDate->move(x, y);
     updateGeometry();
   }
@@ -210,7 +213,7 @@ private:
   QLabel *mCommitter;
   QLabel *mDate;
 
-  int mSpacing;
+  QPoint mSpacing;
   bool mSameAuthorCommitter{false};
 };
 
@@ -348,8 +351,9 @@ public:
       // Set date range.
       QDate lastDate = last.committer().date().toLocalTime().date();
       QDate firstDate = first.committer().date().toLocalTime().date();
-      QString lastDateStr = lastDate.toString(Qt::DefaultLocaleShortDate);
-      QString firstDateStr = firstDate.toString(Qt::DefaultLocaleShortDate);
+      QString lastDateStr = QLocale().toString(lastDate, QLocale::ShortFormat);
+      QString firstDateStr =
+          QLocale().toString(firstDate, QLocale::ShortFormat);
       QString dateStr = (lastDate == firstDate)
                             ? lastDateStr
                             : kDateRangeFmt.arg(lastDateStr, firstDateStr);
@@ -387,7 +391,7 @@ public:
     QDateTime date = commit.committer().date().toLocalTime();
     mHash->setText(brightText(tr("Id:")) + " " + commit.shortId());
     mAuthorCommitterDate->setDate(
-        brightText(date.toString(Qt::DefaultLocaleLongDate)));
+        brightText(QLocale().toString(date, QLocale::LongFormat)));
     mAuthorCommitterDate->setAuthorCommitter(
         kAuthorFmt.arg(author.name(), author.email()),
         kAuthorFmt.arg(committer.name(), committer.email()));

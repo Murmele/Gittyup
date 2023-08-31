@@ -9,6 +9,7 @@
 
 #include "GenericLexer.h"
 #include "LPegLexer.h"
+#include "qtsupport.h"
 #include "conf/Settings.h"
 #include <QCoreApplication>
 #include <QFile>
@@ -29,7 +30,7 @@ void print(QTextStream &out, const Lexer::Lexeme &lexeme, int indent = 0) {
   out << lexeme.text << " - " << lexeme.token;
   if (lexeme.token < kStyleNames.length())
     out << " (" << kStyleNames.at(lexeme.token) << ")";
-  out << endl;
+  out << Qt::endl;
 }
 
 void print(QTextStream &out, Lexer *lexer, int indent = 0) {
@@ -65,7 +66,13 @@ void print(QTextStream &out, Lexer *lexer, int indent = 0) {
         break;
 
       // Ignore everything else.
-      default:
+      case Lexer::Whitespace: // fall through
+      case Lexer::Nothing:    // fall through
+      case Lexer::Number:     // fall through
+      case Lexer::Operator:   // fall through
+      case Lexer::Error:      // fall through
+      case Lexer::Regex:      // fall through
+      case Lexer::Embedded:
         break;
     }
   }
@@ -102,7 +109,7 @@ int main(int argc, char *argv[]) {
     // Lex buffer.
     Lexer *lexer = lexers.value(name);
     if (lexer->lex(buffer)) {
-      out << name << " - " << arg << ":" << endl;
+      out << name << " - " << arg << ":" << Qt::endl;
       print(out, lexer);
     }
   }
