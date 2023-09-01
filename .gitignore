@@ -7,5 +7,6 @@ CMakeLists.txt.user
 cmake-build-debug/
 cmake-build-release/
 .idea/
+.venv/
 compile_commands.json
 

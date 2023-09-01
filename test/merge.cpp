@@ -7,6 +7,7 @@
 // Author: Shane Gramlich
 //
 
+#include "qtsupport.h"
 #include "Test.h"
 #include "ui/MainWindow.h"
 #include "ui/DetailView.h"
@@ -54,7 +55,7 @@ void TestMerge::firstCommit() {
   // Add file and refresh.
   QFile file(mRepo->workdir().filePath("test"));
   QVERIFY(file.open(QFile::WriteOnly));
-  QTextStream(&file) << "This will be a test." << endl;
+  QTextStream(&file) << "This will be a test." << Qt::endl;
 
   RepoView *view = mWindow->currentView();
   refresh(view);
@@ -92,7 +93,7 @@ void TestMerge::secondCommit() {
 
   QFile file(mRepo->workdir().filePath("test"));
   QVERIFY(file.open(QFile::WriteOnly));
-  QTextStream(&file) << "This is a conflict." << endl;
+  QTextStream(&file) << "This is a conflict." << Qt::endl;
 
   refresh(view);
 
@@ -130,7 +131,7 @@ void TestMerge::thirdCommit() {
 
   QFile file(mRepo->workdir().filePath("test"));
   QVERIFY(file.open(QFile::WriteOnly));
-  QTextStream(&file) << "This is a test." << endl;
+  QTextStream(&file) << "This is a test." << Qt::endl;
 
   refresh(view);
 

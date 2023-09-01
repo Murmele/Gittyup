@@ -18,6 +18,7 @@
 #include "FilterList.h"
 #include "Index.h"
 #include "Patch.h"
+#include "qtsupport.h"
 #include "Rebase.h"
 #include "Reference.h"
 #include "Remote.h"
@@ -487,7 +488,7 @@ QStringList Repository::existingTags() const {
 
   QStringList list;
 
-  for (int i = 0; i < array.count; i++) {
+  for (size_t i = 0; i < array.count; i++) {
     list.append(array.strings[i]);
   }
 
@@ -628,6 +629,7 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
       break;
 
     default:
+      // no-op
       break;
   }
 
@@ -744,7 +746,7 @@ QList<Remote> Repository::remotes() const {
     return QList<Remote>();
 
   QList<Remote> remotes;
-  for (int i = 0; i < names.count; ++i) {
+  for (size_t i = 0; i < names.count; ++i) {
     if (Remote remote = lookupRemote(names.strings[i]))
       remotes.append(remote);
   }
@@ -932,7 +934,6 @@ void Repository::rebaseContinue(const QString &commitMessage) {
     }
   }
   // Loop over rebase operations.
-  int count = r.count();
   while (r.hasNext()) {
     git::Commit before = r.next();
     if (!before.isValid()) {
@@ -1052,7 +1053,7 @@ QStringList Repository::lfsEnvironment() {
 
 Repository::LfsTracking Repository::lfsTracked() {
   QString output = lfsExecute({"track"});
-  QStringList lines = output.split('\n', QString::SkipEmptyParts);
+  QStringList lines = output.split('\n', Qt::SkipEmptyParts);
   if (!lines.isEmpty())
     lines.removeFirst();
 

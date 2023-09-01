@@ -17,6 +17,7 @@
 #include "MainWindow.h"
 #include "MenuBar.h"
 #include "PathspecWidget.h"
+#include "qtsupport.h"
 #include "ReferenceWidget.h"
 #include "RemoteCallbacks.h"
 #include "SearchField.h"
@@ -33,6 +34,7 @@
 #include "dialogs/NewBranchDialog.h"
 #include "dialogs/RebaseConflictDialog.h"
 #include "dialogs/RemoteDialog.h"
+#include "dialogs/RenameBranchDialog.h"
 #include "dialogs/SettingsDialog.h"
 #include "dialogs/TagDialog.h"
 #include "editor/TextEditor.h"
@@ -881,7 +883,7 @@ void RepoView::setLogVisible(bool visible) {
 
   QTimeLine *timeline = new QTimeLine(250, this);
   timeline->setDirection(visible ? QTimeLine::Forward : QTimeLine::Backward);
-  timeline->setCurveShape(QTimeLine::LinearCurve);
+  timeline->setEasingCurve(QEasingCurve(QEasingCurve::Linear));
   timeline->setUpdateInterval(20);
 
   connect(timeline, &QTimeLine::valueChanged, this, [this, pos](qreal value) {
@@ -906,7 +908,7 @@ LogEntry *RepoView::error(LogEntry *parent, const QString &action,
                      ? tr("Unable to %1 - %2").arg(action, detail)
                      : tr("Unable to %1 '%2' - %3").arg(action, name, detail);
 
-  QStringList items = text.split("\\n", QString::KeepEmptyParts);
+  QStringList items = text.split("\\n", Qt::KeepEmptyParts);
   if (items.last() == "\n")
     items.removeLast();
 
@@ -1456,7 +1458,7 @@ void RepoView::rebaseAboutToRebase(const git::Rebase rebase,
   QString beforeText = before.link();
   QString step = tr("%1/%2").arg(currIndex).arg(rebase.count());
   QString text = tr("%1 - %2").arg(step, beforeText);
-  LogEntry *entry = mRebase->addEntry(text, tr("Apply"));
+  mRebase->addEntry(text, tr("Apply"));
 }
 
 void RepoView::rebaseConflict(const git::Rebase rebase) {
@@ -2048,6 +2050,13 @@ git::Branch RepoView::createBranch(const QString &name,
 void RepoView::promptToDeleteBranch(const git::Reference &ref) {
   DeleteBranchDialog *dialog = new DeleteBranchDialog(ref, this);
   dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->open();
+}
+
+void RepoView::promptToRenameBranch(const git::Branch &branch) {
+  Q_ASSERT(branch.isValid() && branch.isLocalBranch());
+  RenameBranchDialog *dialog = new RenameBranchDialog(mRepo, branch, this);
+  // The dialog contains the code which performs the rename
   dialog->open();
 }
 
@@ -2779,14 +2788,15 @@ void RepoView::refresh() { refresh(true); }
 
 void RepoView::refresh(bool restoreSelection) {
   // Fake head update.
-  uint32_t counter = 0;
   auto dtw = findChild<DoubleTreeWidget *>();
-  if (dtw)
-    counter = dtw->setDiffCounter();
-  if (mRepo.head().isValid())
+  if (dtw) {
+    dtw->setDiffCounter();
+  }
+  if (mRepo.head().isValid()) {
     DebugRefresh("Head name: " << mRepo.head().name());
-  else
+  } else {
     DebugRefresh("Head invalid");
+  }
   DebugRefresh("time: " << QDateTime::currentDateTime()
                         << " Set diff counter: " << counter);
   emit mRepo.notifier()->referenceUpdated(mRepo.head(), restoreSelection);

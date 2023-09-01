@@ -9,6 +9,7 @@
 
 #include "LogModel.h"
 #include "LogEntry.h"
+#include <QLocale>
 #include <QStyle>
 
 namespace {
@@ -74,8 +75,8 @@ QVariant LogModel::data(const QModelIndex &index, int role) const {
               QDateTime date = entry->timestamp();
               QString timestamp =
                   (date.date() == QDate::currentDate())
-                      ? date.time().toString(Qt::DefaultLocaleShortDate)
-                      : date.toString(Qt::DefaultLocaleShortDate);
+                      ? QLocale().toString(date.time(), QLocale::ShortFormat)
+                      : QLocale().toString(date, QLocale::ShortFormat);
               text = kTimeFmt.arg(timestamp, text);
             }
           }

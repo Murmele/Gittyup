@@ -7,17 +7,32 @@
 // Author: Jason Haslam
 //
 
+#include "qtsupport.h"
 #include "Test.h"
 #include "ui/DoubleTreeWidget.h"
 #include "ui/MainWindow.h"
 #include "ui/RepoView.h"
 #include "ui/TreeView.h"
+#include "ui/TreeProxy.h"
+#include "conf/Settings.h"
 #include <QFile>
 #include <QTextEdit>
 #include <QTextStream>
 
 using namespace Test;
 using namespace QTest;
+
+static void disableListView(TreeView &treeView, RepoView &repoView) {
+  auto treeProxy = dynamic_cast<TreeProxy *>(treeView.model());
+  QVERIFY(treeProxy);
+
+  auto diffTreeModel = dynamic_cast<DiffTreeModel *>(treeProxy->sourceModel());
+  QVERIFY(diffTreeModel);
+
+  diffTreeModel->enableListView(false);
+  Settings::instance()->setValue(Setting::Id::ShowChangedFilesAsList, false);
+  repoView.refresh();
+}
 
 class TestIndex : public QObject {
   Q_OBJECT
@@ -44,7 +59,7 @@ void TestIndex::stageAddition() {
   // Add file and refresh.
   QFile file(mRepo->workdir().filePath("test"));
   QVERIFY(file.open(QFile::WriteOnly));
-  QTextStream(&file) << "This is a test." << endl;
+  QTextStream(&file) << "This is a test." << Qt::endl;
 
   RepoView *view = mWindow->currentView();
   refresh(view);
@@ -54,6 +69,8 @@ void TestIndex::stageAddition() {
 
   auto unstagedFiles = doubleTree->findChild<TreeView *>("Unstaged");
   QVERIFY(unstagedFiles);
+
+  disableListView(*unstagedFiles, *view);
 
   auto stagedFiles = doubleTree->findChild<TreeView *>("Staged");
   QVERIFY(stagedFiles);
@@ -135,11 +152,11 @@ void TestIndex::stageDirectory() {
 
   QFile file1(dir.filePath("test1"));
   QVERIFY(file1.open(QFile::WriteOnly));
-  QTextStream(&file1) << "This is a test." << endl;
+  QTextStream(&file1) << "This is a test." << Qt::endl;
 
   QFile file2(dir.filePath("test2"));
   QVERIFY(file2.open(QFile::WriteOnly));
-  QTextStream(&file2) << "This is a test." << endl;
+  QTextStream(&file2) << "This is a test." << Qt::endl;
 
   RepoView *view = mWindow->currentView();
   refresh(view);
@@ -149,6 +166,8 @@ void TestIndex::stageDirectory() {
 
   auto unstagedFiles = doubleTree->findChild<TreeView *>("Unstaged");
   QVERIFY(unstagedFiles);
+
+  disableListView(*unstagedFiles, *view);
 
   auto stagedFiles = doubleTree->findChild<TreeView *>("Staged");
   QVERIFY(stagedFiles);

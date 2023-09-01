@@ -185,7 +185,7 @@ void ScintillaQt::paintEvent(QPaintEvent *event) {
 }
 
 void ScintillaQt::wheelEvent(QWheelEvent *event) {
-  if (event->orientation() == Qt::Horizontal) {
+  if (event->angleDelta().x() != 0) {
     if (horizontalScrollBarPolicy() == Qt::ScrollBarAlwaysOff)
       event->ignore();
     else
@@ -194,7 +194,7 @@ void ScintillaQt::wheelEvent(QWheelEvent *event) {
     if (QApplication::keyboardModifiers() & Qt::ControlModifier) {
       // Zoom! We play with the font sizes in the styles.
       // Number of steps/line is ignored, we just care if sizing up or down
-      if (event->delta() > 0) {
+      if (event->angleDelta().y() > 0) {
         KeyCommand(SCI_ZOOMIN);
       } else {
         KeyCommand(SCI_ZOOMOUT);
@@ -327,8 +327,7 @@ void ScintillaQt::keyPressEvent(QKeyEvent *event) {
 
     QString text = event->text();
     if (input && !text.isEmpty() && text[0].isPrint()) {
-      QByteArray utext = text.toUtf8();
-      AddCharUTF(utext.data(), utext.size());
+      InsertCharacter(text.toStdString(), CharacterSource::directInput);
     } else {
       event->ignore();
     }
@@ -355,7 +354,7 @@ static int modifierTranslated(int sciModifier) {
 void ScintillaQt::mousePressEvent(QMouseEvent *event) {
   Point pos = PointFromQPoint(event->pos());
 
-  if (event->button() == Qt::MidButton &&
+  if (event->button() == Qt::MiddleButton &&
       QApplication::clipboard()->supportsSelection()) {
     SelectionPosition selPos =
         SPositionFromLocation(pos, false, false, UserVirtualSpace());
@@ -440,6 +439,7 @@ void ScintillaQt::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void ScintillaQt::dragLeaveEvent(QDragLeaveEvent *event) {
+  Q_UNUSED(event);
   SetDragPosition(SelectionPosition(Sci::invalidPosition));
 }
 
@@ -520,9 +520,8 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
       const unsigned int ucWidth = commitStr.at(i).isHighSurrogate() ? 2 : 1;
       const QString oneCharUTF16 = commitStr.mid(i, ucWidth);
       const QByteArray oneChar = oneCharUTF16.toUtf8();
-      const int oneCharLen = oneChar.length();
 
-      AddCharUTF(oneChar.data(), oneCharLen);
+      InsertCharacter(oneChar.toStdString(), CharacterSource::directInput);
       i += ucWidth;
     }
 
@@ -568,7 +567,7 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
             indicator = SC_INDICATOR_CONVERTED;
             break;
 
-          default:
+          case QTextCharFormat::DashDotDotLine:
             indicator = SC_INDICATOR_UNKNOWN;
         }
 
@@ -605,7 +604,7 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
       numBytes += oneCharLen;
       imeCharPos[i + 1] = numBytes;
 
-      AddCharUTF(oneChar.data(), oneCharLen);
+      InsertCharacter(oneChar.toStdString(), CharacterSource::directInput);
 
 #ifdef Q_OS_LINUX
       // Segment marked with imeCaretPos is for target input.
@@ -642,7 +641,7 @@ QVariant ScintillaQt::inputMethodQuery(Qt::InputMethodQuery query) const {
   int line = send(SCI_LINEFROMPOSITION, pos);
 
   switch (query) {
-    case Qt::ImMicroFocus: {
+    case Qt::ImCursorRectangle: {
       int startPos = (preeditPos >= 0) ? preeditPos : pos;
       Point pt =
           const_cast<ScintillaQt *>(this)->LocationFromPosition(startPos);
@@ -691,9 +690,23 @@ QVariant ScintillaQt::inputMethodQuery(Qt::InputMethodQuery query) const {
       return buffer.constData();
     }
 
-    default:
-      return QVariant();
+    case Qt::ImEnabled:                // fall through
+    case Qt::ImAnchorPosition:         // fall through
+    case Qt::ImHints:                  // fall through
+    case Qt::ImMaximumTextLength:      // fall through
+    case Qt::ImPreferredLanguage:      // fall through
+    case Qt::ImAbsolutePosition:       // fall through
+    case Qt::ImTextBeforeCursor:       // fall through
+    case Qt::ImTextAfterCursor:        // fall through
+    case Qt::ImEnterKeyType:           // fall through
+    case Qt::ImAnchorRectangle:        // fall through
+    case Qt::ImInputItemClipRectangle: // fall through
+    case Qt::ImPlatformData:           // fall through
+    case Qt::ImQueryInput:             // fall through
+    case Qt::ImQueryAll:               // fall through
+      break;
   }
+  return QVariant();
 }
 
 void ScintillaQt::PasteFromMode(QClipboard::Mode clipboardMode) {

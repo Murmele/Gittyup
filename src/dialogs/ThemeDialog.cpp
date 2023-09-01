@@ -62,7 +62,7 @@ public:
         case Theme::Dark:
           Settings::instance()->setValue(Setting::Id::ColorTheme, "Dark");
           break;
-        default:
+        case Theme::Default:
           Settings::instance()->setValue(Setting::Id::ColorTheme, "Default");
           break;
       }

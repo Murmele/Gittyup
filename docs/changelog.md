@@ -1,3 +1,20 @@
+### vX.X.X - 2023-04-20 (DEV)
+
+Description
+
+#### Added
+
+* UI(Commit List): Added a right-click menu entry to rename branches.
+* UI(Main Menu): Added a menu-entry to rename the current branch.
+
+#### Changed
+
+* UI(Commit List): Collapse multiple branch and tag right-click menu entries
+                   into submenus. This affects the checkout and delete operations.
+* Fix(Build System): Force usage of clang-format v13 to ensure consistent formatting.
+
+----
+
 ### v1.3.0 - 2023-04-20
 
 Performance Improvement and feature release

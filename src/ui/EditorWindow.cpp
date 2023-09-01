@@ -98,6 +98,7 @@ void EditorWindow::closeEvent(QCloseEvent *event) {
         editor->save();
         break;
       default:
+        // no-op
         break;
     }
   }

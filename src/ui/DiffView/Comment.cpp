@@ -25,7 +25,7 @@ Comment::Comment(const QDateTime &date, const Account::Comment &comment,
   QTextCharFormat timestamp;
   timestamp.setForeground(theme->remoteComment(Theme::Comment::Timestamp));
   cursor.setCharFormat(timestamp);
-  cursor.insertText(date.toString(Qt::DefaultLocaleLongDate));
+  cursor.insertText(QLocale().toString(date, QLocale::LongFormat));
 
   QTextBlockFormat indent;
   indent.setLeftMargin(fontMetrics().horizontalAdvance(' ') *

@@ -698,7 +698,7 @@ void StartDialog::updateButtons() {
       open->setEnabled(false);
     } else {
       Account *account = parent.data(AccountRole).value<Account *>();
-      if (Repository *repo = index.data(RepositoryRole).value<Repository *>()) {
+      if (nullptr != index.data(RepositoryRole).value<Repository *>()) {
         if (account->repositoryPath(index.row()).isEmpty())
           clone = true;
       } else {

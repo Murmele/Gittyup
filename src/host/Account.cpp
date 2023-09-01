@@ -30,8 +30,8 @@ const QString kThemeIconFmt = ":/%1_%2.png";
 } // namespace
 
 Account::Account(const QString &username)
-    : mMgr(new QNetworkAccessManager()), mUsername(username),
-      mError(new AccountError(this)), mProgress(new AccountProgress(this)) {
+    : mUsername(username), mError(new AccountError(this)),
+      mProgress(new AccountProgress(this)), mMgr(new QNetworkAccessManager()) {
   QObject::connect(
       mMgr, &QNetworkAccessManager::sslErrors,
       [this](QNetworkReply *reply, const QList<QSslError> &errors) {
@@ -204,6 +204,8 @@ QString Account::helpText(Kind kind) {
     case Beanstalk:
       return QString();
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(kind)));
 }
 
 QString Account::defaultUrl(Kind kind) {
@@ -219,6 +221,8 @@ QString Account::defaultUrl(Kind kind) {
     case GitLab:
       return GitLab::defaultUrl();
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(kind)));
 }
 
 Account::Kind Account::kindFromString(const QString &kind, bool *ok) {
@@ -258,6 +262,8 @@ QString Account::kindToString(Kind kind) {
     case GitLab:
       return "gitlab";
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(kind)));
 }
 
 void Account::startProgress() {

@@ -791,8 +791,8 @@ public:
       QDateTime date = commit.committer().date().toLocalTime();
       QString timestamp =
           (date.date() == QDate::currentDate())
-              ? date.time().toString(Qt::DefaultLocaleShortDate)
-              : date.date().toString(Qt::DefaultLocaleShortDate);
+              ? QLocale().toString(date.time(), QLocale::ShortFormat)
+              : QLocale().toString(date.date(), QLocale::ShortFormat);
       int timestampWidth = fm.horizontalAdvance(timestamp);
 
       if (compact) {
@@ -1186,6 +1186,7 @@ CommitList::CommitList(Index *index, QWidget *parent)
   connect(model, &CommitModel::statusFinished, [this, model](bool visible) {
     mRestoreSelection = true; // Reset to default
     // Fake a selection notification if the diff is visible and selected.
+    // FIXME: Should we reference `model` or `this->mModel` here?
     if (visible && selectionModel()->isSelected(mModel->index(0, 0)))
       resetSelection();
 
@@ -1239,6 +1240,7 @@ git::Diff CommitList::selectedDiff() const {
   DebugRefresh("Selected indices count: " << indexes.count());
   for (const auto &index : indexes) {
     const auto &id = index.data(CommitRole).value<git::Commit>().shortId();
+    (void)id; // Unused in release builds
     DebugRefresh("Commit: " << id);
   }
   if (indexes.isEmpty())
@@ -1426,6 +1428,24 @@ void CommitList::setModel(QAbstractItemModel *model) {
   restoreSelection();
 }
 
+/// @brief Helper function to add a list of items to a menu.
+/// A single item is added directly to the menu, whereas multiple items will
+/// be added to a sub-menu.
+static void addMenuEntries(QMenu &menu, const QString &operation,
+                           const QList<git::Reference> &items,
+                           std::function<void(const git::Reference &)> action) {
+  QMenu *submenu = &menu;
+  QString entryName(operation + " %1");
+  if (items.count() > 1) {
+    submenu = menu.addMenu(operation);
+    entryName = QString("%1");
+  }
+  for (const git::Reference &ref : items) {
+    submenu->addAction(entryName.arg(ref.name()),
+                       [action, ref] { action(ref); });
+  }
+}
+
 void CommitList::contextMenuEvent(QContextMenuEvent *event) {
   QModelIndex index = indexAt(event->pos());
   if (!index.isValid())
@@ -1496,26 +1516,41 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       menu.addAction(tr("New Branch..."),
                      [view, commit] { view->promptToCreateBranch(commit); });
 
-      bool separator = true;
-      foreach (const git::Reference &ref, commit.refs()) {
+      // Add operations on existing references; there may be 0, 1, or multiple
+      // of each type of reference on a commit.
+      QList<git::Reference> rename_branches;
+      QList<git::Reference> tags;
+      QList<git::Reference> delete_branches;
+      QList<git::Reference> all_branches; // used later
+      for (const git::Reference &ref : commit.refs()) {
         if (ref.isTag()) {
-          if (separator) {
-            menu.addSeparator();
-            separator = false;
+          tags.append(ref);
+        } else if (ref.isBranch()) {
+          all_branches.append(ref);
+          if (ref.isLocalBranch()) {
+            rename_branches.append(ref);
+            if (view->repo().head().name() != ref.name()) {
+              delete_branches.append(ref);
+            }
           }
-          menu.addAction(tr("Delete Tag %1").arg(ref.name()),
-                         [view, ref] { view->promptToDeleteTag(ref); });
-        }
-        if (ref.isLocalBranch() && (view->repo().head().name() != ref.name())) {
-          if (separator) {
-            menu.addSeparator();
-            separator = false;
-          }
-          menu.addAction(tr("Delete Branch %1").arg(ref.name()),
-                         [view, ref] { view->promptToDeleteBranch(ref); });
         }
       }
 
+      if (rename_branches.count() > 0 || delete_branches.count() > 0 ||
+          tags.count() > 0) {
+        menu.addSeparator();
+      }
+      addMenuEntries(menu, tr("Rename Branch"), rename_branches,
+                     std::bind(&RepoView::promptToRenameBranch, view,
+                               std::placeholders::_1));
+
+      addMenuEntries(menu, tr("Delete Branch"), delete_branches,
+                     std::bind(&RepoView::promptToDeleteBranch, view,
+                               std::placeholders::_1));
+
+      addMenuEntries(
+          menu, tr("Delete Tag"), tags,
+          std::bind(&RepoView::promptToDeleteTag, view, std::placeholders::_1));
       menu.addSeparator();
 
       menu.addAction(tr("Merge..."), [view, commit] {
@@ -1573,19 +1608,23 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       menu.addSeparator();
 
       git::Reference head = view->repo().head();
-      foreach (const git::Reference &ref, commit.refs()) {
+      auto submenu = &menu;
+      auto entryName = tr("Checkout %1");
+      if (all_branches.count() > 1) {
+        submenu = menu.addMenu(tr("Checkout"));
+        entryName = QString("%1");
+      }
+      for (const git::Reference &ref : all_branches) {
         if (ref.isLocalBranch()) {
-          QAction *checkout =
-              menu.addAction(tr("Checkout %1").arg(ref.name()),
-                             [view, ref] { view->checkout(ref); });
+          QAction *checkout = submenu->addAction(
+              entryName.arg(ref.name()), [view, ref] { view->checkout(ref); });
 
           checkout->setEnabled(head.isValid() &&
                                head.qualifiedName() != ref.qualifiedName() &&
                                !view->repo().isBare());
         } else if (ref.isRemoteBranch()) {
-          QAction *checkout =
-              menu.addAction(tr("Checkout %1").arg(ref.name()),
-                             [view, ref] { view->checkout(ref); });
+          QAction *checkout = submenu->addAction(
+              entryName.arg(ref.name()), [view, ref] { view->checkout(ref); });
 
           // Calculate local branch name in the same way as checkout() does
           QString local = ref.name().section('/', 1);

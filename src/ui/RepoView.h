@@ -41,7 +41,7 @@ class PathspecWidget;
 class ReferenceWidget;
 class RemoteCallbacks;
 class ToolBar;
-class ContributorInfo;
+struct ContributorInfo;
 
 namespace git {
 class Result;
@@ -251,6 +251,7 @@ public:
                            const git::Branch &upstream = git::Branch(),
                            bool checkout = false, bool force = false);
   void promptToDeleteBranch(const git::Reference &ref);
+  void promptToRenameBranch(const git::Branch &branch);
 
   // stash
   void promptToStash();

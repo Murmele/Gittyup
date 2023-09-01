@@ -67,6 +67,7 @@ public:
           break;
 
         default:
+          // no-op
           break; // FIXME: Report error?
       }
     }

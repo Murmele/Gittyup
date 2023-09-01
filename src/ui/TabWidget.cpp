@@ -42,7 +42,7 @@ public:
         addButton(QIcon(":/clone.png"), tr("Clone repository"));
     connect(clone, &QPushButton::clicked, [this] {
       CloneDialog *dialog = new CloneDialog(CloneDialog::Clone, this);
-      connect(dialog, &CloneDialog::accepted, [this, dialog] {
+      connect(dialog, &CloneDialog::accepted, [dialog] {
         if (MainWindow *window = MainWindow::open(dialog->path()))
           window->currentView()->addLogEntry(dialog->message(),
                                              dialog->messageTitle());
@@ -68,7 +68,7 @@ public:
         addButton(QIcon(":/new.png"), tr("Initialize new repository"));
     connect(init, &QPushButton::clicked, [this] {
       CloneDialog *dialog = new CloneDialog(CloneDialog::Init, this);
-      connect(dialog, &CloneDialog::accepted, [this, dialog] {
+      connect(dialog, &CloneDialog::accepted, [dialog] {
         if (MainWindow *window = MainWindow::open(dialog->path()))
           window->currentView()->addLogEntry(dialog->message(),
                                              dialog->messageTitle());

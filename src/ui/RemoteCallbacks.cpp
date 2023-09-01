@@ -7,6 +7,7 @@
 // Author: Jason Haslam
 //
 
+#include "qtsupport.h"
 #include "RemoteCallbacks.h"
 #include "conf/Settings.h"
 #include "cred/CredentialHelper.h"
@@ -235,7 +236,7 @@ bool RemoteCallbacks::negotiation(
   QTextStream out(&process);
   foreach (const git::Remote::PushUpdate &update, updates)
     out << update.dstName << " " << update.dstId.toString() << " "
-        << update.srcName << " " << update.srcId.toString() << endl;
+        << update.srcName << " " << update.srcId.toString() << Qt::endl;
   process.closeWriteChannel();
 
   if (loop.exec()) {

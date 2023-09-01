@@ -132,8 +132,11 @@ where `<path-to-qt>` points to the Qt install directory that contains
 `bin`, `lib`, etc.
 
 **Build**
-
+```
     ninja
+```
+    
+### A Convenient Shell Script for Ubuntu is available [here](https://raw.githubusercontent.com/Murmele/Gittyup/master/pack/buildUbuntu.sh), and will install all the necessary prerequisites, and build a release version for immediate use.
 
 How to Install
 -----------------
@@ -177,7 +180,6 @@ function run_disown_silence(){
 run_disown_silence flatpak run com.github.Murmele.Gittyup
 ```
 
-
 How to Contribute
 -----------------
 
@@ -191,6 +193,15 @@ for pull requests. Fork the repository and make changes on a new named
 branch. Create pull requests against the `master` branch. Follow the
 [seven guidelines](https://chris.beams.io/posts/git-commit/) to writing a
 great commit message.
+
+Prior to committing a change, please use `cl-format.sh` to ensure your code
+adheres to the formatting conventions for this project. You can also use the
+`setup-env.sh` script to install a pre-commit hook which will automatically
+run `clang-format` against all modified files.
+
+Prior to pushing a change, please ensure you run the unit tests to avoid any
+regressions. These are found in `<build-dir>/test` and can be run using
+`ctest`.
 
 License
 -------

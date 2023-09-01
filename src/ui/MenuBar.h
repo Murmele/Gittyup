@@ -116,6 +116,7 @@ private:
   QAction *mNewBranch;
   QAction *mCheckoutCurrent;
   QAction *mCheckout;
+  QAction *mRenameBranch;
   QAction *mMerge;
   QAction *mRebase;
   QAction *mSquash;

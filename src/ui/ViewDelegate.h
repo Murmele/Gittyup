@@ -9,9 +9,8 @@
  */
 class ViewDelegate : public QItemDelegate {
 public:
-  ViewDelegate(QObject *parent = nullptr) : QItemDelegate(parent) {}
-
-  void setDrawArrow(bool enable) { mDrawArrow = enable; }
+  ViewDelegate(QObject *parent, bool multiColumn = false)
+      : QItemDelegate(parent), mMultiColumn(multiColumn) {}
 
   void paint(QPainter *painter, const QStyleOptionViewItem &option,
              const QModelIndex &index) const override;
@@ -20,7 +19,7 @@ public:
                  const QModelIndex &index) const override;
 
 private:
-  bool mDrawArrow = true;
+  bool mMultiColumn = false;
 };
 
 #endif // VIEWDELEGATE_H

@@ -8,6 +8,7 @@
 //
 
 #include "Plugin.h"
+#include "qtsupport.h"
 #include "conf/Settings.h"
 #include "editor/TextEditor.h"
 #include "git/Config.h"
@@ -491,7 +492,7 @@ Plugin::Plugin(const QString &file, const git::Repository &repo,
 
   // Print error messages to the console.
   connect(this, &Plugin::error, [](const QString &msg) {
-    QTextStream(stderr) << "plugin error: " << msg << endl;
+    QTextStream(stderr) << "plugin error: " << msg << Qt::endl;
   });
 
   // Load libraries.
@@ -613,6 +614,8 @@ QVariant Plugin::optionValue(const QString &key) const {
     case String:
       return config().value<QString>(kKeyFmt.arg(mName, key), value.toString());
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(optionKind(key))));
 }
 
 Plugin::OptionKind Plugin::optionKind(const QString &key) const {

@@ -8,6 +8,7 @@
 //
 
 #include "GitCredential.h"
+#include "qtsupport.h"
 #include <QStandardPaths>
 #include <QCoreApplication>
 #include <QDir>
@@ -45,11 +46,11 @@ bool GitCredential::get(const QString &url, QString &username,
     return false;
 
   QTextStream out(&process);
-  out << "protocol=" << protocol(url) << endl;
-  out << "host=" << host(url) << endl;
+  out << "protocol=" << protocol(url) << Qt::endl;
+  out << "host=" << host(url) << Qt::endl;
   if (!username.isEmpty())
-    out << "username=" << username << endl;
-  out << endl;
+    out << "username=" << username << Qt::endl;
+  out << Qt::endl;
 
   process.closeWriteChannel();
   process.waitForFinished();
@@ -80,11 +81,11 @@ bool GitCredential::store(const QString &url, const QString &username,
     return false;
 
   QTextStream out(&process);
-  out << "protocol=" << protocol(url) << endl;
-  out << "host=" << host(url) << endl;
-  out << "username=" << username << endl;
-  out << "password=" << password << endl;
-  out << endl;
+  out << "protocol=" << protocol(url) << Qt::endl;
+  out << "host=" << host(url) << Qt::endl;
+  out << "username=" << username << Qt::endl;
+  out << "password=" << password << Qt::endl;
+  out << Qt::endl;
 
   process.closeWriteChannel();
   process.waitForFinished();

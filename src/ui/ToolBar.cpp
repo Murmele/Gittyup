@@ -10,6 +10,7 @@
 #include "ToolBar.h"
 #include "History.h"
 #include "MainWindow.h"
+#include "qtsupport.h"
 #include "RepoView.h"
 #include "SearchField.h"
 #include "app/Application.h"
@@ -695,7 +696,6 @@ public:
     initStyleOption(&opt);
 
     QColor color = opt.palette.buttonText().color();
-    QColor light = (isEnabled() && isActiveWindow()) ? color.lighter() : color;
 
     QPainter painter(this);
     painter.setPen(QPen(color, 1.0));
@@ -883,7 +883,7 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
 
   QAction *appConfigAction = configMenu->addAction(tr("Application settings"));
   connect(appConfigAction, &QAction::triggered,
-          [this] { SettingsDialog::openSharedInstance(); });
+          [] { SettingsDialog::openSharedInstance(); });
 
   addWidget(new Spacer(4, this));
 
@@ -916,7 +916,7 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
   addWidget(mode);
 
   using Signal = void (QButtonGroup::*)(int);
-  auto signal = static_cast<Signal>(&QButtonGroup::buttonClicked);
+  auto signal = static_cast<Signal>(&QButtonGroup::idClicked);
   connect(mModeGroup, signal, [this](int index) {
     currentView()->setViewMode(static_cast<RepoView::ViewMode>(index));
   });

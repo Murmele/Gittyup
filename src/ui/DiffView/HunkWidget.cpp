@@ -497,8 +497,6 @@ void HunkWidget::unstageSelected(int startLine, int end, bool emitSignal) {
 
 void HunkWidget::discardDialog(int startLine, int end) {
   QString name = mPatch.name();
-  int line = mPatch.lineNumber(mIndex, 0, git::Diff::NewFile);
-
   QString title = HunkWidget::tr("Discard selected lines?");
   QString text =
       mPatch.isUntracked()
@@ -785,7 +783,7 @@ void HunkWidget::load(git::Patch &staged, bool force) {
         mHeader->theirsButton()->click();
         break;
 
-      default:
+      case git::Patch::Unresolved:
         break;
     }
   }
@@ -1125,7 +1123,7 @@ void HunkWidget::createMarkersAndLineNumbers(const Line &line, int lidx,
       }
 
       QString author = comment.author;
-      QString time = key.toString(Qt::DefaultLocaleLongDate);
+      QString time = QLocale().toString(key, QLocale::LongFormat);
       QString body = paragraphs.join('\n');
       QString text = author + ' ' + time + '\n' + body;
       QByteArray styles =
@@ -1164,18 +1162,18 @@ QByteArray HunkWidget::hunk() const {
     int mask = mEditor->markers(i);
     if (mask & 1 << TextEditor::Marker::Addition) {
       if (!(mask & 1 << TextEditor::Marker::DiscardMarker)) {
-        ar.append(mEditor->line(i));
+        ar.append(mEditor->line(i).toUtf8());
         appended = true;
       }
     } else if (mask & 1 << TextEditor::Marker::Deletion) {
       if (mask & 1 << TextEditor::Marker::DiscardMarker) {
         // with a discard, a deletion becomes reverted
         // and the line is still present
-        ar.append(mEditor->line(i));
+        ar.append(mEditor->line(i).toUtf8());
         appended = true;
       }
     } else {
-      ar.append(mEditor->line(i));
+      ar.append(mEditor->line(i).toUtf8());
       appended = true;
     }
 
@@ -1198,16 +1196,16 @@ QByteArray HunkWidget::apply() {
     int mask = mEditor->markers(i);
     if (mask & 1 << TextEditor::Marker::Addition) {
       if (mask & 1 << TextEditor::Marker::StagedMarker) {
-        ar.append(mEditor->line(i));
+        ar.append(mEditor->line(i).toUtf8());
         appended = true;
       }
     } else if (mask & 1 << TextEditor::Marker::Deletion) {
       if (!(mask & 1 << TextEditor::Marker::StagedMarker)) {
-        ar.append(mEditor->line(i));
+        ar.append(mEditor->line(i).toUtf8());
         appended = true;
       }
     } else {
-      ar.append(mEditor->line(i));
+      ar.append(mEditor->line(i).toUtf8());
       appended = true;
     }
 
