@@ -81,6 +81,10 @@ void TreeView::setModel(QAbstractItemModel *model) {
   connect(model, &QAbstractItemModel::rowsInserted, this,
           QOverload<const QModelIndex &, int, int>::of(
               &TreeView::updateCollapseCount));
+
+  // Allow column sorting and set the default column and sort order.
+  setSortingEnabled(true);
+  sortByColumn(0, Qt::AscendingOrder);
 }
 
 void TreeView::discard(const QModelIndex &index, const bool force) {
