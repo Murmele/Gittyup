@@ -167,6 +167,7 @@ private:
   git::Repository mRepo;
 
   bool mListView = false;
+  bool mConstructed = false;
 };
 
 #endif /* DIFFTREEMODEL */
