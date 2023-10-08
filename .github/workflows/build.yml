@@ -259,10 +259,6 @@ jobs:
         run: |
           cd dep/openssl/openssl
 
-          # this is necessary until https://github.com/openssl/openssl/issues/18720
-          # is fixed in OpenSSL 1.1.1r
-          export CFLAGS=-Wno-error=implicit-function-declaration
-
           ./Configure ${{ matrix.env.openssl_arch }} no-shared
           make
 
