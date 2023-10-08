@@ -21,6 +21,15 @@ namespace {
 
 const QString kLinkFmt = "<a href='%1'>%2</a>";
 
+class Lock {
+public:
+  Lock(bool &var) : mVar(var) { var = true; }
+  ~Lock() { mVar = false; }
+
+private:
+  bool &mVar;
+};
+
 } // namespace
 
 DiffTreeModel::DiffTreeModel(const git::Repository &repo, QObject *parent)
@@ -51,6 +60,8 @@ void DiffTreeModel::setDiff(const git::Diff &diff) {
 }
 
 void DiffTreeModel::refresh(const QStringList &paths) {
+  if (suppressRefresh)
+    return;
   for (auto path : paths) {
     auto index = this->index(path);
     handleDataChanged(index, Qt::CheckStateRole);
@@ -342,6 +353,8 @@ bool DiffTreeModel::discard(const QModelIndex &index) {
 
 bool DiffTreeModel::setData(const QModelIndex &index, const QVariant &value,
                             int role, bool ignoreIndexChanges) {
+
+  Lock l(suppressRefresh);
   switch (role) {
     case Qt::CheckStateRole: {
       QStringList files;
