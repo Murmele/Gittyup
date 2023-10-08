@@ -20,6 +20,7 @@
 #include <QVBoxLayout>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QActionGroup>
 
 namespace {
 const QString kDictKey = "commit.spellcheck.dict";

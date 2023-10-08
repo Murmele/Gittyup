@@ -708,6 +708,7 @@ QVariant ScintillaQt::inputMethodQuery(Qt::InputMethodQuery query) const {
     case Qt::ImPlatformData:           // fall through
     case Qt::ImQueryInput:             // fall through
     case Qt::ImQueryAll:               // fall through
+    case Qt::ImReadOnly:               // fall through
       break;
   }
   return QVariant();

@@ -136,13 +136,13 @@ public:
     QSize date = mDate->sizeHint();
     QSize author = mAuthor->sizeHint();
     QSize committer = mCommitter->sizeHint();
-    int width = author.width() + date.width() + mSpacing.x();
+    int width = author.width() + date.width() + mHorizontalSpacing;
     int height;
     if (mSameAuthorCommitter)
       height = qMax(qMax(author.height(), committer.height()), date.height());
     else
       height = qMax(author.height(), date.height()) + committer.height() +
-               mSpacing.y();
+               mVerticalSpacing;
     return QSize(width, height);
   }
 
@@ -156,7 +156,7 @@ public:
       height = qMax(qMax(author.height(), committer.height()), date.height());
     else
       height = qMax(author.height(), date.height()) + committer.height() +
-               mSpacing.y();
+               mVerticalSpacing;
     return QSize(width, height);
   }
 
@@ -167,10 +167,11 @@ public:
     int author = mAuthor->sizeHint().height();
     int committer = mCommitter->sizeHint().height();
     bool wrapped = (width < sizeHint().width());
-    int unwrappedHeight = mSameAuthorCommitter
-                              ? qMax(committer, qMax(author, date))
-                              : qMax(author + committer + mSpacing.y(), date);
-    return wrapped ? (author + committer + date + 2 * mSpacing.y())
+    int unwrappedHeight =
+        mSameAuthorCommitter
+            ? qMax(committer, qMax(author, date))
+            : qMax(author + committer + mVerticalSpacing, date);
+    return wrapped ? (author + committer + date + 2 * mVerticalSpacing)
                    : unwrappedHeight;
   }
 
@@ -204,9 +205,9 @@ private:
 
     bool wrapped = (width() < sizeHint().width());
     int x = wrapped ? 0 : width() - mDate->width();
-    int y = wrapped wrapped ? mAuthor->height() + mCommitter->height() +
-                                  2 * mVerticalSpacing
-                            : 0;
+    int y = wrapped ? mAuthor->height() + mCommitter->height() +
+                          2 * mVerticalSpacing
+                    : 0;
     mDate->move(x, y);
     updateGeometry();
   }
