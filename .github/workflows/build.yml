@@ -169,23 +169,6 @@ jobs:
               CXX: clang++
             pack: 1
 
-          - name: win32
-            os: windows-latest
-            ninja_platform: win
-            qt_platform: windows
-            qt_arch: win32_msvc2019
-            qt_arch_check_only: win32_msvc2017
-            openssl_arch: VC-WIN32
-            msvc_arch: x86
-            cmake_flags: "-DUSE_BUNDLED_ZLIB=1"
-            cmake_env:
-              CMAKE_RC_FLAGS: "/C 1252"
-              CC: clang
-              CXX: clang++
-              CMAKE_C_FLAGS: -m32
-              CMAKE_CXX_FLAGS: -m32
-            pack: 1
-
     steps:
       # otherwise the testcases will fail, because signature is invalid
       - name: Set git name and email
@@ -404,7 +387,6 @@ jobs:
           automatic_release_tag: 'development'
           files: |
             **/artifacts/Gittyup win64/Gittyup*.exe
-            **/artifacts/Gittyup win32/Gittyup*.exe
             **/artifacts/Gittyup macos/Gittyup*.dmg
             **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
             **/Gittyup-x86_64/*.flatpak
@@ -420,7 +402,6 @@ jobs:
           automatic_release_tag: ${{ github.ref_name }}
           files: |
             **/artifacts/Gittyup win64/Gittyup*.exe
-            **/artifacts/Gittyup win32/Gittyup*.exe
             **/artifacts/Gittyup macos/Gittyup*.dmg
             **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
             **/Gittyup-x86_64/*.flatpak

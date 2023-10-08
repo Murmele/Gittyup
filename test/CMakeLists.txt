@@ -1,6 +1,6 @@
 # Define test macro.
 macro(test)
-  cmake_parse_arguments(ARG "NO_WIN32_OFFSCREEN" "NAME" "" ${ARGN})
+  cmake_parse_arguments(ARG "" "NAME" "" ${ARGN})
 
   add_executable(test_${ARG_NAME} ${ARG_NAME}.cpp)
   target_link_libraries(test_${ARG_NAME} testlib)
@@ -15,24 +15,13 @@ macro(test)
   add_test(NAME ${ARG_NAME} COMMAND $<TARGET_FILE:test_${ARG_NAME}>)
   add_dependencies(check_build test_${ARG_NAME})
 
-  if(${ARG_NO_WIN32_OFFSCREEN})
-    set_property(
-      TEST ${ARG_NAME}
-      APPEND
-      PROPERTY LABELS "NO_WIN32_OFFSCREEN")
-  endif()
-
   if(WIN32)
     find_package(Qt6Gui)
     string(REPLACE ";" "\;" NEWPATH "$ENV{PATH}")
     string(REPLACE ";" "\;" PLUGIN_PATH
                    "$<TARGET_FILE_DIR:Qt6::QOffscreenIntegrationPlugin>")
 
-    if(${ARG_NO_WIN32_OFFSCREEN})
-      set(PLATFORM "windows")
-    else()
-      set(PLATFORM "offscreen")
-    endif()
+    set(PLATFORM "offscreen")
 
     set_tests_properties(
       ${ARG_NAME}
@@ -53,15 +42,6 @@ add_custom_target(
   check
   COMMAND ${CMAKE_CTEST_COMMAND} --force-new-ctest-process --output-on-failure
           --timeout 300
-  DEPENDS check_build
-  COMMENT "Running tests..."
-  USES_TERMINAL)
-
-# Add check target excluding NO_WIN32_OFFSCREEN tests.
-add_custom_target(
-  check_no_win32_offscreen
-  COMMAND ${CMAKE_CTEST_COMMAND} --force-new-ctest-process --output-on-failure
-          --timeout 300 --label-exclude NO_WIN32_OFFSCREEN
   DEPENDS check_build
   COMMENT "Running tests..."
   USES_TERMINAL)
@@ -92,10 +72,10 @@ test(NAME bare_repo)
 test(NAME init_repo)
 test(NAME merge)
 test(NAME external_tools_dialog)
-test(NAME branches_panel NO_WIN32_OFFSCREEN)
-test(NAME editor NO_WIN32_OFFSCREEN)
+test(NAME branches_panel)
+test(NAME editor)
 test(NAME index)
-test(NAME line_endings NO_WIN32_OFFSCREEN)
+test(NAME line_endings)
 test(NAME log)
 test(NAME main_window)
 test(NAME new_branch_dialog)
@@ -110,7 +90,7 @@ test(NAME referencelist)
 test(NAME amend)
 test(NAME SshConfig)
 test(NAME store)
-test(NAME fileContextMenu NO_WIN32_OFFSCREEN)
+test(NAME fileContextMenu)
 test(NAME Setting)
 test(NAME commitMessageTemplate)
 test(NAME commitEditor)
