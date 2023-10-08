@@ -126,11 +126,7 @@ jobs:
       fail-fast: false
       matrix:
         qt:
-          - version: 5.15.2
-            check_only: false
-
-          - version: 5.12.0
-            check_only: true
+          - version: 6.5
 
         env:
           - name: linux
@@ -209,24 +205,11 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v2.13.0
         timeout-minutes: 10
-        if: "!matrix.qt.check_only"
         with:
           version: ${{ matrix.qt.version }}
           target: desktop
           host: ${{ matrix.env.qt_platform }}
           arch: ${{ matrix.env.qt_arch }}
-          install-deps: true
-          modules: qtwebengine
-
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v2.13.0
-        timeout-minutes: 10
-        if: matrix.qt.check_only
-        with:
-          version: ${{ matrix.qt.version }}
-          target: desktop
-          host: ${{ matrix.env.qt_platform }}
-          arch: ${{ matrix.env.qt_arch_check_only }}
           install-deps: true
           modules: qtwebengine
 
@@ -290,7 +273,7 @@ jobs:
 
       # Command copied from flathub build process
       - name: Validate appdata file
-        if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
+        if: matrix.env.ninja_platform == 'linux'
         run: |
           echo "Show generated appdata file"
           cat ./build/release/rsrc/linux/com.github.Murmele.Gittyup.appdata.xml
@@ -301,14 +284,14 @@ jobs:
           flatpak run --env=G_DEBUG=fatal-criticals org.freedesktop.appstream-glib validate ./build/release/rsrc/linux/com.github.Murmele.Gittyup.appdata.xml
 
       - name: Publish build artifacts
-        if: matrix.env.pack && !matrix.qt.check_only
+        if: matrix.env.pack
         uses: actions/upload-artifact@v3
         with:
           path: build/release/pack/Gittyup-*
           name: Gittyup ${{ matrix.env.name }}
 
       - name: Publish version file
-        if: matrix.env.pack && !matrix.qt.check_only
+        if: matrix.env.pack
         uses: actions/upload-artifact@v3
         with:
           path: build/release/VERSION.txt
