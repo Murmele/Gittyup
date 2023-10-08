@@ -175,7 +175,8 @@ public:
         bool matched = false;
 
         for (const QString &pattern : host.patterns) {
-          QRegularExpression re{QRegularExpression::wildcardToRegularExpression(pattern)};
+          QRegularExpression re{
+              QRegularExpression::wildcardToRegularExpression(pattern)};
           if (re.match(hostname).hasMatch()) {
             handler(host);
             matched = true;

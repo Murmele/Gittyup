@@ -84,7 +84,8 @@ public:
 
     QWindow *win = window()->windowHandle();
     QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
-    mIcon->setPixmap(icon.pixmap(QSize(ICON_SIZE, ICON_SIZE), window()->devicePixelRatio()));
+    mIcon->setPixmap(
+        icon.pixmap(QSize(ICON_SIZE, ICON_SIZE), window()->devicePixelRatio()));
 
     mName->setText(kNameFmt.arg(index.data(Qt::DisplayRole).toString()));
 
@@ -139,7 +140,8 @@ void ColumnView::setModel(QAbstractItemModel *model) {
 bool ColumnView::eventFilter(QObject *obj, QEvent *event) {
   if (event->type() == QEvent::MouseButtonPress) {
     QWidget *columnViewport = static_cast<QWidget *>(obj);
-    QPoint globalPos = static_cast<QMouseEvent *>(event)->globalPosition().toPoint();
+    QPoint globalPos =
+        static_cast<QMouseEvent *>(event)->globalPosition().toPoint();
     QModelIndex index = indexAt(viewport()->mapFromGlobal(globalPos));
     if (!columnViewport->hasFocus() && index.row() < 0) {
       columnViewport->setFocus();

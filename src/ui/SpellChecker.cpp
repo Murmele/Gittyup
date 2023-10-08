@@ -26,8 +26,9 @@ SpellChecker::SpellChecker(const QString &dictionaryPath,
     QFile affixFile(affixFileName);
     if (affixFile.open(QIODevice::ReadOnly)) {
       QTextStream stream(&affixFile);
-      QRegularExpression enc_detector("^\\s*SET\\s+([A-Z0-9\\-]+)\\s*",
-                                      QRegularExpression::CaseInsensitiveOption);
+      QRegularExpression enc_detector(
+          "^\\s*SET\\s+([A-Z0-9\\-]+)\\s*",
+          QRegularExpression::CaseInsensitiveOption);
       QString line = stream.readLine();
       while (!line.isEmpty()) {
         auto match = enc_detector.match(line);
@@ -41,7 +42,8 @@ SpellChecker::SpellChecker(const QString &dictionaryPath,
       mValid = true;
     }
 
-    auto conv = QStringConverter::encodingForName(encoding.toLocal8Bit().data());
+    auto conv =
+        QStringConverter::encodingForName(encoding.toLocal8Bit().data());
     mEncoding = conv ? conv.value() : QStringConverter::System;
 
     // Add user dictionary words to spell checker.
@@ -74,8 +76,7 @@ QStringList SpellChecker::suggest(const QString &word) {
 
   // Retrive suggestions for word.
   QByteArray ba = QStringEncoder{mEncoding}.encode(word);
-  std::vector<std::string> suggestion =
-      mHunspell->suggest(ba.toStdString());
+  std::vector<std::string> suggestion = mHunspell->suggest(ba.toStdString());
 
   // Decode from the encoding used by current dictionary to Unicode.
   auto decoder = QStringDecoder{mEncoding};

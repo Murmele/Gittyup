@@ -61,9 +61,9 @@ DeleteBranchDialog::DeleteBranchDialog(const git::Branch &branch,
 
       entry->setBusy(true);
       QStringList refspecs(QString(":%1").arg(upstreamName));
-      git::Result (git::Remote::*push)(git::Remote::Callbacks*, const QStringList&) = &git::Remote::push;
-      watcher->setFuture(
-          QtConcurrent::run(push, remote, callbacks, refspecs));
+      git::Result (git::Remote::*push)(
+          git::Remote::Callbacks *, const QStringList &) = &git::Remote::push;
+      watcher->setFuture(QtConcurrent::run(push, remote, callbacks, refspecs));
 
       connect(watcher, &QFutureWatcher<git::Result>::finished, watcher,
               [entry, watcher, callbacks, remoteName] {
