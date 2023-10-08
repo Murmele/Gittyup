@@ -21,6 +21,7 @@
 #include <QPalette>
 #include <QSettings>
 #include <qnetworkaccessmanager.h>
+#include <stdexcept>
 
 namespace {
 
