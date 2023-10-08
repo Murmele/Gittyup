@@ -126,7 +126,7 @@ jobs:
       fail-fast: false
       matrix:
         qt:
-          - version: 6.5
+          - version: 6.5.*
 
         env:
           - name: linux
