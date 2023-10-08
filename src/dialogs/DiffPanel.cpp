@@ -46,14 +46,8 @@ DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
   // encoding
 
   static std::array encodings{
-    "Utf8",
-    "Utf16",
-    "Utf16LE",
-    "Utf16BE",
-    "Utf32",
-    "Utf32LE",
-    "Utf32BE",
-    "Latin1",
+      "Utf8",  "Utf16",   "Utf16LE", "Utf16BE",
+      "Utf32", "Utf32LE", "Utf32BE", "Latin1",
   };
 
   QComboBox *encoding = new QComboBox(this);

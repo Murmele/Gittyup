@@ -328,7 +328,8 @@ void ScintillaQt::keyPressEvent(QKeyEvent *event) {
     QString text = event->text();
     if (input && !text.isEmpty() && text[0].isPrint()) {
       QByteArray utext = text.toUtf8();
-      InsertCharacter(std::string_view(utext.data(), utext.size()), CharacterSource::directInput);
+      InsertCharacter(std::string_view(utext.data(), utext.size()),
+                      CharacterSource::directInput);
     } else {
       event->ignore();
     }
@@ -522,7 +523,8 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
       const QString oneCharUTF16 = commitStr.mid(i, ucWidth);
       const QByteArray oneChar = oneCharUTF16.toUtf8();
       const int oneCharLen = oneChar.length();
-      InsertCharacter(std::string_view(oneChar.data(), oneCharLen), CharacterSource::directInput);
+      InsertCharacter(std::string_view(oneChar.data(), oneCharLen),
+                      CharacterSource::directInput);
       i += ucWidth;
     }
 
@@ -605,7 +607,8 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
       numBytes += oneCharLen;
       imeCharPos[i + 1] = numBytes;
 
-      InsertCharacter(std::string_view(oneChar.data(), oneCharLen), CharacterSource::directInput);
+      InsertCharacter(std::string_view(oneChar.data(), oneCharLen),
+                      CharacterSource::directInput);
 
 #ifdef Q_OS_LINUX
       // Segment marked with imeCaretPos is for target input.

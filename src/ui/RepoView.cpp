@@ -1805,9 +1805,11 @@ void RepoView::push(const git::Remote &rmt, const git::Reference &src,
           &RepoView::notifyReferenceUpdated);
 
   entry->setBusy(true);
-  git::Result (git::Remote::*push)(git::Remote::Callbacks*, const git::Reference&, const QString&, bool, bool) = &git::Remote::push;
-  mWatcher->setFuture(QtConcurrent::run(push, remote, mCallbacks,
-                                        ref, dst, force, tags));
+  git::Result (git::Remote::*push)(git::Remote::Callbacks *,
+                                   const git::Reference &, const QString &,
+                                   bool, bool) = &git::Remote::push;
+  mWatcher->setFuture(
+      QtConcurrent::run(push, remote, mCallbacks, ref, dst, force, tags));
 }
 
 bool RepoView::commit(const QString &message,

@@ -89,7 +89,8 @@ public:
   WildcardQuery(const Index::Term &term) : TermQuery(term) {}
 
   QList<git::Commit> commits(const Index *index) const override {
-    QRegularExpression re{QRegularExpression::fromWildcard(mTerm.text, Qt::CaseInsensitive)};
+    QRegularExpression re{
+        QRegularExpression::fromWildcard(mTerm.text, Qt::CaseInsensitive)};
     Index::Predicate pred = [re](const QByteArray &word) {
       return re.match(word).hasMatch();
     };
@@ -218,7 +219,8 @@ public:
   QList<git::Commit> commits(const Index *index) const override {
     QByteArray term = mTerm.text.toUtf8();
     QByteArray prefix = term.endsWith('/') ? term : term + '/';
-    QRegularExpression re{QRegularExpression::fromWildcard(mTerm.text, Qt::CaseInsensitive)};
+    QRegularExpression re{
+        QRegularExpression::fromWildcard(mTerm.text, Qt::CaseInsensitive)};
     Index::Predicate pred = [prefix, re](const QByteArray &word) {
       return word.startsWith(prefix) || re.match(word).hasMatch();
     };

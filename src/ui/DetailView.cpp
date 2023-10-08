@@ -123,7 +123,8 @@ public:
     mDate = new QLabel(this);
     mDate->setTextInteractionFlags(kTextFlags);
 
-    mHorizontalSpacing = style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
+    mHorizontalSpacing =
+        style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
     mVerticalSpacing = style()->pixelMetric(QStyle::PM_LayoutVerticalSpacing);
   }
 
@@ -203,8 +204,9 @@ private:
 
     bool wrapped = (width() < sizeHint().width());
     int x = wrapped ? 0 : width() - mDate->width();
-    int y = wrapped
-        wrapped ? mAuthor->height() + mCommitter->height() + 2 * mVerticalSpacing : 0;
+    int y = wrapped wrapped ? mAuthor->height() + mCommitter->height() +
+                                  2 * mVerticalSpacing
+                            : 0;
     mDate->move(x, y);
     updateGeometry();
   }

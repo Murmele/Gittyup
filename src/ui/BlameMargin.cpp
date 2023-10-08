@@ -140,7 +140,8 @@ void BlameMargin::mousePressEvent(QMouseEvent *event) {
 }
 
 void BlameMargin::mouseReleaseEvent(QMouseEvent *event) {
-  if (mBlame.isValid() && mIndex >= 0 && mIndex == index(event->position().y())) {
+  if (mBlame.isValid() && mIndex >= 0 &&
+      mIndex == index(event->position().y())) {
     // Update selection.
     git::Id id = mBlame.id(mIndex);
     mSelection = (mSelection != id) ? id : git::Id();

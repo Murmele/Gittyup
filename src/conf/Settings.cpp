@@ -125,7 +125,8 @@ QString Settings::lexer(const QString &filename) {
     QVariantMap map(lexers.value(key).toMap());
     if (map.contains("patterns")) {
       foreach (QString pattern, map.value("patterns").toString().split(",")) {
-        QRegularExpression regExp{QRegularExpression::fromWildcard(pattern, CS)};
+        QRegularExpression regExp{
+            QRegularExpression::fromWildcard(pattern, CS)};
         if (regExp.match(name).hasMatch())
           return key;
       }

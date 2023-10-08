@@ -94,8 +94,8 @@ void LogView::copy() {
       prefix += isExpanded(index) ? "[-]" : "[+]";
 
     QString text = index.data().toString();
-    plainText +=
-        QString("%1 %2\n").arg(prefix, text.remove(QRegularExpression("<[^>]*>")));
+    plainText += QString("%1 %2\n").arg(
+        prefix, text.remove(QRegularExpression("<[^>]*>")));
     richText += QString("%1 %2<br>").arg(prefix, text);
   }
 
