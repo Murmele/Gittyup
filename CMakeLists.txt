@@ -118,10 +118,6 @@ find_package(
   COMPONENTS ${QT_MODULES} LinguistTools
   REQUIRED)
 if(FLATPAK)
-  find_package(
-    Qt6
-    COMPONENTS XcbQpa
-    REQUIRED)
   add_compile_definitions(FLATPAK)
 endif()
 
