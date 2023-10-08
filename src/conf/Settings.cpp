@@ -16,6 +16,7 @@
 #include <QRegularExpression>
 #include <QSettings>
 #include <QStandardPaths>
+#include <stdexcept>
 
 #ifdef Q_OS_WIN
 #define CS Qt::CaseInsensitive

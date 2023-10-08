@@ -12,6 +12,7 @@
 #include "Debug.h"
 #include "git2/patch.h"
 #include <algorithm>
+#include <stdexcept>
 
 bool containsPath(QString &str, QString &occurence, Qt::CaseSensitivity cs) {
   if (str.contains(occurence, cs)) {
