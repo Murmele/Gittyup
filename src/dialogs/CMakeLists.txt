@@ -39,11 +39,6 @@ target_compile_definitions(
 
 target_include_directories(dialogs PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-find_package(
-  Qt6
-  COMPONENTS Core5Compat
-  REQUIRED)
-
 target_link_libraries(
   dialogs
   cli
