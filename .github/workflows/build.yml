@@ -291,6 +291,16 @@ jobs:
         run: |
           cd build/release
           ninja package
+          
+      # version is exported from cmake to file
+      - name: Retrieve version
+        run: |
+          VER=$(cat build/release/VERSION.txt)
+          echo "VERSION=$VER" >> $GITHUB_ENV
+
+      - name: Print version
+        run: |
+            echo ${{ env.VERSION }}
 
       # Command copied from flathub build process
       - name: Validate appdata file
@@ -320,7 +330,7 @@ jobs:
 
       - name: Test
         if: matrix.env.ninja_platform != 'win' && matrix.env.ninja_platform != 'mac'
-        uses: GabrielBB/xvfb-action@v1
+        uses: GabrielBB/xvfb-action@v1.6
         with:
           working-directory: build/release
           run: ninja check --verbose
@@ -361,8 +371,12 @@ jobs:
       # version is exported from cmake to file
       - name: Retrieve version
         run: |
-          echo "::set-output name=VERSION::$(cat artifacts/Gittyup-VERSION/VERSION.txt)"
-        id: version
+          VER=$(cat artifacts/Gittyup-VERSION/VERSION.txt)
+          echo "VERSION=$VER" >> $GITHUB_ENV
+
+      - name: Print version
+        run: |
+            echo ${{ env.VERSION }}
 
       - name: Update GitHub release (latest tag)
         uses: marvinpinto/action-automatic-releases@latest
@@ -384,7 +398,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
-          title: Gittyup Release ${{ steps.version.outputs.VERSION }}
+          title: Gittyup Release ${{ env.VERSION }}
           automatic_release_tag: ${{ github.ref_name }}
           files: |
             **/artifacts/Gittyup win64/Gittyup*.exe
