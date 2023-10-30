@@ -31,7 +31,7 @@ Report bugs in Gittyup by opening an issue in the
 Remember to search for existing issues before creating a new one.
 
 If you still need help, check out our Matrix channel
-[Gittyup:martix.org](https://matrix.to/#/#Gittyup:matrix.org).
+[Gittyup:matrix.org](https://matrix.to/#/#Gittyup:matrix.org).
 
 Multi language support
 ======================
