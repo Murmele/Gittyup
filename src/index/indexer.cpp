@@ -53,14 +53,14 @@ static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info) {
   SYSTEMTIME localTime;
   GetLocalTime(&localTime);
 
-  char temp[MAX_PATH];
+  wchar_t temp[MAX_PATH];
   GetTempPath(MAX_PATH, temp);
 
-  char dir[MAX_PATH];
+  wchar_t dir[MAX_PATH];
   StringCchPrintf(dir, MAX_PATH, "%sGittyup", temp);
   CreateDirectory(dir, NULL);
 
-  char fileName[MAX_PATH];
+  wchar_t fileName[MAX_PATH];
   StringCchPrintf(
       fileName, MAX_PATH, "%s\\%s-%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp",
       dir, "indexer", GITTYUP_VERSION, localTime.wYear, localTime.wMonth,
