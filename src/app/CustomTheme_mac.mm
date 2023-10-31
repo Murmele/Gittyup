@@ -25,7 +25,7 @@ void CustomTheme::polishWindow(QWindow *window) const
   if (color.lightnessF() < 0.5)
     win.appearance = [NSAppearance appearanceNamed:NSAppearanceNameVibrantDark];
 
-  qreal r,g,b,a;
+  float r,g,b,a;
   color.getRgbF(&r,&g,&b,&a);
   win.backgroundColor = [NSColor colorWithDeviceRed:r green:g blue:b alpha:a];
 }
