@@ -297,7 +297,7 @@ jobs:
         if: matrix.env.ninja_platform == 'win'
         run: |
           cd build/release
-          ninja check --verbose
+          ninja check check_no_win32_offscreen
 
   publish:
     # https://github.com/marvinpinto/actions/issues/177
