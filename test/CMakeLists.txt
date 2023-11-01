@@ -29,9 +29,9 @@ macro(test)
                    "$<TARGET_FILE_DIR:Qt6::QOffscreenIntegrationPlugin>")
 
     if(${ARG_NO_WIN32_OFFSCREEN})
-        set(PLATFORM "windows")
+      set(PLATFORM "windows")
     else()
-        set(PLATFORM "offscreen")
+      set(PLATFORM "offscreen")
     endif()
 
     set_tests_properties(
@@ -65,7 +65,6 @@ add_custom_target(
   DEPENDS check_build
   COMMENT "Running tests..."
   USES_TERMINAL)
-
 
 enable_testing()
 
