@@ -57,15 +57,16 @@ static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info) {
   GetTempPath(MAX_PATH, temp);
 
   wchar_t dir[MAX_PATH];
-  StringCchPrintf(dir, MAX_PATH, "%sGittyup", temp);
+  const wchar_t *gittyup_name = L"%sGittyup";
+  StringCchPrintf(dir, MAX_PATH, gittyup_name, temp);
   CreateDirectory(dir, NULL);
 
   wchar_t fileName[MAX_PATH];
-  StringCchPrintf(
-      fileName, MAX_PATH, "%s\\%s-%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp",
-      dir, "indexer", GITTYUP_VERSION, localTime.wYear, localTime.wMonth,
-      localTime.wDay, localTime.wHour, localTime.wMinute, localTime.wSecond,
-      GetCurrentProcessId(), GetCurrentThreadId());
+  const wchar_t *s = L"%s\\%s-%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp";
+  StringCchPrintf(fileName, MAX_PATH, s, dir, "indexer", GITTYUP_VERSION,
+                  localTime.wYear, localTime.wMonth, localTime.wDay,
+                  localTime.wHour, localTime.wMinute, localTime.wSecond,
+                  GetCurrentProcessId(), GetCurrentThreadId());
 
   HANDLE dumpFile =
       CreateFile(fileName, GENERIC_READ | GENERIC_WRITE,
