@@ -21,7 +21,7 @@ macro(test)
     string(REPLACE ";" "\;" PLUGIN_PATH
                    "$<TARGET_FILE_DIR:Qt6::QOffscreenIntegrationPlugin>")
 
-    set(PLATFORM "offscreen")
+    set(PLATFORM "windows")
 
     set_tests_properties(
       ${ARG_NAME}
