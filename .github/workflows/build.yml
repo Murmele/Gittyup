@@ -305,7 +305,7 @@ jobs:
         if: matrix.env.ninja_platform == 'win'
         run: |
           cd build/release
-          ninja check_no_win32_offscreen
+          ninja check --verbose
 
       - name: Build Appimage
         if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
