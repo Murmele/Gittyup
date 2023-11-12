@@ -289,6 +289,16 @@ void Commit::setStarred(bool starred) {
   repo().setCommitStarred(id(), starred);
 }
 
+QByteArray Commit::formatPatch(int num, int total) const {
+  git_buf buf = {nullptr, 0, 0};
+  if (git_diff_commit_as_email(&buf, repo(), *this, num, total, 0, nullptr))
+    return QByteArray();
+
+  QByteArray text(buf.ptr, buf.size);
+  git_buf_dispose(&buf);
+  return text;
+}
+
 QString Commit::decodeMessage(const char *msg) const {
   if (const char *encoding = git_commit_message_encoding(*this)) {
     if (QTextCodec *codec = QTextCodec::codecForName(encoding))

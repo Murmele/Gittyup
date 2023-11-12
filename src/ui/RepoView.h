@@ -217,6 +217,9 @@ public:
   // cherry-pick
   void cherryPick(const git::Commit &commit);
 
+  // patch
+  void promptToApplyPatch();
+
   // push
   void promptToForcePush(const git::Remote &remote = git::Remote(),
                          const git::Reference &src = git::Reference());
@@ -398,6 +401,8 @@ private:
                             bool recursive, git_reset_t type);
 
   bool checkForConflicts(LogEntry *parent, const QString &action);
+
+  void applyPatch(const QString &path);
 
   git::Signature getSignature(const ContributorInfo &info);
 

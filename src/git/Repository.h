@@ -17,6 +17,7 @@
 #include "Diff.h"
 #include "Index.h"
 #include "Rebase.h"
+#include "git2/apply.h"
 #include "git2/checkout.h"
 #include "git2/errors.h"
 #include "git2/revwalk.h"
@@ -111,6 +112,8 @@ public:
   Diff diffIndexToWorkdir(const Index &index = Index(),
                           Diff::Callbacks *callbacks = nullptr,
                           bool ignoreWhitespace = false) const;
+  bool applyDiff(const Diff &diff,
+                 git_apply_location_t location = GIT_APPLY_LOCATION_WORKDIR);
 
   // refs
   QList<Reference> refs() const;
