@@ -77,6 +77,7 @@ QAction *DoubleTreeWidget::setupAppearanceAction(const char *name,
     Settings::instance()->setValue(id, checked);
     RepoView::parentView(this)->refresh();
   });
+  return action;
 }
 
 DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
