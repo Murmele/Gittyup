@@ -36,17 +36,7 @@ bool asList() {
 } // namespace
 
 DiffTreeModel::DiffTreeModel(const git::Repository &repo, QObject *parent)
-    : QStandardItemModel(0, kModelHeaders.size(), parent), mRepo(repo),
-      mConstructed(false) {
-  // mConstructed only exists so that columnCount() returns the maximum number
-  // of columns when it is called internally by setHeaderData().  Without this,
-  // columnCount() will return 1 in the case that "List View" isn't selected and
-  // that means columns beyond the first won't be assigned the proper header
-  // value in the loop below.
-  for (int i = 0; i < kModelHeaders.size(); ++i) {
-    setHeaderData(i, Qt::Horizontal, kModelHeaders[i]);
-  }
-  mConstructed = true;
+    : QAbstractItemModel(parent), mRepo(repo) {
 }
 
 DiffTreeModel::~DiffTreeModel() { delete mRoot; }
@@ -114,9 +104,21 @@ int DiffTreeModel::rowCount(const QModelIndex &parent) const {
   return mDiff ? node(parent)->children().size() : 0;
 }
 
+QVariant DiffTreeModel::headerData(int section, Qt::Orientation orientation,
+                                   int role) const {
+  if (section > 2) {
+    assert(false);
+    return QVariant();
+  }
+  if (orientation == Qt::Orientation::Vertical)
+    return QVariant();
+  if (role != Qt::DisplayRole)
+    return QVariant();
+  return kModelHeaders.at(section);
+}
+
 int DiffTreeModel::columnCount(const QModelIndex &parent) const {
-  return asList() || !mConstructed ? QStandardItemModel::columnCount(parent)
-                                   : 1;
+  return !asList() || !mMultiColumn ? 1 : kModelHeaders.size();
 }
 
 bool DiffTreeModel::hasChildren(const QModelIndex &parent) const {

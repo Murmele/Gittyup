@@ -14,7 +14,7 @@
 #include "git/Index.h"
 #include "git/Tree.h"
 #include "git/Repository.h"
-#include <QStandardItemModel>
+#include <QAbstractItemModel>
 #include <QAbstractListModel>
 #include <QFileIconProvider>
 #include "git/Index.h"
@@ -81,7 +81,7 @@ private:
  * This Treemodel is similar to the normal tree model, but handles only the
  * files in the diff it self and not the complete tree
  */
-class DiffTreeModel : public QStandardItemModel {
+class DiffTreeModel : public QAbstractItemModel {
   Q_OBJECT
 
 public:
@@ -100,6 +100,8 @@ public:
   void setDiff(const git::Diff &diff = git::Diff());
   void refresh(const QStringList &paths);
 
+  QVariant headerData(int section, Qt::Orientation orientation,
+                      int role = Qt::DisplayRole) const override;
   int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   int columnCount(const QModelIndex &parent = QModelIndex()) const override;
   bool hasChildren(const QModelIndex &parent = QModelIndex()) const override;
@@ -167,7 +169,7 @@ private:
   git::Repository mRepo;
 
   bool mListView = false;
-  bool mConstructed = false;
+  bool mMultiColumn{true};
 };
 
 #endif /* DIFFTREEMODEL */
