@@ -16,6 +16,7 @@
 #include "ui/RepoView.h"
 #include "ui/TabWidget.h"
 #include "update/Updater.h"
+#include "languages.h"
 #include "util/Debug.h"
 #include <QCloseEvent>
 #include <QCommandLineParser>
@@ -172,6 +173,12 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
             .toBool()) &&
       (!parser.isSet("no-translation"))) {
     // Load translation files.
+
+    const auto &language =
+        Settings::instance()->value(Setting::Id::Language).toString();
+    if (language != Languages::system)
+      QLocale::setDefault(QLocale(language));
+
     QLocale locale;
     QDir l10n = Settings::l10nDir();
     QString name = QString(GITTYUP_NAME).toLower();
