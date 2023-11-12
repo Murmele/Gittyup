@@ -68,6 +68,8 @@ TemplateDialog::TemplateDialog(QList<TemplateButton::Template> &templates,
   hBox->addItem(spacer);
   hBox->addWidget(mRemove);
   QVBoxLayout *vBox2 = new QVBoxLayout();
+  vBox2->addWidget(
+      new QLabel(tr("First template will be applied automatically"), this));
   vBox2->addWidget(mTemplateList);
   vBox2->addLayout(hBox);
 
