@@ -352,7 +352,7 @@ public:
                 return mTabs->tabText(row);
 
               RepoView *view = static_cast<RepoView *>(mTabs->widget(row));
-              return view->repo().dir().path();
+              return view->repo().dir(false).path();
             }
 
             return tr("none");
@@ -446,7 +446,7 @@ public:
               return QVariant();
             QWidget *widget = mTabs->widget(row);
             RepoView *view = static_cast<RepoView *>(widget);
-            return view->repo().dir().path();
+            return view->repo().dir(false).path();
           }
 
           case Recent:
@@ -493,7 +493,7 @@ public:
           case Repo:
             if (mTabs->count()) {
               RepoView *view = static_cast<RepoView *>(mTabs->widget(row));
-              return view->repo().dir().path();
+              return view->repo().dir(false).path();
             }
 
             return "";

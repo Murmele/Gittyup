@@ -15,12 +15,7 @@ RecentRepository::RecentRepository(const QString &gitpath, QObject *parent)
 QString RecentRepository::gitpath() const { return mGitPath; }
 
 QString RecentRepository::name() const {
-  QString name;
-  if (mGitPath.endsWith("/.git"))
-    name = mGitPath.section('/', -mSections - 1, -2);
-  else
-    name = mGitPath.section('/', -mSections, -1);
-  return name;
+  return mGitPath.section('/', -mSections, -1);
 }
 
 void RecentRepository::increment() { ++mSections; }

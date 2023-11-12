@@ -52,10 +52,7 @@ class TabName {
 public:
   TabName(const QString &path) : mPath(path) {}
 
-  QString name() const {
-    return mPath.endsWith("/.git") ? mPath.section('/', -mSections - 1, -2)
-                                   : mPath.section('/', -mSections);
-  }
+  QString name() const { return mPath.section('/', -mSections); }
 
   void increment() { ++mSections; }
   int sections() const { return mSections; }
@@ -221,7 +218,7 @@ RepoView *MainWindow::addTab(const QString &path) {
   TabWidget *tabs = tabWidget();
   for (int i = 0; i < tabs->count(); i++) {
     RepoView *view = static_cast<RepoView *>(tabs->widget(i));
-    if (path == view->repo().dir().path()) {
+    if (path == view->repo().dir(false).path()) {
       tabs->setCurrentIndex(i);
       return view;
     }
@@ -238,13 +235,13 @@ RepoView *MainWindow::addTab(const QString &path) {
 
 RepoView *MainWindow::addTab(const git::Repository &repo) {
   // Update recent repository settings.
-  QDir dir = repo.dir();
+  QDir dir = repo.dir(false);
   RecentRepositories::instance()->add(dir.path());
 
   TabWidget *tabs = tabWidget();
   for (int i = 0; i < tabs->count(); i++) {
     RepoView *view = static_cast<RepoView *>(tabs->widget(i));
-    if (dir.path() == view->repo().dir().path()) {
+    if (dir.path() == view->repo().dir(false).path()) {
       tabs->setCurrentIndex(i);
       return view;
     }
@@ -259,13 +256,7 @@ RepoView *MainWindow::addTab(const git::Repository &repo) {
           [this] { updateWindowTitle(); });
 
   emit tabs->tabAboutToBeInserted();
-
-  // NB : this seems to be useless, because overwritten by
-  // MainWindow::updateTabNames
-  QString tabTitle = dir.dirName();
-  if (tabTitle == ".git")
-    tabTitle = dir.path().section("/", -2, -2);
-  tabs->setCurrentIndex(tabs->addTab(view, tabTitle));
+  tabs->setCurrentIndex(tabs->addTab(view, dir.dirName()));
 
   Settings *settings = Settings::instance();
   bool enable =
@@ -390,7 +381,7 @@ MainWindow *MainWindow::open(const QString &path, bool warnOnInvalid) {
 MainWindow *MainWindow::open(const git::Repository &repo) {
   // Update recent repository settings.
   if (repo.isValid())
-    RecentRepositories::instance()->add(repo.dir().path());
+    RecentRepositories::instance()->add(repo.dir(false).path());
 
   // Create the window.
   MainWindow *window = new MainWindow(repo);
@@ -479,7 +470,7 @@ void MainWindow::updateTabNames() {
   QList<TabName> fullNames;
 
   for (int i = 0; i < count(); ++i) {
-    TabName name(view(i)->repo().dir().path());
+    TabName name(view(i)->repo().dir(false).path());
     names[name.name()].append(i);
     fullNames.append(name);
   }
@@ -529,15 +520,9 @@ void MainWindow::updateWindowTitle(int ahead, int behind) {
   }
 
   git::Repository repo = view->repo();
-  QDir dir = repo.dir();
+  QDir dir = repo.dir(false);
   git::Reference head = repo.head();
-  QString path;
-  if (mFullPath)
-    path = dir.path();
-  else if (dir.dirName() == ".git")
-    path = dir.path().section("/", -2, -2);
-  else
-    path = dir.dirName();
+  QString path = mFullPath ? dir.path() : dir.dirName();
   QString name = head.isValid() ? head.name() : repo.unbornHeadName();
   QString title = tr("%1 - %2").arg(path, name);
 
@@ -601,7 +586,7 @@ void MainWindow::updateWindowTitle(int ahead, int behind) {
 QStringList MainWindow::paths() const {
   QStringList paths;
   for (int i = 0; i < count(); ++i)
-    paths.append(view(i)->repo().dir().path());
+    paths.append(view(i)->repo().dir(false).path());
   return paths;
 }
 
