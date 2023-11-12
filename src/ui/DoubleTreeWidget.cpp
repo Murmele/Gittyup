@@ -75,6 +75,8 @@ QAction *DoubleTreeWidget::setupAppearanceAction(const char *name,
   action->setChecked(Settings::instance()->value(id, defaultValue).toBool());
   connect(action, &QAction::triggered, this, [this, id](bool checked) {
     Settings::instance()->setValue(id, checked);
+    mSelectedFile.filename =
+        ""; // When switching view, it is not possible to restore
     RepoView::parentView(this)->refresh();
   });
   return action;
