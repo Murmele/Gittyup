@@ -157,7 +157,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
   if (commits.isEmpty()) {
     handleUncommittedChanges(index, files);
   } else {
-    handleCommits(commits, files);
+    handleCommits(commits, files, diff);
   }
 
   // TODO: moving this into handleWorkingDirChanges()? Because
@@ -395,7 +395,8 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
 }
 
 void FileContextMenu::handleCommits(const QList<git::Commit> &commits,
-                                    const QStringList &files) {
+                                    const QStringList &files,
+                                    const git::Diff &diff) {
   // because this might not live anymore
   // when the lambdas are handled
   const auto view = mView;
