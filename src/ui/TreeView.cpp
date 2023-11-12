@@ -44,7 +44,7 @@ const QString kLabelFmt = "<p style='color: gray; font-weight: bold'>%1</p>";
 } // namespace
 
 TreeView::TreeView(QWidget *parent, const QString &name)
-    : QTreeView(parent), mDelegateCol(0),
+    : QTreeView(parent),
       mFileListDelegatePtr(std::make_unique<ViewDelegate>(this, true)),
       mFileTreeDelegatePtr(std::make_unique<ViewDelegate>(this)), mName(name) {
   setObjectName(name);

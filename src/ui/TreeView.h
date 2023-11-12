@@ -103,7 +103,7 @@ private:
   QString mName;
   std::unique_ptr<ViewDelegate> mFileListDelegatePtr;
   std::unique_ptr<ViewDelegate> mFileTreeDelegatePtr;
-  int mDelegateCol = 0;
+  int mDelegateCol{false};
 };
 
 #endif // TREEVIEW_H
