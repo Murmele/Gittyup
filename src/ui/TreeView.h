@@ -42,6 +42,7 @@ public:
    * \return
    */
   int countCollapsed(QModelIndex parent = QModelIndex(), bool recursive = true);
+  void updateView();
 public slots:
   /*!
    * \brief expandAll
@@ -98,7 +99,6 @@ private:
   bool suppressDeselectionHandling{false};
   int mCollapseCount; // Counts the number of collapsed folders.
   bool mSupressItemExpandStateChanged{false};
-  void updateView();
 
   QString mName;
   std::unique_ptr<ViewDelegate> mFileListDelegatePtr;

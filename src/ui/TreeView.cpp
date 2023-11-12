@@ -48,9 +48,6 @@ TreeView::TreeView(QWidget *parent, const QString &name)
       mFileListDelegatePtr(std::make_unique<ViewDelegate>(this, true)),
       mFileTreeDelegatePtr(std::make_unique<ViewDelegate>(this)), mName(name) {
   setObjectName(name);
-  connect(RepoView::parentView(this)->repo().notifier(),
-          &git::RepositoryNotifier::referenceUpdated, this,
-          &TreeView::updateView);
 }
 
 void TreeView::updateView() {

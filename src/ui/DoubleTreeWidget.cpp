@@ -447,6 +447,9 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
     mStagedWidget->setVisible(false);
   }
 
+  unstagedFiles->updateView();
+  stagedFiles->updateView();
+
   // Clear editor.
   mEditor->clear();
 
