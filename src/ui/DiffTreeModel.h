@@ -99,6 +99,7 @@ public:
 
   void setDiff(const git::Diff &diff = git::Diff());
   void refresh(const QStringList &paths);
+  void setMultiColumn(bool);
 
   QVariant headerData(int section, Qt::Orientation orientation,
                       int role = Qt::DisplayRole) const override;

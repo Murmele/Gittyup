@@ -40,6 +40,7 @@ void Setting::initialize(QMap<Id, QString> &keys) {
   keys[Id::ShowCommitsId] = "commit/id";
   keys[Id::ShowChangedFilesAsList] = "doubletreeview/listview";
   keys[Id::ShowChangedFilesInSingleView] = "doubletreeview/single";
+  keys[Id::ShowChangedFilesMultiColumn] = "doubletreeview/listviewmulticolumn";
   keys[Id::HideUntracked] = "untracked.hide";
 }
 

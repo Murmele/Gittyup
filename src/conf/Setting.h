@@ -62,6 +62,7 @@ public:
     ShowCommitsDate,
     ShowCommitsId,
     ShowChangedFilesAsList,
+    ShowChangedFilesMultiColumn, // For the list only
     ShowChangedFilesInSingleView,
     HideUntracked,
     Language,

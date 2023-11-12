@@ -37,9 +37,16 @@ bool asList() {
 
 DiffTreeModel::DiffTreeModel(const git::Repository &repo, QObject *parent)
     : QAbstractItemModel(parent), mRepo(repo) {
+  setMultiColumn(mMultiColumn);
 }
 
 DiffTreeModel::~DiffTreeModel() { delete mRoot; }
+
+void DiffTreeModel::setMultiColumn(bool multi) {
+  beginResetModel();
+  mMultiColumn = multi;
+  endResetModel(); // Notify view about the change
+}
 
 void DiffTreeModel::createDiffTree() {
 
@@ -416,7 +423,7 @@ Node *DiffTreeModel::node(const QModelIndex &index) const {
 
 QVariant DiffTreeModel::getDisplayRole(const QModelIndex &index) const {
   Node *node = this->node(index);
-  if (asList()) {
+  if (asList() && mMultiColumn) {
     QFileInfo fileInfo(node->path(true));
     switch (index.column()) {
       case 0:
@@ -424,7 +431,7 @@ QVariant DiffTreeModel::getDisplayRole(const QModelIndex &index) const {
       case 1:
         return fileInfo.path();
       default:
-        return "";
+        return ""; // State
     }
   }
   return node->name();

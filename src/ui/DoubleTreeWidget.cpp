@@ -98,6 +98,8 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
       "Single View", Setting::Id::ShowChangedFilesInSingleView);
   QAction *listView =
       setupAppearanceAction("List View", Setting::Id::ShowChangedFilesAsList);
+  QAction *multiColumn = setupAppearanceAction(
+      "Multi Column", Setting::Id::ShowChangedFilesMultiColumn, true);
   RepoView::parentView(this)->refresh(); // apply read settings
 
   QAction *hideUntrackedFiles = setupAppearanceAction(
@@ -105,6 +107,7 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
 
   contextMenu->addAction(singleTree);
   contextMenu->addAction(listView);
+  contextMenu->addAction(multiColumn);
   contextMenu->addAction(hideUntrackedFiles);
   QHBoxLayout *buttonLayout = new QHBoxLayout();
   buttonLayout->addStretch();
@@ -411,9 +414,14 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
   bool listView = Settings::instance()
                       ->value(Setting::Id::ShowChangedFilesAsList, false)
                       .toBool();
+  const bool multiColumn =
+      Settings::instance()
+          ->value(Setting::Id::ShowChangedFilesMultiColumn, true)
+          .toBool();
 
   // Widget modifications.
   model->enableListView(listView);
+  model->setMultiColumn(multiColumn);
   stagedFiles->setRootIsDecorated(!listView);
   unstagedFiles->setRootIsDecorated(!listView);
   // mUnstagedCommitedFiles->setVisible(!singleTree);
