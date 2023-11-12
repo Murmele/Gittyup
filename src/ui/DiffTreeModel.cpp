@@ -113,7 +113,7 @@ int DiffTreeModel::rowCount(const QModelIndex &parent) const {
 
 QVariant DiffTreeModel::headerData(int section, Qt::Orientation orientation,
                                    int role) const {
-  if (section > 2) {
+  if (section > 2 || section < 0) {
     assert(false);
     return QVariant();
   }
