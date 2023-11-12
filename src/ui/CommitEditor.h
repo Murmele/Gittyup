@@ -35,7 +35,7 @@ public:
   void unstage();
   bool isUnstageEnabled() const;
   static QString createFileList(const QStringList &list, int maxFiles);
-  void setMessage(const QStringList &list);
+  void setMessage(const QStringList &files);
   void setMessage(const QString &message);
   QString message() const;
   void setDiff(const git::Diff &diff);
