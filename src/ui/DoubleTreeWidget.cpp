@@ -425,7 +425,8 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
   collapseButtonStagedFiles->setVisible(!listView);
   collapseButtonUnstagedFiles->setVisible(!listView);
 
-  unstagedFiles->updateView(); // Must be before expandAll/collapseAll is done, otherwise the collapse counter is wrong
+  unstagedFiles->updateView(); // Must be before expandAll/collapseAll is done,
+                               // otherwise the collapse counter is wrong
   stagedFiles->updateView();
 
   // If statusDiff, there exist no staged/unstaged, but only
@@ -444,8 +445,8 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
     mStagedWidget->setVisible(false);
   }
 
-         // do not expand if to many files exist, it takes really long
-         // So do it only when there are less than 100
+  // do not expand if to many files exist, it takes really long
+  // So do it only when there are less than 100
   if (diff.isValid() && diff.count() < fileCountExpansionThreshold)
     unstagedFiles->expandAll();
   else
