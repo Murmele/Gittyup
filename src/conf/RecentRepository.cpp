@@ -10,15 +10,17 @@
 #include "RecentRepository.h"
 
 RecentRepository::RecentRepository(const QString &gitpath, QObject *parent)
-    : QObject(parent), mPath(gitpath) {}
+    : QObject(parent), mGitPath(gitpath) {}
 
-QString RecentRepository::gitpath() const { return mPath; }
+QString RecentRepository::gitpath() const { return mGitPath; }
 
 QString RecentRepository::name() const {
-  if (mPath.endsWith("/.git"))
-    return mPath.section('/', -mSections - 1, -2);
+  QString name;
+  if (mGitPath.endsWith("/.git"))
+    name = mGitPath.section('/', -mSections - 1, -2);
   else
-    return mPath.section('/', -mSections, -1);
+    name = mGitPath.section('/', -mSections, -1);
+  return name;
 }
 
 void RecentRepository::increment() { ++mSections; }

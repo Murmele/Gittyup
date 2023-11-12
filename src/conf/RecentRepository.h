@@ -24,7 +24,7 @@ public:
 private:
   void increment();
 
-  QString mPath;
+  QString mGitPath;
   int mSections = 1;
 
   friend class RecentRepositories;
