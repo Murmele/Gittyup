@@ -210,7 +210,7 @@ jobs:
           perl-version: '5.30'
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2.13.0
+        uses: jurplel/install-qt-action@v3.3.0
         timeout-minutes: 10
         if: "!matrix.qt.check_only"
         with:
@@ -222,7 +222,7 @@ jobs:
           modules: qtwebengine
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2.13.0
+        uses: jurplel/install-qt-action@v3.3.0
         timeout-minutes: 10
         if: matrix.qt.check_only
         with:
