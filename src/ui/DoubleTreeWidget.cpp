@@ -67,6 +67,18 @@ private:
 
 } // namespace
 
+QAction *DoubleTreeWidget::setupAppearanceAction(const char *name,
+                                                 Setting::Id id,
+                                                 bool defaultValue) {
+  QAction *action = new QAction(tr(name));
+  action->setCheckable(true);
+  action->setChecked(Settings::instance()->value(id, defaultValue).toBool());
+  connect(action, &QAction::triggered, this, [this, id](bool checked) {
+    Settings::instance()->setValue(id, checked);
+    RepoView::parentView(this)->refresh();
+  });
+}
+
 DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
     : ContentWidget(parent) {
   // first column
@@ -81,38 +93,16 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
   ContextMenuButton *contextButton = new ContextMenuButton(this);
   QMenu *contextMenu = new QMenu(this);
   contextButton->setMenu(contextMenu);
-  QAction *singleTree = new QAction(tr("Single Tree View"));
-  singleTree->setCheckable(true);
-  singleTree->setChecked(
-      Settings::instance()
-          ->value(Setting::Id::ShowChangedFilesInSingleView, false)
-          .toBool());
-  connect(singleTree, &QAction::triggered, this, [this](bool checked) {
-    Settings::instance()->setValue(Setting::Id::ShowChangedFilesInSingleView,
-                                   checked);
-    RepoView::parentView(this)->refresh();
-  });
-  QAction *listView = new QAction(tr("List View"));
-  listView->setCheckable(true);
-  listView->setChecked(Settings::instance()
-                           ->value(Setting::Id::ShowChangedFilesAsList, false)
-                           .toBool());
-  RepoView::parentView(this)->refresh();
-  connect(listView, &QAction::triggered, this, [this](bool checked) {
-    Settings::instance()->setValue(Setting::Id::ShowChangedFilesAsList,
-                                   checked);
-    RepoView::parentView(this)->refresh();
-  });
-  QAction *hideUntrackedFiles = new QAction(tr("Hide Untracked Files"));
-  hideUntrackedFiles->setCheckable(true);
-  hideUntrackedFiles->setChecked(
-      RepoView::parentView(parent)->repo().appConfig().value<bool>(
-          "untracked.hide", false));
-  connect(hideUntrackedFiles, &QAction::triggered, this, [this](bool checked) {
-    RepoView::parentView(this)->repo().appConfig().setValue("untracked.hide",
-                                                            checked);
-    RepoView::parentView(this)->refresh();
-  });
+
+  QAction *singleTree = setupAppearanceAction(
+      "Single View", Setting::Id::ShowChangedFilesInSingleView);
+  QAction *listView =
+      setupAppearanceAction("List View", Setting::Id::ShowChangedFilesAsList);
+  RepoView::parentView(this)->refresh(); // apply read settings
+
+  QAction *hideUntrackedFiles = setupAppearanceAction(
+      "Hide Untracked Files", Setting::Id::HideUntracked, false);
+
   contextMenu->addAction(singleTree);
   contextMenu->addAction(listView);
   contextMenu->addAction(hideUntrackedFiles);

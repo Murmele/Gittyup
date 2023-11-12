@@ -14,6 +14,7 @@
 #include "DetailView.h"
 #include "git/Index.h"
 #include <QModelIndexList>
+#include "conf/Settings.h"
 
 class QTreeView;
 class TreeView;
@@ -67,6 +68,8 @@ private:
   void loadEditorContent(const QModelIndexList &indexes);
   void toggleCollapseStagedFiles();
   void toggleCollapseUnstagedFiles();
+  QAction *setupAppearanceAction(const char *name, Setting::Id id,
+                                 bool defaultValue = false);
 
   DiffTreeModel *mDiffTreeModel{nullptr};
   TreeView *stagedFiles{nullptr};

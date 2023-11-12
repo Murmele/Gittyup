@@ -63,6 +63,7 @@ public:
     ShowCommitsId,
     ShowChangedFilesAsList,
     ShowChangedFilesInSingleView,
+    HideUntracked,
     Language,
   };
   Q_ENUM(Id)
