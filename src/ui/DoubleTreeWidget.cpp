@@ -402,12 +402,6 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
   TreeProxy *proxy = static_cast<TreeProxy *>(unstagedFiles->model());
   DiffTreeModel *model = static_cast<DiffTreeModel *>(proxy->sourceModel());
   model->setDiff(diff);
-  // do not expand if to many files exist, it takes really long
-  // So do it only when there are less than 100
-  if (diff.isValid() && diff.count() < fileCountExpansionThreshold)
-    unstagedFiles->expandAll();
-  else
-    unstagedFiles->collapseAll();
 
   // Single tree & list view.
   bool singleTree =
@@ -431,6 +425,9 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
   collapseButtonStagedFiles->setVisible(!listView);
   collapseButtonUnstagedFiles->setVisible(!listView);
 
+  unstagedFiles->updateView(); // Must be before expandAll/collapseAll is done, otherwise the collapse counter is wrong
+  stagedFiles->updateView();
+
   // If statusDiff, there exist no staged/unstaged, but only
   // the commited files must be shown
   if (!diff.isValid() || diff.isStatusDiff()) {
@@ -447,8 +444,12 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
     mStagedWidget->setVisible(false);
   }
 
-  unstagedFiles->updateView();
-  stagedFiles->updateView();
+         // do not expand if to many files exist, it takes really long
+         // So do it only when there are less than 100
+  if (diff.isValid() && diff.count() < fileCountExpansionThreshold)
+    unstagedFiles->expandAll();
+  else
+    unstagedFiles->collapseAll();
 
   // Clear editor.
   mEditor->clear();
