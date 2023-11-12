@@ -21,7 +21,8 @@
 namespace {
 
 QString lastDir() {
-  QString dir = Settings::instance()->value(Setting::Id::PatchLastDir).toString();
+  QString dir =
+      Settings::instance()->value(Setting::Id::PatchLastDir).toString();
 
   if (dir.isEmpty() || !QDir(dir).exists())
     dir = QDir::homePath();
@@ -34,8 +35,9 @@ void saveLastDir(const QString &path) {
     return;
 
   QFileInfo fileInfo(path);
-  Settings::instance()->setValue(
-      Setting::Id::PatchLastDir, fileInfo.isDir() ? path : fileInfo.absolutePath());
+  Settings::instance()->setValue(Setting::Id::PatchLastDir,
+                                 fileInfo.isDir() ? path
+                                                  : fileInfo.absolutePath());
 }
 
 } // namespace
@@ -152,8 +154,8 @@ void SavePatchDialog::setupUI(bool patch) {
   });
 
   if (patch) {
-    Format format =
-        static_cast<Format>(Settings::instance()->value(Setting::Id::PatchFormat).toInt());
+    Format format = static_cast<Format>(
+        Settings::instance()->value(Setting::Id::PatchFormat).toInt());
     switch (format) {
       case Format::Diff:
         diff->setChecked(true);
@@ -199,7 +201,8 @@ SavePatchDialog::SavePatchDialog(const QByteArray &buffer,
 }
 
 void SavePatchDialog::save() const {
-  Settings::instance()->setValue(Setting::Id::PatchFormat, static_cast<int>(mFormat));
+  Settings::instance()->setValue(Setting::Id::PatchFormat,
+                                 static_cast<int>(mFormat));
   saveLastDir(mDir->text());
 
   if (mFormat == Format::Mailbox)

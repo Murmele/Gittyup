@@ -158,24 +158,6 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     handleUncommittedChanges(index, files);
   } else {
     handleCommits(commits, files);
-
-    // Save Diff
-    QAction *save = addAction(tr("Save Diff"), view, [view, files, diff] {
-      SavePatchDialog *dialog =
-          new SavePatchDialog(diff.toBuffer(files), files, view);
-      dialog->open();
-    });
-    save->setEnabled(false);
-    foreach (const QString &file, files) {
-      int index = diff.indexOf(file);
-      if (index < 0)
-        continue;
-
-      if (diff.status(index) != GIT_DELTA_UNTRACKED) {
-        save->setEnabled(true);
-        break;
-      }
-    }
   }
 
   // TODO: moving this into handleWorkingDirChanges()? Because
@@ -392,6 +374,24 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
       break;
     }
   }
+
+  // Save Diff
+  QAction *save = addAction(tr("Save Diff"), view, [view, files, diff] {
+    SavePatchDialog *dialog =
+        new SavePatchDialog(diff.toBuffer(files), files, view);
+    dialog->open();
+  });
+  save->setEnabled(false);
+  foreach (const QString &file, files) {
+    int index = diff.indexOf(file);
+    if (index < 0)
+      continue;
+
+    if (diff.status(index) != GIT_DELTA_UNTRACKED) {
+      save->setEnabled(true);
+      break;
+    }
+  }
 }
 
 void FileContextMenu::handleCommits(const QList<git::Commit> &commits,
@@ -489,6 +489,14 @@ void FileContextMenu::handleCommits(const QList<git::Commit> &commits,
       break;
     }
   }
+
+  // Save Diff
+  QAction *save = addAction(tr("Save Diff"), view, [view, files, diff] {
+    SavePatchDialog *dialog =
+        new SavePatchDialog(diff.toBuffer(files), files, view);
+    dialog->open();
+  });
+  save->setEnabled(!files.isEmpty());
 }
 
 void FileContextMenu::ignoreFile() {
