@@ -129,6 +129,13 @@ void RecentRepositories::load() {
   qDeleteAll(mRepos);
   mRepos.clear();
 
+  /* If two paths have the same name, increase the path segment so that they get
+   * unique For example: path1/anotherpath/repositoryname
+   * path2/anotherpath/repositoryname
+   *
+   * In this case the complete paths are shown and not only 'repositoryname',
+   * otherwise they are not distinguishable in the recent repository list:
+   */
   foreach (const QString &path, paths) {
     RecentRepository *repo = new RecentRepository(path, this);
     auto functor = [repo](RecentRepository *rhs) {
