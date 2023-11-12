@@ -11,6 +11,7 @@
 #include "ConfFile.h"
 #include "Debug.h"
 #include "qtsupport.h"
+#include "languages.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QSettings>
@@ -26,6 +27,8 @@ namespace {
 
 const QString kIgnoreWsKey("diff/whitespace/ignore");
 const QString kLastPathKey("lastpath");
+const QString kTranslation("translation");
+const QString kTranslationLanguage("language");
 
 // Look up variant at key relative to root.
 QVariant lookup(const QVariantMap &root, const QString &key) {
@@ -51,6 +54,10 @@ Settings::Settings(QObject *parent) : QObject(parent) {
   foreach (const QFileInfo &file, confDir().entryInfoList(QStringList("*.lua")))
     mDefaults[file.baseName()] = ConfFile(file.absoluteFilePath()).parse();
   mDefaults[kLastPathKey] = QDir::homePath();
+  QVariantMap map;
+  map[kTranslationLanguage] = QVariant(Languages::system);
+  mDefaults[kTranslation] = map;
+  mDefaults[kTranslation].toMap()[kTranslationLanguage] = Languages::system;
   mCurrentMap = mDefaults;
 }
 

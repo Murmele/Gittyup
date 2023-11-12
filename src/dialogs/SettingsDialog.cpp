@@ -25,6 +25,7 @@
 #include "ui/MainWindow.h"
 #include "ui/MenuBar.h"
 #include "ui/RepoView.h"
+#include "languages.h"
 #include "update/Updater.h"
 #include <QAction>
 #include <QApplication>
@@ -105,6 +106,13 @@ public:
         new QCheckBox(tr("Update submodules after pull and clone"), this);
     mAutoPrune = new QCheckBox(tr("Prune when fetching"), this);
     mNoTranslation = new QCheckBox(tr("No translation"), this);
+    mLanguages = new QComboBox(this);
+
+    QMapIterator<const char *, const char *> i(Languages::languages);
+    while (i.hasNext()) {
+      i.next();
+      mLanguages->addItem(tr(i.key()), QVariant(i.value()));
+    }
 
     mStoreCredentials =
         new QCheckBox(tr("Store credentials in secure storage"), this);
@@ -123,6 +131,7 @@ public:
     form->addRow(QString(), mPullUpdate);
     form->addRow(QString(), mAutoPrune);
     form->addRow(tr("Language:"), mNoTranslation);
+    form->addRow(tr("Language:"), mLanguages);
     form->addRow(tr("Credentials:"), mStoreCredentials);
     form->addRow(tr("Credential store type:"), mAvailableStores);
     form->addRow(QString(), privacy);
@@ -184,6 +193,12 @@ public:
       Settings::instance()->setValue(Setting::Id::DontTranslate, checked);
     });
 
+    connect(mLanguages, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            [this]() {
+              const auto &language = mLanguages->currentData().toString();
+              Settings::instance()->setValue(Setting::Id::Language, language);
+            });
+
     connect(mStoreCredentials, &QCheckBox::toggled, [this](bool checked) {
       git::Config config = git::Config::global();
       mAvailableStores->setEnabled(checked);
@@ -234,6 +249,14 @@ public:
     mNoTranslation->setChecked(
         settings->value(Setting::Id::DontTranslate).toBool());
 
+    const auto &l = settings->value(Setting::Id::Language).toString();
+    for (int i = 0; i < mLanguages->count(); i++) {
+      if (mLanguages->itemData(i).toString() == l) {
+        mLanguages->setCurrentIndex(i);
+        break;
+      }
+    }
+
     auto currentHelper = config.value<QString>("credential.helper");
     auto checked = CredentialHelper::isHelperValid(currentHelper);
     mStoreCredentials->setChecked(checked);
@@ -259,6 +282,7 @@ private:
   QCheckBox *mPullUpdate;
   QCheckBox *mAutoPrune;
   QCheckBox *mNoTranslation;
+  QComboBox *mLanguages;
   QCheckBox *mStoreCredentials;
   QComboBox *mAvailableStores;
   QCheckBox *mSingleInstance;
