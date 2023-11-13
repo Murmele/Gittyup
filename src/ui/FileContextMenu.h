@@ -35,7 +35,7 @@ private:
   void handleUncommittedChanges(const git::Index &index,
                                 const QStringList &files);
   void handleCommits(const QList<git::Commit> &commits,
-                     const QStringList &files);
+                     const QStringList &files, const git::Diff &);
 
   RepoView *mView;
   QStringList mFiles;

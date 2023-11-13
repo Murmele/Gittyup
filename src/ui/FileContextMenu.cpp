@@ -12,6 +12,7 @@
 #include "IgnoreDialog.h"
 #include "conf/Settings.h"
 #include "Debug.h"
+#include "dialogs/PatchDialog.h"
 #include "dialogs/SettingsDialog.h"
 #include "git/Diff.h"
 #include "git/Index.h"
@@ -156,7 +157,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
   if (commits.isEmpty()) {
     handleUncommittedChanges(index, files);
   } else {
-    handleCommits(commits, files);
+    handleCommits(commits, files, diff);
   }
 
   // TODO: moving this into handleWorkingDirChanges()? Because
@@ -373,10 +374,29 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
       break;
     }
   }
+
+  // Save Diff
+  QAction *save = addAction(tr("Save Diff"), view, [view, files, diff] {
+    SavePatchDialog *dialog =
+        new SavePatchDialog(diff.toBuffer(files), files, view);
+    dialog->open();
+  });
+  save->setEnabled(false);
+  foreach (const QString &file, files) {
+    int index = diff.indexOf(file);
+    if (index < 0)
+      continue;
+
+    if (diff.status(index) != GIT_DELTA_UNTRACKED) {
+      save->setEnabled(true);
+      break;
+    }
+  }
 }
 
 void FileContextMenu::handleCommits(const QList<git::Commit> &commits,
-                                    const QStringList &files) {
+                                    const QStringList &files,
+                                    const git::Diff &diff) {
   // because this might not live anymore
   // when the lambdas are handled
   const auto view = mView;
@@ -470,6 +490,14 @@ void FileContextMenu::handleCommits(const QList<git::Commit> &commits,
       break;
     }
   }
+
+  // Save Diff
+  QAction *save = addAction(tr("Save Diff"), view, [view, files, diff] {
+    SavePatchDialog *dialog =
+        new SavePatchDialog(diff.toBuffer(files), files, view);
+    dialog->open();
+  });
+  save->setEnabled(!files.isEmpty());
 }
 
 void FileContextMenu::ignoreFile() {

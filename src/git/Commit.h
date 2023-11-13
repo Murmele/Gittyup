@@ -80,6 +80,9 @@ public:
   // Get the annotated commit for merging this commit.
   AnnotatedCommit annotatedCommit() const;
 
+  // Get this commit as a mailbox patch format.
+  QByteArray formatPatch(int num, int total) const;
+
   // Set path to emoji description file. This should be set before
   // any commits are created and is not expected to change.
   static void setEmojiFile(const QString &file);

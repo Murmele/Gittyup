@@ -345,6 +345,14 @@ Diff Repository::diffIndexToWorkdir(const Index &index,
   return Diff(diff);
 }
 
+bool Repository::applyDiff(const Diff &diff, git_apply_location_t location) {
+  if (git_apply(d->repo, diff, location, nullptr))
+    return false;
+
+  emit d->notifier->referenceUpdated(head());
+  return true;
+}
+
 Reference Repository::head() const {
   git_reference *ref = nullptr;
   git_repository_head(&ref, d->repo);

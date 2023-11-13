@@ -40,6 +40,8 @@ void Setting::initialize(QMap<Id, QString> &keys) {
   keys[Id::ShowCommitsId] = "commit/id";
   keys[Id::ShowChangedFilesAsList] = "doubletreeview/listview";
   keys[Id::ShowChangedFilesInSingleView] = "doubletreeview/single";
+  keys[Id::PatchFormat] = "patch/format";
+  keys[Id::PatchLastDir] = "patch/lastdir";
 }
 
 void Prompt::initialize(QMap<Kind, QString> &keys) {

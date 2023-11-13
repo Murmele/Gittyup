@@ -64,6 +64,8 @@ public:
     ShowChangedFilesAsList,
     ShowChangedFilesInSingleView,
     Language,
+    PatchFormat,
+    PatchLastDir,
   };
   Q_ENUM(Id)
 
