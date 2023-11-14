@@ -14,9 +14,17 @@ set(LANGUAGES
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 file(GLOB_RECURSE SOURCE_FILES ${SRC_DIR}/*.h ${SRC_DIR}/*.cpp ${SRC_DIR}/*.mm)
 
+set(SYSTEM_LANG_KEY "System")
+set(SUPPORTED_LANGUAGES "{\"${SYSTEM_LANG_KEY}\", \"${SYSTEM_LANG_KEY}\"},")
 foreach(LANGUAGE ${LANGUAGES})
   set(TS_FILES ${TS_FILES} gittyup_${LANGUAGE}.ts)
+  set(SUPPORTED_LANGUAGES
+      "${SUPPORTED_LANGUAGES} {\"${LANGUAGE}\", \"${LANGUAGE}\"},")
 endforeach()
+
+set(LANGUAGE_SOURCE_FILE "${CMAKE_CURRENT_BINARY_DIR}/languages.cpp")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/languages.cpp.inc"
+               ${LANGUAGE_SOURCE_FILE} @ONLY)
 
 if(UPDATE_TRANSLATIONS)
   # FIXME: Clean removes the .ts files.
@@ -27,6 +35,10 @@ endif()
 
 add_custom_target(translations DEPENDS ${QM_FILES})
 add_dependencies(gittyup translations)
+
+add_library(translation ${LANGUAGE_SOURCE_FILE})
+target_include_directories(translation PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(translation Qt5::Core)
 
 # install language files
 

@@ -259,7 +259,27 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
   mTemplate = new TemplateButton(this);
   mTemplate->setText(tr("T"));
   connect(mTemplate, &TemplateButton::templateChanged, this,
-          QOverload<const QString &>::of(&CommitEditor::applyTemplate));
+          [this](const QString &t) {
+            QStringList files;
+            if (mDiff.isValid()) {
+              int count = mDiff.count();
+              git::Index index = mDiff.index();
+              for (int i = 0; i < count; ++i) {
+                QString name = mDiff.name(i);
+                switch (index.isStaged(name)) {
+                  case git::Index::PartiallyStaged:
+                  case git::Index::Staged:
+                    files.append(QFileInfo(name).fileName());
+                    break;
+                  case git::Index::Conflicted:
+                  case git::Index::Disabled:
+                  case git::Index::Unstaged:
+                    break;
+                }
+              }
+            }
+            applyTemplate(t, files);
+          });
 
   QLabel *label = new QLabel(tr("<b>Commit Message:</b>"), this);
 
@@ -586,11 +606,11 @@ QString CommitEditor::createFileList(const QStringList &list, int maxFiles) {
   return msg;
 }
 
-void CommitEditor::setMessage(const QStringList &list) {
+void CommitEditor::setMessage(const QStringList &files) {
   if (mTemplate->templates().count() > 0) {
-    applyTemplate(mTemplate->templates().first().value, list);
+    applyTemplate(mTemplate->templates().first().value, files);
   } else {
-    QString msg = createFileList(list, 3);
+    QString msg = createFileList(files, 3);
     if (!msg.isEmpty())
       msg = QStringLiteral("Update ") + msg;
     setMessage(msg);
@@ -711,7 +731,7 @@ void CommitEditor::updateButtons(bool yieldFocus) {
     return;
   }
 
-  QStringList list;
+  QStringList files;
   int staged = 0;
   int partial = 0;
   int conflicted = 0;
@@ -725,12 +745,12 @@ void CommitEditor::updateButtons(bool yieldFocus) {
         break;
 
       case git::Index::PartiallyStaged:
-        list.append(QFileInfo(name).fileName());
+        files.append(QFileInfo(name).fileName());
         ++partial;
         break;
 
       case git::Index::Staged:
-        list.append(QFileInfo(name).fileName());
+        files.append(QFileInfo(name).fileName());
         ++staged;
         break;
 
@@ -744,7 +764,7 @@ void CommitEditor::updateButtons(bool yieldFocus) {
     QSignalBlocker blocker(mMessage);
     (void)blocker;
 
-    setMessage(list);
+    setMessage(files);
     if (yieldFocus && !mMessage->toPlainText().isEmpty())
       mMessage->setFocus();
   }
