@@ -13,7 +13,7 @@
 #include "conf/Settings.h"
 #include "git/Diff.h"
 #include "git/Config.h"
-#include "git/Index.h"
+#include "git/Blob.h"
 #include "git/Repository.h"
 #include <QStandardPaths>
 #include <QProcess>
@@ -39,10 +39,13 @@ void splitCommand(const QString &command, QString &program, QString &args) {
 
 } // namespace
 
-ExternalTool::ExternalTool(const QString &file, QObject *parent)
-    : QObject(parent), mFile(file) {}
+ExternalTool::ExternalTool(const QStringList &files, const git::Diff &diff,
+                           const git::Repository &repo, QObject *parent)
+    : QObject(parent), mFiles(files), mDiff(diff), mRepo(repo) {}
 
-bool ExternalTool::isValid() const { return !mFile.isEmpty(); }
+bool ExternalTool::isValid() const {
+  return !mFiles.isEmpty() && !mFiles.first().isEmpty();
+}
 
 QString ExternalTool::lookupCommand(const QString &key, bool &shell) {
   git::Config config = git::Config::global();
@@ -96,30 +99,14 @@ QList<ExternalTool::Info> ExternalTool::readBuiltInTools(const QString &key) {
   return tools;
 }
 
-ExternalTool *ExternalTool::create(const QString &file, const git::Diff &diff,
-                                   const git::Repository &repo,
-                                   QObject *parent) {
-  if (!diff.isValid())
-    return nullptr;
+bool ExternalTool::isConflicted(const QString &file) const {
+  if (!mDiff.isValid())
+    return false;
 
-  int index = diff.indexOf(file);
+  int index = mDiff.indexOf(file);
   if (index < 0)
-    return nullptr;
-
-  // Convert to absolute path.
-  QString path = repo.workdir().filePath(file);
+    return false;
 
   // Create merge tool.
-  if (diff.status(index) == GIT_DELTA_CONFLICTED) {
-    git::Index::Conflict conflict = repo.index().conflict(file);
-    git::Blob local = repo.lookupBlob(conflict.ours);
-    git::Blob remote = repo.lookupBlob(conflict.theirs);
-    git::Blob base = repo.lookupBlob(conflict.ancestor);
-    return new MergeTool(path, local, remote, base, parent);
-  }
-
-  // Create diff tool.
-  git::Blob local = repo.lookupBlob(diff.id(index, git::Diff::OldFile));
-  git::Blob remote = repo.lookupBlob(diff.id(index, git::Diff::NewFile));
-  return new DiffTool(path, local, remote, parent);
+  return mDiff.status(index) == GIT_DELTA_CONFLICTED;
 }

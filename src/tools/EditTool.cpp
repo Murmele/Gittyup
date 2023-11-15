@@ -14,11 +14,19 @@
 #include <QProcess>
 #include <QUrl>
 
-EditTool::EditTool(const QString &file, QObject *parent)
-    : ExternalTool(file, parent) {}
+EditTool::EditTool(const QStringList &files, const git::Diff &diff,
+                   const git::Repository &repo, QObject *parent)
+    : ExternalTool(files, diff, repo, parent) {}
 
 bool EditTool::isValid() const {
-  return (ExternalTool::isValid() && QFileInfo(mFile).isFile());
+  if (!ExternalTool::isValid())
+    return false;
+
+  foreach (const QString file, mFiles) {
+    if (!QFileInfo(mRepo.workdir().filePath(file)).isFile())
+      return false;
+  }
+  return true;
 }
 
 ExternalTool::Kind EditTool::kind() const { return Edit; }
@@ -27,26 +35,31 @@ QString EditTool::name() const { return tr("Edit in External Editor"); }
 
 bool EditTool::start() {
   git::Config config = git::Config::global();
-  QString editor = config.value<QString>("gui.editor");
+  QString baseEditor = config.value<QString>("gui.editor");
 
-  if (editor.isEmpty())
-    editor = qgetenv("GIT_EDITOR");
+  if (baseEditor.isEmpty())
+    baseEditor = qgetenv("GIT_EDITOR");
 
-  if (editor.isEmpty())
-    editor = config.value<QString>("core.editor");
+  if (baseEditor.isEmpty())
+    baseEditor = config.value<QString>("core.editor");
 
-  if (editor.isEmpty())
-    editor = qgetenv("VISUAL");
+  if (baseEditor.isEmpty())
+    baseEditor = qgetenv("VISUAL");
 
-  if (editor.isEmpty())
-    editor = qgetenv("EDITOR");
+  if (baseEditor.isEmpty())
+    baseEditor = qgetenv("EDITOR");
 
-  if (editor.isEmpty())
-    return QDesktopServices::openUrl(QUrl::fromLocalFile(mFile));
+  if (baseEditor.isEmpty()) {
+    foreach (const QString &file, mFiles) {
+      QDesktopServices::openUrl(QUrl::fromLocalFile(file));
+    }
+    return true;
+  }
+
+  QString editor = baseEditor;
 
   // Find arguments.
-  QStringList args = editor.split("\" \"");
-
+  QStringList args = baseEditor.split("\" \"");
   if (args.count() > 1) {
     // Format 1: "Command" "Argument1" "Argument2"
     editor = args[0];
@@ -62,17 +75,24 @@ bool EditTool::start() {
       editor = editor.left(li + 1);
     } else {
       // Format 3: "Command" (no argument)
-      // Format 4: Command (no argument)
+      if (fi == -1) {
+        // Format 4: Command  Argument1 Argument2
+        // Format 5: Command (no argument)
+        args = editor.split(" ");
+        editor = args.size() ? args[0] : "";
+      }
     }
   }
 
   // Remove command, add filename, trim command.
   args.removeFirst();
-  args.append(mFile);
+  foreach (const QString &file, mFiles) {
+    args.append(mRepo.workdir().filePath(file));
+  }
   editor.remove("\"");
 
   // Destroy this after process finishes.
-  QProcess *process = new QProcess(this);
+  QProcess *process = new QProcess();
   auto signal = QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished);
   QObject::connect(process, signal, this, &ExternalTool::deleteLater);
 

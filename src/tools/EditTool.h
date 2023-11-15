@@ -12,11 +12,18 @@
 
 #include "ExternalTool.h"
 
+class QObject;
+namespace git {
+class Diff;
+class Repository;
+}; // namespace git
+
 class EditTool : public ExternalTool {
   Q_OBJECT
 
 public:
-  EditTool(const QString &file, QObject *parent = nullptr);
+  EditTool(const QStringList &files, const git::Diff &diff,
+           const git::Repository &repo, QObject *parent);
 
   bool isValid() const override;
 

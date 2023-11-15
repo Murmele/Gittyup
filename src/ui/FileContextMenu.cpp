@@ -9,6 +9,7 @@
 
 #include "FileContextMenu.h"
 #include "RepoView.h"
+#include "DiffTreeModel.h"
 #include "IgnoreDialog.h"
 #include "conf/Settings.h"
 #include "Debug.h"
@@ -19,6 +20,8 @@
 #include "host/Repository.h"
 #include "tools/EditTool.h"
 #include "tools/ShowTool.h"
+#include "tools/DiffTool.h"
+#include "tools/MergeTool.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QDir>
@@ -86,61 +89,25 @@ void handlePath(const git::Repository &repo, const QString &path,
 
 } // namespace
 
-FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
+FileContextMenu::FileContextMenu(RepoView *view,
+                                 const AccumRepoFiles &accumFiles,
                                  const git::Index &index, QWidget *parent)
-    : QMenu(parent), mView(view), mFiles(files) {
-  // Show diff and merge tools for the currently selected diff.
+    : QMenu(parent), mView(view), mAccumFiles(accumFiles) {
   git::Diff diff = view->diff();
-  git::Repository repo = view->repo();
-
   if (!diff.isValid())
     return;
 
+  git::Repository repo = view->repo();
+
   // Create external tools.
-  QList<ExternalTool *> showTools;
-  QList<ExternalTool *> editTools;
-  QList<ExternalTool *> diffTools;
-  QList<ExternalTool *> mergeTools;
-  foreach (const QString &file, files) {
-    // Convert to absolute path.
-    QString path = repo.workdir().filePath(file);
-
-    // Add show tool.
-    showTools.append(new ShowTool(path, this));
-
-    // Add edit tool.
-    editTools.append(new EditTool(path, this));
-
-    // Add diff or merge tool.
-    if (ExternalTool *tool = ExternalTool::create(file, diff, repo, this)) {
-      switch (tool->kind()) {
-        case ExternalTool::Diff:
-          diffTools.append(tool);
-          break;
-
-        case ExternalTool::Merge:
-          mergeTools.append(tool);
-          break;
-
-        case ExternalTool::Show: // fall through
-        case ExternalTool::Edit:
-          Q_ASSERT(false);
-          break;
-      }
-
-      connect(tool, &ExternalTool::error, [this](ExternalTool::Error error) {
-        if (error != ExternalTool::BashNotFound)
-          return;
-
-        QString title = tr("Bash Not Found");
-        QString text = tr("Bash was not found on your PATH.");
-        QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok,
-                        this);
-        msg.setInformativeText(
-            tr("Bash is required to execute external tools."));
-        msg.exec();
-      });
-    }
+  const QStringList &files = mAccumFiles.getFiles();
+  QList<ExternalTool *> showTools, editTools, diffTools, mergeTools;
+  attachTool(new ShowTool(files, diff, repo, this), showTools);
+  attachTool(new EditTool(files, diff, repo, this), editTools);
+  if (diff.isConflicted()) {
+    attachTool(new MergeTool(files, diff, repo, this), mergeTools);
+  } else {
+    attachTool(new DiffTool(files, diff, repo, this), diffTools);
   }
 
   // Add external tool actions.
@@ -173,8 +140,10 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
       }
     }
 
-    addAction(locked ? tr("Unlock") : tr("Lock"),
-              [view, files, locked] { view->lfsSetLocked(files, !locked); });
+    const QStringList &allFiles = files;
+    addAction(locked ? tr("Unlock") : tr("Lock"), [view, allFiles, locked] {
+      view->lfsSetLocked(allFiles, !locked);
+    });
   }
 
   // Add single selection actions.
@@ -473,10 +442,11 @@ void FileContextMenu::handleCommits(const QList<git::Commit> &commits,
 }
 
 void FileContextMenu::ignoreFile() {
-  if (!mFiles.count())
+  const QStringList &files = mAccumFiles.getFilesInDirs();
+  if (!files.count())
     return;
 
-  auto d = new IgnoreDialog(mFiles.join('\n'), parentWidget());
+  auto d = new IgnoreDialog(files.join('\n'), parentWidget());
   d->setAttribute(Qt::WA_DeleteOnClose);
 
   auto *view = mView;
@@ -547,5 +517,102 @@ void FileContextMenu::addExternalToolsAction(
       action->setEnabled(false);
       break;
     }
+  }
+}
+
+void FileContextMenu::attachTool(ExternalTool *tool,
+                                 QList<ExternalTool *> &tools) {
+  tools.append(tool);
+
+  connect(tool, &ExternalTool::error, [this](ExternalTool::Error error) {
+    if (error != ExternalTool::BashNotFound)
+      return;
+
+    QString title = tr("Bash Not Found");
+    QString text = tr("Bash was not found on your PATH.");
+    QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok, this);
+    msg.setInformativeText(tr("Bash is required to execute external tools."));
+    msg.exec();
+  });
+}
+
+AccumRepoFiles::AccumRepoFiles(const QString &file) { mFiles.append(file); }
+
+AccumRepoFiles::AccumRepoFiles(const QStringList &files) {
+  mFiles.append(files);
+}
+
+AccumRepoFiles::AccumRepoFiles(bool staged, bool statusDiff)
+    : mStaged(staged), mStatusDiff(statusDiff) {}
+
+// Get all files that were accumulated individually, not as part of a
+// directory being accumulated.  The files contain the file name with any
+// path provided (relative or absolute).
+const QStringList &AccumRepoFiles::getFiles() const { return mFiles; }
+
+// Get all directory paths that we accumulated.
+QStringList AccumRepoFiles::getAccumulatedDirs() const {
+  return mFilesInDirMap.keys();
+}
+
+// Get a list of files from all accumulated directories or just those from
+// the requested ones.
+QStringList AccumRepoFiles::getFilesInDirs(const QStringList &dirs) const {
+  QStringList filesInDirs;
+
+  const QStringList &dirKeys = dirs.isEmpty() ? getAccumulatedDirs() : dirs;
+  for (QString dirKey : dirKeys) {
+    ConstQMapIterator iter = mFilesInDirMap.find(dirKey);
+    if (iter == mFilesInDirMap.end())
+      continue;
+    filesInDirs.append(iter.value());
+  }
+
+  return filesInDirs;
+}
+
+// Get a list of all accumulated files with paths.  These include those
+// accumulated individually as well as those that were added as part of
+// accumulating a directory.
+QStringList AccumRepoFiles::getAllFiles() const {
+  return getFiles() + getFilesInDirs();
+}
+
+// Accumulate the given node as either an individual file or as a directory.
+// For directories, all the files in the directory will be enumeracted and
+// accumulated, recursively.
+void AccumRepoFiles::add(const git::Index &index, const Node *node) {
+  Debug("AccumRepoFiles accumulateFiles() " << node->name());
+
+  addToFileList(mFiles, index, node);
+}
+
+void AccumRepoFiles::addDirFiles(const git::Index &index, const Node *node) {
+  Debug("AccumRepoFiles addDirFiles() " << node->name());
+
+  for (auto childNode : node->children()) {
+    QFileInfo fileInfo = childNode->path(true);
+    addToFileList(mFilesInDirMap[fileInfo.path()], index, childNode);
+  }
+}
+
+void AccumRepoFiles::addToFileList(QStringList &files, const git::Index &index,
+                                   const Node *node) {
+  if (node->hasChildren()) {
+    addDirFiles(index, node);
+  } else {
+    addFile(files, index, node);
+  }
+}
+
+void AccumRepoFiles::addFile(QStringList &fileList, const git::Index &index,
+                             const Node *node) const {
+  auto path = node->path(true);
+
+  git::Index::StagedState stageState = index.isStaged(path);
+
+  if ((mStaged && stageState != git::Index::Unstaged) ||
+      (!mStaged && stageState != git::Index::Staged) || !mStatusDiff) {
+    fileList.append(path);
   }
 }

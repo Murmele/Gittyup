@@ -15,7 +15,6 @@
 #include "StatePushButton.h"
 #include "TreeProxy.h"
 #include "TreeView.h"
-#include "ViewDelegate.h"
 #include "Debug.h"
 #include "conf/Settings.h"
 #include "DiffView/DiffView.h"
@@ -98,6 +97,7 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
   listView->setChecked(Settings::instance()
                            ->value(Setting::Id::ShowChangedFilesAsList, false)
                            .toBool());
+  RepoView::parentView(this)->refresh();
   connect(listView, &QAction::triggered, this, [this](bool checked) {
     Settings::instance()->setValue(Setting::Id::ShowChangedFilesAsList,
                                    checked);
@@ -160,13 +160,8 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
             repoView->updateSubmodules(submodules, recursive, init,
                                        force_checkout);
           });
-  TreeProxy *treewrapperStaged = new TreeProxy(true, this);
-  treewrapperStaged->setSourceModel(mDiffTreeModel);
-  stagedFiles->setModel(treewrapperStaged);
-  stagedFiles->setHeaderHidden(true);
-  ViewDelegate *stagedDelegate = new ViewDelegate();
-  stagedDelegate->setDrawArrow(false);
-  stagedFiles->setItemDelegateForColumn(0, stagedDelegate);
+
+  stagedFiles->setModel(new TreeProxy(true, mDiffTreeModel, this));
 
   QHBoxLayout *hBoxLayout = new QHBoxLayout();
   QLabel *label = new QLabel(kStagedFiles);
@@ -192,13 +187,7 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
             showFileContextMenu(pos, repoView, unstagedFiles, false);
           });
 
-  TreeProxy *treewrapperUnstaged = new TreeProxy(false, this);
-  treewrapperUnstaged->setSourceModel(mDiffTreeModel);
-  unstagedFiles->setModel(treewrapperUnstaged);
-  unstagedFiles->setHeaderHidden(true);
-  ViewDelegate *unstagedDelegate = new ViewDelegate();
-  unstagedDelegate->setDrawArrow(false);
-  unstagedFiles->setItemDelegateForColumn(0, unstagedDelegate);
+  unstagedFiles->setModel(new TreeProxy(false, mDiffTreeModel, this));
 
   hBoxLayout = new QHBoxLayout();
   mUnstagedCommitedFiles = new QLabel(kUnstagedFiles);
@@ -318,46 +307,24 @@ QModelIndex DoubleTreeWidget::selectedIndex() const {
   return QModelIndex();
 }
 
-static void addNodeToMenu(const git::Index &index, QStringList &files,
-                          const Node *node, bool staged, bool statusDiff) {
-  Debug("DoubleTreeWidgetr addNodeToMenu()" << node->name());
-
-  if (node->hasChildren()) {
-    for (auto child : node->children()) {
-      addNodeToMenu(index, files, child, staged, statusDiff);
-    }
-
-  } else {
-    auto path = node->path(true);
-
-    auto stageState = index.isStaged(path);
-
-    if ((staged && stageState != git::Index::Unstaged) ||
-        (!staged && stageState != git::Index::Staged) || !statusDiff) {
-      files.append(path);
-    }
-  }
-}
-
 void DoubleTreeWidget::showFileContextMenu(const QPoint &pos, RepoView *view,
                                            QTreeView *tree, bool staged) {
-  QStringList files;
-  QModelIndexList indexes = tree->selectionModel()->selectedIndexes();
+  QModelIndexList modelIndexes = tree->selectionModel()->selectedIndexes();
   const auto diff = view->diff();
   if (!diff.isValid())
     return;
 
-  const bool statusDiff = diff.isStatusDiff();
-  foreach (const QModelIndex &index, indexes) {
-    auto node = index.data(Qt::UserRole).value<Node *>();
-
-    addNodeToMenu(view->repo().index(), files, node, staged, statusDiff);
+  const git::Index repoIndex = view->repo().index();
+  AccumRepoFiles accumulatedFiles(staged, diff.isStatusDiff());
+  foreach (const QModelIndex &modelIndex, modelIndexes) {
+    auto node = modelIndex.data(Qt::UserRole).value<Node *>();
+    accumulatedFiles.add(repoIndex, node);
   }
 
-  if (files.isEmpty())
+  if (accumulatedFiles.getAllFiles().isEmpty())
     return;
 
-  auto menu = new FileContextMenu(view, files, git::Index(), tree);
+  auto menu = new FileContextMenu(view, accumulatedFiles, git::Index(), tree);
   menu->setAttribute(Qt::WA_DeleteOnClose);
   menu->popup(tree->mapToGlobal(pos));
 }

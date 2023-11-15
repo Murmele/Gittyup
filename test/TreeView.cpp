@@ -3,7 +3,9 @@
 #include "ui/MainWindow.h"
 #include "ui/DoubleTreeWidget.h"
 #include "ui/TreeView.h"
+#include "ui/TreeProxy.h"
 #include "ui/FileContextMenu.h"
+#include "conf/Settings.h"
 
 #include <QTextEdit>
 
@@ -21,6 +23,18 @@ using namespace QTest;
   QVERIFY(QTest::qWaitForWindowExposed(&window));                              \
                                                                                \
   RepoView *repoView = window.currentView();
+
+static void disableListView(TreeView &treeView, RepoView &repoView) {
+  auto treeProxy = dynamic_cast<TreeProxy *>(treeView.model());
+  QVERIFY(treeProxy);
+
+  auto diffTreeModel = dynamic_cast<DiffTreeModel *>(treeProxy->sourceModel());
+  QVERIFY(diffTreeModel);
+
+  diffTreeModel->enableListView(false);
+  Settings::instance()->setValue(Setting::Id::ShowChangedFilesAsList, false);
+  repoView.refresh();
+}
 
 class TestTreeView : public QObject {
   Q_OBJECT
@@ -46,6 +60,7 @@ void TestTreeView::restoreStagedFileAfterCommit() {
   {
     auto unstagedTree = doubleTree->findChild<TreeView *>("Unstaged");
     QVERIFY(unstagedTree);
+    disableListView(*unstagedTree, *view);
     QAbstractItemModel *unstagedModel = unstagedTree->model();
     // Wait for refresh
     auto timeout = Timeout(10000, "Repository didn't refresh in time");
@@ -179,10 +194,11 @@ void TestTreeView::discardFiles() {
 
   auto *menu = doubleTree->findChild<FileContextMenu *>();
   QVERIFY(menu);
-  QCOMPARE(menu->mFiles.count(), 1);
+  auto files = menu->mAccumFiles.getFiles();
+  QCOMPARE(files.count(), 1);
   // only folder1/file.txt shall get discarded.
   // folder1/file2.txt shall not discarded!
-  QCOMPARE(menu->mFiles.at(0), "folder1/file.txt");
+  QCOMPARE(files.at(0), "folder1/file.txt");
 
   // From here on everything is tested in TestFileContextMenu
 }
