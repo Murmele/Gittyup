@@ -6,7 +6,7 @@ cd "`dirname "$0"`"
 # Variable that will hold the name of the clang-format command
 FMT=""
 
-FOLDERS=("./src" "./test")
+FOLDERS=("./src" "./test" "./l10n")
 
 # We specifically require clang-format v13. Some distros include the version
 # number in the name, others don't. Prefer the specifically-named version.

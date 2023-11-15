@@ -67,7 +67,14 @@ target_compile_definitions(
   PRIVATE QT_TRANSLATIONS_DIR="${QT_TRANSLATIONS_DIR}"
           BUILD_DESCRIPTION="${BUILD_DESCRIPTION}")
 
-target_link_libraries(app conf git ui update Qt5::Widgets)
+target_link_libraries(
+  app
+  translation
+  conf
+  git
+  ui
+  update
+  Qt5::Widgets)
 
 set_target_properties(app PROPERTIES AUTOMOC ON)
 
