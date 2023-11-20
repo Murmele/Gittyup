@@ -117,10 +117,10 @@ public:
     RecentRepository *repo = repos->repository(index.row());
     switch (role) {
       case Qt::DisplayRole:
-        return mShowFullPath ? repo->path() : repo->name();
+        return mShowFullPath ? repo->gitpath() : repo->name();
 
       case Qt::UserRole:
-        return repo->path();
+        return repo->gitpath();
     }
 
     return QVariant();

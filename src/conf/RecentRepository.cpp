@@ -9,13 +9,13 @@
 
 #include "RecentRepository.h"
 
-RecentRepository::RecentRepository(const QString &path, QObject *parent)
-    : QObject(parent), mPath(path) {}
+RecentRepository::RecentRepository(const QString &gitpath, QObject *parent)
+    : QObject(parent), mGitPath(gitpath) {}
 
-QString RecentRepository::path() const { return mPath; }
+QString RecentRepository::gitpath() const { return mGitPath; }
 
 QString RecentRepository::name() const {
-  return mPath.section('/', -mSections);
+  return mGitPath.section('/', -mSections, -1);
 }
 
 void RecentRepository::increment() { ++mSections; }

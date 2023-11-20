@@ -16,15 +16,15 @@ class RecentRepository : public QObject {
   Q_OBJECT
 
 public:
-  RecentRepository(const QString &path, QObject *parent = nullptr);
+  RecentRepository(const QString &gitpath, QObject *parent = nullptr);
 
-  QString path() const;
+  QString gitpath() const;
   QString name() const;
 
 private:
   void increment();
 
-  QString mPath;
+  QString mGitPath;
   int mSections = 1;
 
   friend class RecentRepositories;
