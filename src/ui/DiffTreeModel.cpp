@@ -7,6 +7,7 @@
 // Author: Jason Haslam
 //
 
+#include <array>
 #include "DiffTreeModel.h"
 #include "conf/Settings.h"
 #include "git/Blob.h"
@@ -16,17 +17,36 @@
 #include "git/Patch.h"
 #include <QStringBuilder>
 #include <QUrl>
+#include <qobjectdefs.h>
 
 namespace {
 
 const QString kLinkFmt = "<a href='%1'>%2</a>";
 
+const std::array<QString, 3> kModelHeaders = {QObject::tr("File Name"),
+                                              QObject::tr("Relative Path"),
+                                              QObject::tr("State")};
+
+bool asList() {
+  return Settings::instance()
+      ->value(Setting::Id::ShowChangedFilesAsList, false)
+      .toBool();
+}
+
 } // namespace
 
 DiffTreeModel::DiffTreeModel(const git::Repository &repo, QObject *parent)
-    : QAbstractItemModel(parent), mRepo(repo) {}
+    : QAbstractItemModel(parent), mRepo(repo) {
+  setMultiColumn(mMultiColumn);
+}
 
 DiffTreeModel::~DiffTreeModel() { delete mRoot; }
+
+void DiffTreeModel::setMultiColumn(bool multi) {
+  beginResetModel();
+  mMultiColumn = multi;
+  endResetModel(); // Notify view about the change
+}
 
 void DiffTreeModel::createDiffTree() {
 
@@ -91,7 +111,22 @@ int DiffTreeModel::rowCount(const QModelIndex &parent) const {
   return mDiff ? node(parent)->children().size() : 0;
 }
 
-int DiffTreeModel::columnCount(const QModelIndex &parent) const { return 1; }
+QVariant DiffTreeModel::headerData(int section, Qt::Orientation orientation,
+                                   int role) const {
+  if (section > 2 || section < 0) {
+    assert(false);
+    return QVariant();
+  }
+  if (orientation == Qt::Orientation::Vertical)
+    return QVariant();
+  if (role != Qt::DisplayRole)
+    return QVariant();
+  return kModelHeaders.at(section);
+}
+
+int DiffTreeModel::columnCount(const QModelIndex &parent) const {
+  return !asList() || !mMultiColumn ? 1 : kModelHeaders.size();
+}
 
 bool DiffTreeModel::hasChildren(const QModelIndex &parent) const {
   return mRoot && node(parent)->hasChildren();
@@ -134,7 +169,7 @@ void DiffTreeModel::modelIndices(const QModelIndex &parent,
   }
 
   for (int i = 0; i < n->children().length(); i++) {
-    auto child = createIndex(i, 0, n->children()[i]);
+    auto child = createIndex(i, parent.column(), n->children()[i]);
     if (recursive)
       modelIndices(child, list);
     else if (!node(child)->hasChildren())
@@ -195,9 +230,15 @@ QVariant DiffTreeModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 
   Node *node = this->node(index);
+
+  // Skip intermediate path elements for trees showing file lists only.
+  if (node->hasChildren() && asList())
+    return QVariant();
+
   switch (role) {
-    case Qt::DisplayRole:
-      return node->name();
+    case Qt::DisplayRole: {
+      return getDisplayRole(index);
+    }
 
       //    case Qt::DecorationRole: {
       //      QFileInfo info(node->path());
@@ -212,7 +253,7 @@ QVariant DiffTreeModel::data(const QModelIndex &index, int role) const {
       return node->path();
 
     case Qt::CheckStateRole: {
-      if (!mDiff.isValid() || !mDiff.isStatusDiff())
+      if (!mDiff.isValid() || !mDiff.isStatusDiff() || index.column() > 0)
         return QVariant();
 
       git::Index index = mDiff.index();
@@ -378,6 +419,22 @@ Qt::ItemFlags DiffTreeModel::flags(const QModelIndex &index) const {
 
 Node *DiffTreeModel::node(const QModelIndex &index) const {
   return index.isValid() ? static_cast<Node *>(index.internalPointer()) : mRoot;
+}
+
+QVariant DiffTreeModel::getDisplayRole(const QModelIndex &index) const {
+  Node *node = this->node(index);
+  if (asList() && mMultiColumn) {
+    QFileInfo fileInfo(node->path(true));
+    switch (index.column()) {
+      case 0:
+        return fileInfo.fileName();
+      case 1:
+        return fileInfo.path();
+      default:
+        return ""; // State
+    }
+  }
+  return node->name();
 }
 
 //#############################################################################

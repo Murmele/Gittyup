@@ -13,12 +13,26 @@
 #include "ui/MainWindow.h"
 #include "ui/RepoView.h"
 #include "ui/TreeView.h"
+#include "ui/TreeProxy.h"
+#include "conf/Settings.h"
 #include <QFile>
 #include <QTextEdit>
 #include <QTextStream>
 
 using namespace Test;
 using namespace QTest;
+
+static void disableListView(TreeView &treeView, RepoView &repoView) {
+  auto treeProxy = dynamic_cast<TreeProxy *>(treeView.model());
+  QVERIFY(treeProxy);
+
+  auto diffTreeModel = dynamic_cast<DiffTreeModel *>(treeProxy->sourceModel());
+  QVERIFY(diffTreeModel);
+
+  diffTreeModel->enableListView(false);
+  Settings::instance()->setValue(Setting::Id::ShowChangedFilesAsList, false);
+  repoView.refresh();
+}
 
 class TestIndex : public QObject {
   Q_OBJECT
@@ -55,6 +69,8 @@ void TestIndex::stageAddition() {
 
   auto unstagedFiles = doubleTree->findChild<TreeView *>("Unstaged");
   QVERIFY(unstagedFiles);
+
+  disableListView(*unstagedFiles, *view);
 
   auto stagedFiles = doubleTree->findChild<TreeView *>("Staged");
   QVERIFY(stagedFiles);
@@ -150,6 +166,8 @@ void TestIndex::stageDirectory() {
 
   auto unstagedFiles = doubleTree->findChild<TreeView *>("Unstaged");
   QVERIFY(unstagedFiles);
+
+  disableListView(*unstagedFiles, *view);
 
   auto stagedFiles = doubleTree->findChild<TreeView *>("Staged");
   QVERIFY(stagedFiles);
