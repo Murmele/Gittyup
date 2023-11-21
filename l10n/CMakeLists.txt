@@ -38,7 +38,7 @@ add_dependencies(gittyup translations)
 
 add_library(translation ${LANGUAGE_SOURCE_FILE})
 target_include_directories(translation PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(translation Qt5::Core)
+target_link_libraries(translation Qt6::Core)
 
 # install language files
 
