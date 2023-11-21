@@ -24,6 +24,9 @@
 #include "RepoView.h"
 #include <QMessageBox>
 #include <QPushButton>
+#include "conf/Settings.h"
+#include <QAbstractItemModel>
+#include <memory>
 
 #ifdef Q_OS_WIN
 #define ICON_SIZE 48
@@ -41,8 +44,26 @@ const QString kLabelFmt = "<p style='color: gray; font-weight: bold'>%1</p>";
 } // namespace
 
 TreeView::TreeView(QWidget *parent, const QString &name)
-    : QTreeView(parent), mSharedDelegate(new ViewDelegate(this)), mName(name) {
+    : QTreeView(parent),
+      mFileListDelegatePtr(std::make_unique<ViewDelegate>(this, true)),
+      mFileTreeDelegatePtr(std::make_unique<ViewDelegate>(this)), mName(name) {
   setObjectName(name);
+}
+
+void TreeView::updateView() {
+  QAbstractItemModel *itemModel = model();
+  if (!itemModel)
+    return;
+
+  // Remove any previous delegate on the current column, get the new current
+  // column, and set the delegate on that.
+  setItemDelegateForColumn(mDelegateCol, nullptr);
+  mDelegateCol = itemModel->columnCount() - 1;
+  setItemDelegateForColumn(mDelegateCol, mDelegateCol
+                                             ? mFileListDelegatePtr.get()
+                                             : mFileTreeDelegatePtr.get());
+
+  setHeaderHidden(mDelegateCol ? false : true);
 }
 
 void TreeView::setModel(QAbstractItemModel *model) {
@@ -57,6 +78,10 @@ void TreeView::setModel(QAbstractItemModel *model) {
   connect(model, &QAbstractItemModel::rowsInserted, this,
           QOverload<const QModelIndex &, int, int>::of(
               &TreeView::updateCollapseCount));
+
+  // Allow column sorting and set the default column and sort order.
+  setSortingEnabled(true);
+  sortByColumn(0, Qt::AscendingOrder);
 }
 
 void TreeView::discard(const QModelIndex &index, const bool force) {

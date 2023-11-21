@@ -50,16 +50,20 @@ void RecentRepositories::remove(int index) {
   emit repositoryRemoved();
 }
 
-void RecentRepositories::add(QString path) {
+/*!
+ * gitpath: path to the git repository, does not neccesarly need to be the
+ * workdir
+ */
+void RecentRepositories::add(QString gitpath) {
   emit repositoryAboutToBeAdded();
 
   auto end = mRepos.end();
-  RecentRepository *repo = new RecentRepository(path, this);
+  RecentRepository *repo = new RecentRepository(gitpath, this);
   auto it = std::remove_if(mRepos.begin(), end, [repo](RecentRepository *rhs) {
 #ifdef Q_OS_WIN
-    return repo->path().compare(rhs->path(), Qt::CaseInsensitive) == 0;
+    return repo->gitpath().compare(rhs->gitpath(), Qt::CaseInsensitive) == 0;
 #else
-    return (repo->path() == rhs->path());
+    return (repo->gitpath() == rhs->gitpath());
 #endif
   });
 
@@ -82,7 +86,7 @@ RecentRepositories *RecentRepositories::instance() {
 void RecentRepositories::store() {
   QStringList paths;
   foreach (RecentRepository *repo, mRepos)
-    paths.append(repo->path());
+    paths.append(repo->gitpath());
 
   QSettings().setValue(kRecentKey, paths);
 
@@ -125,6 +129,13 @@ void RecentRepositories::load() {
   qDeleteAll(mRepos);
   mRepos.clear();
 
+  /* If two paths have the same name, increase the path segment so that they get
+   * unique For example: path1/anotherpath/repositoryname
+   * path2/anotherpath/repositoryname
+   *
+   * In this case the complete paths are shown and not only 'repositoryname',
+   * otherwise they are not distinguishable in the recent repository list:
+   */
   foreach (const QString &path, paths) {
     RecentRepository *repo = new RecentRepository(path, this);
     auto functor = [repo](RecentRepository *rhs) {

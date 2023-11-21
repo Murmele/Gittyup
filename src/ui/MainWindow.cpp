@@ -217,7 +217,7 @@ RepoView *MainWindow::addTab(const QString &path) {
   TabWidget *tabs = tabWidget();
   for (int i = 0; i < tabs->count(); i++) {
     RepoView *view = static_cast<RepoView *>(tabs->widget(i));
-    if (path == view->repo().workdir().path()) {
+    if (path == view->repo().dir(false).path()) {
       tabs->setCurrentIndex(i);
       return view;
     }
@@ -234,13 +234,13 @@ RepoView *MainWindow::addTab(const QString &path) {
 
 RepoView *MainWindow::addTab(const git::Repository &repo) {
   // Update recent repository settings.
-  QDir dir = repo.workdir();
+  QDir dir = repo.dir(false);
   RecentRepositories::instance()->add(dir.path());
 
   TabWidget *tabs = tabWidget();
   for (int i = 0; i < tabs->count(); i++) {
     RepoView *view = static_cast<RepoView *>(tabs->widget(i));
-    if (dir.path() == view->repo().workdir().path()) {
+    if (dir.path() == view->repo().dir(false).path()) {
       tabs->setCurrentIndex(i);
       return view;
     }
@@ -380,7 +380,7 @@ MainWindow *MainWindow::open(const QString &path, bool warnOnInvalid) {
 MainWindow *MainWindow::open(const git::Repository &repo) {
   // Update recent repository settings.
   if (repo.isValid())
-    RecentRepositories::instance()->add(repo.workdir().path());
+    RecentRepositories::instance()->add(repo.dir(false).path());
 
   // Create the window.
   MainWindow *window = new MainWindow(repo);
@@ -469,7 +469,7 @@ void MainWindow::updateTabNames() {
   QList<TabName> fullNames;
 
   for (int i = 0; i < count(); ++i) {
-    TabName name(view(i)->repo().workdir().path());
+    TabName name(view(i)->repo().dir(false).path());
     names[name.name()].append(i);
     fullNames.append(name);
   }
@@ -519,7 +519,7 @@ void MainWindow::updateWindowTitle(int ahead, int behind) {
   }
 
   git::Repository repo = view->repo();
-  QDir dir = repo.workdir();
+  QDir dir = repo.dir(false);
   git::Reference head = repo.head();
   QString path = mFullPath ? dir.path() : dir.dirName();
   QString name = head.isValid() ? head.name() : repo.unbornHeadName();
@@ -585,7 +585,7 @@ void MainWindow::updateWindowTitle(int ahead, int behind) {
 QStringList MainWindow::paths() const {
   QStringList paths;
   for (int i = 0; i < count(); ++i)
-    paths.append(view(i)->repo().workdir().path());
+    paths.append(view(i)->repo().dir(false).path());
   return paths;
 }
 

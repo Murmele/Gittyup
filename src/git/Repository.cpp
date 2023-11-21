@@ -151,7 +151,14 @@ Repository::Repository(git_repository *repo) : d(registerRepository(repo)) {}
 
 Repository::operator git_repository *() const { return d->repo; }
 
-QDir Repository::dir() const { return QDir(git_repository_path(d->repo)); }
+QDir Repository::dir(bool includeGitFolder) const {
+  QDir dir(git_repository_path(d->repo));
+  if (!includeGitFolder) {
+    assert(dir.dirName() == ".git");
+    assert(dir.cdUp());
+  }
+  return dir;
+}
 
 QDir Repository::workdir() const {
   return isBare() ? dir() : QDir(git_repository_workdir(d->repo));

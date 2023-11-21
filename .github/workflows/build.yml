@@ -343,7 +343,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: build/release/*.AppImage
-          name: Gittyup Appimage
+          name: GittyupAppImage
 
   publish:
     # https://github.com/marvinpinto/actions/issues/177
@@ -390,6 +390,7 @@ jobs:
             **/artifacts/Gittyup macos/Gittyup*.dmg
             **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
             **/Gittyup-x86_64/*.flatpak
+            **/artifacts/GittyupAppImage/*
 
       - name: Update GitHub release (version tag)
         uses: marvinpinto/action-automatic-releases@latest
@@ -404,7 +405,7 @@ jobs:
             **/artifacts/Gittyup macos/Gittyup*.dmg
             **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
             **/Gittyup-x86_64/*.flatpak
-            **/artifacts/Gittyup Appimage/*
+            **/artifacts/GittyupAppImage/*
 
       # needed otherwise the docs folder is not available     
       - name: Checkout repository

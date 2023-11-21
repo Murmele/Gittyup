@@ -352,7 +352,7 @@ public:
                 return mTabs->tabText(row);
 
               RepoView *view = static_cast<RepoView *>(mTabs->widget(row));
-              return view->repo().workdir().path();
+              return view->repo().dir(false).path();
             }
 
             return tr("none");
@@ -361,7 +361,7 @@ public:
             RecentRepositories *recent = RecentRepositories::instance();
             if (recent->count()) {
               RecentRepository *repo = repos->repository(row);
-              return mShowFullPath ? repo->path() : repo->name();
+              return mShowFullPath ? repo->gitpath() : repo->name();
             }
 
             return tr("none");
@@ -446,13 +446,13 @@ public:
               return QVariant();
             QWidget *widget = mTabs->widget(row);
             RepoView *view = static_cast<RepoView *>(widget);
-            return view->repo().workdir().path();
+            return view->repo().dir(false).path();
           }
 
           case Recent:
             if (!repos->count())
               return QVariant();
-            return repos->repository(row)->path();
+            return repos->repository(row)->gitpath();
 
           default:
             return QVariant();
@@ -493,7 +493,7 @@ public:
           case Repo:
             if (mTabs->count()) {
               RepoView *view = static_cast<RepoView *>(mTabs->widget(row));
-              return view->repo().workdir().path();
+              return view->repo().dir(false).path();
             }
 
             return "";
@@ -502,7 +502,7 @@ public:
             RecentRepositories *recent = RecentRepositories::instance();
             if (recent->count()) {
               RecentRepository *repo = repos->repository(row);
-              return repo->path();
+              return repo->gitpath();
             }
 
             return "";

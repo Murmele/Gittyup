@@ -72,7 +72,7 @@ public:
 
   RepositoryNotifier *notifier() const { return d->notifier; }
 
-  QDir dir() const;
+  QDir dir(bool includeGitFolder = true) const;
   QDir workdir() const;
   QDir appDir() const;
 
