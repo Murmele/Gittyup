@@ -162,8 +162,8 @@ jobs:
             msvc_arch: x64
             cmake_env:
               CMAKE_RC_FLAGS: "/C 1252"
-              CC: cl
-              CXX: cl
+              CC: clang
+              CXX: clang++
             pack: 1
 
           - name: win32
@@ -176,8 +176,8 @@ jobs:
             msvc_arch: x86
             cmake_env:
               CMAKE_RC_FLAGS: "/C 1252"
-              CC: cl
-              CXX: cl
+              CC: clang
+              CXX: clang++
             pack: 1
 
     steps:
