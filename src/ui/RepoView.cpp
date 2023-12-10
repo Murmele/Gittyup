@@ -1465,6 +1465,9 @@ void RepoView::rebaseConflict(const git::Rebase rebase) {
   if (mRebase) {
     mRebase->addEntry(tr("Please resolve conflicts before continue"),
                       tr("Conflict"));
+    mDetails->setCommitMessage(rebase.commitToRebase()
+                                   .message(git::Commit::SubstituteEmoji)
+                                   .trimmed());
   }
   refresh(false);
 }
