@@ -28,6 +28,7 @@ private slots:
   void testDiscardFolder();
   void testDiscardNothing();
   void testIgnoreFile();
+  void testIgnoreFileUntracked();
   void testIgnoreFolder();
   void testRemoveUntrackedFolder();
 };
@@ -62,7 +63,8 @@ void TestFileContextMenu::testDiscardFile() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(10); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -78,6 +80,7 @@ void TestFileContextMenu::testDiscardFile() {
     }
   }
   QVERIFY(action);
+  QVERIFY(action->isEnabled());
   action->triggered(true);
 
   auto *msgBox = repoView->findChild<QMessageBox *>();
@@ -136,7 +139,8 @@ void TestFileContextMenu::testDiscardSubmodule() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(10); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -161,6 +165,8 @@ void TestFileContextMenu::testDiscardSubmodule() {
   QVERIFY(button);
   QVERIFY(button->isEnabled());
   emit button->clicked(true);
+
+  QTest::qWait(10); // Wait until submodule discarded
 
   // original text
   //  {"file.txt", "File.txt\n"},
@@ -214,7 +220,8 @@ void TestFileContextMenu::testDiscardFolder() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(10); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -291,7 +298,8 @@ void TestFileContextMenu::testDiscardNothing() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(10); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -359,7 +367,8 @@ void TestFileContextMenu::testIgnoreFile() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(10); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -375,6 +384,62 @@ void TestFileContextMenu::testIgnoreFile() {
     }
   }
   QVERIFY(action);
+  QCOMPARE(action->isEnabled(), false); // Modified file cannot be ignored
+}
+
+void TestFileContextMenu::testIgnoreFileUntracked() {
+  INIT_REPO("TestRepository.zip", false);
+
+  git::Commit commit =
+      repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
+  QVERIFY(commit);
+
+  // modifying all files
+  QHash<QString, QString> fileContent{
+      {"file.txt", "Modified file"},
+      {"file2.txt", "Modified file2"},
+      {"folder1/file.txt", "Modified file in folder1"},
+      {"folder1/file2.txt", "Modified file2 in folder1"},
+      {"GittyupTestRepo/README.md", "Modified readme in submodule"},
+  };
+
+  {
+    QHashIterator<QString, QString> i(fileContent);
+    while (i.hasNext()) {
+      i.next();
+      QFile file(repo.workdir().filePath(i.key()));
+      QVERIFY(file.exists());
+      QVERIFY(file.open(QFile::WriteOnly));
+      file.write(i.value().toLatin1());
+    }
+  }
+
+  {
+    // Create new file which shall be ignored
+    QFile file(repo.workdir().filePath("newFile.txt"));
+    QVERIFY(file.open(QFile::WriteOnly));
+    QVERIFY(file.write("Content of new file") > 0);
+  }
+
+  // refresh repo
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(10); // Wait until status is finished (own thread executed)
+
+  // let the changes settle
+  QApplication::processEvents();
+
+  QStringList files = {"newFile.txt"};
+  FileContextMenu m(repoView, files, repo.index(), repoView);
+
+  QAction *action = nullptr;
+  for (auto *a : m.actions()) {
+    if (a->objectName() == "IgnoreAction") {
+      action = a;
+      break;
+    }
+  }
+  QVERIFY(action);
+  QVERIFY(action->isEnabled());
   action->triggered(true);
 
   auto *ignoreDialog = repoView->findChild<IgnoreDialog *>();
@@ -387,9 +452,9 @@ void TestFileContextMenu::testIgnoreFile() {
   const QString ignores = file.readAll();
 
 #ifdef Q_OS_WIN
-  QCOMPARE(ignores, "file.txt\r\n");
+  QCOMPARE(ignores, "newFile.txt\r\n");
 #else
-  QCOMPARE(ignores, "file.txt\n");
+  QCOMPARE(ignores, "newFile.txt\n");
 #endif
 }
 
@@ -421,7 +486,8 @@ void TestFileContextMenu::testIgnoreFolder() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(10); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -437,6 +503,7 @@ void TestFileContextMenu::testIgnoreFolder() {
     }
   }
   QVERIFY(action);
+  QVERIFY(action->isEnabled());
   action->triggered(true);
 
   auto *ignoreDialog = repoView->findChild<IgnoreDialog *>();
@@ -490,7 +557,8 @@ void TestFileContextMenu::testRemoveUntrackedFolder() {
   }
 
   // refresh repo
-  repo.notifier()->referenceUpdated(repo.head());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTest::qWait(10); // Wait until status is finished (own thread executed)
 
   // let the changes settle
   QApplication::processEvents();
@@ -506,6 +574,7 @@ void TestFileContextMenu::testRemoveUntrackedFolder() {
     }
   }
   QVERIFY(action);
+  QVERIFY(action->isEnabled());
   action->triggered(true);
 
   // Click remove in dialog

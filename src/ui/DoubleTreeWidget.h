@@ -14,6 +14,7 @@
 #include "DetailView.h"
 #include "git/Index.h"
 #include <QModelIndexList>
+#include "conf/Settings.h"
 
 class QTreeView;
 class TreeView;
@@ -47,6 +48,8 @@ public:
   void findNext() override;
   void findPrevious() override;
 
+  uint32_t setDiffCounter() { return mSetDiffCounter; }
+
 private slots:
   void collapseCountChanged(int count);
   static void showFileContextMenu(const QPoint &pos, RepoView *view,
@@ -65,6 +68,8 @@ private:
   void loadEditorContent(const QModelIndexList &indexes);
   void toggleCollapseStagedFiles();
   void toggleCollapseUnstagedFiles();
+  QAction *setupAppearanceAction(const char *name, Setting::Id id,
+                                 bool defaultValue = false);
 
   DiffTreeModel *mDiffTreeModel{nullptr};
   TreeView *stagedFiles{nullptr};
@@ -106,6 +111,8 @@ private:
   git::Diff mDiff;
 
   int fileCountExpansionThreshold{100};
+
+  uint32_t mSetDiffCounter{0};
 
   friend class TestTreeView;
 };

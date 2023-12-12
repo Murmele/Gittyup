@@ -75,6 +75,7 @@ class TestRebase : public QObject {
 private slots:
   void withoutConflicts();
   void conflictingRebase();
+  void conflictingRebaseCustomMessage();
   void continueExternalStartedRebase(); // must have conflicts otherwise it is
                                         // not possible to continue
   void startRebaseContinueInCLI();
@@ -233,6 +234,8 @@ void TestRebase::conflictingRebase() {
   // Checkout correct branch
   repoView->checkout(branch);
 
+  QTest::qWait(100);
+
   // Rebase on main
   git::Reference mainBranch = mRepo.lookupRef(QString("refs/heads/main"));
   QVERIFY(mainBranch.isValid());
@@ -261,24 +264,20 @@ void TestRebase::conflictingRebase() {
           -1); // just write something to resolve the conflict
   f.close();
 
-  QTest::qWait(1000);
+  QTest::qWait(100);
 
   refreshTriggered = 0;
   repoView->continueRebase();  // should fail
   QCOMPARE(rebaseConflict, 2); // User tries to continue without staging
   QCOMPARE(refreshTriggered, 1);
 
-  QTest::qWait(1000); // Wait until refresh is done
+  QTest::qWait(100); // Wait until refresh is done
 
   // Staging the file
   auto filewidgets = repoView->findChildren<FileWidget *>();
   QCOMPARE(filewidgets.length(), 1);
   filewidgets.at(0)->stageStateChanged(filewidgets.at(0)->modelIndex(),
                                        git::Index::StagedState::Staged);
-
-  QTextEdit *editor = repoView->findChild<QTextEdit *>("MessageEditor");
-  QVERIFY(editor);
-  editor->setText("Test message");
 
   refreshTriggered = 0;
   rebaseConflict = 0;
@@ -291,12 +290,13 @@ void TestRebase::conflictingRebase() {
   QList<Commit> parents = branch.annotatedCommit().commit().parents();
   QCOMPARE(parents.count(), 1);
   QCOMPARE(parents.at(0).id(), ac.commit().id());
-  QCOMPARE(
-      branch.annotatedCommit().commit().message(),
-      "Test message"); // custom message was used instead of the original one
+  QCOMPARE(branch.annotatedCommit().commit().message(),
+           "File.txt changed by second branch"); // original message is shown
 
   // Check that rebase was really finished
   QCOMPARE(mRepo.rebaseOngoing(), false);
+
+  QTest::qWait(100); // Wait until refresh finished
 
   // Check that buttons are visible
   QCOMPARE(continueRebaseButton->isVisible(), false);
@@ -307,6 +307,89 @@ void TestRebase::conflictingRebase() {
   QCOMPARE(rebaseAboutToRebase, 1);
   QCOMPARE(rebaseCommitSuccess, 1);
   QCOMPARE(rebaseConflict, 0);
+}
+
+void TestRebase::conflictingRebaseCustomMessage() {
+  INIT_REPO("rebaseConflicts.zip", true);
+
+  auto *detailview = repoView->findChild<DetailView *>();
+  QVERIFY(detailview);
+  auto *abortRebaseButton = detailview->findChild<QPushButton *>("AbortRebase");
+  QVERIFY(abortRebaseButton);
+  auto *continueRebaseButton =
+      detailview->findChild<QPushButton *>("ContinueRebase");
+  QVERIFY(continueRebaseButton);
+  QCOMPARE(continueRebaseButton->isVisible(), false);
+  QCOMPARE(abortRebaseButton->isVisible(), false);
+
+  const QString rebaseBranchName = "refs/heads/singleCommitConflict";
+
+  git::Reference branch = mRepo.lookupRef(rebaseBranchName);
+  QVERIFY(branch.isValid());
+  auto c = branch.annotatedCommit().commit();
+
+  // Checkout correct branch
+  repoView->checkout(branch);
+
+  QTest::qWait(100);
+
+  // Rebase on main
+  git::Reference mainBranch = mRepo.lookupRef(QString("refs/heads/main"));
+  QVERIFY(mainBranch.isValid());
+  auto ac = mainBranch.annotatedCommit();
+  LogEntry *entry = repoView->addLogEntry("Rebase", "Rebase", nullptr);
+  repoView->rebase(ac, entry);
+
+  QCOMPARE(mRepo.rebaseOngoing(), true);
+
+  // Check that buttons are visible
+  QTest::qWait(100);
+
+  // Resolve conflicts
+  diff = mRepo.status(mRepo.index(), nullptr, false);
+  QCOMPARE(diff.count(), 1);
+  QCOMPARE(diff.patch(0).isConflicted(), true);
+  QFile f(mRepo.workdir().filePath(diff.patch(0).name()));
+  QCOMPARE(f.open(QIODevice::WriteOnly), true);
+  QVERIFY(f.write("Test123") !=
+          -1); // just write something to resolve the conflict
+  f.close();
+
+  QTest::qWait(100);
+
+  repoView->continueRebase(); // should fail
+
+  QTest::qWait(100); // Wait until refresh is done
+
+  // Staging the file
+  auto filewidgets = repoView->findChildren<FileWidget *>();
+  QCOMPARE(filewidgets.length(), 1);
+  filewidgets.at(0)->stageStateChanged(filewidgets.at(0)->modelIndex(),
+                                       git::Index::StagedState::Staged);
+
+  QTextEdit *editor = repoView->findChild<QTextEdit *>("MessageEditor");
+  QVERIFY(editor);
+  editor->setText("Test message"); // modify message
+
+  repoView->continueRebase();
+
+  // Check that branch is based on "main" now
+  branch = mRepo.lookupRef(rebaseBranchName);
+  QVERIFY(branch.isValid());
+  QList<Commit> parents = branch.annotatedCommit().commit().parents();
+  QCOMPARE(parents.count(), 1);
+  QCOMPARE(parents.at(0).id(), ac.commit().id());
+  QCOMPARE(branch.annotatedCommit().commit().message(),
+           "Test message"); // Modified message is shown
+
+  // Check that rebase was really finished
+  QCOMPARE(mRepo.rebaseOngoing(), false);
+
+  QTest::qWait(100); // Wait until refresh finished
+
+  // Check that buttons are visible
+  QCOMPARE(continueRebaseButton->isVisible(), false);
+  QCOMPARE(abortRebaseButton->isVisible(), false);
 }
 
 void TestRebase::continueExternalStartedRebase() {
@@ -489,7 +572,7 @@ void TestRebase::startRebaseContinueInCLI() {
   //    EXECUTE_GIT_COMMAND(path, "rebase --continue", 1)
 
   //    Test::refresh(repoView);  // TODO: must be called, because when changing
-  //    externally the repoView will not be notified. QTest::qWait(1000);
+  //    externally the repoView will not be notified. QTest::qWait(100);
 
   //    // Does not work, because libgit2 does not detect interactive rebases
   //    QCOMPARE(repoView->isRebaseContinueVisible(), false);
@@ -685,6 +768,9 @@ void TestRebase::abortMR() {
   // Check that rebase was really finished
   QCOMPARE(mRepo.rebaseOngoing(), false);
 
+  QTest::qWait(1000); // wait until detailview will be updated, after updating
+                      // status is finished
+
   // Check that buttons are visible
   QCOMPARE(continueRebaseButton->isVisible(), false);
   QCOMPARE(abortRebaseButton->isVisible(), false);
@@ -826,6 +912,8 @@ void TestRebase::commitDuringRebase() {
 
   // Check that rebase was really finished
   QCOMPARE(mRepo.rebaseOngoing(), false);
+
+  QTest::qWait(10); // Wait until refresh is finished
 
   // Check that buttons are visible
   QCOMPARE(continueRebaseButton->isVisible(), false);

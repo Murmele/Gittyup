@@ -1,11 +1,74 @@
-### v1.2.1 - 2022-11-10
+### vX.X.X - 2023-04-20 (DEV)
+
+Description
+
+#### Added
+
+* UI(Commit List): Added a right-click menu entry to rename branches.
+* UI(Main Menu): Added a menu-entry to rename the current branch.
+
+#### Changed
+
+* UI(Commit List): Collapse multiple branch and tag right-click menu entries
+                   into submenus. This affects the checkout and delete operations.
+* Fix(Build System): Force usage of clang-format v13 to ensure consistent formatting.
+
+----
+
+### v1.3.0 - 2023-04-20
+
+Performance Improvement and feature release
+
+#### Added
+
+* Colorized status badges
+* Template: use first template as default template for the commit message
+* Search function for the treeview
+* Reworked credential store: add possibility to choose between different methods to store credentials
+
+#### Changed
+
+* Fix external diff in Flatpak build
+* Fix windows credentials
+* Fix force push to correct remote
+* Fix tab title if more than three times a repository with the same name is opened
+* Fix storing repository settings correctly, because otherwise they are not applied
+* Fix language support
+* Improved refresh velocity
+* Fix storing and restoring current opened file when Gittyup refreshes
+* Improved velocity for files with many hunks
+
+----
+
+### v1.2.2 - 2023-01-22
 
 Bug fix release
 
 #### Changed
 
+* Fix flatpak install process
+
+----
+
+### v1.2.1 - 2023-01-22
+
+Bug fix release
+
+#### Added
+* Possibility to hide avatar (Settings - Window - View - Show Avatars)
+* Show log entry when a conflict during rebase happens
+
+#### Changed
+
 * Fix download url for flatpak and macos
 * Fix Segmentation fault when ignoring files
+* Fix discard of complete files and submodules
+* Fix context menu entries
+* Fix bytesize overflow
+* Fix focus loose during scrolling in the Commitlist with the keyboard
+* Do not crash when the repository is for some reason broken
+* Fix crash if rebasing is not possible
+
 ----
 
 ### v1.2.0 - 2022-10-28

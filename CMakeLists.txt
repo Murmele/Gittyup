@@ -1,14 +1,21 @@
-cmake_minimum_required(VERSION 3.6.2)
+cmake_minimum_required(VERSION 3.12)
 project(Gittyup)
 
 # Set name and version.
 set(GITTYUP_NAME "Gittyup")
+set(GITTYUP_EXECUTABLE_NAME "gittyup")
+set(GITTYUP_IDENTIFIER "com.github.Murmele.Gittyup")
 set(GITTYUP_VERSION_MAJOR 1)
-set(GITTYUP_VERSION_MINOR 2)
-set(GITTYUP_VERSION_PATCH 1)
+set(GITTYUP_VERSION_MINOR 3)
+set(GITTYUP_VERSION_PATCH 0)
 set(GITTYUP_VERSION
     "${GITTYUP_VERSION_MAJOR}.${GITTYUP_VERSION_MINOR}.${GITTYUP_VERSION_PATCH}"
 )
+
+string(TIMESTAMP CURR_YEAR "%Y")
+add_compile_definitions(CURR_YEAR=${CURR_YEAR})
+configure_file(${CMAKE_SOURCE_DIR}/LICENSE.md.in ${CMAKE_SOURCE_DIR}/LICENSE.md
+               @ONLY NEWLINE_STYLE UNIX)
 
 # Write version to file so it can be used also from external, for example in the
 # github manifest
@@ -45,6 +52,7 @@ set(BUILD_SHARED_LIBS OFF)
 
 option(FLATPAK "Building for flatpak" OFF)
 option(DEBUG_FLATPAK "Building but using flatpak urls for testing" OFF)
+option(ENABLE_UPDATE_OVER_GUI "Enable updating from the Gittyup gui" ON)
 option(USE_SYSTEM_OPENSSL "Use the system-wide OpenSSL installation" OFF)
 option(
   USE_SYSTEM_LIBGIT2
@@ -68,7 +76,10 @@ set(LUA_MODULES_PATH
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-if(UNIX AND NOT APPLE)
+if(HAIKU)
+  # qsort_r in libgit2 requires this
+  set(CMAKE_EXE_LINKER_FLAGS -lgnu)
+elseif(UNIX AND NOT APPLE)
   set(CMAKE_EXE_LINKER_FLAGS -ldl)
 endif()
 
@@ -86,9 +97,20 @@ if(UNIX)
   set(QT_MODULES ${QT_MODULES} DBus)
 endif()
 
-option(DEBUG_OUTPUT "Print debug output" ON)
+option(DEBUG_OUTPUT
+       "Print debug output (Only available if debug menu is enabled!)" ON)
+option(DEBUG_OUTPUT_GENERAL "Enable general debug messages" ON)
+option(DEBUG_OUTPUT_REFRESH "Enable debug messages to debug the refresh flow"
+       OFF)
 if(NOT DEBUG_OUTPUT)
   add_compile_definitions(QT_NO_DEBUG_OUTPUT)
+else()
+  if(DEBUG_OUTPUT_GENERAL)
+    add_compile_definitions(DEBUG_OUTPUT_GENERAL)
+  endif()
+  if(DEBUG_OUTPUT_REFRESH)
+    add_compile_definitions(DEBUG_OUTPUT_REFRESH)
+  endif()
 endif()
 
 find_package(
@@ -101,6 +123,10 @@ if(FLATPAK)
     COMPONENTS XcbQpa
     REQUIRED)
   add_compile_definitions(FLATPAK)
+endif()
+
+if(ENABLE_UPDATE_OVER_GUI)
+  add_compile_definitions(ENABLE_UPDATE_OVER_GUI)
 endif()
 
 if(DEBUG_FLATPAK)
@@ -123,6 +149,18 @@ if(APPLE)
     set_target_properties(Qt5::${QT_MODULE} PROPERTIES IMPORTED_LOCATION_DEBUG
                                                        ${LOCATION})
   endforeach()
+endif()
+
+if(APPLE)
+  set(CONTENTS_DIR ${GITTYUP_EXECUTABLE_NAME}.app/Contents)
+  set(RESOURCES_DIR ${CONTENTS_DIR}/Resources)
+  set(L10N_INSTALL_DIR ${RESOURCES_DIR}/l10n)
+elseif(UNIX)
+  set(L10N_INSTALL_DIR ${CMAKE_INSTALL_LOCALEDIR}/${GITTYUP_NAME})
+  set(RESOURCES_DIR ${CMAKE_INSTALL_DATADIR}/${GITTYUP_NAME})
+else()
+  set(L10N_INSTALL_DIR Resources/l10n)
+  set(RESOURCES_DIR Resources)
 endif()
 
 add_subdirectory(dep)

@@ -45,6 +45,7 @@ public:
   void setLastPath(const QString &lastPath);
 
   // settings directories
+  static QDir rootDir();
   static QDir appDir();
   static QDir docDir();
   static QDir confDir();

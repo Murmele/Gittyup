@@ -11,6 +11,8 @@
 #define TREEVIEW_H
 
 #include <QTreeView>
+#include <memory>
+#include "ViewDelegate.h"
 
 class QItemDelegate;
 class DiffTreeModel;
@@ -40,6 +42,7 @@ public:
    * \return
    */
   int countCollapsed(QModelIndex parent = QModelIndex(), bool recursive = true);
+  void updateView();
 public slots:
   /*!
    * \brief expandAll
@@ -97,8 +100,10 @@ private:
   int mCollapseCount; // Counts the number of collapsed folders.
   bool mSupressItemExpandStateChanged{false};
 
-  QItemDelegate *mSharedDelegate;
   QString mName;
+  std::unique_ptr<ViewDelegate> mFileListDelegatePtr;
+  std::unique_ptr<ViewDelegate> mFileTreeDelegatePtr;
+  int mDelegateCol{false};
 };
 
 #endif // TREEVIEW_H

@@ -1,18 +1,18 @@
 #!/bin/bash
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "`dirname "$0"`"
 
 # Variable that will hold the name of the clang-format command
 FMT=""
 
-FOLDERS=("./src" "./test")
+FOLDERS=("./src" "./test" "./l10n")
 
-# Some distros just call it clang-format. Others (e.g. Ubuntu) are insistent
-# that the version number be part of the command. We prefer clang-format if
-# that's present, otherwise we work backwards from highest version to lowest
-# version but at least 13.
-for clangfmt in clang-format{,-{1,2,3}{9,8,7,6,5,4,3}}; do
-    if which "$clangfmt" &>/dev/null; then
+# We specifically require clang-format v13. Some distros include the version
+# number in the name, others don't. Prefer the specifically-named version.
+for clangfmt in clang-format-13 clang-format
+do
+    if command -v "$clangfmt" &>/dev/null; then
         FMT="$clangfmt"
         break
     fi
@@ -22,6 +22,14 @@ done
 if [ -z "$FMT" ]; then
     echo "failed to find clang-format"
     exit 1
+fi
+
+# Check we have v13 of clang-format
+VERSION=`$FMT --version | grep -Po 'version\s\K(\d+)'`
+if [ "$VERSION" != "13" ]; then
+	echo "Found clang-format v$VERSION, but v13 is required. Please install v13 of clang-format and try again."
+	echo "On Debian-derived distributions, this can be done via: apt install clang-format-13"
+	exit 1
 fi
 
 function format() {
@@ -41,9 +49,18 @@ for dir in ${FOLDERS[@]}; do
     fi
 done
 
+# Format cmake files
+# NOTE: requires support for python venv; on Debian-like distros, this can be
+# installed using apt install python3-venv
 echo "Start formatting cmake files"
-pip install cmake-format==0.6.13
+CMAKE_FORMAT=${SCRIPT_DIR}/.venv/bin/cmake-format
+if [ ! -f "$CMAKE_FORMAT" ]; then
+	pushd ${SCRIPT_DIR}
+	python3 -m venv .venv
+	.venv/bin/pip install cmake-format==0.6.13
+	popd
+fi
 find . \
     \( -type d -path './test/dep/*' -prune \) \
     -o \( -type d -path './dep/*/*' -prune \) \
-    -o \( -name CMakeLists.txt -exec cmake-format --in-place {} + \)
+    -o \( -name CMakeLists.txt -exec "$CMAKE_FORMAT" --in-place {} + \)

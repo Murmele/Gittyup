@@ -13,6 +13,7 @@
 #include "MainWindow.h"
 #include "ProgressIndicator.h"
 #include "RepoView.h"
+#include "Debug.h"
 #include "app/Application.h"
 #include "conf/Settings.h"
 #include "dialogs/MergeDialog.h"
@@ -72,6 +73,10 @@ private:
   bool mCanceled = false;
 };
 
+/*!
+ * \brief The CommitModel class
+ * Model showing all commits as timeline
+ */
 class CommitModel : public QAbstractListModel {
   Q_OBJECT
 
@@ -91,12 +96,6 @@ public:
       resetWalker();
       emit statusFinished(!mRows.isEmpty() && !mRows.first().commit.isValid());
     });
-
-    git::RepositoryNotifier *notifier = repo.notifier();
-    connect(notifier, &git::RepositoryNotifier::referenceUpdated, this,
-            &CommitModel::resetReference);
-    connect(notifier, &git::RepositoryNotifier::workdirChanged,
-            [this] { resetReference(mRef); });
 
     resetSettings();
   }
@@ -150,9 +149,15 @@ public:
     resetWalker();
   }
 
+  void suppressResetWalker(bool suppress) { mSuppressResetWalker = suppress; }
+
+  bool isResetWalkerSuppressed() { return mSuppressResetWalker; }
+
   void setReference(const git::Reference &ref) {
     mRef = ref;
-    resetWalker();
+    if (!mSuppressResetWalker) {
+      resetWalker();
+    }
   }
 
   void resetReference(const git::Reference &ref) {
@@ -164,8 +169,10 @@ public:
     // Status is invalid after HEAD changes.
     if (!ref.isValid() || ref.isHead())
       startStatus();
-
-    resetWalker();
+    else if (!mSuppressResetWalker) {
+      // reset walker will be done when status finished
+      resetWalker();
+    }
   }
 
   void resetWalker() {
@@ -174,6 +181,7 @@ public:
     // Reset state.
     mParents.clear();
     mRows.clear();
+    DebugRefresh("");
 
     // Update status row.
     bool head = (!mRef.isValid() || mRef.isHead());
@@ -184,8 +192,8 @@ public:
         row.append({Segment(Bottom, kTaintedColor), Segment(Dot, QColor())});
         mParents.append(Parent(mRef.target(), nextColor(), true));
       }
-
-      mRows.append(Row(git::Commit(), row));
+      DebugRefresh("mRows append invalid commit");
+      mRows.append(Row(git::Commit(), row)); // Uncommitted changes
     }
 
     // Begin walking commits.
@@ -284,6 +292,7 @@ public:
         row = columns(commit, parents, root);
 
       rows.append(Row(commit, row));
+      DebugRefresh("Append commit: " << commit.shortId());
 
       // Bail out.
       if (i++ >= 64)
@@ -546,12 +555,17 @@ private:
   QList<Parent> mParents;
 
   // walker settings
+  bool mSuppressResetWalker{false};
   bool mRefsAll = true;
   bool mSortDate = true;
   bool mCleanStatus = true;
   bool mGraphVisible = true;
 };
 
+/*!
+ * \brief The ListModel class
+ * Used to show a list of commits. This is used when a filter is used
+ */
 class ListModel : public QAbstractListModel {
 public:
   ListModel(QObject *parent = nullptr) : QAbstractListModel(parent) {}
@@ -611,6 +625,14 @@ public:
     bool compact = Settings::instance()
                        ->value(Setting::Id::ShowCommitsInCompactMode)
                        .toBool();
+    bool showAuthor = Settings::instance()
+                          ->value(Setting::Id::ShowCommitsAuthor, true)
+                          .toBool();
+    bool showDate = Settings::instance()
+                        ->value(Setting::Id::ShowCommitsDate, true)
+                        .toBool();
+    bool showId =
+        Settings::instance()->value(Setting::Id::ShowCommitsId, true).toBool();
     LayoutConstants constants = layoutConstants(compact);
 
     // Draw background.
@@ -769,8 +791,8 @@ public:
       QDateTime date = commit.committer().date().toLocalTime();
       QString timestamp =
           (date.date() == QDate::currentDate())
-              ? date.time().toString(Qt::DefaultLocaleShortDate)
-              : date.date().toString(Qt::DefaultLocaleShortDate);
+              ? QLocale().toString(date.time(), QLocale::ShortFormat)
+              : QLocale().toString(date.date(), QLocale::ShortFormat);
       int timestampWidth = fm.horizontalAdvance(timestamp);
 
       if (compact) {
@@ -785,18 +807,20 @@ public:
         rect.setWidth(rect.width() - star.width());
 
         // Draw commit id.
-        QString id = commit.id().toString().left(kShortIdSize);
-        int idWidth = maxShortIdWidth(fm);
+        if (showId) {
+          QString id = commit.id().toString().left(kShortIdSize);
+          int idWidth = maxShortIdWidth(fm);
 
-        QRect commitRect = rect;
-        commitRect.setX(commitRect.x() + commitRect.width() - idWidth);
-        painter->save();
-        painter->drawText(commitRect, Qt::AlignLeft, id);
-        painter->restore();
-        rect.setWidth(rect.width() - idWidth - constants.hMargin);
+          QRect commitRect = rect;
+          commitRect.setX(commitRect.x() + commitRect.width() - idWidth);
+          painter->save();
+          painter->drawText(commitRect, Qt::AlignLeft, id);
+          painter->restore();
+          rect.setWidth(rect.width() - idWidth - constants.hMargin);
+        }
 
         // Draw date. Only if it is not the same as previous?
-        if (rect.width() > minWidthDesc + timestampWidth + 8 &&
+        if (showDate && rect.width() > minWidthDesc + timestampWidth + 8 &&
             totalWidth > minDisplayWidthDate) {
           painter->save();
           painter->setPen(bright);
@@ -823,6 +847,20 @@ public:
           badgesWidth = Badge::paint(painter, refs, ref, &opt, Qt::AlignLeft);
         rect.setX(badgesWidth); // Comes right after the badges
 
+        // Draw Name.
+        if (showAuthor) {
+          QString name = commit.author().name();
+          painter->save();
+          QFont bold = opt.font;
+          bold.setBold(true);
+          painter->setFont(bold);
+          painter->drawText(rect, Qt::AlignLeft, name);
+          painter->restore();
+          const QFontMetrics boldFm(bold);
+          rect.setX(rect.x() + boldFm.horizontalAdvance(name) +
+                    constants.hMargin);
+        }
+
         // Draw message.
         painter->save();
         painter->setPen(bright);
@@ -832,37 +870,79 @@ public:
         painter->restore();
 
       } else {
-        // Draw Name.
-        QString name = commit.author().name();
-        painter->save();
-        QFont bold = opt.font;
-        bold.setBold(true);
-        painter->setFont(bold);
-        painter->drawText(rect, Qt::AlignLeft, name);
-        painter->restore();
 
-        // Draw date.
-        if (rect.width() > fm.horizontalAdvance(name) + timestampWidth + 8) {
+        // Draw Name.
+        QString name = "";
+        if (showAuthor) {
+          name = commit.author().name();
           painter->save();
-          painter->setPen(bright);
-          painter->drawText(rect, Qt::AlignRight, timestamp);
+          QFont bold = opt.font;
+          bold.setBold(true);
+          painter->setFont(bold);
+          painter->drawText(rect, Qt::AlignLeft, name);
           painter->restore();
         }
 
-        rect.setY(rect.y() + constants.lineSpacing + constants.vMargin);
+        // Draw date.
+        if (showDate &&
+            rect.width() > fm.horizontalAdvance(name) + timestampWidth + 8) {
+          painter->save();
+          painter->setPen(bright);
+          if (showAuthor) {
+            painter->drawText(rect, Qt::AlignRight, timestamp);
+          } else {
+            painter->drawText(rect, Qt::AlignLeft, timestamp);
+          }
+          painter->restore();
+        }
 
         // Draw id.
-        QString id = commit.shortId();
-        painter->save();
-        painter->drawText(rect, Qt::AlignLeft, id);
-        painter->restore();
+        QString id = "";
+        if (showId) {
+          QRect idRect = rect;
+          if (showAuthor || showDate) {
+            idRect.setY(idRect.y() + constants.lineSpacing + constants.vMargin);
+          }
+          id = commit.shortId();
+          painter->save();
+          painter->drawText(idRect, Qt::AlignLeft, id);
+          painter->restore();
+        }
 
         // Draw references.
         QList<Badge::Label> refs = mRefs.value(commit.id());
         if (!refs.isEmpty()) {
           QRect refsRect = rect;
-          refsRect.setX(refsRect.x() + fm.boundingRect(id).width() + 6);
+          QString leftText = "";
+
+          if (showDate && showAuthor) {
+            refsRect.setY(refsRect.y() + constants.lineSpacing +
+                          constants.vMargin);
+            if (showId) {
+              leftText = id;
+            }
+          } else {
+            if (showDate) {
+              leftText = timestamp;
+            } else if (showAuthor) {
+              leftText = name;
+            } else if (showId) {
+              leftText = id;
+            }
+          }
+          refsRect.setX(refsRect.x() + fm.boundingRect(leftText).width() + 6);
           Badge::paint(painter, refs, refsRect, &opt);
+        }
+
+        int numOptional = 0;
+        if (showId)
+          ++numOptional;
+        if (showAuthor)
+          ++numOptional;
+        if (showDate)
+          ++numOptional;
+        if (numOptional > 1) {
+          rect.setY(rect.y() + constants.lineSpacing + constants.vMargin);
         }
 
         rect.setY(rect.y() + constants.lineSpacing + constants.vMargin);
@@ -1024,12 +1104,14 @@ private:
 
     if (mRepo.isHeadDetached()) {
       git::Reference head = mRepo.head();
-      mRefs[head.target().id()].append({head.name(), true});
+      mRefs[head.target().id()].append(
+          {Badge::Label::Type::Ref, head.name(), true});
     }
 
     foreach (const git::Reference &ref, mRepo.refs()) {
       if (git::Commit target = ref.target())
-        mRefs[target.id()].append({ref.name(), ref.isHead(), ref.isTag()});
+        mRefs[target.id()].append(
+            {Badge::Label::Type::Ref, ref.name(), ref.isHead(), ref.isTag()});
     }
   }
 
@@ -1101,8 +1183,10 @@ CommitList::CommitList(Index *index, QWidget *parent)
           &CommitList::restoreSelection);
 
   CommitModel *model = static_cast<CommitModel *>(mModel);
-  connect(model, &CommitModel::statusFinished, [this](bool visible) {
+  connect(model, &CommitModel::statusFinished, [this, model](bool visible) {
+    mRestoreSelection = true; // Reset to default
     // Fake a selection notification if the diff is visible and selected.
+    // FIXME: Should we reference `model` or `this->mModel` here?
     if (visible && selectionModel()->isSelected(mModel->index(0, 0)))
       resetSelection();
 
@@ -1114,27 +1198,18 @@ CommitList::CommitList(Index *index, QWidget *parent)
     emit statusChanged(visible);
   });
 
-  connect(this, &CommitList::entered,
-          [this](const QModelIndex &index) { update(index); });
-
   git::RepositoryNotifier *notifier = repo.notifier();
   connect(notifier, &git::RepositoryNotifier::referenceUpdated,
-          [this](const git::Reference &ref) {
-            if (!ref.isValid())
-              return;
-
-            if (ref.isStash())
-              updateModel();
-
-            if (ref.isHead()) {
-              QModelIndex index = this->model()->index(0, 0);
-              if (!index.data(CommitRole).isValid()) {
-                selectFirstCommit();
-              } else {
-                selectRange(ref.target().id().toString());
-              }
-            }
+          [this](const git::Reference &ref, bool restoreSelection) {
+            mRestoreSelection = restoreSelection;
+            resetReference(ref);
           });
+  connect(notifier, &git::RepositoryNotifier::workdirChanged, [this] {
+    resetReference(static_cast<const CommitModel *>(mModel)->reference());
+  });
+
+  connect(this, &CommitList::entered,
+          [this](const QModelIndex &index) { update(index); });
 
 #ifdef Q_OS_MAC
   QFont font = this->font();
@@ -1162,6 +1237,12 @@ QString CommitList::selectedRange() const {
 
 git::Diff CommitList::selectedDiff() const {
   QModelIndexList indexes = sortedIndexes();
+  DebugRefresh("Selected indices count: " << indexes.count());
+  for (const auto &index : indexes) {
+    const auto &id = index.data(CommitRole).value<git::Commit>().shortId();
+    (void)id; // Unused in release builds
+    DebugRefresh("Commit: " << id);
+  }
   if (indexes.isEmpty())
     return git::Diff();
 
@@ -1196,7 +1277,8 @@ void CommitList::cancelStatus() {
 
 void CommitList::setReference(const git::Reference &ref) {
   static_cast<CommitModel *>(mModel)->setReference(ref);
-  updateModel();
+  if (!isResetWalkerSuppressed())
+    updateModel();
   setFocus();
 }
 
@@ -1239,6 +1321,11 @@ void CommitList::resetSelection(bool spontaneous) {
 
 void CommitList::selectFirstCommit(bool spontaneous) {
   QModelIndex index = model()->index(0, 0);
+  const auto commit = index.data(CommitRole).value<git::Commit>();
+  if (commit.isValid())
+    DebugRefresh("Commit id: " << commit.shortId());
+  else
+    DebugRefresh("Invalid commit");
   if (index.isValid()) {
     selectIndexes(QItemSelection(index, index), QString(), spontaneous);
   } else {
@@ -1293,6 +1380,18 @@ bool CommitList::selectRange(const QString &range, const QString &file,
   return true;
 }
 
+void CommitList::suppressResetWalker(bool suppress) {
+  static_cast<CommitModel *>(mModel)->suppressResetWalker(suppress);
+}
+
+void CommitList::resetReference(const git::Reference &ref) {
+  static_cast<CommitModel *>(mModel)->resetReference(ref);
+}
+
+bool CommitList::isResetWalkerSuppressed() {
+  return static_cast<CommitModel *>(mModel)->isResetWalkerSuppressed();
+}
+
 void CommitList::resetSettings() {
   static_cast<CommitModel *>(mModel)->resetSettings(true);
 }
@@ -1327,6 +1426,24 @@ void CommitList::setModel(QAbstractItemModel *model) {
   setSelectionModel(selectionModel);
 
   restoreSelection();
+}
+
+/// @brief Helper function to add a list of items to a menu.
+/// A single item is added directly to the menu, whereas multiple items will
+/// be added to a sub-menu.
+static void addMenuEntries(QMenu &menu, const QString &operation,
+                           const QList<git::Reference> &items,
+                           std::function<void(const git::Reference &)> action) {
+  QMenu *submenu = &menu;
+  QString entryName(operation + " %1");
+  if (items.count() > 1) {
+    submenu = menu.addMenu(operation);
+    entryName = QString("%1");
+  }
+  for (const git::Reference &ref : items) {
+    submenu->addAction(entryName.arg(ref.name()),
+                       [action, ref] { action(ref); });
+  }
 }
 
 void CommitList::contextMenuEvent(QContextMenuEvent *event) {
@@ -1399,26 +1516,41 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       menu.addAction(tr("New Branch..."),
                      [view, commit] { view->promptToCreateBranch(commit); });
 
-      bool separator = true;
-      foreach (const git::Reference &ref, commit.refs()) {
+      // Add operations on existing references; there may be 0, 1, or multiple
+      // of each type of reference on a commit.
+      QList<git::Reference> rename_branches;
+      QList<git::Reference> tags;
+      QList<git::Reference> delete_branches;
+      QList<git::Reference> all_branches; // used later
+      for (const git::Reference &ref : commit.refs()) {
         if (ref.isTag()) {
-          if (separator) {
-            menu.addSeparator();
-            separator = false;
+          tags.append(ref);
+        } else if (ref.isBranch()) {
+          all_branches.append(ref);
+          if (ref.isLocalBranch()) {
+            rename_branches.append(ref);
+            if (view->repo().head().name() != ref.name()) {
+              delete_branches.append(ref);
+            }
           }
-          menu.addAction(tr("Delete Tag %1").arg(ref.name()),
-                         [view, ref] { view->promptToDeleteTag(ref); });
-        }
-        if (ref.isLocalBranch() && (view->repo().head().name() != ref.name())) {
-          if (separator) {
-            menu.addSeparator();
-            separator = false;
-          }
-          menu.addAction(tr("Delete Branch %1").arg(ref.name()),
-                         [view, ref] { view->promptToDeleteBranch(ref); });
         }
       }
 
+      if (rename_branches.count() > 0 || delete_branches.count() > 0 ||
+          tags.count() > 0) {
+        menu.addSeparator();
+      }
+      addMenuEntries(menu, tr("Rename Branch"), rename_branches,
+                     std::bind(&RepoView::promptToRenameBranch, view,
+                               std::placeholders::_1));
+
+      addMenuEntries(menu, tr("Delete Branch"), delete_branches,
+                     std::bind(&RepoView::promptToDeleteBranch, view,
+                               std::placeholders::_1));
+
+      addMenuEntries(
+          menu, tr("Delete Tag"), tags,
+          std::bind(&RepoView::promptToDeleteTag, view, std::placeholders::_1));
       menu.addSeparator();
 
       menu.addAction(tr("Merge..."), [view, commit] {
@@ -1476,19 +1608,23 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
       menu.addSeparator();
 
       git::Reference head = view->repo().head();
-      foreach (const git::Reference &ref, commit.refs()) {
+      auto submenu = &menu;
+      auto entryName = tr("Checkout %1");
+      if (all_branches.count() > 1) {
+        submenu = menu.addMenu(tr("Checkout"));
+        entryName = QString("%1");
+      }
+      for (const git::Reference &ref : all_branches) {
         if (ref.isLocalBranch()) {
-          QAction *checkout =
-              menu.addAction(tr("Checkout %1").arg(ref.name()),
-                             [view, ref] { view->checkout(ref); });
+          QAction *checkout = submenu->addAction(
+              entryName.arg(ref.name()), [view, ref] { view->checkout(ref); });
 
           checkout->setEnabled(head.isValid() &&
                                head.qualifiedName() != ref.qualifiedName() &&
                                !view->repo().isBare());
         } else if (ref.isRemoteBranch()) {
-          QAction *checkout =
-              menu.addAction(tr("Checkout %1").arg(ref.name()),
-                             [view, ref] { view->checkout(ref); });
+          QAction *checkout = submenu->addAction(
+              entryName.arg(ref.name()), [view, ref] { view->checkout(ref); });
 
           // Calculate local branch name in the same way as checkout() does
           QString local = ref.name().section('/', 1);
@@ -1546,6 +1682,8 @@ void CommitList::mousePressEvent(QMouseEvent *event) {
   if (mStar.isValid() || mCancel.isValid())
     return;
 
+  DebugRefresh("time: " << QDateTime::currentDateTime());
+
   QListView::mousePressEvent(event);
 }
 
@@ -1572,12 +1710,20 @@ void CommitList::leaveEvent(QEvent *event) {
   QListView::leaveEvent(event);
 }
 
-void CommitList::storeSelection() { mSelectedRange = selectedRange(); }
+void CommitList::storeSelection() {
+  mSelectedRange = selectedRange();
+  DebugRefresh("Selected Range: " << mSelectedRange);
+  Debug(mSelectedRange);
+}
 
 void CommitList::restoreSelection() {
   // Restore selection.
-  if (!mSelectedRange.isEmpty() && !selectRange(mSelectedRange))
+  DebugRefresh(mSelectedRange);
+  if (!mRestoreSelection ||
+      (!mSelectedRange.isEmpty() && !selectRange(mSelectedRange))) {
+    DebugRefresh("Failed to restore");
     emit diffSelected(git::Diff());
+  }
 
   mSelectedRange = QString();
 }

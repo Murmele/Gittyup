@@ -79,7 +79,9 @@ void LogDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
 
   QRect rect = decorationRect(option, index);
   if (static_cast<QMetaType::Type>(variant.type()) == QMetaType::QChar) {
-    Badge::paint(painter, {Badge::Label(variant.toChar())}, rect, &opt);
+    Badge::paint(painter,
+                 {Badge::Label(Badge::Label::Type::Log, variant.toChar())},
+                 rect, &opt);
   } else if (variant.canConvert<int>()) {
     int progress = variant.toInt();
     ProgressIndicator::paint(painter, rect, "#808080", progress, opt.widget);
@@ -126,7 +128,9 @@ void LogDelegate::initStyleOption(QStyleOptionViewItem *option,
   QStyledItemDelegate::initStyleOption(option, index);
   QVariant variant = index.data(Qt::DecorationRole);
   if (static_cast<QMetaType::Type>(variant.type()) == QMetaType::QChar) {
-    option->decorationSize = Badge::size(option->font) - ADJUSTMENT_SIZE;
+    option->decorationSize =
+        Badge::size(option->font, Badge::Label(Badge::Label::Type::Log)) -
+        ADJUSTMENT_SIZE;
   } else if (variant.canConvert<int>()) {
     option->decorationSize = ProgressIndicator::size();
   }

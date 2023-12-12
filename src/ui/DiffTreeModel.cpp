@@ -7,6 +7,7 @@
 // Author: Jason Haslam
 //
 
+#include <array>
 #include "DiffTreeModel.h"
 #include "conf/Settings.h"
 #include "git/Blob.h"
@@ -16,17 +17,36 @@
 #include "git/Patch.h"
 #include <QStringBuilder>
 #include <QUrl>
+#include <qobjectdefs.h>
 
 namespace {
 
 const QString kLinkFmt = "<a href='%1'>%2</a>";
 
+const std::array<QString, 3> kModelHeaders = {QObject::tr("File Name"),
+                                              QObject::tr("Relative Path"),
+                                              QObject::tr("State")};
+
+bool asList() {
+  return Settings::instance()
+      ->value(Setting::Id::ShowChangedFilesAsList, false)
+      .toBool();
+}
+
 } // namespace
 
 DiffTreeModel::DiffTreeModel(const git::Repository &repo, QObject *parent)
-    : QAbstractItemModel(parent), mRepo(repo) {}
+    : QAbstractItemModel(parent), mRepo(repo) {
+  setMultiColumn(mMultiColumn);
+}
 
 DiffTreeModel::~DiffTreeModel() { delete mRoot; }
+
+void DiffTreeModel::setMultiColumn(bool multi) {
+  beginResetModel();
+  mMultiColumn = multi;
+  endResetModel(); // Notify view about the change
+}
 
 void DiffTreeModel::createDiffTree() {
 
@@ -53,15 +73,60 @@ void DiffTreeModel::setDiff(const git::Diff &diff) {
 void DiffTreeModel::refresh(const QStringList &paths) {
   for (auto path : paths) {
     auto index = this->index(path);
-    emit dataChanged(index, index, {Qt::CheckStateRole});
+    handleDataChanged(index, Qt::CheckStateRole);
   }
+}
+
+void DiffTreeModel::handleDataChanged(const QModelIndex &index, int role) {
+  if (!index.isValid())
+    return;
+
+  // childs
+  if (hasChildren(index)) {
+    // emit dataChanged() for all files in the folder
+    // all children changed too. TODO: only the tracked files should emit a
+    // signal
+    int count = rowCount(index);
+    for (int row = 0; row < count; row++) {
+      QModelIndex child = this->index(row, 0, index);
+      emit dataChanged(child, child, {role});
+    }
+  }
+  // parents
+  // recursive approach to emit signal dataChanged also for the parents.
+  // Because when a file in a folder is staged, the state of the folder
+  // changes too
+  QModelIndex parent = this->parent(index);
+  while (parent.isValid()) {
+    emit dataChanged(parent, parent, {role});
+    parent = this->parent(parent);
+  }
+
+  // file/folder it self
+  // emit dataChanged() for folder or file it self
+  emit dataChanged(index, index, {role});
 }
 
 int DiffTreeModel::rowCount(const QModelIndex &parent) const {
   return mDiff ? node(parent)->children().size() : 0;
 }
 
-int DiffTreeModel::columnCount(const QModelIndex &parent) const { return 1; }
+QVariant DiffTreeModel::headerData(int section, Qt::Orientation orientation,
+                                   int role) const {
+  if (section > 2 || section < 0) {
+    assert(false);
+    return QVariant();
+  }
+  if (orientation == Qt::Orientation::Vertical)
+    return QVariant();
+  if (role != Qt::DisplayRole)
+    return QVariant();
+  return kModelHeaders.at(section);
+}
+
+int DiffTreeModel::columnCount(const QModelIndex &parent) const {
+  return !asList() || !mMultiColumn ? 1 : kModelHeaders.size();
+}
 
 bool DiffTreeModel::hasChildren(const QModelIndex &parent) const {
   return mRoot && node(parent)->hasChildren();
@@ -104,7 +169,7 @@ void DiffTreeModel::modelIndices(const QModelIndex &parent,
   }
 
   for (int i = 0; i < n->children().length(); i++) {
-    auto child = createIndex(i, 0, n->children()[i]);
+    auto child = createIndex(i, parent.column(), n->children()[i]);
     if (recursive)
       modelIndices(child, list);
     else if (!node(child)->hasChildren())
@@ -140,14 +205,21 @@ QModelIndex DiffTreeModel::index(Node *n) const {
 }
 
 QModelIndex DiffTreeModel::index(const QString &name) const {
-  auto list = name.split("/");
-  if (list.length() == 0)
-    return QModelIndex();
+  if (mListView) {
+    for (auto c : mRoot->children()) {
+      if (c->name() == name)
+        return index(c);
+    }
+  } else {
+    auto list = name.split("/");
+    if (list.length() == 0)
+      return QModelIndex();
 
-  for (auto c : mRoot->children()) {
-    auto n = c->child(list, 0);
-    if (n)
-      return index(n);
+    for (auto c : mRoot->children()) {
+      auto n = c->child(list, 0);
+      if (n)
+        return index(n);
+    }
   }
 
   return QModelIndex();
@@ -158,9 +230,15 @@ QVariant DiffTreeModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 
   Node *node = this->node(index);
+
+  // Skip intermediate path elements for trees showing file lists only.
+  if (node->hasChildren() && asList())
+    return QVariant();
+
   switch (role) {
-    case Qt::DisplayRole:
-      return node->name();
+    case Qt::DisplayRole: {
+      return getDisplayRole(index);
+    }
 
       //    case Qt::DecorationRole: {
       //      QFileInfo info(node->path());
@@ -175,7 +253,7 @@ QVariant DiffTreeModel::data(const QModelIndex &index, int role) const {
       return node->path();
 
     case Qt::CheckStateRole: {
-      if (!mDiff.isValid() || !mDiff.isStatusDiff())
+      if (!mDiff.isValid() || !mDiff.isStatusDiff() || index.column() > 0)
         return QVariant();
 
       git::Index index = mDiff.index();
@@ -325,30 +403,7 @@ bool DiffTreeModel::setData(const QModelIndex &index, const QVariant &value,
           (void)state;
       }
 
-      // childs
-      if (hasChildren(index)) {
-        // emit dataChanged() for all files in the folder
-        // all children changed too. TODO: only the tracked files should emit a
-        // signal
-        int count = rowCount(index);
-        for (int row = 0; row < count; row++) {
-          QModelIndex child = this->index(row, 0, index);
-          emit dataChanged(child, child, {role});
-        }
-      }
-      // parents
-      // recursive approach to emit signal dataChanged also for the parents.
-      // Because when a file in a folder is staged, the state of the folder
-      // changes too
-      QModelIndex parent = this->parent(index);
-      while (parent.isValid()) {
-        emit dataChanged(parent, parent, {role});
-        parent = this->parent(parent);
-      }
-
-      // file/folder it self
-      // emit dataChanged() for folder or file it self
-      emit dataChanged(index, index, {role});
+      handleDataChanged(index, role);
       emit checkStateChanged(index, value.toInt());
 
       return true;
@@ -364,6 +419,22 @@ Qt::ItemFlags DiffTreeModel::flags(const QModelIndex &index) const {
 
 Node *DiffTreeModel::node(const QModelIndex &index) const {
   return index.isValid() ? static_cast<Node *>(index.internalPointer()) : mRoot;
+}
+
+QVariant DiffTreeModel::getDisplayRole(const QModelIndex &index) const {
+  Node *node = this->node(index);
+  if (asList() && mMultiColumn) {
+    QFileInfo fileInfo(node->path(true));
+    switch (index.column()) {
+      case 0:
+        return fileInfo.fileName();
+      case 1:
+        return fileInfo.path();
+      default:
+        return ""; // State
+    }
+  }
+  return node->name();
 }
 
 //#############################################################################
@@ -416,25 +487,38 @@ void Node::addChild(const QStringList &pathPart, int patchIndex,
 
 git::Index::StagedState
 Node::stageState(const git::Index &idx, ParentStageState searchingState) const {
-  if (!hasChildren())
-    return idx.isStaged(path(true));
-
-  git::Index::StagedState childState;
+  git::Index::StagedState childState = idx.isStaged(path(true));
   for (auto child : mChildren) {
 
     childState = child->stageState(idx, searchingState);
+
+    // determine new searching state
+    // conflicted and disabled files/submodules are in the unstaged treeview,
     if ((childState == git::Index::StagedState::Staged &&
          searchingState == ParentStageState::Unstaged) ||
-        (childState == git::Index::StagedState::Unstaged &&
+        ((childState == git::Index::StagedState::Unstaged ||
+          childState == git::Index::StagedState::Conflicted ||
+          childState == git::Index::StagedState::Disabled) &&
          searchingState == ParentStageState::Staged) ||
         childState == git::Index::PartiallyStaged)
       return git::Index::PartiallyStaged;
 
     if (searchingState == ParentStageState::Any) {
-      if (childState == git::Index::Unstaged)
-        searchingState = ParentStageState::Unstaged;
-      else if (childState == git::Index::Staged)
-        searchingState = ParentStageState::Staged;
+      switch (childState) {
+        case git::Index::Unstaged:
+          searchingState = ParentStageState::Unstaged;
+          break;
+        case git::Index::Staged:
+          searchingState = ParentStageState::Staged;
+          break;
+        case git::Index::PartiallyStaged:
+          break; // does not change searchingState
+        case git::Index::Conflicted:
+          // fall through
+        case git::Index::Disabled:
+          searchingState = ParentStageState::Unstaged;
+          break;
+      }
     }
   }
 

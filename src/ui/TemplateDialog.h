@@ -14,7 +14,8 @@ class QDialogButtonBox;
 class TemplateDialog : public QDialog {
   Q_OBJECT
 public:
-  TemplateDialog(QList<TemplateButton::Template> &templates, QWidget *parent);
+  TemplateDialog(QList<TemplateButton::Template> &templates,
+                 QWidget *parent = nullptr);
 
 private:
   void addTemplate();
@@ -25,6 +26,8 @@ private:
   bool uniqueName(QString name);
   void checkName(QString name);
   void showTemplate(int idx);
+  void importTemplates(QString filename = QStringLiteral(""));
+  void exportTemplates(QString filename = QStringLiteral(""));
 
   QPushButton *mUp;   // moving template up
   QPushButton *mDown; // moving template down
@@ -40,6 +43,8 @@ private:
   QList<TemplateButton::Template> mNew;
 
   bool mSupress{false};
+
+  friend class TestCommitMessageTemplate;
 };
 
 #endif // TEMPLATEDIALOG_H

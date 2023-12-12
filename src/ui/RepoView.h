@@ -41,7 +41,7 @@ class PathspecWidget;
 class ReferenceWidget;
 class RemoteCallbacks;
 class ToolBar;
-class ContributorInfo;
+struct ContributorInfo;
 
 namespace git {
 class Result;
@@ -251,6 +251,7 @@ public:
                            const git::Branch &upstream = git::Branch(),
                            bool checkout = false, bool force = false);
   void promptToDeleteBranch(const git::Reference &ref);
+  void promptToRenameBranch(const git::Branch &branch);
 
   // stash
   void promptToStash();
@@ -278,7 +279,7 @@ public:
   void updateSubmodules(
       const QList<git::Submodule> &submodules = QList<git::Submodule>(),
       bool recursive = true, bool init = false, bool checkout_force = false,
-      LogEntry *parent = nullptr);
+      LogEntry *parent = nullptr, bool restoreSelection = true);
   bool openSubmodule(const git::Submodule &submodule);
 
   // config
@@ -302,6 +303,7 @@ public:
 
   // refresh
   void refresh();
+  void refresh(bool restoreSelection);
 
   // pathspec search filter
   void setPathspec(const QString &path);
@@ -385,7 +387,8 @@ private:
                           bool checkout_force, LogEntry *parent);
   void updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
                              bool recursive = true, bool init = false,
-                             bool checkout_force = false);
+                             bool checkout_force = false,
+                             bool restoreSelection = true);
 
   QList<SubmoduleInfo>
   submoduleResetInfoList(const git::Repository &repo,

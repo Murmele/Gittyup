@@ -1,5 +1,13 @@
 build
+.cache
 .DS_Store
 .project
 .vscode/
 CMakeLists.txt.user
+cmake-build-debug/
+cmake-build-release/
+build
+.idea/
+.venv
+compile_commands.json
+

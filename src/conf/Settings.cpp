@@ -9,12 +9,13 @@
 
 #include "Settings.h"
 #include "ConfFile.h"
+#include "Debug.h"
+#include "qtsupport.h"
+#include "languages.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QSettings>
 #include <QStandardPaths>
-
-#include <QDebug>
 
 #ifdef Q_OS_WIN
 #define CS Qt::CaseInsensitive
@@ -24,18 +25,20 @@
 
 namespace {
 
-const QString kIgnoreWsKey = "diff/whitespace/ignore";
-const QString kLastPathKey = "lastpath";
+const QString kIgnoreWsKey("diff/whitespace/ignore");
+const QString kLastPathKey("lastpath");
+const QString kTranslation("translation");
+const QString kTranslationLanguage("language");
 
 // Look up variant at key relative to root.
 QVariant lookup(const QVariantMap &root, const QString &key) {
-  QStringList list = key.split("/", QString::SkipEmptyParts);
+  QStringList list(key.split("/", Qt::SkipEmptyParts));
   if (list.isEmpty())
     return root;
 
-  QVariantMap map = root;
+  QVariantMap map(root);
   while (map.contains(list.first())) {
-    QVariant result = map.value(list.takeFirst());
+    QVariant result(map.value(list.takeFirst()));
     if (list.isEmpty())
       return result;
     map = result.toMap();
@@ -45,24 +48,16 @@ QVariant lookup(const QVariantMap &root, const QString &key) {
 }
 
 QString promptKey(Prompt::Kind kind) { return Prompt::key(kind); }
-
-QDir rootDir() {
-  QDir dir(QCoreApplication::applicationDirPath());
-
-#ifdef Q_OS_MAC
-  dir.cdUp(); // Contents
-#endif
-  qDebug() << "Root dir: " << dir;
-
-  return dir;
-}
-
 } // namespace
 
 Settings::Settings(QObject *parent) : QObject(parent) {
   foreach (const QFileInfo &file, confDir().entryInfoList(QStringList("*.lua")))
     mDefaults[file.baseName()] = ConfFile(file.absoluteFilePath()).parse();
   mDefaults[kLastPathKey] = QDir::homePath();
+  QVariantMap map;
+  map[kTranslationLanguage] = QVariant(Languages::system);
+  mDefaults[kTranslation] = map;
+  mDefaults[kTranslation].toMap()[kTranslationLanguage] = Languages::system;
   mCurrentMap = mDefaults;
 }
 
@@ -76,7 +71,7 @@ QVariant Settings::value(const QString &key,
                          const QVariant &defaultValue) const {
   QSettings settings;
   settings.beginGroup(group());
-  QVariant result = settings.value(key, defaultValue);
+  QVariant result(settings.value(key, defaultValue));
   settings.endGroup();
   return result;
 }
@@ -120,13 +115,13 @@ QString Settings::lexer(const QString &filename) {
     return "null";
 
   QFileInfo info(filename);
-  QString name = info.fileName();
-  QString suffix = info.suffix().toLower();
+  QString name(info.fileName());
+  QString suffix(info.suffix().toLower());
 
   // Try all patterns first.
-  QVariantMap lexers = mDefaults.value("lexers").toMap();
+  QVariantMap lexers(mDefaults.value("lexers").toMap());
   foreach (const QString &key, lexers.keys()) {
-    QVariantMap map = lexers.value(key).toMap();
+    QVariantMap map(lexers.value(key).toMap());
     if (map.contains("patterns")) {
       foreach (QString pattern, map.value("patterns").toString().split(",")) {
         QRegExp regExp(pattern, CS, QRegExp::Wildcard);
@@ -138,7 +133,7 @@ QString Settings::lexer(const QString &filename) {
 
   // Try to match by extension.
   foreach (const QString &key, lexers.keys()) {
-    QVariantMap map = lexers.value(key).toMap();
+    QVariantMap map(lexers.value(key).toMap());
     if (map.contains("extensions")) {
       foreach (QString ext, map.value("extensions").toString().split(",")) {
         if (suffix == ext)
@@ -151,8 +146,8 @@ QString Settings::lexer(const QString &filename) {
 }
 
 QString Settings::kind(const QString &filename) {
-  QString key = lexer(filename);
-  QVariantMap lexers = mDefaults.value("lexers").toMap();
+  QString key(lexer(filename));
+  QVariantMap lexers(mDefaults.value("lexers").toMap());
   return lexers.value(key).toMap().value("name").toString();
 }
 
@@ -184,6 +179,8 @@ QString Settings::promptDescription(Prompt::Kind kind) const {
     case Prompt::Kind::LargeFiles:
       return tr("Prompt to stage large files");
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(kind)));
 }
 
 void Settings::setHotkey(const QString &action, const QString &hotkey) {
@@ -208,6 +205,13 @@ void Settings::setLastPath(const QString &lastPath) {
   setValue(kLastPathKey, lastPath);
 }
 
+QDir Settings::rootDir() {
+  QDir dir(QCoreApplication::applicationDirPath());
+  dir.cdUp();
+
+  return dir;
+}
+
 QDir Settings::appDir() {
   QDir dir(QCoreApplication::applicationDirPath());
 
@@ -223,48 +227,62 @@ QDir Settings::appDir() {
 QDir Settings::docDir() { return confDir(); }
 
 QDir Settings::confDir() {
-  QDir dir = rootDir();
-  if (!dir.cd("Resources"))
-    dir = QDir(CONF_DIR);
-  qDebug() << "Conf dir: " << dir;
+
+#if !defined(NDEBUG)
+  QDir dir(SRC_CONF_DIR);
+#else
+  QDir dir(rootDir());
+  if (!dir.cd("Resources")) {
+    if (!dir.cd(CONF_DIR))
+      dir.setPath(SRC_CONF_DIR);
+  }
+#endif
   return dir;
 }
 
 QDir Settings::l10nDir() {
-  QDir dir = confDir();
-  if (!dir.cd("l10n"))
-    dir = QDir(L10N_DIR);
-
-  qDebug() << "l10n dir: " << dir;
+#if !defined(NDEBUG)
+  QDir dir(QDir(SRC_L10N_DIR));
+#else
+  QDir dir(confDir());
+  if (!dir.cd("l10n")) {
+    dir = rootDir();
+    if (!dir.cd(L10N_DIR))
+      dir.setPath(SRC_L10N_DIR);
+  }
+#endif
   return dir;
 }
 
 QDir Settings::dictionariesDir() {
-  QDir dir = confDir();
+  QDir dir(confDir());
   dir.cd("dictionaries");
-  qDebug() << "Dictionaries dir: " << dir;
   return dir;
 }
 
 QDir Settings::lexerDir() {
-  QDir dir = confDir();
-  if (!dir.cd("lexers"))
-    dir = QDir(SCINTILLUA_LEXERS_DIR);
-  qDebug() << "Lexers dir: " << dir;
+#if !defined(NDEBUG)
+  QDir dir(SRC_SCINTILLUA_LEXERS_DIR);
+#else
+  QDir dir(confDir());
+  if (!dir.cd("lexers")) {
+    dir = rootDir();
+    if (!dir.cd(SCINTILLUA_LEXERS_DIR))
+      dir.setPath(SRC_SCINTILLUA_LEXERS_DIR);
+  }
+#endif
   return dir;
 }
 
 QDir Settings::themesDir() {
-  QDir dir = confDir();
+  QDir dir(confDir());
   dir.cd("themes");
-  qDebug() << "Theme dir: " << dir;
   return dir;
 }
 
 QDir Settings::pluginsDir() {
-  QDir dir = confDir();
+  QDir dir(confDir());
   dir.cd("plugins");
-  qDebug() << "Plugins dir: " << dir;
   return dir;
 }
 
@@ -273,8 +291,8 @@ QDir Settings::userDir() {
 }
 
 QDir Settings::tempDir() {
-  QString name = QCoreApplication::applicationName();
-  QDir dir = QDir::temp();
+  QString name(QCoreApplication::applicationName());
+  QDir dir(QDir::temp());
   dir.mkpath(name);
   dir.cd(name);
   return dir;

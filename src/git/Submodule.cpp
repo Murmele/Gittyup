@@ -26,7 +26,7 @@ Submodule::operator git_submodule *() const { return d.data(); }
 bool Submodule::isInitialized() const {
   Repository repo(git_submodule_owner(d.data()));
   QString key = QString("submodule.%1.url").arg(name());
-  return !repo.config().value<QString>(key).isEmpty();
+  return !repo.gitConfig().value<QString>(key).isEmpty();
 }
 
 void Submodule::initialize() const { git_submodule_init(d.data(), false); }
@@ -34,7 +34,7 @@ void Submodule::initialize() const { git_submodule_init(d.data(), false); }
 void Submodule::deinitialize() const {
   // Remove git config entry.
   Repository repo(git_submodule_owner(d.data()));
-  Config config = repo.config();
+  Config config = repo.gitConfig();
   QString regex = QString("submodule\\.%1\\..*").arg(name());
   Config::Iterator it = config.glob(regex);
   while (Config::Entry entry = it.next())

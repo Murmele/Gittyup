@@ -18,7 +18,7 @@ file(GLOB CONFIG_FILES ${CONF_DIR}/*.lua)
 file(GLOB DICTIONARIES ${CONF_DIR}/dictionaries/*.aff
      ${CONF_DIR}/dictionaries/*.dic ${CONF_DIR}/dictionaries/*.txt)
 file(GLOB THEMES ${CONF_DIR}/themes/*.lua)
-file(GLOB SCINTILLUA_LEXERS ${SCINTILLUA_LEXERS_DIR}/*.lua)
+file(GLOB SCINTILLUA_LEXERS ${SRC_SCINTILLUA_LEXERS_DIR}/*.lua)
 file(GLOB LUA_PLUGINS ${CONF_DIR}/plugins/*.lua ${CONF_DIR}/plugins/*.txt)
 
 # Build resources.
@@ -59,11 +59,22 @@ endif()
 
 target_compile_definitions(
   app
-  PUBLIC GITTYUP_NAME="${GITTYUP_NAME}" GITTYUP_VERSION="${GITTYUP_VERSION}"
+  PUBLIC GITTYUP_NAME="${GITTYUP_NAME}"
+         GITTYUP_VERSION="${GITTYUP_VERSION}"
+         GITTYUP_IDENTIFIER="${GITTYUP_IDENTIFIER}"
+         GITTYUP_DBUS_INTERFACE_NAME="${GITTYUP_IDENTIFIER}.Application"
+         GITTYUP_DBUS_OBJECT_PATH="/com/github/Murmele/Gittyup/Application"
   PRIVATE QT_TRANSLATIONS_DIR="${QT_TRANSLATIONS_DIR}"
           BUILD_DESCRIPTION="${BUILD_DESCRIPTION}")
 
-target_link_libraries(app conf git ui update Qt5::Widgets)
+target_link_libraries(
+  app
+  translation
+  conf
+  git
+  ui
+  update
+  Qt5::Widgets)
 
 set_target_properties(app PROPERTIES AUTOMOC ON)
 
@@ -103,8 +114,10 @@ endif()
 target_link_libraries(gittyup app)
 
 set_target_properties(
-  gittyup PROPERTIES OUTPUT_NAME ${GITTYUP_NAME} RUNTIME_OUTPUT_DIRECTORY
-                                                 ${CMAKE_BINARY_DIR})
+  gittyup
+  PROPERTIES OUTPUT_NAME ${GITTYUP_EXECUTABLE_NAME}
+             MACOSX_BUNDLE_BUNDLE_NAME ${GITTYUP_NAME}
+             RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 if(WIN32)
   target_link_libraries(app Dbghelp.lib)
@@ -118,7 +131,7 @@ elseif(APPLE)
                MACOSX_BUNDLE_BUNDLE_VERSION ${GITTYUP_VERSION}
                MACOSX_BUNDLE_LONG_VERSION_STRING ${GITTYUP_VERSION}
                MACOSX_BUNDLE_SHORT_VERSION_STRING ${GITTYUP_VERSION}
-               MACOSX_BUNDLE_GUI_IDENTIFIER "com.Murmele.Gittyup")
+               MACOSX_BUNDLE_GUI_IDENTIFIER ${GITTYUP_IDENTIFIER})
 
   # Copy config files into bundle.
   set_source_files_properties(
@@ -152,19 +165,10 @@ endif()
 
 add_dependencies(gittyup indexer relauncher)
 
-if(FLATPAK)
-  # Install application.
-  install(
-    TARGETS gittyup
-    DESTINATION ./bin # otherwise the executable will not be found by flatpak
-    COMPONENT ${GITTYUP_NAME})
-else()
-  # Install application.
-  install(
-    TARGETS gittyup
-    DESTINATION .
-    COMPONENT ${GITTYUP_NAME})
-endif()
+install(
+  TARGETS gittyup
+  DESTINATION $<IF:$<PLATFORM_ID:Darwin>,.,${CMAKE_INSTALL_BINDIR}>
+  COMPONENT ${GITTYUP_NAME})
 
 if(APPLE)
   get_target_property(QT_LIBRARY Qt5::Core LOCATION)
@@ -172,7 +176,7 @@ if(APPLE)
   get_filename_component(RPATH ${QT_FRAMEWORK} DIRECTORY)
 
   # Fixup relauncher RPATH.
-  set(RELAUNCHER ${GITTYUP_NAME}.app/Contents/MacOS/relauncher)
+  set(RELAUNCHER ${CONTENTS_DIR}/MacOS/relauncher)
   install(
     CODE "execute_process(COMMAND
 		${CMAKE_INSTALL_NAME_TOOL} -delete_rpath \"${RPATH}\"
@@ -189,7 +193,7 @@ execute_process(COMMAND
     COMPONENT ${GITTYUP_NAME})
 
   # Fixup indexer RPATH.
-  set(INDEXER ${GITTYUP_NAME}.app/Contents/MacOS/indexer)
+  set(INDEXER ${CONTENTS_DIR}/MacOS/indexer)
   install(
     CODE "execute_process(COMMAND
 		${CMAKE_INSTALL_NAME_TOOL} -delete_rpath \"${RPATH}\"
@@ -207,13 +211,16 @@ execute_process(COMMAND
 else()
   # Windows and UNIX must be ./ otherwise it is interpreted as absolute path
   if(UNIX)
-    set(RESOURCES_INSTALL_DIR
-        "${CMAKE_INSTALL_DATADIR}/gittyup/Resources"
-        CACHE STRING "The path for installing resource files")
-  else()
-    set(RESOURCES_INSTALL_DIR
-        "Resources"
-        CACHE STRING "The path for installing resource files")
+    install(
+      FILES ${CMAKE_SOURCE_DIR}/rsrc/linux/com.github.Murmele.Gittyup.desktop
+      DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+      RENAME ${GITTYUP_EXECUTABLE_NAME}.desktop)
+    if(${GENERATE_APPDATA})
+      install(
+        FILES ${APPDATA}
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
+        RENAME ${GITTYUP_EXECUTABLE_NAME}.appdata.xml)
+    endif()
   endif()
 
   # Install config files.
@@ -224,13 +231,13 @@ else()
     install(
       FILES ${CHANGELOG_HTML} ${ACKNOWLEDGMENTS_HTML} ${PRIVACY_HTML}
             ${PLUGIN_HTML}
-      DESTINATION ${RESOURCES_INSTALL_DIR}
+      DESTINATION ${RESOURCES_DIR}
       COMPONENT ${GITTYUP_NAME})
   endif()
 
   install(
     FILES ${EMOJI} ${MERGETOOLS}
-    DESTINATION ${RESOURCES_INSTALL_DIR}
+    DESTINATION ${RESOURCES_DIR}
     COMPONENT ${GITTYUP_NAME})
 
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${EMOJI}
@@ -241,7 +248,7 @@ else()
   foreach(CONFIG_FILE ${CONFIG_FILES})
     install(
       FILES ${CONFIG_FILE}
-      DESTINATION ${RESOURCES_INSTALL_DIR}
+      DESTINATION ${RESOURCES_DIR}
       COMPONENT ${GITTYUP_NAME})
 
     file(RELATIVE_PATH CONFIG_FILE_DEST ${CONF_DIR} ${CONFIG_FILE})
@@ -252,7 +259,7 @@ else()
 
   install(
     FILES ${DICTIONARIES}
-    DESTINATION ${RESOURCES_INSTALL_DIR}/dictionaries
+    DESTINATION ${RESOURCES_DIR}/dictionaries
     COMPONENT ${GITTYUP_NAME})
 
   foreach(DICTIONARY ${DICTIONARIES})
@@ -263,7 +270,7 @@ else()
 
   install(
     FILES ${THEMES}
-    DESTINATION ${RESOURCES_INSTALL_DIR}/themes
+    DESTINATION ${RESOURCES_DIR}/themes
     COMPONENT ${GITTYUP_NAME})
 
   foreach(THEME ${THEMES})
@@ -274,7 +281,7 @@ else()
 
   install(
     FILES ${LUA_PLUGINS}
-    DESTINATION ${RESOURCES_INSTALL_DIR}/plugins
+    DESTINATION ${RESOURCES_DIR}/plugins
     COMPONENT ${GITTYUP_NAME})
 
   foreach(LUA_PLUGIN ${LUA_PLUGINS})
@@ -286,7 +293,7 @@ else()
   foreach(SCINTILLUA_LEXER ${SCINTILLUA_LEXERS})
     install(
       FILES ${SCINTILLUA_LEXER}
-      DESTINATION ${RESOURCES_INSTALL_DIR}/lexers
+      DESTINATION ${RESOURCES_DIR}/lexers
       COMPONENT ${GITTYUP_NAME})
 
     get_filename_component(SCINTILLUA_LEXER_DEST ${SCINTILLUA_LEXER} NAME)

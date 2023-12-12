@@ -110,7 +110,7 @@ bool BlameMargin::event(QEvent *event) {
     git::Signature signature = mBlame.signature(index);
     if (signature.isValid()) {
       email = QString("&lt;%1&gt;").arg(signature.email());
-      date = signature.date().toString(Qt::DefaultLocaleLongDate);
+      date = QLocale().toString(signature.date(), QLocale::LongFormat);
     }
 
     if (!name.isEmpty())
@@ -223,8 +223,8 @@ void BlameMargin::paintEvent(QPaintEvent *event) {
     if (signature.isValid()) {
       QDateTime dateTime = signature.date();
       date = (dateTime.date() == today)
-                 ? dateTime.time().toString(Qt::DefaultLocaleShortDate)
-                 : dateTime.date().toString(Qt::DefaultLocaleShortDate);
+                 ? QLocale().toString(dateTime.time(), QLocale::ShortFormat)
+                 : QLocale().toString(dateTime.date(), QLocale::ShortFormat);
       time = dateTime.toTime_t();
     }
 
@@ -284,8 +284,8 @@ void BlameMargin::paintEvent(QPaintEvent *event) {
       QDateTime dateTime = signature.date();
       QString longDate =
           (dateTime.date() == today)
-              ? dateTime.time().toString(Qt::DefaultLocaleLongDate)
-              : dateTime.date().toString(Qt::DefaultLocaleLongDate);
+              ? QLocale().toString(dateTime.time(), QLocale::LongFormat)
+              : QLocale().toString(dateTime.date(), QLocale::LongFormat);
 
       QRectF dateRect = regularMetrics.boundingRect(longDate);
       if (nameRect.width() + dateRect.width() + 4 <= rect.width())

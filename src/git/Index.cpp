@@ -363,7 +363,10 @@ Id Index::headId(const QString &path, uint32_t *mode) const {
     return Id();
 
   git_tree_entry *entry = nullptr;
-  if (git_tree_entry_bypath(&entry, commit.tree(), path.toUtf8()))
+  const auto tree = commit.tree();
+  if (!tree.isValid())
+    return Id(); // broken repository?
+  if (git_tree_entry_bypath(&entry, tree, path.toUtf8()))
     return Id();
 
   if (mode)

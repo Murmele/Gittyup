@@ -16,6 +16,8 @@
 #include "ui/RepoView.h"
 #include "ui/TabWidget.h"
 #include "update/Updater.h"
+#include "languages.h"
+#include "util/Debug.h"
 #include <QCloseEvent>
 #include <QCommandLineParser>
 #include <QDesktopServices>
@@ -132,6 +134,18 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
   // Set debug menu option.
   MenuBar::setDebugMenuVisible(parser.isSet("debug-menu"));
 
+  Debug(QString("Root dir: %1").arg(Settings::rootDir().absolutePath()));
+  Debug(QString("App dir: %1").arg(Settings::appDir().absolutePath()));
+  Debug(QString("Doc dir: %1").arg(Settings::docDir().absolutePath()));
+  Debug(QString("Conf dir: %1").arg(Settings::confDir().absolutePath()));
+  Debug(QString("l10n dir: %1").arg(Settings::l10nDir().absolutePath()));
+  Debug(QString("dictionaries dir: %1")
+            .arg(Settings::dictionariesDir().absolutePath()));
+  Debug(QString("lexer dir: %1").arg(Settings::lexerDir().absolutePath()));
+  Debug(QString("themes dir: %1").arg(Settings::themesDir().absolutePath()));
+  Debug(
+      QString("pluginsDir dir: %1").arg(Settings::pluginsDir().absolutePath()));
+
   // Set pathspec filter.
   mPathspec = parser.value("filter");
 
@@ -159,6 +173,12 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
             .toBool()) &&
       (!parser.isSet("no-translation"))) {
     // Load translation files.
+
+    const auto &language =
+        Settings::instance()->value(Setting::Id::Language).toString();
+    if (language != Languages::system)
+      QLocale::setDefault(QLocale(language));
+
     QLocale locale;
     QDir l10n = Settings::l10nDir();
     QString name = QString(GITTYUP_NAME).toLower();
@@ -310,9 +330,9 @@ static MainWindow *openOrSwitch(QDir repo) {
 }
 
 #if defined(Q_OS_LINUX)
-#define DBUS_SERVICE_NAME "com.github.Murmele.Gittyup"
-#define DBUS_INTERFACE_NAME "com.github.Murmele.Gittyup.Application"
-#define DBUS_OBJECT_PATH "/com/github/Murmele/Gittyup/Application"
+#define DBUS_SERVICE_NAME GITTYUP_IDENTIFIER
+#define DBUS_INTERFACE_NAME GITTYUP_DBUS_INTERFACE_NAME
+#define DBUS_OBJECT_PATH GITTYUP_DBUS_OBJECT_PATH
 
 DBusGittyup::DBusGittyup(QObject *parent) : QObject(parent) {}
 

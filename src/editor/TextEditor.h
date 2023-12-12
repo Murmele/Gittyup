@@ -105,7 +105,7 @@ public:
 
   QList<Diagnostic> diagnostics(int line);
   void addDiagnostic(int line, const Diagnostic &diag);
-  sptr_t WndProc(unsigned int message, uptr_t wParam, sptr_t lParam);
+  sptr_t WndProc(unsigned int message, uptr_t wParam, sptr_t lParam) override;
 
   // Make wheel event public.
   // FIXME: This should be an event filter?
@@ -154,7 +154,7 @@ private:
   int diagnosticMarker(int line);
   void loadMarkerIcon(Marker marker, const QIcon &icon);
   void loadMarkerPixmap(Marker marker, const QPixmap &pixmap);
-  void AddToPopUp(const char *label, int cmd = 0, bool enabled = true);
+  void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) override;
   void ContextMenu(Scintilla::Point pt);
 
   QString mPath;

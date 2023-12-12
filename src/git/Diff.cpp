@@ -9,9 +9,9 @@
 
 #include "Diff.h"
 #include "Patch.h"
+#include "Debug.h"
 #include "git2/patch.h"
 #include <algorithm>
-#include <QDebug>
 
 bool containsPath(QString &str, QString &occurence, Qt::CaseSensitivity cs) {
   if (str.contains(occurence, cs)) {
@@ -108,13 +108,13 @@ QByteArray Diff::print() {
   QByteArray diff;
   for (auto file : data.files) {
     for (auto hunk : file.hunks) {
-      diff.append(hunk.header);
+      diff.append(hunk.header.toUtf8());
 
       for (auto line : hunk.lines)
-        diff.append(line);
+        diff.append(line.toUtf8());
     }
   }
-  qDebug() << QString(diff);
+  Debug(QString(diff));
   return diff;
 }
 
@@ -173,6 +173,9 @@ void Diff::findSimilar(bool untracked) {
   if (untracked)
     opts.flags = GIT_DIFF_FIND_FOR_UNTRACKED;
 
+  if (!isValid())
+    return;
+
   git_diff_find_similar(d->diff, &opts);
   d->resetMap();
 }
@@ -195,6 +198,8 @@ void Diff::sort(SortRole role, Qt::SortOrder order) {
                              : (rhsStatus < lhsStatus);
           }
         }
+        throw std::runtime_error("unreachable; value=" +
+                                 std::to_string(static_cast<int>(role)));
       });
 }
 

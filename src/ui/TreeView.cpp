@@ -11,6 +11,7 @@
 #include "ColumnView.h"
 #include "ViewDelegate.h"
 #include "TreeModel.h"
+#include "Debug.h"
 #include <QFormLayout>
 #include <QItemDelegate>
 #include <QLabel>
@@ -23,6 +24,9 @@
 #include "RepoView.h"
 #include <QMessageBox>
 #include <QPushButton>
+#include "conf/Settings.h"
+#include <QAbstractItemModel>
+#include <memory>
 
 #ifdef Q_OS_WIN
 #define ICON_SIZE 48
@@ -40,8 +44,26 @@ const QString kLabelFmt = "<p style='color: gray; font-weight: bold'>%1</p>";
 } // namespace
 
 TreeView::TreeView(QWidget *parent, const QString &name)
-    : QTreeView(parent), mSharedDelegate(new ViewDelegate(this)), mName(name) {
+    : QTreeView(parent),
+      mFileListDelegatePtr(std::make_unique<ViewDelegate>(this, true)),
+      mFileTreeDelegatePtr(std::make_unique<ViewDelegate>(this)), mName(name) {
   setObjectName(name);
+}
+
+void TreeView::updateView() {
+  QAbstractItemModel *itemModel = model();
+  if (!itemModel)
+    return;
+
+  // Remove any previous delegate on the current column, get the new current
+  // column, and set the delegate on that.
+  setItemDelegateForColumn(mDelegateCol, nullptr);
+  mDelegateCol = itemModel->columnCount() - 1;
+  setItemDelegateForColumn(mDelegateCol, mDelegateCol
+                                             ? mFileListDelegatePtr.get()
+                                             : mFileTreeDelegatePtr.get());
+
+  setHeaderHidden(mDelegateCol ? false : true);
 }
 
 void TreeView::setModel(QAbstractItemModel *model) {
@@ -56,6 +78,10 @@ void TreeView::setModel(QAbstractItemModel *model) {
   connect(model, &QAbstractItemModel::rowsInserted, this,
           QOverload<const QModelIndex &, int, int>::of(
               &TreeView::updateCollapseCount));
+
+  // Allow column sorting and set the default column and sort order.
+  setSortingEnabled(true);
+  sortByColumn(0, Qt::AscendingOrder);
 }
 
 void TreeView::discard(const QModelIndex &index, const bool force) {
@@ -164,8 +190,8 @@ void TreeView::handleSelectionChange(const QItemSelection &selected,
 }
 
 void TreeView::setCollapseCount(int value) {
-  qDebug() << "Name: " << mName << "Current Collapsed: " << mCollapseCount
-           << "; New Collapsed: " << value;
+  Debug("Name: " << mName << "Current Collapsed: " << mCollapseCount
+                 << "; New Collapsed: " << value);
   assert(value >= 0);
   mCollapseCount = value;
   emit collapseCountChanged(mCollapseCount);
@@ -208,11 +234,11 @@ int TreeView::countCollapsed(QModelIndex parent, bool recursive) {
       // Count only if the item is expanded and if recursive is on
       count += countCollapsed(idx);
     }
-    qDebug() << "Name: " << mName << " Row: " << i << ": " << data.toString()
-             << "; Count: " << count;
+    Debug("Name: " << mName << " Row: " << i << ": " << data.toString()
+                   << "; Count: " << count);
   }
 
-  qDebug() << "Name: " << mName << ", countCollapsed():" << count;
+  Debug("Name: " << mName << ", countCollapsed():" << count);
   return count;
 }
 
@@ -243,8 +269,8 @@ void TreeView::collapseAll() {
 void TreeView::itemExpanded(const QModelIndex &index) {
   if (mSupressItemExpandStateChanged)
     return;
-  qDebug() << "Expanded: Name: " << mName
-           << ", Index data: " << index.data().toString();
+  Debug("Expanded: Name: " << mName
+                           << ", Index data: " << index.data().toString());
   setCollapseCount(mCollapseCount - 1 + countCollapsed(index, false));
 }
 
@@ -252,8 +278,8 @@ void TreeView::itemCollapsed(const QModelIndex &index) {
   if (mSupressItemExpandStateChanged)
     return;
 
-  qDebug() << "Collapsed: Name: " << mName
-           << ", Index data: " << index.data().toString();
+  Debug("Collapsed: Name: " << mName
+                            << ", Index data: " << index.data().toString());
   // one item was collapsed, but all collapsed items below this item must be
   // subtracted
   setCollapseCount(mCollapseCount + 1 - countCollapsed(index, false));

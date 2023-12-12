@@ -11,6 +11,7 @@
 #include "Branch.h"
 #include "Config.h"
 #include "Id.h"
+#include "qtsupport.h"
 #include "TagRef.h"
 #include "git2/buffer.h"
 #include "git2/clone.h"
@@ -423,7 +424,7 @@ int Remote::Callbacks::certificate(git_cert *cert, int valid, const char *host,
     return 0;
 
   Repository repo = reinterpret_cast<Remote::Callbacks *>(payload)->repo();
-  Config config = repo.isValid() ? repo.config() : Config::global();
+  Config config = repo.isValid() ? repo.gitConfig() : Config::global();
   if (!config.value<bool>("http.sslVerify", true))
     return 0;
 
@@ -444,9 +445,10 @@ int Remote::Callbacks::transfer(const git_indexer_progress *stats,
     case Resolve:
       return cbs->resolve(stats->total_deltas, stats->indexed_deltas) ? 0 : -1;
 
-    default:
+    case Update:
       return 0;
   }
+  return 0;
 }
 
 int Remote::Callbacks::update(const char *name, const git_oid *a,
@@ -596,7 +598,7 @@ Result Remote::push(Callbacks *callbacks, const Reference &src,
     refspec += ":" + dst;
   } else {
     QString key = QString("branch.%1.merge").arg(src.name());
-    QString upstream = repo.config().value<QString>(key);
+    QString upstream = repo.gitConfig().value<QString>(key);
     if (!upstream.isEmpty())
       refspec += ":" + upstream;
   }
@@ -674,7 +676,7 @@ void Remote::log(const QString &text) {
     return;
 
   QString time = QTime::currentTime().toString(Qt::ISODateWithMs);
-  QTextStream(&file) << time << " - " << text << endl;
+  QTextStream(&file) << time << " - " << text << Qt::endl;
 }
 
 } // namespace git

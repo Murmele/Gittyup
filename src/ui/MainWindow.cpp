@@ -21,6 +21,7 @@
 #include "git/Repository.h"
 #include "git/Config.h"
 #include "git/Submodule.h"
+#include "qmap.h"
 #include <QApplication>
 #include <QCloseEvent>
 #include <QGuiApplication>
@@ -32,6 +33,7 @@
 #include <QSettings>
 #include <QTimeLine>
 #include <QToolButton>
+#include "util/Debug.h"
 
 namespace {
 
@@ -53,6 +55,8 @@ public:
   QString name() const { return mPath.section('/', -mSections); }
 
   void increment() { ++mSections; }
+  int sections() const { return mSections; }
+  void setSections(int sections) { mSections = sections; }
 
 private:
   QString mPath;
@@ -189,7 +193,7 @@ void MainWindow::setSideBarVisible(bool visible) {
 
   QTimeLine *timeline = new QTimeLine(250, this);
   timeline->setDirection(visible ? QTimeLine::Forward : QTimeLine::Backward);
-  timeline->setCurveShape(QTimeLine::LinearCurve);
+  timeline->setEasingCurve(QEasingCurve(QEasingCurve::Linear));
   timeline->setUpdateInterval(20);
 
   connect(timeline, &QTimeLine::valueChanged, [this, pos](qreal value) {
@@ -214,7 +218,7 @@ RepoView *MainWindow::addTab(const QString &path) {
   TabWidget *tabs = tabWidget();
   for (int i = 0; i < tabs->count(); i++) {
     RepoView *view = static_cast<RepoView *>(tabs->widget(i));
-    if (path == view->repo().workdir().path()) {
+    if (path == view->repo().dir(false).path()) {
       tabs->setCurrentIndex(i);
       return view;
     }
@@ -231,13 +235,13 @@ RepoView *MainWindow::addTab(const QString &path) {
 
 RepoView *MainWindow::addTab(const git::Repository &repo) {
   // Update recent repository settings.
-  QDir dir = repo.workdir();
+  QDir dir = repo.dir(false);
   RecentRepositories::instance()->add(dir.path());
 
   TabWidget *tabs = tabWidget();
   for (int i = 0; i < tabs->count(); i++) {
     RepoView *view = static_cast<RepoView *>(tabs->widget(i));
-    if (dir.path() == view->repo().workdir().path()) {
+    if (dir.path() == view->repo().dir(false).path()) {
       tabs->setCurrentIndex(i);
       return view;
     }
@@ -263,12 +267,7 @@ RepoView *MainWindow::addTab(const git::Repository &repo) {
   }
 
   // Start status diff.
-  view->refresh();
-
-  // Select head after the view has been added.
-  view->selectHead();
-  view->selectFirstCommit();
-
+  view->refresh(false);
   return view;
 }
 
@@ -358,6 +357,7 @@ bool MainWindow::restoreWindows() {
 }
 
 MainWindow *MainWindow::open(const QString &path, bool warnOnInvalid) {
+  DebugRefresh("Open project: " << path);
   if (path.isEmpty())
     return nullptr;
 
@@ -381,7 +381,7 @@ MainWindow *MainWindow::open(const QString &path, bool warnOnInvalid) {
 MainWindow *MainWindow::open(const git::Repository &repo) {
   // Update recent repository settings.
   if (repo.isValid())
-    RecentRepositories::instance()->add(repo.workdir().path());
+    RecentRepositories::instance()->add(repo.dir(false).path());
 
   // Create the window.
   MainWindow *window = new MainWindow(repo);
@@ -465,25 +465,31 @@ void MainWindow::warnInvalidRepo(const QString &path) {
 }
 
 void MainWindow::updateTabNames() {
-  QList<TabName> names;
+  TabWidget *tabs = tabWidget();
+  QHash<QString, QList<int>> names;
+  QList<TabName> fullNames;
+
   for (int i = 0; i < count(); ++i) {
-    TabName name(view(i)->repo().workdir().path());
-    auto functor = [&name](const TabName &rhs) {
-      return (name.name() == rhs.name());
-    };
-
-    QList<TabName>::iterator it, end = names.end();
-    while ((it = std::find_if(names.begin(), end, functor)) != end) {
-      it->increment();
-      name.increment();
-    }
-
-    names.append(name);
+    TabName name(view(i)->repo().dir(false).path());
+    names[name.name()].append(i);
+    fullNames.append(name);
   }
 
-  TabWidget *tabs = tabWidget();
-  for (int i = 0; i < count(); ++i)
-    tabs->setTabText(i, names.at(i).name());
+  QHash<QString, QList<int>>::key_iterator first;
+  while ((first = names.keyBegin()) != names.keyEnd()) {
+    auto key = *first;
+    auto ids = names.take(key);
+
+    if (ids.count() == 1) {
+      tabs->setTabText(ids.first(), key);
+    } else {
+      for (auto id : ids) {
+        auto &name = fullNames[id];
+        name.increment();
+        names[name.name()].append(id);
+      }
+    }
+  }
 }
 
 void MainWindow::updateInterface() {
@@ -514,7 +520,7 @@ void MainWindow::updateWindowTitle(int ahead, int behind) {
   }
 
   git::Repository repo = view->repo();
-  QDir dir = repo.workdir();
+  QDir dir = repo.dir(false);
   git::Reference head = repo.head();
   QString path = mFullPath ? dir.path() : dir.dirName();
   QString name = head.isValid() ? head.name() : repo.unbornHeadName();
@@ -580,7 +586,7 @@ void MainWindow::updateWindowTitle(int ahead, int behind) {
 QStringList MainWindow::paths() const {
   QStringList paths;
   for (int i = 0; i < count(); ++i)
-    paths.append(view(i)->repo().workdir().path());
+    paths.append(view(i)->repo().dir(false).path());
   return paths;
 }
 

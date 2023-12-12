@@ -18,6 +18,7 @@
 #include "FilterList.h"
 #include "Index.h"
 #include "Patch.h"
+#include "qtsupport.h"
 #include "Rebase.h"
 #include "Reference.h"
 #include "Remote.h"
@@ -151,7 +152,14 @@ Repository::Repository(git_repository *repo) : d(registerRepository(repo)) {}
 
 Repository::operator git_repository *() const { return d->repo; }
 
-QDir Repository::dir() const { return QDir(git_repository_path(d->repo)); }
+QDir Repository::dir(bool includeGitFolder) const {
+  QDir dir(git_repository_path(d->repo));
+  if (!includeGitFolder) {
+    assert(dir.dirName() == ".git");
+    assert(dir.cdUp());
+  }
+  return dir;
+}
 
 QDir Repository::workdir() const {
   return isBare() ? dir() : QDir(git_repository_workdir(d->repo));
@@ -173,12 +181,16 @@ QString Repository::message() const {
   return QString::fromUtf8(buf.ptr, buf.size);
 }
 
-Config Repository::config() const {
+// Config file used for git specific configs
+// config file in <Repository>/.git/config
+Config Repository::gitConfig() const {
   git_config *config = nullptr;
   git_repository_config(&config, d->repo);
   return Config(config);
 }
 
+// Config file used for app specific configs
+// config file in <Repository>/.git/gittyup/config
 Config Repository::appConfig() const {
   Config config = Config::appGlobal();
   QString path = appDir().filePath(kConfigFile);
@@ -305,8 +317,11 @@ Diff Repository::status(const Index &index, Diff::Callbacks *callbacks,
 Diff Repository::diffTreeToIndex(const Tree &tree, const Index &index,
                                  bool ignoreWhitespace) const {
   git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
-  opts.flags |= GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS |
-                GIT_DIFF_INCLUDE_TYPECHANGE;
+  opts.flags |= GIT_DIFF_INCLUDE_TYPECHANGE;
+
+  if (!appConfig().value<bool>("untracked.hide", false))
+    opts.flags |= GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS;
+
   if (ignoreWhitespace)
     opts.flags |= GIT_DIFF_IGNORE_WHITESPACE;
 
@@ -319,8 +334,11 @@ Diff Repository::diffIndexToWorkdir(const Index &index,
                                     Diff::Callbacks *callbacks,
                                     bool ignoreWhitespace) const {
   git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
-  opts.flags |= (GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS |
-                 GIT_DIFF_DISABLE_MMAP | GIT_DIFF_INCLUDE_TYPECHANGE);
+  opts.flags |= (GIT_DIFF_DISABLE_MMAP | GIT_DIFF_INCLUDE_TYPECHANGE);
+
+  if (!appConfig().value<bool>("untracked.hide", false))
+    opts.flags |= GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS;
+
   if (ignoreWhitespace)
     opts.flags |= GIT_DIFF_IGNORE_WHITESPACE;
 
@@ -477,7 +495,7 @@ QStringList Repository::existingTags() const {
 
   QStringList list;
 
-  for (int i = 0; i < array.count; i++) {
+  for (size_t i = 0; i < array.count; i++) {
     list.append(array.strings[i]);
   }
 
@@ -618,6 +636,7 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
       break;
 
     default:
+      // no-op
       break;
   }
 
@@ -734,7 +753,7 @@ QList<Remote> Repository::remotes() const {
     return QList<Remote>();
 
   QList<Remote> remotes;
-  for (int i = 0; i < names.count; ++i) {
+  for (size_t i = 0; i < names.count; ++i) {
     if (Remote remote = lookupRemote(names.strings[i]))
       remotes.append(remote);
   }
@@ -889,8 +908,10 @@ void Repository::rebase(const AnnotatedCommit &mergeHead,
   git_rebase_init(&r, d->repo, nullptr, mergeHead, nullptr, &opts);
   auto rebase = git::Rebase(d->repo, r, overrideUser, overrideEmail);
 
-  if (!rebase.isValid())
+  if (!rebase.isValid()) {
     emit d->notifier->rebaseInitError();
+    return;
+  }
 
   // start rebasing
   rebaseContinue(QStringLiteral(""));
@@ -920,7 +941,6 @@ void Repository::rebaseContinue(const QString &commitMessage) {
     }
   }
   // Loop over rebase operations.
-  int count = r.count();
   while (r.hasNext()) {
     git::Commit before = r.next();
     if (!before.isValid()) {
@@ -1010,7 +1030,7 @@ void Repository::cleanupState() {
 }
 
 QTextCodec *Repository::codec() const {
-  QString encoding = config().value<QString>("gui.encoding");
+  QString encoding = gitConfig().value<QString>("gui.encoding");
   QTextCodec *codec = QTextCodec::codecForName(encoding.toUtf8());
   return codec ? codec : QTextCodec::codecForLocale();
 }
@@ -1040,7 +1060,7 @@ QStringList Repository::lfsEnvironment() {
 
 Repository::LfsTracking Repository::lfsTracked() {
   QString output = lfsExecute({"track"});
-  QStringList lines = output.split('\n', QString::SkipEmptyParts);
+  QStringList lines = output.split('\n', Qt::SkipEmptyParts);
   if (!lines.isEmpty())
     lines.removeFirst();
 

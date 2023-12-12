@@ -49,7 +49,9 @@ QSize Badge::sizeHint() const {
 }
 
 QSize Badge::minimumSizeHint() const {
-  return !mLabels.isEmpty() ? size(font(), kEllipsis) : QSize();
+  return !mLabels.isEmpty()
+             ? size(font(), Label(mLabels.first().type, kEllipsis))
+             : QSize();
 }
 
 QSize Badge::size(const QFont &font, const QList<Label> &labels) {
@@ -140,14 +142,28 @@ void Badge::paint(QPainter *painter, const Label &label, const QRect &rect,
   Theme::BadgeState state = Theme::BadgeState::Normal;
   if (selected && active) {
     state = Theme::BadgeState::Selected;
-  } else if (label.text == "!") {
-    state = Theme::BadgeState::Conflicted;
   } else if (label.bold) {
     state = Theme::BadgeState::Head;
   }
 
-  QColor fore = theme->badge(Theme::BadgeRole::Foreground, state);
-  QColor back = theme->badge(Theme::BadgeRole::Background, state);
+  if (label.type == Label::Type::Status) {
+    if (label.text == '!') {
+      state = Theme::BadgeState::Conflicted;
+    } else if (label.text == 'M') {
+      state = Theme::BadgeState::Modified;
+    } else if (label.text == 'A') {
+      state = Theme::BadgeState::Added;
+    } else if (label.text == 'D') {
+      state = Theme::BadgeState::Deleted;
+    } else if (label.text == '?') {
+      state = Theme::BadgeState::Untracked;
+    } else if (label.text == 'R') {
+      state = Theme::BadgeState::Renamed;
+    }
+  }
+
+  const QColor fore = theme->badge(Theme::BadgeRole::Foreground, state);
+  const QColor back = theme->badge(Theme::BadgeRole::Background, state);
 
   painter->setBrush(back);
   painter->setPen(Qt::NoPen);

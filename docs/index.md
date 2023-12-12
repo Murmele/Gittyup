@@ -31,7 +31,26 @@ Report bugs in Gittyup by opening an issue in the
 Remember to search for existing issues before creating a new one.
 
 If you still need help, check out our Matrix channel
-[Gittyup:martix.org](https://matrix.to/#/#Gittyup:matrix.org).
+[Gittyup:matrix.org](https://matrix.to/#/#Gittyup:matrix.org).
+
+Multi language support
+======================
+
+Gittyup supports the following languages:
+- English (en)
+- German (de)
+- Spanisch (es)
+- Japanese (ja)
+- Portuguese (pt)
+- Portuguese Brazil (pt_BR)
+- Chinese (zh_CN)
+- Russian (ru)
+
+By default the system language is used. To switch to another language execute the application with the following command
+```
+LANG=<lang> <executable>
+```
+
 
 Features
 ========
@@ -74,9 +93,9 @@ Solving rebase conflicts and continuing after conflicts are solved
 
 ![Rebase Conflicts](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/RebaseConflicts.png)
 
-### Staring commits
+### Starring commits
 to find specific commits much faster
-![Staring commits](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/starring_commits.png)
+![Starring commits](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/starring_commits.png)
 
 ### Tag selection
 Use an existing tag as template for your next tag. So you never have to look which is your latest tag
@@ -84,7 +103,7 @@ Use an existing tag as template for your next tag. So you never have to look whi
 ![Tag selection](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/tag_selection.png)
 
 ### Commit message template
-Create you commit messages according a defined template
+Create you commit messages according a defined template. The first template is automatically applied to the commit message editor.
 
 ![Commit message template selection](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/CommitMessageTemplateSelection.png)
 

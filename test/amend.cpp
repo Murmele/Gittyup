@@ -1,5 +1,6 @@
 #include "Test.h"
 
+#include "qtsupport.h"
 #include "git/Signature.h"
 #include "git/Reference.h"
 #include "git/Tree.h"
@@ -29,6 +30,7 @@ private slots:
   void testAmendAddFile();
   void testAmendDialog();
   void testAmendDialog2();
+  void testAmendDialogNewLineInMessage();
 };
 
 using namespace git;
@@ -93,7 +95,7 @@ void TestAmend::testAmendAddFile() {
     // Add file and refresh.
     QFile file(mRepo->workdir().filePath("test"));
     QVERIFY(file.open(QFile::WriteOnly));
-    QTextStream(&file) << "This will be a test." << endl;
+    QTextStream(&file) << "This will be a test." << Qt::endl;
 
     Test::refresh(view);
 
@@ -138,7 +140,7 @@ void TestAmend::testAmendAddFile() {
   {
     QFile file(mRepo->workdir().filePath("test"));
     QVERIFY(file.open(QFile::WriteOnly));
-    QTextStream(&file) << "Changes made" << endl;
+    QTextStream(&file) << "Changes made" << Qt::endl;
 
     Test::refresh(view);
 
@@ -363,6 +365,23 @@ void TestAmend::testAmendDialog2() {
   QCOMPARE(info.committerInfo.name, "Another committer name");
   QCOMPARE(info.committerInfo.email, "Another committer email address");
   QCOMPARE(info.commitMessage, "Changing the commit message");
+}
+
+void TestAmend::testAmendDialogNewLineInMessage() {
+  // Test changing author name, author email, committer name, committer email
+
+  Test::ScratchRepository repo;
+  auto authorSignature = repo->signature(
+      "New Author", "New Author Email",
+      QDateTime::fromString("Sun May 23 10:36:26 2022 +0200", Qt::RFC2822Date));
+  auto committerSignature = repo->signature(
+      "New Committer", "New Committer Email",
+      QDateTime::fromString("Sun May 23 11:36:26 2022 +0200", Qt::RFC2822Date));
+
+  AmendDialog d(authorSignature, committerSignature,
+                "Test commit message\nNewLine");
+
+  QCOMPARE(d.getInfo().commitMessage, "Test commit message\nNewLine");
 }
 
 TEST_MAIN(TestAmend)

@@ -47,7 +47,7 @@ DeleteBranchDialog::DeleteBranchDialog(const git::Branch &branch,
 
       QString name = upstream.name().section('/', 1);
       QString key = kBranchMergeFmt.arg(branch.name());
-      QString upstreamName = repo.config().value<QString>(key);
+      QString upstreamName = repo.gitConfig().value<QString>(key);
 
       git::Remote remote = upstream.remote();
       QString remoteName = remote.name();

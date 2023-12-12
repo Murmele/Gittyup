@@ -15,6 +15,7 @@
 #include "conf/Settings.h"
 #include "ui/MainWindow.h"
 #include "git/Command.h"
+#include "Debug.h"
 #include <QApplication>
 #include <QCloseEvent>
 #include <QDialog>
@@ -64,7 +65,7 @@ Updater::Download::~Download() { delete mFile; }
 Updater::Updater(QObject *parent) : QObject(parent) {
   // Set up connections.
   connect(&mMgr, &QNetworkAccessManager::sslErrors, this, &Updater::sslErrors);
-  connect(this, &Updater::upToDate, [this] {
+  connect(this, &Updater::upToDate, [] {
     UpToDateDialog dialog;
     dialog.exec();
   });
@@ -174,7 +175,7 @@ void Updater::update(bool spontaneous) {
 	}
 	QString link = kLinkFmt.arg(platformArg, QString("-%1").arg(version), extension);
 #endif
-    qDebug() << "Download url of the update: " << link;
+    Debug("Download url of the update: " << link);
 
     emit updateAvailable(platform, version, html, link);
   });
@@ -271,32 +272,60 @@ Updater *Updater::instance() {
 }
 
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
+bool Updater::uninstallGittyup(bool system) {
+  QString bash = git::Command::bashPath();
+  QString loc = system ? "--system" : "--user";
+
+  QStringList args;
+  args.append("-c");
+  args.append(QString("flatpak-spawn --host flatpak remove -y %1 "
+                      "com.github.Murmele.Gittyup")
+                  .arg(loc));
+  auto *p = new QProcess(this);
+
+  p->start(bash, args);
+  if (!p->waitForFinished()) {
+    const QString es = p->errorString();
+    qDebug() << "Uninstalling Gittyup failed: " + es;
+    return false;
+  } else {
+    qDebug() << "Uninstall: " + p->readAll();
+  }
+  p->deleteLater();
+  return true;
+}
+
 bool Updater::install(const DownloadRef &download, QString &error) {
   QString path = download->file()->fileName();
+
+  // Ignore return value
+  uninstallGittyup(true);
+  uninstallGittyup(false);
 
   QDir dir(QCoreApplication::applicationDirPath());
   QStringList args;
   args.append("-c");
   args.append(
       QString("flatpak-spawn --host flatpak install --user -y %1").arg(path));
-  qDebug() << "Install arguments: " << args;
-  qDebug() << "Download file: " << path;
+  Debug("Install arguments: " << args);
+  Debug("Download file: " << path);
   QProcess *p = new QProcess(this);
 
   QString bash = git::Command::bashPath();
-  qDebug() << "Bash: " << bash;
+  Debug("Bash: " << bash);
   p->start(bash, args);
   if (!p->waitForFinished()) {
     const QString es = p->errorString();
     error = tr("Installer script failed: %1").arg(es);
-    qDebug() << "Installer script failed: " + es;
+    Debug("Installer script failed: " + es);
     return false;
   } else {
-    qDebug() << "Successfully installed bundle: " + p->readAll();
+    Debug("Successfully installed bundle: " + p->readAll());
   }
+  p->deleteLater();
 
   auto relauncher_cmd = dir.filePath("relauncher");
-  qDebug() << "Relauncher command: " << relauncher_cmd;
+  Debug("Relauncher command: " << relauncher_cmd);
 
   // Start the relaunch helper.
   QString app = "flatpak-spawn --host flatpak run com.github.Murmele.Gittyup";

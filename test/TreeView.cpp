@@ -3,7 +3,9 @@
 #include "ui/MainWindow.h"
 #include "ui/DoubleTreeWidget.h"
 #include "ui/TreeView.h"
+#include "ui/TreeProxy.h"
 #include "ui/FileContextMenu.h"
+#include "conf/Settings.h"
 
 #include <QTextEdit>
 
@@ -22,6 +24,18 @@ using namespace QTest;
                                                                                \
   RepoView *repoView = window.currentView();
 
+static void disableListView(TreeView &treeView, RepoView &repoView) {
+  auto treeProxy = dynamic_cast<TreeProxy *>(treeView.model());
+  QVERIFY(treeProxy);
+
+  auto diffTreeModel = dynamic_cast<DiffTreeModel *>(treeProxy->sourceModel());
+  QVERIFY(diffTreeModel);
+
+  diffTreeModel->enableListView(false);
+  Settings::instance()->setValue(Setting::Id::ShowChangedFilesAsList, false);
+  repoView.refresh();
+}
+
 class TestTreeView : public QObject {
   Q_OBJECT
 
@@ -29,6 +43,8 @@ private slots:
   void restoreStagedFileAfterCommit();
   void discardFiles();
   void fileMergeCrash();
+  void dirtySubmoduleAndStagedSubmodule();
+  void conflictedAndStagedFile();
 
 private:
 };
@@ -44,6 +60,7 @@ void TestTreeView::restoreStagedFileAfterCommit() {
   {
     auto unstagedTree = doubleTree->findChild<TreeView *>("Unstaged");
     QVERIFY(unstagedTree);
+    disableListView(*unstagedTree, *view);
     QAbstractItemModel *unstagedModel = unstagedTree->model();
     // Wait for refresh
     auto timeout = Timeout(10000, "Repository didn't refresh in time");
@@ -259,6 +276,80 @@ void TestTreeView::fileMergeCrash() {
   mouseClick(save, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(), 0);
 
   // should not crash
+}
+
+void TestTreeView::dirtySubmoduleAndStagedSubmodule() {
+  INIT_REPO("DirtySubmoduleUnstagedTree.zip", false);
+
+  auto doubleTree = repoView->findChild<DoubleTreeWidget *>();
+  QVERIFY(doubleTree);
+  auto stagedTree = doubleTree->findChild<TreeView *>("Staged");
+  QVERIFY(stagedTree);
+  auto unstagedTree = doubleTree->findChild<TreeView *>("Unstaged");
+  QVERIFY(unstagedTree);
+
+  {
+    QAbstractItemModel *stagedModel = stagedTree->model();
+    QCOMPARE(stagedModel->rowCount(), 1);
+    QModelIndex index = stagedModel->index(0, 0); // submodules folder
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "submodules");
+
+    QCOMPARE(stagedModel->rowCount(index), 1);
+    index = stagedModel->index(0, 0, index); // submodule1
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "submodule1");
+  }
+
+  {
+    QAbstractItemModel *unstagedModel = unstagedTree->model();
+    QCOMPARE(unstagedModel->rowCount(), 1);
+    QModelIndex index = unstagedModel->index(0, 0); // submodules folder
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "submodules");
+
+    QCOMPARE(unstagedModel->rowCount(index), 1);
+    index = unstagedModel->index(0, 0, index); // submodule2
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "submodule2");
+  }
+}
+
+void TestTreeView::conflictedAndStagedFile() {
+  INIT_REPO("ConflictedAndStagedFile.zip", false);
+
+  auto doubleTree = repoView->findChild<DoubleTreeWidget *>();
+  QVERIFY(doubleTree);
+  auto stagedTree = doubleTree->findChild<TreeView *>("Staged");
+  QVERIFY(stagedTree);
+  auto unstagedTree = doubleTree->findChild<TreeView *>("Unstaged");
+  QVERIFY(unstagedTree);
+
+  {
+    QAbstractItemModel *stagedModel = stagedTree->model();
+    QCOMPARE(stagedModel->rowCount(), 1);
+    QModelIndex index = stagedModel->index(0, 0); // "folder" folder
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "folder");
+
+    QCOMPARE(stagedModel->rowCount(index), 1);
+    index = stagedModel->index(0, 0, index);
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "NotConflictedFile.txt");
+  }
+
+  {
+    QAbstractItemModel *unstagedModel = unstagedTree->model();
+    QCOMPARE(unstagedModel->rowCount(), 1);
+    QModelIndex index = unstagedModel->index(0, 0); // "folder" folder
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "folder");
+
+    QCOMPARE(unstagedModel->rowCount(index), 1);
+    index = unstagedModel->index(0, 0, index);
+    QVERIFY(index.isValid());
+    QCOMPARE(index.data(), "conflictedFile.txt");
+  }
 }
 
 TEST_MAIN(TestTreeView)

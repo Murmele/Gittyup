@@ -17,10 +17,13 @@
 #include "MainWindow.h"
 #include "MenuBar.h"
 #include "PathspecWidget.h"
+#include "qtsupport.h"
 #include "ReferenceWidget.h"
 #include "RemoteCallbacks.h"
 #include "SearchField.h"
+#include "DoubleTreeWidget.h"
 #include "ToolBar.h"
+#include "Debug.h"
 #include "app/Application.h"
 #include "conf/Settings.h"
 #include "dialogs/AmendDialog.h"
@@ -31,6 +34,7 @@
 #include "dialogs/NewBranchDialog.h"
 #include "dialogs/RebaseConflictDialog.h"
 #include "dialogs/RemoteDialog.h"
+#include "dialogs/RenameBranchDialog.h"
 #include "dialogs/SettingsDialog.h"
 #include "dialogs/TagDialog.h"
 #include "editor/TextEditor.h"
@@ -246,8 +250,9 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
   connect(notifier, &git::RepositoryNotifier::referenceUpdated, this,
           [this](const git::Reference &ref) {
             if (ref.isValid() && ref.isHead()) {
-              mRefs->select(ref);
-
+              mCommits->suppressResetWalker(true);
+              mRefs->select(ref, false);
+              mCommits->suppressResetWalker(false);
               // Invalidate submodule cache when the HEAD changes.
               mRepo.invalidateSubmoduleCache();
             }
@@ -305,7 +310,7 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
   // Refresh the diff when a whole directory is added to the index.
   // FIXME: This is a workaround.
   connect(notifier, &git::RepositoryNotifier::directoryStaged, this,
-          &RepoView::refresh, Qt::QueuedConnection);
+          QOverload<>::of(&RepoView::refresh), Qt::QueuedConnection);
   connect(notifier, &git::RepositoryNotifier::directoryAboutToBeStaged, this,
           [this](const QString &dir, int count, bool &allow) {
             if (!Settings::instance()->prompt(Prompt::Kind::Directories))
@@ -693,7 +698,7 @@ void RepoView::visitLink(const QString &link) {
 
   if (action == "sslverifyrepo") {
     if (mRepo.isValid()) {
-      git::Config config = mRepo.config();
+      git::Config config = mRepo.gitConfig();
       config.setValue<bool>("http.sslVerify", false);
       QMessageBox msg(QMessageBox::Icon::Information, tr("Certificate Error"),
                       tr("SSL verification disabled for this repository"),
@@ -842,7 +847,7 @@ void RepoView::startIndexing() {
 #endif
   QFileInfo check_file(indexer_cmd);
   if (!check_file.isFile()) {
-    qDebug() << "No indexer found: " << indexer_cmd;
+    Debug("No indexer found: " << indexer_cmd);
   }
   mIndexer.start(indexer_cmd, args);
 }
@@ -878,7 +883,7 @@ void RepoView::setLogVisible(bool visible) {
 
   QTimeLine *timeline = new QTimeLine(250, this);
   timeline->setDirection(visible ? QTimeLine::Forward : QTimeLine::Backward);
-  timeline->setCurveShape(QTimeLine::LinearCurve);
+  timeline->setEasingCurve(QEasingCurve(QEasingCurve::Linear));
   timeline->setUpdateInterval(20);
 
   connect(timeline, &QTimeLine::valueChanged, this, [this, pos](qreal value) {
@@ -903,7 +908,7 @@ LogEntry *RepoView::error(LogEntry *parent, const QString &action,
                      ? tr("Unable to %1 - %2").arg(action, detail)
                      : tr("Unable to %1 '%2' - %3").arg(action, name, detail);
 
-  QStringList items = text.split("\\n", QString::KeepEmptyParts);
+  QStringList items = text.split("\\n", Qt::KeepEmptyParts);
   if (items.last() == "\n")
     items.removeLast();
 
@@ -1003,7 +1008,7 @@ QFuture<git::Result> RepoView::fetch(const git::Remote &rmt, bool tags,
           // Add ssl hint.
           if (result.error() == -GIT_ERROR_SSL) {
             git::Config config =
-                mRepo.isValid() ? mRepo.config() : git::Config::global();
+                mRepo.isValid() ? mRepo.gitConfig() : git::Config::global();
             if (config.value<bool>("http.sslVerify", true)) {
               QString ssl =
                   tr("You may disable ssl verification <a "
@@ -1112,7 +1117,7 @@ void RepoView::pull(MergeFlags flags, const git::Remote &rmt, bool tags,
             MergeFlags mf = flags;
             if (flags == Default) {
               // Read pull.rebase from config.
-              git::Config config = mRepo.config();
+              git::Config config = mRepo.gitConfig();
               bool rebase = config.value<bool>("pull.rebase");
 
               // Read branch.<name>.rebase from config.
@@ -1138,6 +1143,7 @@ void RepoView::pull(MergeFlags flags, const git::Remote &rmt, bool tags,
 void RepoView::merge(MergeFlags flags, const git::Reference &ref,
                      const git::AnnotatedCommit &commit, LogEntry *parent,
                      const std::function<void()> &callback) {
+  DebugRefresh("");
   git::Reference head = mRepo.head();
 
   git::AnnotatedCommit upstream;
@@ -1301,8 +1307,7 @@ void RepoView::merge(MergeFlags flags, const git::AnnotatedCommit &upstream,
     return;
 
   if (flags & NoCommit) {
-    refresh();
-    selectHead();
+    refresh(false);
     return;
   }
 
@@ -1396,13 +1401,13 @@ void RepoView::mergeAbort(LogEntry *parent) {
 
   addLogEntry(text, tr("Abort"), parent);
   mDetails->setCommitMessage(QString());
-  refresh();
+  refresh(false);
 }
 
 void RepoView::abortRebase() {
   mRepo.rebaseAbort();
   mRebase = nullptr;
-  refresh();
+  refresh(false);
 }
 
 void RepoView::continueRebase() {
@@ -1453,10 +1458,19 @@ void RepoView::rebaseAboutToRebase(const git::Rebase rebase,
   QString beforeText = before.link();
   QString step = tr("%1/%2").arg(currIndex).arg(rebase.count());
   QString text = tr("%1 - %2").arg(step, beforeText);
-  LogEntry *entry = mRebase->addEntry(text, tr("Apply"));
+  mRebase->addEntry(text, tr("Apply"));
 }
 
-void RepoView::rebaseConflict(const git::Rebase rebase) { refresh(); }
+void RepoView::rebaseConflict(const git::Rebase rebase) {
+  if (mRebase) {
+    mRebase->addEntry(tr("Please resolve conflicts before continue"),
+                      tr("Conflict"));
+    mDetails->setCommitMessage(rebase.commitToRebase()
+                                   .message(git::Commit::SubstituteEmoji)
+                                   .trimmed());
+  }
+  refresh(false);
+}
 
 void RepoView::rebaseCommitSuccess(const git::Rebase rebase,
                                    const git::Commit before,
@@ -1612,7 +1626,7 @@ void RepoView::promptToForcePush(const git::Remote &remote,
                                  const git::Reference &src) {
   // FIXME: Check if force is really required?
 
-  QString title = tr("Force Push?");
+  QString title = tr("Force Push to %1?").arg(remote.name());
   QString text = tr("Are you sure you want to force push?");
   QMessageBox *dialog = new QMessageBox(QMessageBox::Warning, title, text,
                                         QMessageBox::Cancel, this);
@@ -1752,11 +1766,13 @@ void RepoView::push(const git::Remote &rmt, const git::Reference &src,
               QString hint1 =
                   tr("You may want to integrate remote commits first by "
                      "<a href='action:pull'>pulling</a>. Then "
-                     "<a href='action:push'>push</a> again.");
+                     "<a href='action:push?to=%1'>push</a> again.")
+                      .arg(remote.name());
               QString hint2 =
                   tr("If you really want the remote to lose commits, you may "
-                     "be able to <a href='action:push?force=true'>force "
-                     "push</a>.");
+                     "be able to <a href='action:push?to=%1&force=true'>force "
+                     "push</a>.")
+                      .arg(remote.name());
               errorEntry->addEntry(LogEntry::Hint, hint1);
               errorEntry->addEntry(LogEntry::Warning, hint2);
             }
@@ -2040,6 +2056,13 @@ void RepoView::promptToDeleteBranch(const git::Reference &ref) {
   dialog->open();
 }
 
+void RepoView::promptToRenameBranch(const git::Branch &branch) {
+  Q_ASSERT(branch.isValid() && branch.isLocalBranch());
+  RenameBranchDialog *dialog = new RenameBranchDialog(mRepo, branch, this);
+  // The dialog contains the code which performs the rename
+  dialog->open();
+}
+
 void RepoView::promptToStash() {
   // Prompt to edit stash commit message.
   if (!Settings::instance()->prompt(Prompt::Kind::Stash)) {
@@ -2073,7 +2096,7 @@ void RepoView::stash(const QString &message) {
   }
 
   entry->setText(msg(commit));
-  refresh();
+  refresh(false);
 }
 
 void RepoView::applyStash(int index) {
@@ -2087,7 +2110,7 @@ void RepoView::applyStash(int index) {
     return;
   }
 
-  refresh();
+  refresh(false);
 }
 
 void RepoView::dropStash(int index) {
@@ -2111,7 +2134,7 @@ void RepoView::popStash(int index) {
     return;
   }
 
-  refresh();
+  refresh(false);
 }
 
 void RepoView::promptToAddTag(const git::Commit &commit) {
@@ -2249,11 +2272,14 @@ void RepoView::reset(const git::Commit &commit, git_reset_t type,
   QString text = tr("%1 to %2").arg(head.name(), commit.link());
   LogEntry *entry = addLogEntry(text, title);
 
-  if (!commit.reset(type))
+  if (!commit.reset(type, QStringList(), false))
     error(entry, commitToAmend ? tr("amend") : tr("reset"), head.name());
 
   updateSubmodules(mRepo.submodules(), true, false,
-                   (type == GIT_RESET_HARD) ? true : false, entry);
+                   (type == GIT_RESET_HARD) ? true : false, entry,
+                   type == git_reset_t::GIT_RESET_HARD);
+  if (mRepo.submodules().isEmpty())
+    refresh(type == git_reset_t::GIT_RESET_HARD);
 }
 
 void RepoView::resetSubmodules(const QList<git::Submodule> &submodules,
@@ -2292,7 +2318,7 @@ void RepoView::resetSubmodules(const QList<git::Submodule> &submodules,
 void RepoView::resetSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
                                     bool recursive, git_reset_t type) {
   if (submodules.isEmpty()) {
-    refresh();
+    refresh(true);
     return;
   }
 
@@ -2385,7 +2411,7 @@ RepoView::submoduleResetInfoList(const git::Repository &repo,
 
 void RepoView::updateSubmodules(const QList<git::Submodule> &submodules,
                                 bool recursive, bool init, bool checkout_force,
-                                LogEntry *parent) {
+                                LogEntry *parent, bool restoreSelection) {
   if (mWatcher) {
     // Queue update. synchrone
     connect(mWatcher, &QFutureWatcher<git::Result>::finished, mWatcher,
@@ -2403,7 +2429,8 @@ void RepoView::updateSubmodules(const QList<git::Submodule> &submodules,
   // Start updating asynchronously.
   QList<SubmoduleInfo> infos =
       submoduleUpdateInfoList(mRepo, submodules, init, checkout_force, parent);
-  updateSubmodulesAsync(infos, recursive, init, checkout_force);
+  updateSubmodulesAsync(infos, recursive, init, checkout_force,
+                        restoreSelection);
 }
 
 /*!
@@ -2448,9 +2475,10 @@ QList<RepoView::SubmoduleInfo> RepoView::submoduleUpdateInfoList(
 
 void RepoView::updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
                                      bool recursive, bool init,
-                                     bool checkout_force) {
+                                     bool checkout_force,
+                                     bool restoreSelection) {
   if (submodules.isEmpty()) {
-    refresh();
+    refresh(restoreSelection);
     return;
   }
 
@@ -2462,7 +2490,8 @@ void RepoView::updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
 
   mWatcher = new QFutureWatcher<git::Result>(this);
   connect(mWatcher, &QFutureWatcher<git::Result>::finished, mWatcher,
-          [this, init, recursive, checkout_force, tail, info, entry] {
+          [this, init, recursive, checkout_force, tail, info, entry,
+           restoreSelection] {
             entry->setBusy(false);
 
             git::Result result = mWatcher->result();
@@ -2492,7 +2521,7 @@ void RepoView::updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
 
             // Restart with smaller list.
             updateSubmodulesAsync(prefix + tail, recursive, init,
-                                  checkout_force);
+                                  checkout_force, restoreSelection);
           });
 
   QString url = submodule.url();
@@ -2699,7 +2728,7 @@ void RepoView::openTerminal() {
   child.setArguments(QStringList() << "-c" << terminalCmd);
 #endif
   child.setWorkingDirectory(mRepo.workdir().absolutePath());
-  qDebug() << "Execute Terminal: Arguments: " << child.arguments();
+  Debug("Execute Terminal: Arguments: " << child.arguments());
   child.startDetached();
 #endif
 }
@@ -2716,7 +2745,7 @@ void RepoView::ignore(const QString &name) {
   QTextStream(&file) << name << "\n";
   file.close();
 
-  refresh();
+  refresh(true);
 }
 
 EditorWindow *RepoView::newEditor() {
@@ -2758,9 +2787,22 @@ EditorWindow *RepoView::openEditor(const QString &path, int line,
   return window;
 }
 
-void RepoView::refresh() {
+void RepoView::refresh() { refresh(true); }
+
+void RepoView::refresh(bool restoreSelection) {
   // Fake head update.
-  emit mRepo.notifier()->referenceUpdated(mRepo.head());
+  auto dtw = findChild<DoubleTreeWidget *>();
+  if (dtw) {
+    dtw->setDiffCounter();
+  }
+  if (mRepo.head().isValid()) {
+    DebugRefresh("Head name: " << mRepo.head().name());
+  } else {
+    DebugRefresh("Head invalid");
+  }
+  DebugRefresh("time: " << QDateTime::currentDateTime()
+                        << " Set diff counter: " << counter);
+  emit mRepo.notifier()->referenceUpdated(mRepo.head(), restoreSelection);
 }
 
 void RepoView::setPathspec(const QString &path) {
@@ -2876,6 +2918,7 @@ void RepoView::resumeLogTimer(bool suspended) {
 }
 
 bool RepoView::checkForConflicts(LogEntry *parent, const QString &action) {
+  DebugRefresh("Has conflicts: " << mRepo.index().hasConflicts());
   // Check for conflicts.
   if (!mRepo.index().hasConflicts())
     return false;
@@ -2912,7 +2955,7 @@ bool RepoView::checkForConflicts(LogEntry *parent, const QString &action) {
     entry->addEntry(LogEntry::Hint, abort.arg(action));
   }
 
-  refresh();
+  refresh(false);
   return true;
 }
 

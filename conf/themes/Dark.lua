@@ -56,13 +56,13 @@ theme['button']    = {
 -- commit list colors
 -- { default, active, inactive, disabled }
 theme['commits']   = {
-  text             = '#E1E5F2',
-  bright_text      = '#AAB2BE',
+  text             = '#AAB2BE',
+  bright_text      = '#E1E5F2',
   background       = '#2D2E34',
   alternate        = '#2D2E34', -- an alternate background color for list rows
   highlight        = { active = '#2A82DA', inactive = '#1B5B9B' },
-  highlighted_text = { active = '#E1E5F2', inactive = '#E1E5F2' },
-  highlighted_bright_text = { active = '#A6CBF0', inactive = '#9090A5' }
+  highlighted_text = { active = '#A6CBF0', inactive = '#E1E5F2' },
+  highlighted_bright_text = { active = '#E1E5F2', inactive = '#9090A5' }
 }
 
 -- status badge colors
@@ -77,7 +77,12 @@ theme['badge']     = {
     selected       = '#E1E5F2', -- the color when a list item is selected
     conflicted     = '#DA2ADA', -- the color of conflicted items
     head           = '#52A500', -- a bolder color to indicate the HEAD
-    notification   = '#8C2026'  -- the color of toolbar notifications badges
+    notification   = '#8C2026',  -- the color of toolbar notifications badges
+    modified       = '#91973A', -- (yellow) the color of the badge when the file is modified
+    added          = '#394734', -- (green) the color of the badge when the file was newly added
+    deleted        = '#5E3638', -- (red) the color of the badge when the file was deleted
+	untracked	   = '#2A4944', -- (green blue) the color of the badge when the file is untracked
+	renamed		   = '#23455E'  -- (blue) the color of the badge when the file is renamed
   }
 }
 

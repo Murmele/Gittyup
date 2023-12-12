@@ -101,7 +101,14 @@ QColor Theme::badge(BadgeRole role, BadgeState state) {
         case BadgeState::Head:
           return QPalette().color(QPalette::HighlightedText);
 
-        default:
+        case BadgeState::Normal:       // fall through
+        case BadgeState::Conflicted:   // fall through
+        case BadgeState::Notification: // fall through
+        case BadgeState::Modified:     // fall through
+        case BadgeState::Added:        // fall through
+        case BadgeState::Deleted:      // fall through
+        case BadgeState::Untracked:    // fall through
+        case BadgeState::Renamed:      // fall through
           return QPalette().color(QPalette::WindowText);
       }
 
@@ -123,8 +130,20 @@ QColor Theme::badge(BadgeRole role, BadgeState state) {
 
         case BadgeState::Notification:
           return mDark ? "#8C2026" : "#FF0000";
+        case BadgeState::Modified:
+          return mDark ? "#91973A" : "#FFEEDB";
+        case BadgeState::Added:
+          return mDark ? "#394734" : "#DCFFDC";
+        case BadgeState::Deleted:
+          return mDark ? "#5E3638" : "#FFDCDC";
+        case BadgeState::Untracked:
+          return mDark ? "#2A4944" : "#C7FFF6";
+        case BadgeState::Renamed:
+          return mDark ? "#23455E" : "#D2E8FC";
       }
   }
+  assert(false);
+  return QStringLiteral("");
 }
 
 QList<QColor> Theme::branchTopologyEdges() {
@@ -152,6 +171,8 @@ QColor Theme::commitEditor(CommitEditor color) {
     case CommitEditor::LengthWarning:
       return Qt::yellow;
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor Theme::diff(Diff color) {
@@ -180,6 +201,8 @@ QColor Theme::diff(Diff color) {
       case Diff::Error:
         return "#7E494B";
     }
+    throw std::runtime_error("unreachable; value=" +
+                             std::to_string(static_cast<int>(color)));
   }
 
   switch (color) {
@@ -206,6 +229,8 @@ QColor Theme::diff(Diff color) {
     case Diff::Error:
       return "#FF0000";
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor Theme::heatMap(HeatMap color) {
@@ -216,6 +241,8 @@ QColor Theme::heatMap(HeatMap color) {
       return mDark ? QPalette().color(QPalette::Inactive, QPalette::Highlight)
                    : QPalette().color(QPalette::Mid);
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor Theme::remoteComment(Comment color) {
@@ -229,6 +256,8 @@ QColor Theme::remoteComment(Comment color) {
     case Comment::Timestamp:
       return QPalette().color(QPalette::WindowText);
   }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(color)));
 }
 
 QColor Theme::star() { return QPalette().color(QPalette::Highlight); }

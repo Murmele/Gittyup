@@ -12,12 +12,12 @@
 #include "git/Config.h"
 #include "git/Index.h"
 #include "git/Repository.h"
+#include "Debug.h"
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
 #include <QProcess>
 #include <QTemporaryFile>
-#include <QDebug>
 
 MergeTool::MergeTool(const QString &file, const git::Blob &localBlob,
                      const git::Blob &remoteBlob, const git::Blob &baseBlob,
@@ -78,11 +78,15 @@ bool MergeTool::start() {
 
   // Destroy this after process finishes.
   QProcess *process = new QProcess(this);
+  process->setProcessChannelMode(
+      QProcess::ProcessChannelMode::ForwardedChannels);
   git::Repository repo = mLocalBlob.repo();
   auto signal = QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished);
   QObject::connect(process, signal, [this, repo, backupPath, process] {
-    // qDebug() << "Merge Process Exited!";
-    // FIXME: Trust exit code?
+    Debug("Merge Process Exited!");
+    Debug("Stdout: " << process->readAllStandardOutput());
+    Debug("Stderr: " << process->readAllStandardError());
+
     QFileInfo merged(mFile);
     QFileInfo backup(backupPath);
     git::Config config = git::Config::global();
@@ -105,19 +109,18 @@ bool MergeTool::start() {
   env.insert("BASE", basePath);
   process->setProcessEnvironment(env);
 
-#define TEST_FLATPAK_SPAWN 0
-#if defined(FLATPAK) || TEST_FLATPAK_SPAWN
+#if defined(FLATPAK) || defined(DEBUG_FLATPAK)
   QStringList arguments = {"--host", "--env=LOCAL=" + local->fileName(),
                            "--env=REMOTE=" + remote->fileName(),
                            "--env=MERGED=" + mFile, "--env=BASE=" + basePath};
   arguments.append("sh");
   arguments.append("-c");
   arguments.append(command);
-  // qDebug() << "Command: " << "flatpak-spawn";
+  // Debug("Command: " << "flatpak-spawn");
   process->start("flatpak-spawn", arguments);
-  // qDebug() << "QProcess Arguments: " << process->arguments();
+  // Debug("QProcess Arguments: " << process->arguments());
   if (!process->waitForStarted()) {
-    qDebug() << "MergeTool starting failed";
+    Debug("MergeTool starting failed");
     return false;
   }
 #else

@@ -50,7 +50,6 @@ public:
     TerminalName,
     TerminalPath,
     DontTranslate,
-    StoreCredentials,
     AllowSingleInstanceOnly,
     CheckForUpdatesAutomatically,
     InstallUpdatesAutomatically,
@@ -59,8 +58,14 @@ public:
     SshKeyFilePath,
     CommitMergeImmediately,
     ShowCommitsInCompactMode,
+    ShowCommitsAuthor,
+    ShowCommitsDate,
+    ShowCommitsId,
     ShowChangedFilesAsList,
+    ShowChangedFilesMultiColumn, // For the list only
     ShowChangedFilesInSingleView,
+    HideUntracked,
+    Language,
   };
   Q_ENUM(Id)
 

@@ -15,10 +15,11 @@
 #include "StatePushButton.h"
 #include "TreeProxy.h"
 #include "TreeView.h"
-#include "ViewDelegate.h"
+#include "Debug.h"
 #include "conf/Settings.h"
 #include "DiffView/DiffView.h"
 #include "git/Index.h"
+#include "git/Config.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -66,6 +67,21 @@ private:
 
 } // namespace
 
+QAction *DoubleTreeWidget::setupAppearanceAction(const char *name,
+                                                 Setting::Id id,
+                                                 bool defaultValue) {
+  QAction *action = new QAction(tr(name));
+  action->setCheckable(true);
+  action->setChecked(Settings::instance()->value(id, defaultValue).toBool());
+  connect(action, &QAction::triggered, this, [this, id](bool checked) {
+    Settings::instance()->setValue(id, checked);
+    mSelectedFile.filename =
+        ""; // When switching view, it is not possible to restore
+    RepoView::parentView(this)->refresh();
+  });
+  return action;
+}
+
 DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
     : ContentWidget(parent) {
   // first column
@@ -80,29 +96,22 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
   ContextMenuButton *contextButton = new ContextMenuButton(this);
   QMenu *contextMenu = new QMenu(this);
   contextButton->setMenu(contextMenu);
-  QAction *singleTree = new QAction(tr("Single Tree View"));
-  singleTree->setCheckable(true);
-  singleTree->setChecked(
-      Settings::instance()
-          ->value(Setting::Id::ShowChangedFilesInSingleView, false)
-          .toBool());
-  connect(singleTree, &QAction::triggered, this, [this](bool checked) {
-    Settings::instance()->setValue(Setting::Id::ShowChangedFilesInSingleView,
-                                   checked);
-    RepoView::parentView(this)->refresh();
-  });
-  QAction *listView = new QAction(tr("List View"));
-  listView->setCheckable(true);
-  listView->setChecked(Settings::instance()
-                           ->value(Setting::Id::ShowChangedFilesAsList, false)
-                           .toBool());
-  connect(listView, &QAction::triggered, this, [this](bool checked) {
-    Settings::instance()->setValue(Setting::Id::ShowChangedFilesAsList,
-                                   checked);
-    RepoView::parentView(this)->refresh();
-  });
+
+  QAction *singleTree = setupAppearanceAction(
+      "Single View", Setting::Id::ShowChangedFilesInSingleView);
+  QAction *listView =
+      setupAppearanceAction("List View", Setting::Id::ShowChangedFilesAsList);
+  QAction *multiColumn = setupAppearanceAction(
+      "Multi Column", Setting::Id::ShowChangedFilesMultiColumn, true);
+  RepoView::parentView(this)->refresh(); // apply read settings
+
+  QAction *hideUntrackedFiles = setupAppearanceAction(
+      "Hide Untracked Files", Setting::Id::HideUntracked, false);
+
   contextMenu->addAction(singleTree);
   contextMenu->addAction(listView);
+  contextMenu->addAction(multiColumn);
+  contextMenu->addAction(hideUntrackedFiles);
   QHBoxLayout *buttonLayout = new QHBoxLayout();
   buttonLayout->addStretch();
   buttonLayout->addWidget(segmentedButton);
@@ -147,13 +156,8 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
             repoView->updateSubmodules(submodules, recursive, init,
                                        force_checkout);
           });
-  TreeProxy *treewrapperStaged = new TreeProxy(true, this);
-  treewrapperStaged->setSourceModel(mDiffTreeModel);
-  stagedFiles->setModel(treewrapperStaged);
-  stagedFiles->setHeaderHidden(true);
-  ViewDelegate *stagedDelegate = new ViewDelegate();
-  stagedDelegate->setDrawArrow(false);
-  stagedFiles->setItemDelegateForColumn(0, stagedDelegate);
+
+  stagedFiles->setModel(new TreeProxy(true, mDiffTreeModel, this));
 
   QHBoxLayout *hBoxLayout = new QHBoxLayout();
   QLabel *label = new QLabel(kStagedFiles);
@@ -179,13 +183,7 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
             showFileContextMenu(pos, repoView, unstagedFiles, false);
           });
 
-  TreeProxy *treewrapperUnstaged = new TreeProxy(false, this);
-  treewrapperUnstaged->setSourceModel(mDiffTreeModel);
-  unstagedFiles->setModel(treewrapperUnstaged);
-  unstagedFiles->setHeaderHidden(true);
-  ViewDelegate *unstagedDelegate = new ViewDelegate();
-  unstagedDelegate->setDrawArrow(false);
-  unstagedFiles->setItemDelegateForColumn(0, unstagedDelegate);
+  unstagedFiles->setModel(new TreeProxy(false, mDiffTreeModel, this));
 
   hBoxLayout = new QHBoxLayout();
   mUnstagedCommitedFiles = new QLabel(kUnstagedFiles);
@@ -215,6 +213,12 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
   splitter->addWidget(treeViewSplitter);
   splitter->setStretchFactor(0, 3);
   splitter->setStretchFactor(1, 1);
+  // prevent that diffview will be collapsed
+  // The problem is that the diffview is between two splitters
+  // and if the diffview is collapsed only the splitter of the
+  // commitlist is visible and is is not possible to get the
+  // diffview visible again.
+  splitter->setCollapsible(0, false);
   connect(splitter, &QSplitter::splitterMoved, this, [splitter] {
     QSettings().setValue(kSplitterKey, splitter->saveState());
   });
@@ -301,7 +305,7 @@ QModelIndex DoubleTreeWidget::selectedIndex() const {
 
 static void addNodeToMenu(const git::Index &index, QStringList &files,
                           const Node *node, bool staged, bool statusDiff) {
-  qDebug() << "DoubleTreeWidgetr addNodeToMenu()" << node->name();
+  Debug("DoubleTreeWidgetr addNodeToMenu()" << node->name());
 
   if (node->hasChildren()) {
     for (auto child : node->children()) {
@@ -383,6 +387,11 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
   Q_UNUSED(file)
   Q_UNUSED(pathspec)
 
+  mSetDiffCounter++;
+
+  DebugRefresh("time: " << QDateTime::currentDateTime()
+                        << "Counter: " << mSetDiffCounter);
+
   mDiff = diff;
 
   // Remember selection.
@@ -393,12 +402,6 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
   TreeProxy *proxy = static_cast<TreeProxy *>(unstagedFiles->model());
   DiffTreeModel *model = static_cast<DiffTreeModel *>(proxy->sourceModel());
   model->setDiff(diff);
-  // do not expand if to many files exist, it takes really long
-  // So do it only when there are less than 100
-  if (diff.isValid() && diff.count() < fileCountExpansionThreshold)
-    unstagedFiles->expandAll();
-  else
-    unstagedFiles->collapseAll();
 
   // Single tree & list view.
   bool singleTree =
@@ -408,14 +411,23 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
   bool listView = Settings::instance()
                       ->value(Setting::Id::ShowChangedFilesAsList, false)
                       .toBool();
+  const bool multiColumn =
+      Settings::instance()
+          ->value(Setting::Id::ShowChangedFilesMultiColumn, true)
+          .toBool();
 
   // Widget modifications.
   model->enableListView(listView);
+  model->setMultiColumn(multiColumn);
   stagedFiles->setRootIsDecorated(!listView);
   unstagedFiles->setRootIsDecorated(!listView);
   // mUnstagedCommitedFiles->setVisible(!singleTree);
   collapseButtonStagedFiles->setVisible(!listView);
   collapseButtonUnstagedFiles->setVisible(!listView);
+
+  unstagedFiles->updateView(); // Must be before expandAll/collapseAll is done,
+                               // otherwise the collapse counter is wrong
+  stagedFiles->updateView();
 
   // If statusDiff, there exist no staged/unstaged, but only
   // the commited files must be shown
@@ -433,6 +445,13 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
     mStagedWidget->setVisible(false);
   }
 
+  // do not expand if to many files exist, it takes really long
+  // So do it only when there are less than 100
+  if (diff.isValid() && diff.count() < fileCountExpansionThreshold)
+    unstagedFiles->expandAll();
+  else
+    unstagedFiles->collapseAll();
+
   // Clear editor.
   mEditor->clear();
 
@@ -441,6 +460,9 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
   // Restore selection.
   if (diff.isValid())
     loadSelection();
+
+  DebugRefresh("finished, time: " << QDateTime::currentDateTime()
+                                  << "Counter: " << mSetDiffCounter);
 }
 
 void DoubleTreeWidget::find() { mEditor->find(); }
@@ -474,6 +496,19 @@ void DoubleTreeWidget::loadSelection() {
 
   if (mSelectedFile.filename != "") {
     index = mDiffTreeModel->index(mSelectedFile.filename);
+
+    if (!index.isValid()) {
+      // If index is anymore valid, because of removed file,
+      // select the parent if possible
+      auto list = mSelectedFile.filename.split(
+          QStringLiteral("/")); // TODO: check also on windows
+      list.removeLast();
+      while (!index.isValid() && !list.isEmpty()) {
+        const QString s = list.join(QStringLiteral("/"));
+        index = mDiffTreeModel->index(s);
+        list.removeLast();
+      }
+    }
     state = static_cast<Qt::CheckState>(
         mDiffTreeModel->data(index, Qt::CheckStateRole).toInt());
   }

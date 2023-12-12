@@ -117,10 +117,10 @@ public:
     RecentRepository *repo = repos->repository(index.row());
     switch (role) {
       case Qt::DisplayRole:
-        return mShowFullPath ? repo->path() : repo->name();
+        return mShowFullPath ? repo->gitpath() : repo->name();
 
       case Qt::UserRole:
-        return repo->path();
+        return repo->gitpath();
     }
 
     return QVariant();
@@ -698,7 +698,7 @@ void StartDialog::updateButtons() {
       open->setEnabled(false);
     } else {
       Account *account = parent.data(AccountRole).value<Account *>();
-      if (Repository *repo = index.data(RepositoryRole).value<Repository *>()) {
+      if (nullptr != index.data(RepositoryRole).value<Repository *>()) {
         if (account->repositoryPath(index.row()).isEmpty())
           clone = true;
       } else {

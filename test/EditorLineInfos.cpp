@@ -1,4 +1,5 @@
 #include "Test.h"
+#include "Debug.h"
 #include "dialogs/ExternalToolsDialog.h"
 
 #include "ui/DiffView/HunkWidget.h"
@@ -51,8 +52,9 @@
     else                                                                       \
       state = QString::number(markers);                                        \
                                                                                \
-    qDebug() << "Index: " << i << ", State: " << state << ", Staged: "         \
-             << BITSET(markers, TextEditor::Marker::StagedMarker) << line;     \
+    Debug("Index: " << i << ", State: " << state << ", Staged: "               \
+                    << BITSET(markers, TextEditor::Marker::StagedMarker)       \
+                    << line);                                                  \
     if (unstagedAddition.indexOf(i) != -1) {                                   \
       /* unstaged addition */                                                  \
       QVERIFY2(BITSET(markers, TextEditor::Marker::Addition),                  \

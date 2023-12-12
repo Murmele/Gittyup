@@ -15,6 +15,7 @@
 #include "git/Tree.h"
 #include "git/Repository.h"
 #include <QAbstractItemModel>
+#include <QAbstractListModel>
 #include <QFileIconProvider>
 #include "git/Index.h"
 
@@ -98,7 +99,10 @@ public:
 
   void setDiff(const git::Diff &diff = git::Diff());
   void refresh(const QStringList &paths);
+  void setMultiColumn(bool);
 
+  QVariant headerData(int section, Qt::Orientation orientation,
+                      int role = Qt::DisplayRole) const override;
   int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   int columnCount(const QModelIndex &parent = QModelIndex()) const override;
   bool hasChildren(const QModelIndex &parent = QModelIndex()) const override;
@@ -153,7 +157,11 @@ signals:
                         bool init, bool checkout_force);
 
 private:
+  void handleDataChanged(const QModelIndex &index, int role);
+
+private:
   Node *node(const QModelIndex &index) const;
+  QVariant getDisplayRole(const QModelIndex &index) const;
 
   QFileIconProvider mIconProvider;
 
@@ -162,6 +170,7 @@ private:
   git::Repository mRepo;
 
   bool mListView = false;
+  bool mMultiColumn{true};
 };
 
 #endif /* DIFFTREEMODEL */

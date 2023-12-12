@@ -129,11 +129,11 @@ void Branch::remove(bool force) {
 }
 
 bool Branch::isRebase() const {
-  return repo().config().value<bool>(kRebaseFmt.arg(name()));
+  return repo().gitConfig().value<bool>(kRebaseFmt.arg(name()));
 }
 
 void Branch::setRebase(bool checked) {
-  repo().config().setValue(kRebaseFmt.arg(name()), checked);
+  repo().gitConfig().setValue(kRebaseFmt.arg(name()), checked);
 }
 
 AnnotatedCommit Branch::annotatedCommitFromFetchHead() const {

@@ -108,6 +108,10 @@ public:
   HunkWidget *addHunk(const git::Diff &diff, const git::Patch &patch,
                       const git::Patch &staged, int index, bool lfs,
                       bool submodule);
+  bool canFetchMore() const;
+  int fetchMore(int count = 4);
+  void fetchAll(int index);
+
   void setStageState(git::Index::StagedState state);
   QModelIndex modelIndex();
 
@@ -140,6 +144,7 @@ private:
 
   git::Diff mDiff;
   git::Patch mPatch;
+  git::Patch mStaged;
   QModelIndex mModelIndex;
 
   _FileWidget::Header *mHeader{nullptr};

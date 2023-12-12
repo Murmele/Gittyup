@@ -71,7 +71,7 @@ public:
 
   RepositoryNotifier *notifier() const { return d->notifier; }
 
-  QDir dir() const;
+  QDir dir(bool includeGitFolder = true) const;
   QDir workdir() const;
   QDir appDir() const;
 
@@ -81,7 +81,7 @@ public:
   QString message() const;
 
   // config
-  Config config() const;
+  Config gitConfig() const;
   Config appConfig() const;
 
   // bare
@@ -316,7 +316,7 @@ signals:
   void referenceAdded(const Reference &ref);
   void referenceAboutToBeRemoved(const Reference &ref);
   void referenceRemoved(const QString &name);
-  void referenceUpdated(const Reference &ref);
+  void referenceUpdated(const Reference &ref, bool restoreSelection = false);
 
   void remoteAboutToBeAdded(const QString &name);
   void remoteAdded(const Remote &remote);

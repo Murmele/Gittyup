@@ -38,9 +38,18 @@ jobs:
     runs-on: ubuntu-latest
     container:
       # image: bilelmoussaoui/flatpak-github-actions:kde-5.15-21.08
-      image: exactlyonekas/gittyup-flatpak-builder:latest
+      image: archlinux:latest
       options: --privileged
     steps:
+
+    - name: Update
+      run: |
+        pacman --noconfirm -Suy
+        pacman --noconfirm -S flatpak flatpak-builder xorg-server-xvfb
+        flatpak install --assumeyes org.kde.Sdk//5.15-21.08
+        flatpak install --assumeyes org.freedesktop.Sdk.Extension.golang//21.08
+        flatpak install --assumeyes org.kde.Platform//5.15-21.08
+
     - name: Show environment variables
       run: >
         echo IS_RELEASE: ${{ env.IS_RELEASE }}
@@ -67,7 +76,7 @@ jobs:
     - name: Replace git tag by the commit id on which it runs
       if: github.ref_type != 'tag'
       run: >
-        sed -i 's@tag: gittyup_v[1-9]*.[0-9]*.[0-9]*@commit: "${{ (github.event.pull_request && github.event.pull_request.head.sha) || github.sha }}"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@tag: .*@commit: "${{ (github.event.pull_request && github.event.pull_request.head.sha) || github.sha }}"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
 
     - name: Use correct git tag
       if: github.ref_type == 'tag'
@@ -87,6 +96,11 @@ jobs:
       if: github.ref_type != 'tag'
       run: >
         sed -i 's@desktop-file-name-suffix: ""@desktop-file-name-suffix: " (Development)"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+
+    - name: Enable automatic update
+      if: github.ref_type != 'tag'
+      run: >
+        sed -i 's@-DENABLE_UPDATE_OVER_GUI=OFF@-DENABLE_UPDATE_OVER_GUI=ON@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
 
     - name: Show Flatpak manifest
       run: cat com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
@@ -123,8 +137,11 @@ jobs:
             os: ubuntu-latest
             ninja_platform: linux
             qt_platform: linux
+            qt_arch: gcc_64
             openssl_arch: linux-x86_64
-            cmake_flags: "-DGENERATE_APPDATA=ON"
+            ld_library_arch: linux-x86-64
+            cmake_flags: "-DGENERATE_APPDATA=ON -DCMAKE_INSTALL_PREFIX=/usr -DUSE_SYSTEM_QT=ON -DENABLE_UPDATE_OVER_GUI=OFF"
+            pack: 0
             cmake_env: {}
 
           - name: macos
@@ -193,7 +210,7 @@ jobs:
           perl-version: '5.30'
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2.13.0
+        uses: jurplel/install-qt-action@v3.3.0
         timeout-minutes: 10
         if: "!matrix.qt.check_only"
         with:
@@ -205,7 +222,7 @@ jobs:
           modules: qtwebengine
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2.13.0
+        uses: jurplel/install-qt-action@v3.3.0
         timeout-minutes: 10
         if: matrix.qt.check_only
         with:
@@ -264,7 +281,7 @@ jobs:
         run: |
           mkdir -p build/release
           cd build/release
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DDEBUG_OUTPUT=OFF -DGITTYUP_CI_TESTS=ON ${{ env.CMAKE_FLAGS }} ${{ matrix.env.cmake_flags }} ../..
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DUPDATE_TRANSLATIONS=ON -DGITTYUP_CI_TESTS=ON ${{ env.CMAKE_FLAGS }} ${{ matrix.env.cmake_flags }} ../..
 
       - name: Build Information
         run: |
@@ -301,21 +318,64 @@ jobs:
         if: matrix.env.pack && !matrix.qt.check_only
         uses: actions/upload-artifact@v3
         with:
-          path: build/release/VERSION.txt
+          path: build/release/Version.txt
           name: Gittyup-VERSION
+
+      - name: Check Version file
+        run: |
+          cd build/release
+          cat ./Version.txt
 
       - name: Test
         if: matrix.env.ninja_platform != 'win' && matrix.env.ninja_platform != 'mac'
         uses: GabrielBB/xvfb-action@v1
         with:
           working-directory: build/release
-          run: ninja check
+          run: ninja check --verbose
 
       - name: Test (Windows)
         if: matrix.env.ninja_platform == 'win'
         run: |
           cd build/release
           ninja check_no_win32_offscreen
+
+      - name: Build Appimage
+        if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
+        run: |
+          cd build/release
+          sudo apt -y install appstream
+          sudo apt -y install libfuse2
+          sudo apt -y install libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0
+          sudo apt -y install libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xinerama0 libxcb-xinput0 libxcb-xkb1 libxcb-xrm0 libxcb-xv0 libxcb-xvmc0 libxcb1
+          
+          mkdir -p AppDir
+          DESTDIR=AppDir ninja install
+
+          export QTDIR=$RUNNER_WORKSPACE/Qt/${{ matrix.qt.version }}/${{ matrix.env.qt_arch }}
+
+          rm -rf ./AppDir/usr/include/
+          strip ./AppDir/usr/bin/cmark ./AppDir/usr/bin/gittyup ./AppDir/usr/bin/indexer ./AppDir/usr/bin/relauncher
+
+          wget -c https://github.com/$(wget -q https://github.com/probonopd/go-appimage/releases/expanded_assets/continuous -O - | grep "appimagetool-.*-x86_64.AppImage" | head -n 1 | cut -d '"' -f 2)
+          chmod +x appimagetool-*.AppImage
+          QTDIR=$QTDIR ./appimagetool-*.AppImage -s deploy ./AppDir/usr/share/applications/*.desktop --appimage-extract-and-run # Bundle EVERYTHING
+
+          # Modify the AppDir: move ld-linux into the same directory as the payload application
+          # and change AppRun accordingly; so that, e.g., Qt qApp->applicationDirPath() works
+          mv ./AppDir/lib64/ld-${{ matrix.env.ld_library_arch }}.so.2 ./AppDir/usr/bin/
+          sed -i -e 's@^LD_LINUX.*@LD_LINUX=$(find "$HERE/usr/bin" -name "ld-*.so.*" | head -n 1)@g' ./AppDir/AppRun
+
+          rm ./AppDir/usr/share/metainfo/gittyup.appdata.xml
+          VERSION=$(cat ./Version.txt)
+          VERSION="$VERSION" ./appimagetool-*.AppImage ./AppDir # turn AppDir into AppImage
+          #ls -lh Gittyup-*
+
+      - name: Publish Appimage
+        if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
+        uses: actions/upload-artifact@v3
+        with:
+          path: build/release/*.AppImage
+          name: GittyupAppImage
 
   publish:
     # https://github.com/marvinpinto/actions/issues/177
@@ -347,7 +407,7 @@ jobs:
       # version is exported from cmake to file
       - name: Retrieve version
         run: |
-          echo "::set-output name=VERSION::$(cat artifacts/Gittyup-VERSION/VERSION.txt)"
+          echo "::set-output name=VERSION::$(cat artifacts/Gittyup-VERSION/Version.txt)"
         id: version
 
       - name: Update GitHub release (latest tag)
@@ -363,6 +423,7 @@ jobs:
             **/artifacts/Gittyup macos/Gittyup*.dmg
             **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
             **/Gittyup-x86_64/*.flatpak
+            **/artifacts/GittyupAppImage/*
 
       - name: Update GitHub release (version tag)
         uses: marvinpinto/action-automatic-releases@latest
@@ -378,6 +439,7 @@ jobs:
             **/artifacts/Gittyup macos/Gittyup*.dmg
             **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
             **/Gittyup-x86_64/*.flatpak
+            **/artifacts/GittyupAppImage/*
 
       # needed otherwise the docs folder is not available     
       - name: Checkout repository

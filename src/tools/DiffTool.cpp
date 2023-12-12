@@ -12,6 +12,7 @@
 #include "git/Repository.h"
 #include <QProcess>
 #include <QTemporaryFile>
+#include <QDebug>
 
 DiffTool::DiffTool(const QString &file, const git::Blob &localBlob,
                    const git::Blob &remoteBlob, QObject *parent)
@@ -59,8 +60,25 @@ bool DiffTool::start() {
 
   // Destroy this after process finishes.
   QProcess *process = new QProcess(this);
+  process->setProcessChannelMode(
+      QProcess::ProcessChannelMode::ForwardedChannels);
   auto signal = QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished);
-  QObject::connect(process, signal, this, &ExternalTool::deleteLater);
+  QObject::connect(process, signal, [this, process] {
+    qDebug() << "Merge Process Exited!";
+    qDebug() << "Stdout: " << process->readAllStandardOutput();
+    qDebug() << "Stderr: " << process->readAllStandardError();
+    deleteLater();
+  });
+
+#if defined(FLATPAK) || defined(DEBUG_FLATPAK)
+  QStringList arguments = {"--host", "--env=LOCAL=" + local->fileName(),
+                           "--env=REMOTE=" + remotePath,
+                           "--env=MERGED=" + mFile, "--env=BASE=" + mFile};
+  arguments.append("sh");
+  arguments.append("-c");
+  arguments.append(command);
+  process->start("flatpak-spawn", arguments);
+#else
 
   QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
   env.insert("LOCAL", local->fileName());
@@ -78,9 +96,12 @@ bool DiffTool::start() {
     emit error(BashNotFound);
     return false;
   }
+#endif
 
-  if (!process->waitForStarted())
+  if (!process->waitForStarted()) {
+    qDebug() << "DiffTool starting failed";
     return false;
+  }
 
   // Detach from parent.
   setParent(nullptr);

@@ -26,6 +26,9 @@
 #include <QSettings>
 #include <QSplitter>
 #include <QVBoxLayout>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QCheckBox>
 
 namespace {
 
@@ -40,12 +43,30 @@ const QItemSelectionModel::SelectionFlags kSelectionFlags =
 TreeWidget::TreeWidget(const git::Repository &repo, QWidget *parent)
     : ContentWidget(parent) {
   mView = new ColumnView(this);
-  mView->setModel(new TreeModel(repo, this));
+  mModel = new TreeModel(repo, this);
+  mView->setModel(mModel);
   connect(mView, &ColumnView::fileSelected, this,
           &TreeWidget::loadEditorContent);
 
   // Open a new editor window on double-click.
   connect(mView, &ColumnView::doubleClicked, this, &TreeWidget::edit);
+
+  mLabelSearch = new QLabel(tr("Search:"), this);
+  mSearch = new QLineEdit(this);
+  connect(mSearch, &QLineEdit::textChanged, this, &TreeWidget::search);
+  mcbRegex = new QCheckBox(tr("Regex"), this);
+  connect(mcbRegex, &QCheckBox::clicked, this, &TreeWidget::search);
+  mcbCaseSensitive = new QCheckBox(tr("Case Sensitive"), this);
+  connect(mcbCaseSensitive, &QCheckBox::clicked, this, &TreeWidget::search);
+  QHBoxLayout *l = new QHBoxLayout();
+  l->addWidget(mLabelSearch);
+  l->addWidget(mSearch);
+  l->addWidget(mcbCaseSensitive);
+  l->addWidget(mcbRegex);
+
+  mSearchResults = new QListWidget(this);
+  connect(mSearchResults, &QListWidget::currentItemChanged, this,
+          &TreeWidget::setFile);
 
   mEditor = new BlameEditor(repo, this);
 
@@ -63,6 +84,8 @@ TreeWidget::TreeWidget(const git::Repository &repo, QWidget *parent)
 
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
+  layout->addLayout(l);
+  layout->addWidget(mSearchResults);
   layout->addWidget(splitter);
 
   RepoView *view = RepoView::parentView(this);
@@ -93,17 +116,22 @@ void TreeWidget::setDiff(const git::Diff &diff, const QString &file,
 
   // Reset model.
   git::Tree tree = RepoView::parentView(this)->tree();
-  TreeModel *model = static_cast<TreeModel *>(mView->model());
-  model->setTree(tree, diff);
+  mModel->setTree(tree, diff);
 
   // Clear editor.
   mEditor->clear();
+  mSearch->clear();
+  mSuppressIndexChange = true;
+  mSearchResults->clear();
+  mSuppressIndexChange = false;
 
   // Restore selection.
   selectFile(name);
 
   // Show the tree view.
-  mView->setVisible(tree.isValid());
+  const bool search = !mSearch->text().isEmpty();
+  mView->setVisible(tree.isValid() && !search);
+  mSearchResults->setVisible(tree.isValid() && search);
 }
 
 void TreeWidget::find() { mEditor->find(); }
@@ -135,6 +163,56 @@ void TreeWidget::edit(const QModelIndex &index) {
   RepoView::parentView(this)->edit(index.data(Qt::EditRole).toString());
 }
 
+void TreeWidget::search() {
+  const QString pattern = mSearch->text();
+  const bool search = !pattern.isEmpty();
+  mView->setVisible(!search);
+  mSearchResults->setVisible(search);
+
+  if (!search)
+    return;
+
+  bool regex = mcbRegex->isChecked();
+  bool caseSensitive = mcbCaseSensitive->isChecked();
+
+  QRegularExpression re(
+      pattern, caseSensitive ? QRegularExpression::NoPatternOption
+                             : QRegularExpression::CaseInsensitiveOption);
+  mSuppressIndexChange = true;
+  mSearchResults->clear();
+  searchFiles(re, regex, caseSensitive);
+  mSuppressIndexChange = false;
+}
+
+void TreeWidget::searchFiles(const QRegularExpression &re, bool regex,
+                             bool caseSensitive, const QModelIndex &parent) {
+  for (int row = 0; row < mModel->rowCount(parent); row++) {
+    const auto index = mModel->index(row, 0, QModelIndex(parent));
+    if (mModel->rowCount(index) > 0) {
+      // folder
+      searchFiles(re, regex, caseSensitive, index);
+    } else {
+      // file
+      const QString name = mModel->data(index, Qt::EditRole).toString();
+      if ((!regex &&
+           name.contains(re.pattern(), caseSensitive ? Qt::CaseSensitive
+                                                     : Qt::CaseInsensitive)) ||
+          (regex && re.match(name).hasMatch())) {
+        QListWidgetItem *item = new QListWidgetItem(name, mSearchResults);
+        item->setData(Qt::UserRole, index);
+        mSearchResults->addItem(item);
+      }
+    }
+  }
+}
+
+void TreeWidget::setFile(const QListWidgetItem *item) {
+  if (mSuppressIndexChange)
+    return;
+  const auto index = item->data(Qt::UserRole).value<QModelIndex>();
+  loadEditorContent(index);
+}
+
 void TreeWidget::loadEditorContent(const QModelIndex &index) {
   QString name = index.data(Qt::EditRole).toString();
   git::Blob blob = index.data(TreeModel::BlobRole).value<git::Blob>();
@@ -150,7 +228,7 @@ void TreeWidget::selectFile(const QString &file) {
 
   QModelIndex index;
   QStringList path = file.split("/");
-  QAbstractItemModel *model = mView->model();
+  QAbstractItemModel *model = mModel;
   while (!path.isEmpty()) {
     QString elem = path.takeFirst();
     for (int row = 0; row < model->rowCount(index); ++row) {

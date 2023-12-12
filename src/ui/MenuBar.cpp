@@ -39,6 +39,7 @@
 #include "log/LogEntry.h"
 #include "log/LogView.h"
 #include "update/Updater.h"
+#include "util/Debug.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QCloseEvent>
@@ -191,6 +192,9 @@ static Hotkey configureBranchesHotkey = HotkeyManager::registerHotkey(
 static Hotkey newBranchHotkey =
     HotkeyManager::registerHotkey(nullptr, "branch/new", "Branch/New");
 
+static Hotkey renameBranchHotkey =
+    HotkeyManager::registerHotkey(nullptr, "branch/rename", "Branch/Rename");
+
 static Hotkey checkoutCurrentHotkey = HotkeyManager::registerHotkey(
     "Ctrl+Shift+Alt+H", "branch/checkoutCurrent", "Branch/Checkout Current");
 
@@ -304,7 +308,7 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
       RecentRepository *repo = repos->repository(i);
       QAction *action = openRecent->addAction(repo->name());
       connect(action, &QAction::triggered,
-              [repo] { MainWindow::open(repo->path()); });
+              [repo] { MainWindow::open(repo->gitpath()); });
     }
   });
 
@@ -360,7 +364,7 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
 
   mRedo = edit->addAction(tr("Redo"));
   redoHotkey.use(mRedo);
-  connect(mRedo, &QAction::triggered, [this] {
+  connect(mRedo, &QAction::triggered, [] {
     QWidget *widget = QApplication::focusWidget();
     if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
       editor->redo();
@@ -639,6 +643,12 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
   connect(mNewBranch, &QAction::triggered,
           [this] { view()->promptToCreateBranch(); });
 
+  mRenameBranch = branch->addAction(tr("Rename Branch"));
+  renameBranchHotkey.use(mRenameBranch);
+  connect(mRenameBranch, &QAction::triggered, [this] {
+    this->view()->promptToRenameBranch(this->view()->reference());
+  });
+
   branch->addSeparator();
 
   mCheckoutCurrent = branch->addAction(tr("Checkout Current"));
@@ -872,6 +882,12 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
     connect(remote, &QAction::triggered,
             [](bool checked) { git::Remote::setLoggingEnabled(checked); });
 
+    QAction *debugMessages = debug->addAction(tr("Log Debug Messages"));
+    debugMessages->setCheckable(true);
+    debugMessages->setChecked(Debug::isLogging());
+    connect(debugMessages, &QAction::triggered,
+            [](bool checked) { Debug::setLogging(checked); });
+
     debug->addSeparator();
 
     QAction *diffs = debug->addAction(tr("Load All Diffs"));
@@ -968,6 +984,7 @@ void MenuBar::updateCutCopyPaste() {
     mPaste->setEnabled(canPaste);
     mFindSelection->setEnabled(editor->hasSelectedText());
   } else if (LogView *logView = qobject_cast<LogView *>(widget)) {
+    (void)logView; // unused
     mCopy->setEnabled(true);
   }
 }
@@ -1043,6 +1060,7 @@ void MenuBar::updateBranch() {
   mCheckoutCurrent->setEnabled(ref.isValid() && head.isValid() &&
                                ref.qualifiedName() != head.qualifiedName());
   mCheckout->setEnabled(head.isValid() && !view->repo().isBare());
+  mRenameBranch->setEnabled(ref.isLocalBranch());
   mNewBranch->setEnabled(head.isValid());
 
   mMerge->setEnabled(head.isValid());
@@ -1138,6 +1156,7 @@ QList<RepoView *> MenuBar::views() const {
 }
 
 void MenuBar::setDebugMenuVisible(bool visible) { sDebugMenuVisible = visible; }
+bool MenuBar::isDebugMenuVisible() { return sDebugMenuVisible; }
 
 MenuBar *MenuBar::instance(QWidget *widget) {
 #ifdef Q_OS_MAC

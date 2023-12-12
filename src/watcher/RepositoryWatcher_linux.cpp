@@ -90,7 +90,7 @@ public:
               ignored = false;
 
               // Start watching new directories.
-              int mask = (IN_CREATE | IN_ISDIR);
+              uint32_t mask = (IN_CREATE | IN_ISDIR);
               if ((event->mask & mask) == mask)
                 watch(path);
             }

@@ -25,6 +25,7 @@
 #include "ui/MainWindow.h"
 #include "ui/MenuBar.h"
 #include "ui/RepoView.h"
+#include "languages.h"
 #include "update/Updater.h"
 #include <QAction>
 #include <QApplication>
@@ -105,16 +106,22 @@ public:
         new QCheckBox(tr("Update submodules after pull and clone"), this);
     mAutoPrune = new QCheckBox(tr("Prune when fetching"), this);
     mNoTranslation = new QCheckBox(tr("No translation"), this);
+    mLanguages = new QComboBox(this);
+
+    QMapIterator<const char *, const char *> i(Languages::languages);
+    while (i.hasNext()) {
+      i.next();
+      mLanguages->addItem(tr(i.key()), QVariant(i.value()));
+    }
 
     mStoreCredentials =
         new QCheckBox(tr("Store credentials in secure storage"), this);
 
+    mAvailableStores = new QComboBox(this);
+
     QLabel *privacy = new QLabel(tr("<a href='view'>View privacy policy</a>"));
     connect(privacy, &QLabel::linkActivated,
             [] { AboutDialog::openSharedInstance(AboutDialog::Privacy); });
-
-    mSingleInstance =
-        new QCheckBox(tr("Only allow a single running instance"), this);
 
     QFormLayout *form = new QFormLayout;
     form->addRow(tr("User name:"), mName);
@@ -124,11 +131,18 @@ public:
     form->addRow(QString(), mPullUpdate);
     form->addRow(QString(), mAutoPrune);
     form->addRow(tr("Language:"), mNoTranslation);
+    form->addRow(tr("Language:"), mLanguages);
     form->addRow(tr("Credentials:"), mStoreCredentials);
+    form->addRow(tr("Credential store type:"), mAvailableStores);
     form->addRow(QString(), privacy);
+
+    mSingleInstance =
+        new QCheckBox(tr("Only allow a single running instance"), this);
 
 #if defined(Q_OS_LINUX) || defined(Q_OS_WIN)
     form->addRow(tr("Single instance:"), mSingleInstance);
+#elif defined(Q_OS_MACX)
+    mSingleInstance->setVisible(false);
 #endif
 
     QVBoxLayout *layout = new QVBoxLayout(this);
@@ -179,10 +193,32 @@ public:
       Settings::instance()->setValue(Setting::Id::DontTranslate, checked);
     });
 
-    connect(mStoreCredentials, &QCheckBox::toggled, [](bool checked) {
-      Settings::instance()->setValue(Setting::Id::StoreCredentials, checked);
+    connect(mLanguages, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            [this]() {
+              const auto &language = mLanguages->currentData().toString();
+              Settings::instance()->setValue(Setting::Id::Language, language);
+            });
+
+    connect(mStoreCredentials, &QCheckBox::toggled, [this](bool checked) {
+      git::Config config = git::Config::global();
+      mAvailableStores->setEnabled(checked);
+      if (checked) {
+        auto store = mAvailableStores->currentText();
+        config.setValue("credential.helper", store);
+      } else {
+        config.remove("credential.helper");
+      }
+
       delete CredentialHelper::instance();
     });
+
+    connect(mAvailableStores, &QComboBox::currentTextChanged,
+            [](const QString &text) {
+              git::Config config = git::Config::global();
+              config.setValue("credential.helper", text);
+
+              delete CredentialHelper::instance();
+            });
 
     connect(mSingleInstance, &QCheckBox::toggled, [](bool checked) {
       Settings::instance()->setValue(Setting::Id::AllowSingleInstanceOnly,
@@ -196,6 +232,7 @@ public:
     mEmail->setText(config.value<QString>("user.email"));
 
     Settings *settings = Settings::instance();
+
     mFetch->setChecked(
         settings->value(Setting::Id::FetchAutomatically).toBool());
     mFetchMinutes->setValue(
@@ -211,8 +248,25 @@ public:
 
     mNoTranslation->setChecked(
         settings->value(Setting::Id::DontTranslate).toBool());
-    mStoreCredentials->setChecked(
-        settings->value(Setting::Id::StoreCredentials).toBool());
+
+    const auto &l = settings->value(Setting::Id::Language).toString();
+    for (int i = 0; i < mLanguages->count(); i++) {
+      if (mLanguages->itemData(i).toString() == l) {
+        mLanguages->setCurrentIndex(i);
+        break;
+      }
+    }
+
+    auto currentHelper = config.value<QString>("credential.helper");
+    auto checked = CredentialHelper::isHelperValid(currentHelper);
+    mStoreCredentials->setChecked(checked);
+
+    auto availableHelpers = CredentialHelper::getAvailableHelperNames();
+    foreach (auto helper, availableHelpers) {
+      mAvailableStores->addItem(helper);
+    }
+    mAvailableStores->setEditable(true);
+    mAvailableStores->setCurrentText(currentHelper);
 
     mSingleInstance->setChecked(
         settings->value(Setting::Id::AllowSingleInstanceOnly).toBool());
@@ -228,7 +282,9 @@ private:
   QCheckBox *mPullUpdate;
   QCheckBox *mAutoPrune;
   QCheckBox *mNoTranslation;
+  QComboBox *mLanguages;
   QCheckBox *mStoreCredentials;
+  QComboBox *mAvailableStores;
   QCheckBox *mSingleInstance;
 };
 
