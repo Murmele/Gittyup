@@ -85,7 +85,7 @@ elseif(NOT USE_SYSTEM_QT)
       get_filename_component(QT_FRAMEWORK ${QT_LIBRARY} DIRECTORY)
       set(DEST_DIR ${CONTENTS_DIR}/Frameworks)
       install(
-        DIRECTORY ${QT_FRAMEWORK}
+        DIRECTORY ${QT_FRAMEWORK}/../..
         DESTINATION ${DEST_DIR}
         COMPONENT ${GITTYUP_NAME}
         PATTERN "*.prl" EXCLUDE
