@@ -54,7 +54,7 @@ target_compile_definitions(
 
 target_include_directories(scintilla PUBLIC ${SCINTILLA_DIR}/src)
 
-target_link_libraries(scintilla Qt5::Widgets lexilla)
+target_link_libraries(scintilla Qt6::Widgets lexilla)
 
 set_target_properties(scintilla PROPERTIES AUTOMOC ON)
 

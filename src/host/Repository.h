@@ -10,6 +10,7 @@
 #ifndef HOST_REPOSITORY_H
 #define HOST_REPOSITORY_H
 
+#include <QObject>
 #include <QMap>
 #include <QMetaType>
 #include <QSharedPointer>

@@ -15,11 +15,11 @@
 
 bool containsPath(QString &str, QString &occurence, Qt::CaseSensitivity cs) {
   if (str.contains(occurence, cs)) {
-    if (str.count() == occurence.count()) {
+    if (str.size() == occurence.size()) {
       // file/folder matches exactly
       return true;
-    } else if (str.count() >= occurence.length() + 1 &&
-               str[occurence.length()] == "/") {
+    } else if (str.size() >= occurence.length() + 1 &&
+               str[occurence.length()] == '/') {
       // file or folder in occurence
       return true;
     }

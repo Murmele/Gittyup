@@ -28,6 +28,7 @@
 #include "languages.h"
 #include "update/Updater.h"
 #include <QAction>
+#include <QActionGroup>
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>

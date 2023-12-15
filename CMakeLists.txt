@@ -114,12 +114,12 @@ else()
 endif()
 
 find_package(
-  Qt5 5.12
+  Qt6
   COMPONENTS ${QT_MODULES} LinguistTools
   REQUIRED)
 if(FLATPAK)
   find_package(
-    Qt5 5.15
+    Qt6
     COMPONENTS XcbQpa
     REQUIRED)
   add_compile_definitions(FLATPAK)
@@ -135,7 +135,7 @@ endif()
 
 include(GNUInstallDirs) # Defines some variables as BINDIR, LIBDIR, ...
 
-set(QT_TRANSLATIONS_DIR "${Qt5_DIR}/../../../translations")
+set(QT_TRANSLATIONS_DIR "${Qt6_DIR}/../../../translations")
 set(QT_TRANSLATIONS_DIR "/usr/share/qt/translations")
 
 if(APPLE)
@@ -145,8 +145,8 @@ if(APPLE)
     # dependencies are to the release libraries (e.g. QtGui_debug depends on
     # QtCore). This causes multiple symbol definition errors at application load
     # time.
-    get_target_property(LOCATION Qt5::${QT_MODULE} LOCATION)
-    set_target_properties(Qt5::${QT_MODULE} PROPERTIES IMPORTED_LOCATION_DEBUG
+    get_target_property(LOCATION Qt6::${QT_MODULE} LOCATION)
+    set_target_properties(Qt6::${QT_MODULE} PROPERTIES IMPORTED_LOCATION_DEBUG
                                                        ${LOCATION})
   endforeach()
 endif()

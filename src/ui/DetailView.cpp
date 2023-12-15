@@ -23,6 +23,7 @@
 #include "git/Signature.h"
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>
+#include <QActionGroup>
 #include <QClipboard>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -122,8 +123,8 @@ public:
     mDate = new QLabel(this);
     mDate->setTextInteractionFlags(kTextFlags);
 
-    mSpacing.setX(style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing));
-    mSpacing.setY(style()->pixelMetric(QStyle::PM_LayoutVerticalSpacing));
+    mHorizontalSpacing = style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
+    mVerticalSpacing = style()->pixelMetric(QStyle::PM_LayoutVerticalSpacing);
   }
 
   void moveEvent(QMoveEvent *event) override { updateLayout(); }
@@ -198,13 +199,12 @@ private:
   void updateLayout() {
     mAuthor->move(0, 0);
     if (mCommitter->isVisible())
-      mCommitter->move(0, mAuthor->height() + mSpacing.y());
+      mCommitter->move(0, mAuthor->height() + mVerticalSpacing);
 
     bool wrapped = (width() < sizeHint().width());
     int x = wrapped ? 0 : width() - mDate->width();
     int y = wrapped
-                ? mAuthor->height() + mCommitter->height() + 2 * mSpacing.y()
-                : 0;
+        wrapped ? mAuthor->height() + mCommitter->height() + 2 * mVerticalSpacing : 0;
     mDate->move(x, y);
     updateGeometry();
   }
@@ -213,7 +213,8 @@ private:
   QLabel *mCommitter;
   QLabel *mDate;
 
-  QPoint mSpacing;
+  int mHorizontalSpacing;
+  int mVerticalSpacing;
   bool mSameAuthorCommitter{false};
 };
 
@@ -306,7 +307,7 @@ public:
     // Compute description asynchronously.
     if (commits.size() == 1)
       mWatcher.setFuture(
-          QtConcurrent::run(commits.first(), &git::Commit::description));
+          QtConcurrent::run(&git::Commit::description, commits.first()));
   }
 
   void setCommits(const QList<git::Commit> &commits) {

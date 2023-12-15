@@ -67,8 +67,8 @@ void BlameMargin::setBlame(const git::Repository &repo,
           .toBool()) {
     git::Commit first = repo.walker(GIT_SORT_TIME | GIT_SORT_REVERSE).next();
     git::Commit last = repo.walker(GIT_SORT_TIME).next();
-    mMinTime = first ? first.committer().date().toTime_t() : -1;
-    mMaxTime = last ? last.committer().date().toTime_t() : -1;
+    mMinTime = first ? first.committer().date().toSecsSinceEpoch() : -1;
+    mMaxTime = last ? last.committer().date().toSecsSinceEpoch() : -1;
   }
 
   mTimer.stop();
@@ -136,11 +136,11 @@ bool BlameMargin::event(QEvent *event) {
 }
 
 void BlameMargin::mousePressEvent(QMouseEvent *event) {
-  mIndex = mBlame.isValid() ? index(event->y()) : -1;
+  mIndex = mBlame.isValid() ? index(event->position().y()) : -1;
 }
 
 void BlameMargin::mouseReleaseEvent(QMouseEvent *event) {
-  if (mBlame.isValid() && mIndex >= 0 && mIndex == index(event->y())) {
+  if (mBlame.isValid() && mIndex >= 0 && mIndex == index(event->position().y())) {
     // Update selection.
     git::Id id = mBlame.id(mIndex);
     mSelection = (mSelection != id) ? id : git::Id();
@@ -154,7 +154,7 @@ void BlameMargin::mouseDoubleClickEvent(QMouseEvent *event) {
   if (!mBlame.isValid())
     return;
 
-  int index = this->index(event->y());
+  int index = this->index(event->position().y());
   if (index < 0)
     return;
 
@@ -172,7 +172,7 @@ void BlameMargin::mouseDoubleClickEvent(QMouseEvent *event) {
 void BlameMargin::paintEvent(QPaintEvent *event) {
   // Draw background.
   QStyleOption opt;
-  opt.init(this);
+  opt.initFrom(this);
   QPainter painter(this);
   style()->drawPrimitive(QStyle::PE_Widget, &opt, &painter, this);
 
@@ -225,7 +225,7 @@ void BlameMargin::paintEvent(QPaintEvent *event) {
       date = (dateTime.date() == today)
                  ? QLocale().toString(dateTime.time(), QLocale::ShortFormat)
                  : QLocale().toString(dateTime.date(), QLocale::ShortFormat);
-      time = dateTime.toTime_t();
+      time = dateTime.toSecsSinceEpoch();
     }
 
     // Draw background.

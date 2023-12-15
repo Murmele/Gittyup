@@ -13,6 +13,6 @@ add_library(watcher RepositoryWatcher.cpp ${WATCHER_IMPL_FILE})
 
 target_include_directories(watcher PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-target_link_libraries(watcher git Qt5::Core ${WATCHER_IMPL_LIBS})
+target_link_libraries(watcher git Qt6::Core ${WATCHER_IMPL_LIBS})
 
 set_target_properties(watcher PROPERTIES AUTOMOC ON)

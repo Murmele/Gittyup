@@ -39,6 +39,8 @@ target_compile_definitions(
 
 target_include_directories(dialogs PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
+find_package(Qt6 COMPONENTS Core5Compat REQUIRED)
+
 target_link_libraries(
   dialogs
   cli
@@ -46,6 +48,6 @@ target_link_libraries(
   cred
   host
   index
-  Qt5::Widgets)
+  Qt6::Widgets)
 
 set_target_properties(dialogs PROPERTIES AUTOMOC ON)

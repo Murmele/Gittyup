@@ -320,6 +320,8 @@ public:
   }
 
   QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const {
+    if (index.row() >= mRows.size())
+      return QVariant();
     const Row &row = mRows.at(index.row());
     bool status = !row.commit.isValid();
     switch (role) {
@@ -1246,8 +1248,10 @@ git::Diff CommitList::selectedDiff() const {
   if (indexes.isEmpty())
     return git::Diff();
 
-  if (indexes.size() == 1)
-    return indexes.first().data(DiffRole).value<git::Diff>();
+  if (indexes.size() == 1) {
+    auto first = indexes.first().data(DiffRole);
+    return first.isValid() ? first.value<git::Diff>() : git::Diff();
+  }
 
   git::Commit first = indexes.first().data(CommitRole).value<git::Commit>();
   if (!first.isValid())
@@ -1816,7 +1820,8 @@ bool CommitList::isDecoration(const QModelIndex &index, const QPoint &pos) {
     return false;
 
   CommitDelegate *delegate = static_cast<CommitDelegate *>(itemDelegate());
-  QStyleOptionViewItem options = viewOptions();
+  QStyleOptionViewItem options;
+  initViewItemOption(&options);
   options.rect = visualRect(index);
   return delegate->decorationRect(options, index).contains(pos);
 }
@@ -1826,7 +1831,8 @@ bool CommitList::isStar(const QModelIndex &index, const QPoint &pos) {
     return false;
 
   CommitDelegate *delegate = static_cast<CommitDelegate *>(itemDelegate());
-  QStyleOptionViewItem options = viewOptions();
+  QStyleOptionViewItem options;
+  initViewItemOption(&options);
   options.rect = visualRect(index);
   return delegate->starRect(options, index).contains(pos);
 }

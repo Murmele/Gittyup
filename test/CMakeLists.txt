@@ -23,10 +23,10 @@ macro(test)
   endif()
 
   if(WIN32)
-    find_package(Qt5Gui)
+    find_package(Qt6Gui)
     string(REPLACE ";" "\;" NEWPATH "$ENV{PATH}")
     string(REPLACE ";" "\;" PLUGIN_PATH
-                   "$<TARGET_FILE_DIR:Qt5::QOffscreenIntegrationPlugin>")
+                   "$<TARGET_FILE_DIR:Qt6::QOffscreenIntegrationPlugin>")
 
     if(${ARG_NO_WIN32_OFFSCREEN})
       set(PLATFORM "windows")
@@ -73,7 +73,7 @@ set(CMAKE_DISABLE_TESTING ON)
 add_subdirectory(dep/zip)
 
 add_library(testlib EXCLUDE_FROM_ALL Test.cpp)
-target_link_libraries(testlib app git ui Qt5::Test zip)
+target_link_libraries(testlib app git ui Qt6::Test zip)
 target_include_directories(testlib PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_compile_definitions(
   testlib

@@ -180,7 +180,7 @@ void Index::setStaged(const QStringList &files, bool staged, bool yieldFocus) {
           if (!smHead.isValid())
             continue;
 
-          git_time_t time = smHead.committer().date().toTime_t();
+          git_time_t time = smHead.committer().date().toSecsSinceEpoch();
           entry.ctime.seconds = time;
           entry.ctime.nanoseconds = 0;
           entry.mtime.seconds = time;

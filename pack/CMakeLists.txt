@@ -28,13 +28,13 @@ if(FLATPAK)
   qt_import_plugins(gittyup INCLUDE ${QT_PLUGINS})
 elseif(NOT USE_SYSTEM_QT)
   foreach(QT_PLUGIN ${QT_PLUGINS})
-    if(NOT TARGET Qt5::${QT_PLUGIN})
+    if(NOT TARGET Qt6::${QT_PLUGIN})
       if(UNIX OR APPLE)
         continue()
       endif()
     endif()
 
-    get_target_property(PLUGIN Qt5::${QT_PLUGIN} LOCATION_${CMAKE_BUILD_TYPE})
+    get_target_property(PLUGIN Qt6::${QT_PLUGIN} LOCATION_${CMAKE_BUILD_TYPE})
     get_filename_component(FILE_NAME ${PLUGIN} NAME)
     get_filename_component(DIR ${PLUGIN} DIRECTORY)
     get_filename_component(DIR_NAME ${DIR} NAME)
@@ -78,7 +78,7 @@ elseif(NOT USE_SYSTEM_QT)
 
   # Install Qt libraries.
   foreach(QT_MODULE ${QT_MODULES})
-    get_target_property(QT_LIBRARY Qt5::${QT_MODULE}
+    get_target_property(QT_LIBRARY Qt6::${QT_MODULE}
                         LOCATION_${CMAKE_BUILD_TYPE})
 
     if(APPLE)
@@ -131,8 +131,8 @@ endif()
 
 # Install XcbQpa library.
 if(UNIX AND NOT APPLE)
-  set(LIB_NAME libQt5XcbQpa)
-  get_target_property(QT_CORE_LIBRARY Qt5::Core LOCATION)
+  set(LIB_NAME libQt6XcbQpa)
+  get_target_property(QT_CORE_LIBRARY Qt6::Core LOCATION)
   get_filename_component(LIB_PATH ${QT_CORE_LIBRARY} PATH)
   get_filename_component(LIB_EXT ${QT_CORE_LIBRARY} EXT)
 
