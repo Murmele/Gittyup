@@ -308,12 +308,12 @@ jobs:
           ninja check_no_win32_offscreen
 
       - name: Build Appimage
-        if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
+        if: matrix.env.ninja_platform == 'linux'
         run: |
           cd build/release
           sudo apt -y install appstream
           sudo apt -y install libfuse2
-          sudo apt -y install libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0
+          sudo apt -y install libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-cursor0
           sudo apt -y install libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xinerama0 libxcb-xinput0 libxcb-xkb1 libxcb-xrm0 libxcb-xv0 libxcb-xvmc0 libxcb1
           
           mkdir -p AppDir
@@ -339,7 +339,7 @@ jobs:
           #ls -lh Gittyup-*
 
       - name: Publish Appimage
-        if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
+        if: matrix.env.ninja_platform == 'linux'
         uses: actions/upload-artifact@v3
         with:
           path: build/release/*.AppImage
