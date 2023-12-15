@@ -83,9 +83,13 @@ elseif(NOT USE_SYSTEM_QT)
 
     if(APPLE)
       get_filename_component(QT_FRAMEWORK ${QT_LIBRARY} DIRECTORY)
+
+      # FIXME: QT_LIBRARY points directly to the library bin instead of the symlink 2 directories above (since qt6)
+      string(REGEX REPLACE "/Versions/.*" "" QT_FRAMEWORK "${QT_FRAMEWORK}")
+
       set(DEST_DIR ${CONTENTS_DIR}/Frameworks)
       install(
-        DIRECTORY ${QT_FRAMEWORK}/../..
+        DIRECTORY ${QT_FRAMEWORK}
         DESTINATION ${DEST_DIR}
         COMPONENT ${GITTYUP_NAME}
         PATTERN "*.prl" EXCLUDE
