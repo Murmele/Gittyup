@@ -38,7 +38,7 @@ elseif(NOT USE_SYSTEM_QT)
     get_filename_component(FILE_NAME ${PLUGIN} NAME)
     get_filename_component(DIR ${PLUGIN} DIRECTORY)
     get_filename_component(DIR_NAME ${DIR} NAME)
-    set(PLUGIN_PATH plugins/${DIR_NAME}/${FILE_NAME})
+    set(PLUGIN_PATH Plugins/${DIR_NAME}/${FILE_NAME})
 
     install(
       FILES ${PLUGIN}
