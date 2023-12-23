@@ -42,7 +42,7 @@ elseif(NOT USE_SYSTEM_QT)
 
     install(
       FILES ${PLUGIN}
-      DESTINATION ${INSTALL_LIBDIR}/Plugins/${DIR_NAME}
+      DESTINATION ${INSTALL_LIBDIR}/plugins/${DIR_NAME}
       PERMISSIONS
         OWNER_READ
         OWNER_WRITE
