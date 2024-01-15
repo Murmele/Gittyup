@@ -92,7 +92,7 @@ How to Build
 **Initialize Submodules**
 
     git submodule init
-    git submodule update
+    git submodule update --depth 1
 
 **Build OpenSSL**
 
