@@ -328,6 +328,7 @@ jobs:
           chmod +x appimagetool-*.AppImage
           ls $QTDIR
           ls $QTDIR/plugins
+          ls $QTDIR/plugins/platforms
           QTDIR=$QTDIR ./appimagetool-*.AppImage -s deploy ./AppDir/usr/share/applications/*.desktop --appimage-extract-and-run # Bundle EVERYTHING
 
           # Modify the AppDir: move ld-linux into the same directory as the payload application
