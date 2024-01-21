@@ -107,7 +107,7 @@ elseif(NOT USE_SYSTEM_QT)
       else()
         # Strip minor and patch version extensions.
         get_filename_component(TARGET_NAME_WE ${QT_LIBRARY} NAME_WE)
-        set(TARGET_NAME ${TARGET_NAME_WE}.so.5)
+        set(TARGET_NAME ${TARGET_NAME_WE}.so.6)
       endif()
 
       install(
