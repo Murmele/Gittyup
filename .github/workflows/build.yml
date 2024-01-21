@@ -326,8 +326,11 @@ jobs:
 
           wget -c https://github.com/$(wget -q https://github.com/probonopd/go-appimage/releases/expanded_assets/continuous -O - | grep "appimagetool-.*-x86_64.AppImage" | head -n 1 | cut -d '"' -f 2)
           chmod +x appimagetool-*.AppImage
+          echo Show QTDIR
           ls $QTDIR
+          echo Show QTDIR plugins
           ls $QTDIR/plugins
+          echo Show QTDIR plugins platforms
           ls $QTDIR/plugins/platforms
           QTDIR=$QTDIR ./appimagetool-*.AppImage -s deploy ./AppDir/usr/share/applications/*.desktop --appimage-extract-and-run # Bundle EVERYTHING
 
