@@ -24,7 +24,7 @@ else()
   set(INSTALL_LIBDIR ${CONTENTS_DIR})
 endif()
 
-if(FLATPAK OR UNIX)
+if(FLATPAK)
   qt_import_plugins(gittyup INCLUDE ${QT_PLUGINS})
 elseif(NOT USE_SYSTEM_QT)
   foreach(QT_PLUGIN ${QT_PLUGINS})
