@@ -201,7 +201,7 @@ void MainWindow::setSideBarVisible(bool visible) {
     splitter->setSizes({static_cast<int>(pos * value), 1});
   });
 
-  connect(timeline, &QTimeLine::finished, [timeline] { delete timeline; });
+  connect(timeline, &QTimeLine::finished, [timeline] { timeline->deleteLater(); });
 
   timeline->start();
 }
