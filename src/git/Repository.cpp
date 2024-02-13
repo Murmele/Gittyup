@@ -156,7 +156,11 @@ QDir Repository::dir(bool includeGitFolder) const {
   QDir dir(git_repository_path(d->repo));
   if (!includeGitFolder) {
     assert(dir.dirName() == ".git");
-    assert(dir.cdUp());
+    if (!dir.cdUp()) {
+      assert(false); // must be done explicit, because in release build the
+                     // assert will not be executed, so assert(dir.cdUp()) does
+                     // not work in release build
+    }
   }
   return dir;
 }
