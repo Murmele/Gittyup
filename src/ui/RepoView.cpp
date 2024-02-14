@@ -890,7 +890,8 @@ void RepoView::setLogVisible(bool visible) {
     setSizes({1, static_cast<int>(pos * value)});
   });
 
-  connect(timeline, &QTimeLine::finished, [timeline] { timeline->deleteLater(); });
+  connect(timeline, &QTimeLine::finished,
+          [timeline] { timeline->deleteLater(); });
 
   timeline->start();
 }
