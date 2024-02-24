@@ -829,6 +829,20 @@ public:
           rect.setWidth(rect.width() - timestampWidth - constants.hMargin);
         }
 
+        // Draw Name.
+        if (showAuthor) {
+          QString name = commit.author().name() + "  ";
+          painter->save();
+          QFont bold = opt.font;
+          bold.setBold(true);
+          painter->setFont(bold);
+          painter->drawText(rect, Qt::AlignRight, name);
+          painter->restore();
+          const QFontMetrics boldFm(bold);
+          rect.setWidth(rect.width() - boldFm.horizontalAdvance(name) -
+                        constants.hMargin);
+        }
+
         // Calculate remaining width for the references.
         QRect ref = rect;
         int refsWidth = ref.width() - minWidthDesc;
@@ -846,20 +860,6 @@ public:
         if (!refs.isEmpty())
           badgesWidth = Badge::paint(painter, refs, ref, &opt, Qt::AlignLeft);
         rect.setX(badgesWidth); // Comes right after the badges
-
-        // Draw Name.
-        if (showAuthor) {
-          QString name = commit.author().name();
-          painter->save();
-          QFont bold = opt.font;
-          bold.setBold(true);
-          painter->setFont(bold);
-          painter->drawText(rect, Qt::AlignLeft, name);
-          painter->restore();
-          const QFontMetrics boldFm(bold);
-          rect.setX(rect.x() + boldFm.horizontalAdvance(name) +
-                    constants.hMargin);
-        }
 
         // Draw message.
         painter->save();
