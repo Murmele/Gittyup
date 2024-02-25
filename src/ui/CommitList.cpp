@@ -787,7 +787,16 @@ public:
     // Draw content.
     git::Commit commit =
         index.data(CommitList::Role::CommitRole).value<git::Commit>();
-    if (commit.isValid()) {
+    if (!commit.isValid()) {
+      // special case for uncommitted changes
+      QString message = index.model()->data(index).toString();
+      painter->save();
+      QFont italic = opt.font;
+      italic.setItalic(true);
+      painter->setFont(italic);
+      painter->drawText(opt.rect, Qt::AlignCenter, message);
+      painter->restore();
+    } else {
       const QFontMetrics &fm = opt.fontMetrics;
       QRect star = rect;
 
