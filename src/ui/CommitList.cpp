@@ -635,9 +635,6 @@ public:
         Settings::instance()->value(Setting::Id::ShowCommitsId, true).toBool();
     LayoutConstants constants = layoutConstants(compact);
 
-    // Draw background.
-    QStyledItemDelegate::paint(painter, opt, index);
-
     bool active = (opt.state & QStyle::State_Active);
     bool selected = (opt.state & QStyle::State_Selected);
     auto group = active ? QPalette::Active : QPalette::Inactive;
@@ -646,9 +643,15 @@ public:
     QPalette palette = Application::theme()->commitList();
     QColor text = palette.color(group, textRole);
     QColor bright = palette.color(group, brightRole);
+    QColor highlight = palette.color(group, QPalette::Highlight);
 
     painter->save();
     painter->setRenderHints(QPainter::Antialiasing);
+
+    // Draw background.
+    if (selected) {
+      painter->fillRect(opt.rect, highlight);
+    }
 
     // Draw busy indicator.
     if (opt.features & QStyleOptionViewItem::HasDecoration) {
@@ -784,7 +787,16 @@ public:
     // Draw content.
     git::Commit commit =
         index.data(CommitList::Role::CommitRole).value<git::Commit>();
-    if (commit.isValid()) {
+    if (!commit.isValid()) {
+      // special case for uncommitted changes
+      QString message = index.model()->data(index).toString();
+      painter->save();
+      QFont italic = opt.font;
+      italic.setItalic(true);
+      painter->setFont(italic);
+      painter->drawText(opt.rect, Qt::AlignCenter, message);
+      painter->restore();
+    } else {
       const QFontMetrics &fm = opt.fontMetrics;
       QRect star = rect;
 
