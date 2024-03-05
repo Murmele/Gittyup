@@ -150,6 +150,17 @@ public:
     resetWalker();
   }
 
+  bool is_working_tree_clean(void) const {
+    if (mStatus.isRunning()) {
+      return false;
+    }
+    git::Diff stat = status();
+    if (!stat.isValid()) {
+      return true;
+    }
+    return stat.count() == 0;
+  }
+
   void suppressResetWalker(bool suppress) { mSuppressResetWalker = suppress; }
 
   bool isResetWalkerSuppressed() { return mSuppressResetWalker; }
@@ -186,8 +197,8 @@ public:
 
     // Update status row.
     bool head = (!mRef.isValid() || mRef.isHead());
-    bool valid = (!mStatus.isFinished() || status().isValid());
-    if (mShowCleanStatus && head && valid && mPathspec.isEmpty()) {
+    if (mShowCleanStatus && head && mStatus.isFinished() &&
+        mPathspec.isEmpty()) {
       QVector<Column> row;
       if (mGraphVisible && mRef.isValid() && mStatus.isFinished()) {
         row.append({Segment(Bottom, kTaintedColor), Segment(Dot, QColor())});
@@ -322,17 +333,19 @@ public:
 
   QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const {
     const Row &row = mRows.at(index.row());
-    bool status = !row.commit.isValid();
+    bool commit_is_valid = row.commit.isValid();
+
     switch (role) {
       case Qt::DisplayRole:
-        if (!status)
+        if (commit_is_valid)
           return QVariant();
-
-        return mStatus.isFinished() ? tr("Uncommitted changes")
-                                    : tr("Checking for uncommitted changes");
+        if (!mStatus.isFinished())
+          return tr("Checking for uncommitted changes");
+        return is_working_tree_clean() ? tr("Working tree clean")
+                                       : tr("Uncommitted changes");
 
       case Qt::FontRole: {
-        if (!status)
+        if (commit_is_valid)
           return QVariant();
 
         QFont font = static_cast<QWidget *>(QObject::parent())->font();
@@ -341,19 +354,19 @@ public:
       }
 
       case Qt::TextAlignmentRole:
-        if (!status)
+        if (commit_is_valid)
           return QVariant();
 
         return QVariant(Qt::AlignHCenter | Qt::AlignVCenter);
 
       case Qt::DecorationRole:
-        if (!status)
+        if (commit_is_valid)
           return QVariant();
 
         return mStatus.isFinished() ? QVariant() : mProgress;
 
       case CommitList::Role::DiffRole: {
-        if (status)
+        if (!commit_is_valid)
           return QVariant::fromValue(this->status());
 
         bool ignoreWhitespace = Settings::instance()->isWhitespaceIgnored();
@@ -363,7 +376,7 @@ public:
       }
 
       case CommitList::Role::CommitRole:
-        return status ? QVariant() : QVariant::fromValue(row.commit);
+        return commit_is_valid ? QVariant::fromValue(row.commit) : QVariant();
 
       case CommitList::Role::GraphRole: {
         QVariantList columns;
