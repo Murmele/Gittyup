@@ -76,6 +76,9 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
   setScrollWidthTracking(true);
   setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
+  // TODO: add a setting / button to toggle line wrapping
+  setWrapMode(SC_WRAP_WORD);
+
   setMarginLeft(4);
   setMarginTypeN(Staged, SC_MARGIN_SYMBOL);
   setMarginTypeN(LineNumber, SC_MARGIN_NUMBER);
