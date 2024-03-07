@@ -76,7 +76,6 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
   setScrollWidthTracking(true);
   setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
-  // TODO: add a setting / button to toggle line wrapping
   setWrapMode(SC_WRAP_WORD);
 
   setMarginLeft(4);
@@ -183,6 +182,12 @@ void TextEditor::applySettings() {
   setUseTabs(settings->value(Setting::Id::UseTabsForIndent).toBool());
   setIndent(settings->value(Setting::Id::IndentWidth).toInt());
   setTabWidth(settings->value(Setting::Id::TabWidth).toInt());
+
+  if (Settings::instance()->isTextEditorWrapLines()) {
+    setWrapMode(SC_WRAP_WORD);
+  } else {
+    setWrapMode(SC_WRAP_NONE);
+  }
 
   // Initialize markers.
   QColor background = palette().color(QPalette::Base);

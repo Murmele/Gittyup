@@ -69,8 +69,16 @@ DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
     }
   });
 
+  // Wrap lines
+  QCheckBox *wrapLines = new QCheckBox(tr("Wrap lines"), this);
+  wrapLines->setChecked(Settings::instance()->isTextEditorWrapLines());
+  connect(wrapLines, &QCheckBox::toggled, [](bool wrap) {
+    Settings::instance()->setTextEditorWrapLines(wrap);
+  });
+
   QFormLayout *layout = new QFormLayout(this);
   layout->addRow(tr("Context lines:"), contextLayout);
+  layout->addRow(tr("Wrap lines:"), wrapLines);
   layout->addRow(tr("Character Encoding:"), encoding);
 
   // Remaining settings are strictly global.
