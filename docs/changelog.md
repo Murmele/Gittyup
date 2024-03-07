@@ -6,12 +6,23 @@ Description
 
 * UI(Commit List): Added a right-click menu entry to rename branches.
 * UI(Main Menu): Added a menu-entry to rename the current branch.
+* Appimage support
+* Support for repositories with the repository dir not in the working directory
+* Multi column support for the tree view
+* Possibility to hide untracked files in double tree view
+* Add possibility to search for file patterns in the tree view
 
 #### Changed
 
 * UI(Commit List): Collapse multiple branch and tag right-click menu entries
                    into submenus. This affects the checkout and delete operations.
 * Fix(Build System): Force usage of clang-format v13 to ensure consistent formatting.
+
+#### Fixed
+
+* Crash on Windows #680
+* Use original commit message as default during rebase
+* fix stage all
 
 ----
 
