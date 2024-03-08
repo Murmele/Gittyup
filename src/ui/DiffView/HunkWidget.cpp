@@ -5,6 +5,7 @@
 #include "DiffView.h"
 #include "DisclosureButton.h"
 #include "EditButton.h"
+#include "HunkHeader.h"
 #include "DiscardButton.h"
 #include "app/Application.h"
 
@@ -39,15 +40,16 @@ _HunkWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
                             int index, bool lfs, bool submodule,
                             QWidget *parent)
     : QFrame(parent) {
+  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
   setObjectName("HunkHeader");
   mCheck = new QCheckBox(this);
   mCheck->setTristate(true);
   mCheck->setVisible(diff.isStatusDiff() && !submodule &&
                      !patch.isConflicted());
 
-  QString header = (index >= 0) ? patch.header(index) : QString();
-  QString escaped = header.trimmed().toHtmlEscaped();
-  QLabel *label = new QLabel(DiffViewStyle::kHunkFmt.arg(escaped), this);
+  QString headerString = (index >= 0) ? patch.header(index) : QString();
+  QString escaped = headerString.trimmed().toHtmlEscaped();
+  HunkHeader *header = new HunkHeader(escaped, submodule, this);
 
   if (patch.isConflicted()) {
     mSave = new QToolButton(this);
@@ -132,7 +134,7 @@ _HunkWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
   QHBoxLayout *layout = new QHBoxLayout(this);
   layout->setContentsMargins(4, 4, 4, 4);
   layout->addWidget(mCheck);
-  layout->addWidget(label);
+  layout->addWidget(header, 1);
   layout->addStretch();
   layout->addLayout(buttons);
 
