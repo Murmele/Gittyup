@@ -76,7 +76,7 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
   setScrollWidthTracking(true);
   setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
-  setWrapMode(SC_WRAP_WORD);
+  setWrapMode(SC_WRAP_NONE);
 
   setMarginLeft(4);
   setMarginTypeN(Staged, SC_MARGIN_SYMBOL);
