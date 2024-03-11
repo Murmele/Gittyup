@@ -5,7 +5,6 @@
 #include "DiffView.h"
 #include "DisclosureButton.h"
 #include "EditButton.h"
-#include "HunkHeader.h"
 #include "DiscardButton.h"
 #include "app/Application.h"
 
@@ -36,20 +35,31 @@ const QString noNewLineAtEndOfFile =
     HunkWidget::tr("No newline at end of file");
 } // namespace
 
+_HunkWidget::HunkLabel::HunkLabel(const QString &name, bool submodule,
+                                  QWidget *parent)
+    : QWidget(parent), mName(name) {}
+void _HunkWidget::HunkLabel::paintEvent(QPaintEvent *event) {
+  QPainter painter(this);
+  painter.setRenderHint(QPainter::Antialiasing);
+  QFontMetrics fm = fontMetrics();
+  QRect rect = fm.boundingRect(0, 0, this->rect().width(), 300,
+                               Qt::AlignLeft | Qt::ElideRight, mName);
+  painter.drawText(rect, Qt::AlignLeft | Qt::ElideRight, mName);
+}
+
 _HunkWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
                             int index, bool lfs, bool submodule,
                             QWidget *parent)
     : QFrame(parent) {
-  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
   setObjectName("HunkHeader");
   mCheck = new QCheckBox(this);
   mCheck->setTristate(true);
   mCheck->setVisible(diff.isStatusDiff() && !submodule &&
                      !patch.isConflicted());
 
-  QString headerString = (index >= 0) ? patch.header(index) : QString();
-  QString escaped = headerString.trimmed().toHtmlEscaped();
-  HunkHeader *header = new HunkHeader(escaped, submodule, this);
+  QString label_string = (index >= 0) ? patch.header(index) : QString();
+  label_string = label_string.trimmed().toHtmlEscaped();
+  HunkLabel *label = new HunkLabel(label_string, submodule, this);
 
   if (patch.isConflicted()) {
     mSave = new QToolButton(this);
@@ -134,7 +144,7 @@ _HunkWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
   QHBoxLayout *layout = new QHBoxLayout(this);
   layout->setContentsMargins(4, 4, 4, 4);
   layout->addWidget(mCheck);
-  layout->addWidget(header, 1);
+  layout->addWidget(label, 1);
   layout->addStretch();
   layout->addLayout(buttons);
 

@@ -11,7 +11,6 @@ add_library(
   ContextMenuButton.cpp
   DetailView.cpp
   DiffView/DiffView.cpp
-  DiffView/HunkHeader.cpp
   DiffView/HunkWidget.cpp
   DiffView/FileWidget.cpp
   DiffView/FileLabel.cpp
