@@ -42,8 +42,7 @@ void _HunkWidget::HunkLabel::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
   QFontMetrics fm = fontMetrics();
-  QRect rect = fm.boundingRect(0, 0, this->rect().width(), 300,
-                               Qt::AlignLeft | Qt::ElideRight, mName);
+  QRect rect = fm.boundingRect(0, 0, this->rect().width(), 300, 0, mName);
   painter.drawText(rect, Qt::AlignLeft | Qt::ElideRight, mName);
 }
 

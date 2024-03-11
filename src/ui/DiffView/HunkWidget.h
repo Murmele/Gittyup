@@ -19,7 +19,6 @@ class DisclosureButton;
 class Line;
 
 namespace _HunkWidget {
-
 class HunkLabel : public QWidget {
 public:
   HunkLabel(const QString &name, bool submodule, QWidget *parent = nullptr);
