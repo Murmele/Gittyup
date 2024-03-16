@@ -6,6 +6,7 @@ Description
 
 * UI(Commit List): Added a right-click menu entry to rename branches.
 * UI(Main Menu): Added a menu-entry to rename the current branch.
+* UI(Diff View): Added line wrapping option in Tools - Options - Diff
 
 #### Changed
 

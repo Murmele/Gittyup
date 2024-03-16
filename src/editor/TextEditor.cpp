@@ -76,6 +76,8 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
   setScrollWidthTracking(true);
   setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
+  setWrapMode(SC_WRAP_NONE);
+
   setMarginLeft(4);
   setMarginTypeN(Staged, SC_MARGIN_SYMBOL);
   setMarginTypeN(LineNumber, SC_MARGIN_NUMBER);
@@ -180,6 +182,12 @@ void TextEditor::applySettings() {
   setUseTabs(settings->value(Setting::Id::UseTabsForIndent).toBool());
   setIndent(settings->value(Setting::Id::IndentWidth).toInt());
   setTabWidth(settings->value(Setting::Id::TabWidth).toInt());
+
+  if (Settings::instance()->isTextEditorWrapLines()) {
+    setWrapMode(SC_WRAP_WORD);
+  } else {
+    setWrapMode(SC_WRAP_NONE);
+  }
 
   // Initialize markers.
   QColor background = palette().color(QPalette::Base);

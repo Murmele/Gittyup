@@ -25,6 +25,7 @@
 
 namespace {
 
+const QString kWrapLines("diff/lines/wrap");
 const QString kIgnoreWsKey("diff/whitespace/ignore");
 const QString kLastPathKey("lastpath");
 const QString kTranslation("translation");
@@ -189,6 +190,14 @@ void Settings::setHotkey(const QString &action, const QString &hotkey) {
 
 QString Settings::hotkey(const QString &action) const {
   return value("hotkeys/" + action, "").toString();
+}
+
+bool Settings::isTextEditorWrapLines() const {
+  return value(kWrapLines).toBool();
+}
+
+void Settings::setTextEditorWrapLines(bool wrap) {
+  setValue(kWrapLines, wrap, true);
 }
 
 bool Settings::isWhitespaceIgnored() const {
