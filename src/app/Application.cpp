@@ -295,14 +295,11 @@ bool Application::restoreWindows() {
   if (dir != Settings::appDir()) {
     if (MainWindow *win = MainWindow::open(dir.path(), false)) {
       win->currentView()->setPathspec(mPathspec);
-      
       return true;
     }
 
     return false;
   }
-
-  
 
   // Save on exit.
   MainWindow::setSaveWindowSettings(true);

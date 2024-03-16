@@ -565,6 +565,11 @@ public:
     connect(showAvatars, &QCheckBox::toggled, [](bool checked) {
       Settings::instance()->setValue(Setting::Id::ShowAvatars, checked);
     });
+    QCheckBox *showMaximized = new QCheckBox(tr("Show Window Maximized when opened"));
+    showMaximized->setChecked(settings->value(Setting::Id::ShowMaximized).toBool());
+    connect(showMaximized, &QCheckBox::toggled, [](bool checked) {
+      Settings::instance()->setValue(Setting::Id::ShowMaximized, checked);
+    });
 
     QString mergeText = settings->promptDescription(Prompt::Kind::Merge);
     QCheckBox *merge = new QCheckBox(mergeText, this);
@@ -619,6 +624,7 @@ public:
     layout->addRow(QString(), repoTabs);
     layout->addRow(tr("View:"), hideMenuBar);
     layout->addRow(QString(), showAvatars);
+    layout->addRow(QString(), showMaximized);
     layout->addRow(tr("Prompt:"), merge);
     layout->addRow(QString(), revert);
     layout->addRow(QString(), cherryPick);

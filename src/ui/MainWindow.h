@@ -13,7 +13,6 @@
 #include "git/Repository.h"
 #include <QMainWindow>
 
-
 class RepoView;
 class TabWidget;
 class ToolBar;
@@ -23,7 +22,7 @@ namespace git {
 class Submodule;
 }
 
-class MainWindow : public QMainWindow{
+class MainWindow : public QMainWindow {
   Q_OBJECT
 
 public:

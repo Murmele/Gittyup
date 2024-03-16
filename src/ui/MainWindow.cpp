@@ -301,7 +301,6 @@ QList<MainWindow *> MainWindow::windows() {
   return mainWins;
 }
 
-
 bool MainWindow::restoreWindows() {
   QList<MainWindow *> windows;
 
@@ -387,8 +386,16 @@ MainWindow *MainWindow::open(const git::Repository &repo) {
 
   // Create the window.
   MainWindow *window = new MainWindow(repo);
-  window->showMaximized();
 
+  const bool showMaximized =
+        Settings::instance()->value(Setting::Id::ShowMaximized).toBool();
+
+  if(showMaximized) {
+    window->showMaximized();
+  } else {
+    window->show();
+  }
+  
   return window;
 }
 
