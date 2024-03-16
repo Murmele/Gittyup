@@ -301,6 +301,7 @@ QList<MainWindow *> MainWindow::windows() {
   return mainWins;
 }
 
+
 bool MainWindow::restoreWindows() {
   QList<MainWindow *> windows;
 
@@ -386,7 +387,7 @@ MainWindow *MainWindow::open(const git::Repository &repo) {
 
   // Create the window.
   MainWindow *window = new MainWindow(repo);
-  window->show();
+  window->showMaximized();
 
   return window;
 }
