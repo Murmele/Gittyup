@@ -59,7 +59,7 @@ public:
    * \return
    */
   QByteArray print();
-  bool isValid() const { return d; }
+  bool isValid() const { return d ? true : false; }
   explicit operator bool() const { return isValid(); }
 
   bool isConflicted() const;

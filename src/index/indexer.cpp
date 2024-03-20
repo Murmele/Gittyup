@@ -53,19 +53,20 @@ static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info) {
   SYSTEMTIME localTime;
   GetLocalTime(&localTime);
 
-  char temp[MAX_PATH];
+  wchar_t temp[MAX_PATH];
   GetTempPath(MAX_PATH, temp);
 
-  char dir[MAX_PATH];
-  StringCchPrintf(dir, MAX_PATH, "%sGittyup", temp);
+  wchar_t dir[MAX_PATH];
+  const wchar_t *gittyup_name = L"%sGittyup";
+  StringCchPrintf(dir, MAX_PATH, gittyup_name, temp);
   CreateDirectory(dir, NULL);
 
-  char fileName[MAX_PATH];
-  StringCchPrintf(
-      fileName, MAX_PATH, "%s\\%s-%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp",
-      dir, "indexer", GITTYUP_VERSION, localTime.wYear, localTime.wMonth,
-      localTime.wDay, localTime.wHour, localTime.wMinute, localTime.wSecond,
-      GetCurrentProcessId(), GetCurrentThreadId());
+  wchar_t fileName[MAX_PATH];
+  const wchar_t *s = L"%s\\%s-%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp";
+  StringCchPrintf(fileName, MAX_PATH, s, dir, "indexer", GITTYUP_VERSION,
+                  localTime.wYear, localTime.wMonth, localTime.wDay,
+                  localTime.wHour, localTime.wMinute, localTime.wSecond,
+                  GetCurrentProcessId(), GetCurrentThreadId());
 
   HANDLE dumpFile =
       CreateFile(fileName, GENERIC_READ | GENERIC_WRITE,
@@ -427,12 +428,8 @@ public:
     int count = 0;
     QList<git::Commit> commits;
     git::Commit commit = mWalker.next();
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
     QSet<git::Id> ids(mIndex.ids().begin(), mIndex.ids().end());
-#else
-    QSet<git::Id> ids = QSet<git::Id>::fromList(mIndex.ids());
-#endif
+
     while (commit.isValid() && count < 8192) {
       // Don't index merge commits.
       if (!commit.isMerge() && !ids.contains(commit.id())) {
@@ -453,7 +450,7 @@ public:
     using CommitList = QList<git::Commit>;
     mWatcher.setFuture(
         QtConcurrent::mappedReduced<Index::PostingMap, CommitList, Map, Reduce>(
-            commits, Map(mIndex.repo(), mLexers, mOut),
+            std::move(commits), Map(mIndex.repo(), mLexers, mOut),
             Reduce(mIndex.ids(), mOut)));
     return true;
   }
@@ -476,7 +473,7 @@ public:
   }
 
   bool nativeEventFilter(const QByteArray &type, void *message,
-                         long *result) override {
+                         qintptr *result) override {
     Q_UNUSED(result);
 #ifdef Q_OS_WIN
     MSG *msg = static_cast<MSG *>(message);

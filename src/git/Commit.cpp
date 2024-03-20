@@ -26,7 +26,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QRegularExpression>
-#include <QTextCodec>
+#include <QStringConverter>
+#include <QStringDecoder>
 #include <QVector>
 
 namespace git {
@@ -291,8 +292,9 @@ void Commit::setStarred(bool starred) {
 
 QString Commit::decodeMessage(const char *msg) const {
   if (const char *encoding = git_commit_message_encoding(*this)) {
-    if (QTextCodec *codec = QTextCodec::codecForName(encoding))
-      return codec->toUnicode(msg);
+    auto conv = QStringConverter::encodingForName(encoding);
+    if (conv.has_value())
+      return QStringDecoder{conv.value()}.decode(msg);
   }
 
   return msg;

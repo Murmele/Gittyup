@@ -27,6 +27,6 @@ add_library(
   TagRef.cpp
   Tree.cpp)
 
-target_link_libraries(git git2 Qt5::Core Qt5::Network util)
+target_link_libraries(git git2 Qt6::Core Qt6::Network util)
 
 set_target_properties(git PROPERTIES AUTOMOC ON)

@@ -17,6 +17,7 @@
 #include <QProxyStyle>
 #include <QStyleOption>
 #include <QWidget>
+#include <stdexcept>
 
 namespace {
 

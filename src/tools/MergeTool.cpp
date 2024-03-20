@@ -128,7 +128,7 @@ bool MergeTool::start() {
   if (!bash.isEmpty()) {
     process->start(bash, {"-c", command});
   } else if (!shell) {
-    process->start(git::Command::substitute(env, command));
+    process->start(git::Command::substitute(env, command), QStringList());
   } else {
     emit error(BashNotFound);
     return false;

@@ -27,6 +27,7 @@ public:
   void autoUpdate();
   bool restoreWindows();
   bool runSingleInstance();
+  void applyTheme();
 
   static bool isInTest();
   static void setInTest();

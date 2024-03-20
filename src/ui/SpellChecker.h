@@ -4,6 +4,7 @@
 #define SPELLCHECKER_H
 
 #include <QString>
+#include <QStringConverter>
 
 class Hunspell;
 
@@ -24,7 +25,7 @@ public:
 private:
   Hunspell *mHunspell = nullptr;
 
-  QTextCodec *mCodec;
+  QStringConverter::Encoding mEncoding;
   QString mUserDictionary;
 
   bool mValid = false;
