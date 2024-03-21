@@ -47,6 +47,7 @@ public:
   void selectReference(const git::Reference &ref);
   void resetSelection(bool spontaneous = false);
   void selectFirstCommit(bool spontaneous = false);
+  void selectCommitRelative(int offset);
   bool selectRange(const QString &range, const QString &file = QString(),
                    bool spontaneous = false);
   void suppressResetWalker(bool suppress);

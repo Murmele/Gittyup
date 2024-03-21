@@ -1169,11 +1169,11 @@ public:
 
 } // namespace
 
-static Hotkey prevCommitHotKey = HotkeyManager::registerHotkey(
-    "J", "commitList/prevCommit", "CommitList/PrevCommit");
+static Hotkey selectCommitDownHotKey = HotkeyManager::registerHotkey(
+    "j", "commitList/selectCommitDown", "CommitList/Select Next Commit Down");
 
-static Hotkey nextCommitHotKey = HotkeyManager::registerHotkey(
-    "K", "commitList/nextCommit", "CommitList/NextCommit");
+static Hotkey selectCommitUpHotKey = HotkeyManager::registerHotkey(
+    "k", "commitList/selectCommitUp", "CommitList/Select Next Commit Up");
 
 CommitList::CommitList(Index *index, QWidget *parent)
     : QListView(parent), mIndex(index) {
@@ -1231,16 +1231,13 @@ CommitList::CommitList(Index *index, QWidget *parent)
           [this](const QModelIndex &index) { update(index); });
 
   QShortcut *shortcut = new QShortcut(this);
-  prevCommitHotKey.use(shortcut);
-  connect(shortcut, &QShortcut::activated, [this] {
-    printf("prevCommit\n");
-  });
+  selectCommitDownHotKey.use(shortcut);
+  connect(shortcut, &QShortcut::activated, [this] { selectCommitRelative(1); });
 
   shortcut = new QShortcut(this);
-  nextCommitHotKey.use(shortcut);
-  connect(shortcut, &QShortcut::activated, [this] {
-    printf("nextCommit\n");
-  });
+  selectCommitUpHotKey.use(shortcut);
+  connect(shortcut, &QShortcut::activated,
+          [this] { selectCommitRelative(-1); });
 
 #ifdef Q_OS_MAC
   QFont font = this->font();
@@ -1362,6 +1359,19 @@ void CommitList::selectFirstCommit(bool spontaneous) {
   } else {
     emit diffSelected(git::Diff());
   }
+}
+
+void CommitList::selectCommitRelative(int offset) {
+  QModelIndexList indices = selectionModel()->selectedIndexes();
+  QModelIndex index = indices[0];
+  if (!index.isValid()) {
+    return;
+  }
+  QModelIndex new_index = model()->index(index.row() + offset, index.column());
+  if (!new_index.isValid()) {
+    return;
+  }
+  selectIndexes(QItemSelection(new_index, new_index), QString(), true);
 }
 
 bool CommitList::selectRange(const QString &range, const QString &file,
