@@ -303,6 +303,7 @@ jobs:
           cat ./build/release/rsrc/linux/com.github.Murmele.Gittyup.appdata.xml
           echo "Start validating appdata file"
           sudo apt install flatpak
+          sudo apt-get -y install gsettings-ubuntu-schemas
           sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
           sudo flatpak install -y org.freedesktop.appstream-glib
           flatpak run --env=G_DEBUG=fatal-criticals org.freedesktop.appstream-glib validate ./build/release/rsrc/linux/com.github.Murmele.Gittyup.appdata.xml
