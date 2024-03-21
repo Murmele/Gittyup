@@ -28,6 +28,7 @@
 #include "git/Signature.h"
 #include "git/TagRef.h"
 #include "git/Tree.h"
+#include "ui/HotkeyManager.h"
 #include <QAbstractListModel>
 #include <QApplication>
 #include <QMenu>
@@ -1168,6 +1169,12 @@ public:
 
 } // namespace
 
+static Hotkey prevCommitHotKey = HotkeyManager::registerHotkey(
+    "J", "commitList/prevCommit", "CommitList/PrevCommit");
+
+static Hotkey nextCommitHotKey = HotkeyManager::registerHotkey(
+    "K", "commitList/nextCommit", "CommitList/NextCommit");
+
 CommitList::CommitList(Index *index, QWidget *parent)
     : QListView(parent), mIndex(index) {
   Theme *theme = Application::theme();
@@ -1222,6 +1229,18 @@ CommitList::CommitList(Index *index, QWidget *parent)
 
   connect(this, &CommitList::entered,
           [this](const QModelIndex &index) { update(index); });
+
+  QShortcut *shortcut = new QShortcut(this);
+  prevCommitHotKey.use(shortcut);
+  connect(shortcut, &QShortcut::activated, [this] {
+    printf("prevCommit\n");
+  });
+
+  shortcut = new QShortcut(this);
+  nextCommitHotKey.use(shortcut);
+  connect(shortcut, &QShortcut::activated, [this] {
+    printf("nextCommit\n");
+  });
 
 #ifdef Q_OS_MAC
   QFont font = this->font();
