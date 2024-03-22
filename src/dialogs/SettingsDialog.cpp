@@ -565,8 +565,10 @@ public:
     connect(showAvatars, &QCheckBox::toggled, [](bool checked) {
       Settings::instance()->setValue(Setting::Id::ShowAvatars, checked);
     });
-    QCheckBox *showMaximized = new QCheckBox(tr("Show Window Maximized when opened"));
-    showMaximized->setChecked(settings->value(Setting::Id::ShowMaximized).toBool());
+    QCheckBox *showMaximized =
+        new QCheckBox(tr("Show Window Maximized when opened"));
+    showMaximized->setChecked(
+        settings->value(Setting::Id::ShowMaximized).toBool());
     connect(showMaximized, &QCheckBox::toggled, [](bool checked) {
       Settings::instance()->setValue(Setting::Id::ShowMaximized, checked);
     });
