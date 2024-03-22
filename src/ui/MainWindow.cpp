@@ -388,14 +388,14 @@ MainWindow *MainWindow::open(const git::Repository &repo) {
   MainWindow *window = new MainWindow(repo);
 
   const bool showMaximized =
-        Settings::instance()->value(Setting::Id::ShowMaximized).toBool();
+      Settings::instance()->value(Setting::Id::ShowMaximized).toBool();
 
-  if(showMaximized) {
+  if (showMaximized) {
     window->showMaximized();
   } else {
     window->show();
   }
-  
+
   return window;
 }
 
