@@ -2141,7 +2141,10 @@ void RepoView::popStash(int index) {
     error(entry, tr("pop stash"), commit.link());
     return;
   }
-  refresh(false);
+  if (mRepo.stashes().size() == 0) {
+    // switch back to head when there are no stashes left
+    mCommits->setReference(mRepo.head());
+  }
 }
 
 void RepoView::promptToAddTag(const git::Commit &commit) {
@@ -2803,7 +2806,6 @@ void RepoView::refresh(bool restoreSelection) {
     dtw->setDiffCounter();
   }
   if (mRepo.head().isValid()) {
-    mCommits->setReference(mRepo.head());
     DebugRefresh("Head name: " << mRepo.head().name());
   } else {
     DebugRefresh("Head invalid");
