@@ -2141,10 +2141,8 @@ void RepoView::popStash(int index) {
     error(entry, tr("pop stash"), commit.link());
     return;
   }
-  if (mRepo.stashes().size() == 0) {
-    // switch back to head when there are no stashes left
-    mCommits->setReference(mRepo.head());
-  }
+  // switch back to head
+  selectReference(mRepo.head());
 }
 
 void RepoView::promptToAddTag(const git::Commit &commit) {
