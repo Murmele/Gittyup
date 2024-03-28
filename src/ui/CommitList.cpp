@@ -28,6 +28,7 @@
 #include "git/Signature.h"
 #include "git/TagRef.h"
 #include "git/Tree.h"
+#include "ui/HotkeyManager.h"
 #include <QAbstractListModel>
 #include <QApplication>
 #include <QMenu>
@@ -1168,6 +1169,12 @@ public:
 
 } // namespace
 
+static Hotkey selectCommitDownHotKey = HotkeyManager::registerHotkey(
+    "j", "commitList/selectCommitDown", "CommitList/Select Next Commit Down");
+
+static Hotkey selectCommitUpHotKey = HotkeyManager::registerHotkey(
+    "k", "commitList/selectCommitUp", "CommitList/Select Next Commit Up");
+
 CommitList::CommitList(Index *index, QWidget *parent)
     : QListView(parent), mIndex(index) {
   Theme *theme = Application::theme();
@@ -1222,6 +1229,15 @@ CommitList::CommitList(Index *index, QWidget *parent)
 
   connect(this, &CommitList::entered,
           [this](const QModelIndex &index) { update(index); });
+
+  QShortcut *shortcut = new QShortcut(this);
+  selectCommitDownHotKey.use(shortcut);
+  connect(shortcut, &QShortcut::activated, [this] { selectCommitRelative(1); });
+
+  shortcut = new QShortcut(this);
+  selectCommitUpHotKey.use(shortcut);
+  connect(shortcut, &QShortcut::activated,
+          [this] { selectCommitRelative(-1); });
 
 #ifdef Q_OS_MAC
   QFont font = this->font();
@@ -1343,6 +1359,19 @@ void CommitList::selectFirstCommit(bool spontaneous) {
   } else {
     emit diffSelected(git::Diff());
   }
+}
+
+void CommitList::selectCommitRelative(int offset) {
+  QModelIndexList indices = selectionModel()->selectedIndexes();
+  QModelIndex index = indices[0];
+  if (!index.isValid()) {
+    return;
+  }
+  QModelIndex new_index = model()->index(index.row() + offset, index.column());
+  if (!new_index.isValid()) {
+    return;
+  }
+  selectIndexes(QItemSelection(new_index, new_index), QString(), true);
 }
 
 bool CommitList::selectRange(const QString &range, const QString &file,
