@@ -38,9 +38,9 @@ struct FilterInfo {
 
 QString quote(const QString &path) { return QString("\"%1\"").arg(path); }
 
-int apply(git_filter *self, void **payload, git_buf *to, const git_buf *from,
-          const git_filter_source *src) {
-  FilterInfo *info = reinterpret_cast<FilterInfo *>(self);
+int apply(const git_filter *self, QByteArray &to, const char *from,
+          const size_t from_length, const git_filter_source *src) {
+  const FilterInfo *info = reinterpret_cast<const FilterInfo *>(self);
   git_filter_mode_t mode = git_filter_source_mode(src);
   QString command = (mode == GIT_FILTER_SMUDGE) ? info->smudge : info->clean;
 
@@ -59,7 +59,7 @@ int apply(git_filter *self, void **payload, git_buf *to, const git_buf *from,
   if (!process.waitForStarted())
     return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
 
-  process.write(from->ptr, from->size);
+  process.write(from);
   process.closeWriteChannel();
 
   if (!process.waitForFinished() || process.exitCode()) {
@@ -67,8 +67,52 @@ int apply(git_filter *self, void **payload, git_buf *to, const git_buf *from,
     return info->required ? GIT_EUSER : GIT_PASSTHROUGH;
   }
 
-  QByteArray data = process.readAll();
-  git_buf_set(to, data.constData(), data.length());
+  to = process.readAll();
+  return 0;
+}
+
+struct Stream {
+  git_writestream parent; // must be the first. No pointer!
+  git_writestream *next;
+  git_filter_mode_t mode;
+  const git_filter *filter;
+  const git_filter_source *filter_source;
+};
+
+static void stream_free(git_writestream *stream) { free(stream); }
+
+static int stream_close(git_writestream *s) {
+  struct Stream *stream = (struct Stream *)s;
+  stream->next->close(stream->next);
+  return 0;
+}
+
+static int stream_write(git_writestream *s, const char *buffer, size_t len) {
+
+  struct Stream *stream = (struct Stream *)s;
+  QByteArray to;
+  apply(stream->filter, to, buffer, len, stream->filter_source);
+  stream->next->write(stream->next, to.data(), to.length());
+  return 0;
+}
+
+// Called for every new stream
+static int stream_init(git_writestream **out, git_filter *self, void **payload,
+                       const git_filter_source *src, git_writestream *next) {
+
+  struct Stream *stream =
+      static_cast<struct Stream *>(calloc(1, sizeof(struct Stream)));
+  if (!stream)
+    return -1;
+
+  stream->parent.write = stream_write;
+  stream->parent.close = stream_close;
+  stream->parent.free = stream_free;
+  stream->next = next;
+  stream->filter_source = src;
+  stream->filter = self;
+
+  *out = (git_writestream *)stream;
   return 0;
 }
 
@@ -101,7 +145,7 @@ void Filter::init() {
     info.name = key.toUtf8();
     info.attributes = kFilterFmt.arg(key).toUtf8();
 
-    info.filter.apply = &apply;
+    info.filter.stream = stream_init;
     info.filter.attributes = info.attributes.constData();
     git_filter_register(info.name.constData(), &info.filter,
                         GIT_FILTER_DRIVER_PRIORITY);
