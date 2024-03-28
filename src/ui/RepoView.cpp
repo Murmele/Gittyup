@@ -2143,6 +2143,7 @@ void RepoView::popStash(int index) {
   }
   // switch back to head
   selectReference(mRepo.head());
+  selectFirstCommit();
 }
 
 void RepoView::promptToAddTag(const git::Commit &commit) {
