@@ -78,7 +78,7 @@ void LogDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
     return;
 
   QRect rect = decorationRect(option, index);
-  if (static_cast<QMetaType::Type>(variant.type()) == QMetaType::QChar) {
+  if (variant.typeId() == QMetaType::QChar) {
     Badge::paint(painter,
                  {Badge::Label(Badge::Label::Type::Log, variant.toChar())},
                  rect, &opt);
@@ -127,7 +127,7 @@ void LogDelegate::initStyleOption(QStyleOptionViewItem *option,
                                   const QModelIndex &index) const {
   QStyledItemDelegate::initStyleOption(option, index);
   QVariant variant = index.data(Qt::DecorationRole);
-  if (static_cast<QMetaType::Type>(variant.type()) == QMetaType::QChar) {
+  if (variant.typeId() == QMetaType::QChar) {
     option->decorationSize =
         Badge::size(option->font, Badge::Label(Badge::Label::Type::Log)) -
         ADJUSTMENT_SIZE;

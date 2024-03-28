@@ -4,7 +4,7 @@
 #include "SpellChecker.h"
 #include <QFile>
 #include <QTextStream>
-#include <QTextCodec>
+#include <QRegularExpression>
 
 SpellChecker::SpellChecker(const QString &dictionaryPath,
                            const QString &userDictionary)
@@ -26,12 +26,14 @@ SpellChecker::SpellChecker(const QString &dictionaryPath,
     QFile affixFile(affixFileName);
     if (affixFile.open(QIODevice::ReadOnly)) {
       QTextStream stream(&affixFile);
-      QRegExp enc_detector("^\\s*SET\\s+([A-Z0-9\\-]+)\\s*",
-                           Qt::CaseInsensitive);
+      QRegularExpression enc_detector(
+          "^\\s*SET\\s+([A-Z0-9\\-]+)\\s*",
+          QRegularExpression::CaseInsensitiveOption);
       QString line = stream.readLine();
       while (!line.isEmpty()) {
-        if (enc_detector.indexIn(line) >= 0) {
-          encoding = enc_detector.cap(1);
+        auto match = enc_detector.match(line);
+        if (match.hasMatch() >= 0) {
+          encoding = match.captured(1);
           break;
         }
         line = stream.readLine();
@@ -40,7 +42,9 @@ SpellChecker::SpellChecker(const QString &dictionaryPath,
       mValid = true;
     }
 
-    mCodec = QTextCodec::codecForName(encoding.toLatin1().constData());
+    auto conv =
+        QStringConverter::encodingForName(encoding.toLocal8Bit().data());
+    mEncoding = conv ? conv.value() : QStringConverter::System;
 
     // Add user dictionary words to spell checker.
     if (!mUserDictionary.isEmpty()) {
@@ -49,7 +53,8 @@ SpellChecker::SpellChecker(const QString &dictionaryPath,
         QTextStream stream(&userDictonaryFile);
         QString line = stream.readLine();
         while (!line.isEmpty()) {
-          mHunspell->add(mCodec->fromUnicode(line).constData());
+          QByteArray ba = QStringEncoder{mEncoding}.encode(line);
+          mHunspell->add(ba.toStdString());
           line = stream.readLine();
         }
         userDictonaryFile.close();
@@ -62,29 +67,33 @@ SpellChecker::~SpellChecker() { delete mHunspell; }
 
 bool SpellChecker::spell(const QString &word) {
   // Encode from Unicode to the encoding used by current dictionary.
-  return mHunspell->spell(mCodec->fromUnicode(word).toStdString());
+  QByteArray ba = QStringEncoder{mEncoding}.encode(word);
+  return mHunspell->spell(ba.toStdString());
 }
 
 QStringList SpellChecker::suggest(const QString &word) {
   QStringList suggestions;
 
   // Retrive suggestions for word.
-  std::vector<std::string> suggestion =
-      mHunspell->suggest(mCodec->fromUnicode(word).toStdString());
+  QByteArray ba = QStringEncoder{mEncoding}.encode(word);
+  std::vector<std::string> suggestion = mHunspell->suggest(ba.toStdString());
 
   // Decode from the encoding used by current dictionary to Unicode.
+  auto decoder = QStringDecoder{mEncoding};
   foreach (const std::string &str, suggestion)
-    suggestions.append(mCodec->toUnicode(str.data()));
+    suggestions.append(decoder.decode(str.data()));
 
   return suggestions;
 }
 
 void SpellChecker::ignoreWord(const QString &word) {
-  mHunspell->add(mCodec->fromUnicode(word).constData());
+  QByteArray ba = QStringEncoder{mEncoding}.encode(word);
+  mHunspell->add(ba.toStdString());
 }
 
 void SpellChecker::addToUserDict(const QString &word) {
-  mHunspell->add(mCodec->fromUnicode(word).constData());
+  QByteArray ba = QStringEncoder{mEncoding}.encode(word);
+  mHunspell->add(ba.toStdString());
 
   if (!mUserDictionary.isEmpty()) {
     QFile userDictonaryFile(mUserDictionary);

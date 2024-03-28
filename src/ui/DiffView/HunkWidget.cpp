@@ -281,7 +281,7 @@ HunkWidget::HunkWidget(DiffView *view, const git::Diff &diff,
         return;
 
       QTextStream out(&file);
-      out.setCodec(repo.codec());
+      out.setEncoding(repo.encoding());
       out << editor.text();
       file.commit();
 
@@ -408,7 +408,7 @@ HunkWidget::HunkWidget(DiffView *view, const git::Diff &diff,
                   return;
 
                 QTextStream out(&file);
-                out.setCodec(repo.codec());
+                out.setEncoding(repo.encoding());
                 out << editor.text();
                 file.commit();
 

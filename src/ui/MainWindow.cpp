@@ -27,7 +27,6 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QCryptographicHash>
-#include <QDesktopWidget>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QSettings>

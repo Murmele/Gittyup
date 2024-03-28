@@ -23,6 +23,7 @@
 #include "git/Signature.h"
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>
+#include <QActionGroup>
 #include <QClipboard>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -122,8 +123,9 @@ public:
     mDate = new QLabel(this);
     mDate->setTextInteractionFlags(kTextFlags);
 
-    mSpacing.setX(style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing));
-    mSpacing.setY(style()->pixelMetric(QStyle::PM_LayoutVerticalSpacing));
+    mHorizontalSpacing =
+        style()->pixelMetric(QStyle::PM_LayoutHorizontalSpacing);
+    mVerticalSpacing = style()->pixelMetric(QStyle::PM_LayoutVerticalSpacing);
   }
 
   void moveEvent(QMoveEvent *event) override { updateLayout(); }
@@ -134,13 +136,13 @@ public:
     QSize date = mDate->sizeHint();
     QSize author = mAuthor->sizeHint();
     QSize committer = mCommitter->sizeHint();
-    int width = author.width() + date.width() + mSpacing.x();
+    int width = author.width() + date.width() + mHorizontalSpacing;
     int height;
     if (mSameAuthorCommitter)
       height = qMax(qMax(author.height(), committer.height()), date.height());
     else
       height = qMax(author.height(), date.height()) + committer.height() +
-               mSpacing.y();
+               mVerticalSpacing;
     return QSize(width, height);
   }
 
@@ -154,7 +156,7 @@ public:
       height = qMax(qMax(author.height(), committer.height()), date.height());
     else
       height = qMax(author.height(), date.height()) + committer.height() +
-               mSpacing.y();
+               mVerticalSpacing;
     return QSize(width, height);
   }
 
@@ -165,10 +167,11 @@ public:
     int author = mAuthor->sizeHint().height();
     int committer = mCommitter->sizeHint().height();
     bool wrapped = (width < sizeHint().width());
-    int unwrappedHeight = mSameAuthorCommitter
-                              ? qMax(committer, qMax(author, date))
-                              : qMax(author + committer + mSpacing.y(), date);
-    return wrapped ? (author + committer + date + 2 * mSpacing.y())
+    int unwrappedHeight =
+        mSameAuthorCommitter
+            ? qMax(committer, qMax(author, date))
+            : qMax(author + committer + mVerticalSpacing, date);
+    return wrapped ? (author + committer + date + 2 * mVerticalSpacing)
                    : unwrappedHeight;
   }
 
@@ -198,13 +201,13 @@ private:
   void updateLayout() {
     mAuthor->move(0, 0);
     if (mCommitter->isVisible())
-      mCommitter->move(0, mAuthor->height() + mSpacing.y());
+      mCommitter->move(0, mAuthor->height() + mVerticalSpacing);
 
     bool wrapped = (width() < sizeHint().width());
     int x = wrapped ? 0 : width() - mDate->width();
-    int y = wrapped
-                ? mAuthor->height() + mCommitter->height() + 2 * mSpacing.y()
-                : 0;
+    int y = wrapped ? mAuthor->height() + mCommitter->height() +
+                          2 * mVerticalSpacing
+                    : 0;
     mDate->move(x, y);
     updateGeometry();
   }
@@ -213,7 +216,8 @@ private:
   QLabel *mCommitter;
   QLabel *mDate;
 
-  QPoint mSpacing;
+  int mHorizontalSpacing;
+  int mVerticalSpacing;
   bool mSameAuthorCommitter{false};
 };
 
@@ -306,7 +310,7 @@ public:
     // Compute description asynchronously.
     if (commits.size() == 1)
       mWatcher.setFuture(
-          QtConcurrent::run(commits.first(), &git::Commit::description));
+          QtConcurrent::run(&git::Commit::description, commits.first()));
   }
 
   void setCommits(const QList<git::Commit> &commits) {

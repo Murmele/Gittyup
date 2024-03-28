@@ -12,7 +12,7 @@
 #include <QDate>
 #include <QMap>
 #include <QSet>
-#include <QRegExp>
+#include <QRegularExpression>
 
 namespace {
 
@@ -89,9 +89,10 @@ public:
   WildcardQuery(const Index::Term &term) : TermQuery(term) {}
 
   QList<git::Commit> commits(const Index *index) const override {
-    QRegExp re(mTerm.text, Qt::CaseInsensitive, QRegExp::Wildcard);
+    QRegularExpression re{
+        QRegularExpression::fromWildcard(mTerm.text, Qt::CaseInsensitive)};
     Index::Predicate pred = [re](const QByteArray &word) {
-      return re.exactMatch(word);
+      return re.match(word).hasMatch();
     };
 
     return index->commits(index->postings(pred, mTerm.field));
@@ -182,24 +183,16 @@ public:
     QList<git::Commit> rhs = mRhs->commits(index);
     QList<git::Commit> commits = mLhs->commits(index);
     if (mKind == And) {
-// Remove commits that don't match the right hand side.
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+      // Remove commits that don't match the right hand side.
       QSet<git::Commit> set(rhs.begin(), rhs.end());
-#else
-      QSet<git::Commit> set = QSet<git::Commit>::fromList(rhs);
-#endif
       QMutableListIterator<git::Commit> it(commits);
       while (it.hasNext()) {
         if (!set.contains(it.next()))
           it.remove();
       }
     } else {
-// Add commits that aren't already in the result set.
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+      // Add commits that aren't already in the result set.
       QSet<git::Commit> set(commits.begin(), commits.end());
-#else
-      QSet<git::Commit> set = QSet<git::Commit>::fromList(commits);
-#endif
       foreach (const git::Commit &commit, rhs) {
         if (!set.contains(commit))
           commits.append(commit);
@@ -222,9 +215,10 @@ public:
   QList<git::Commit> commits(const Index *index) const override {
     QByteArray term = mTerm.text.toUtf8();
     QByteArray prefix = term.endsWith('/') ? term : term + '/';
-    QRegExp re(mTerm.text, Qt::CaseInsensitive, QRegExp::Wildcard);
+    QRegularExpression re{
+        QRegularExpression::fromWildcard(mTerm.text, Qt::CaseInsensitive)};
     Index::Predicate pred = [prefix, re](const QByteArray &word) {
-      return word.startsWith(prefix) || re.exactMatch(word);
+      return word.startsWith(prefix) || re.match(word).hasMatch();
     };
 
     return index->commits(index->postings(pred, Index::Path));

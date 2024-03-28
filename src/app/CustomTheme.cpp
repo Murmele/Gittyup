@@ -15,6 +15,7 @@
 #include <QProxyStyle>
 #include <QStandardPaths>
 #include <QStyleOptionButton>
+#include <stdexcept>
 
 namespace {
 

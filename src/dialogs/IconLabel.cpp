@@ -22,8 +22,7 @@ QSize IconLabel::minimumSizeHint() const { return sizeHint(); }
 
 void IconLabel::paintEvent(QPaintEvent *event) {
   QSize size = sizeHint();
-  QWidget *win = window();
   QPainter(this).drawPixmap(
       QStyle::alignedRect(Qt::LeftToRight, Qt::AlignHCenter, size, rect()),
-      mIcon.pixmap(win ? win->windowHandle() : nullptr, size));
+      mIcon.pixmap(size, window()->devicePixelRatio()));
 }

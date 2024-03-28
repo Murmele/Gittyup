@@ -29,6 +29,7 @@
 #include <QToolButton>
 #include <QWindow>
 #include <QtMath>
+#include <QRegularExpression>
 
 namespace {
 
@@ -944,7 +945,7 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
 
   // Hook up star button to search field.
   connect(mStarButton, &QToolButton::toggled, [this](bool checked) {
-    QStringList terms = mSearchField->text().split(QRegExp("\\s+"));
+    QStringList terms = mSearchField->text().split(QRegularExpression("\\s+"));
     if (checked) {
       terms.append(kStarredQuery);
     } else {
@@ -958,7 +959,7 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
     QSignalBlocker blocker(mStarButton);
     (void)blocker;
 
-    QStringList terms = mSearchField->text().split(QRegExp("\\s+"));
+    QStringList terms = mSearchField->text().split(QRegularExpression("\\s+"));
     mStarButton->setChecked(terms.contains(kStarredQuery));
   });
 }
