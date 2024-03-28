@@ -386,7 +386,15 @@ MainWindow *MainWindow::open(const git::Repository &repo) {
 
   // Create the window.
   MainWindow *window = new MainWindow(repo);
-  window->show();
+
+  const bool showMaximized =
+      Settings::instance()->value(Setting::Id::ShowMaximized).toBool();
+
+  if (showMaximized) {
+    window->showMaximized();
+  } else {
+    window->show();
+  }
 
   return window;
 }
