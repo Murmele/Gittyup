@@ -27,7 +27,7 @@ Description
 * Close the branch drop-down list after the user checks out a branch.
 * Fix: Delete timeline causes crash on windows
 * Fix: Rebase: Use original commit message as default message
-* Fix: "Stage all" button
+* Fix: Stage all button
 
 ----
 
