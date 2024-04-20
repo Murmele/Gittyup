@@ -30,7 +30,7 @@ jobs:
 
     - name: Check CMake code style
       run: |
-        test -f "NotFound.txt"
+        test -e "NotFound.txt" || exit 1
         pip install cmake-format==0.6.13 && \
         find \( -type d -path './dep/*/*' -prune \) -o \( -name CMakeLists.txt -exec cmake-format --check {} + \)
 
