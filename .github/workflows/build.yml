@@ -98,18 +98,20 @@ jobs:
       run: cat com.github.Murmele.Gittyup.yml
 
     - name: Build package
-      uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v4
+      uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
       with:
         bundle: Gittyup.flatpak
         manifest-path: com.github.Murmele.Gittyup.yml
         cache: false
+        upload-artifact: true
+        verbose: true
         branch: ${{ steps.flatpak_release_branch.outputs.value }}
 
     - name: Publish build artifacts
       uses: actions/upload-artifact@v2
       with:
-        path: com.github.Murmele.Gittyup/*
-        name: Gittyup Flatpak
+        path: Gittyup.flatpak
+        name: GittyupFlatpak
 
 
   build:
@@ -384,17 +386,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: artifacts
-
-      - name: list artifacts folder
-        run: |
-          echo "Show artifacts folder:"
-          ls artifacts
-          echo "Show artifacts/Gittyup Flatpak folder:"
-          ls "artifacts/Gittyup Flatpak"
-          echo "Show artifacts/Gittyup-x86_64:"
-          ls "artifacts/Gittyup-x86_64"
-          echo "Show artifacts/Gittyup VERSION"
-          ls "artifacts/Gittyup-VERSION"
     
       # version is exported from cmake to file
       - name: Retrieve version
@@ -410,12 +401,11 @@ jobs:
           title: 'Latest Build (Development)'
           automatic_release_tag: 'development'
           files: |
-            **/artifacts/Gittyup win64/Gittyup*.exe
-            **/artifacts/Gittyup win32/Gittyup*.exe
-            **/artifacts/Gittyup macos/Gittyup*.dmg
-            **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
-            **/Gittyup-x86_64/*.flatpak
-            **/artifacts/GittyupAppImage/*
+            "**/artifacts/Gittyup win64/Gittyup*.exe"
+            "**/artifacts/Gittyup win32/Gittyup*.exe"
+            "**/artifacts/Gittyup macos/Gittyup*.dmg"
+            "**/artifact/GittyupFlatpak/*.flatpak"
+            "**/artifacts/GittyupAppImage/Gittyup*.AppImage"
 
       - name: Update GitHub release (version tag)
         uses: marvinpinto/action-automatic-releases@latest
@@ -426,12 +416,11 @@ jobs:
           title: Gittyup Release ${{ steps.version.outputs.VERSION }}
           automatic_release_tag: ${{ github.ref_name }}
           files: |
-            **/artifacts/Gittyup win64/Gittyup*.exe
-            **/artifacts/Gittyup win32/Gittyup*.exe
-            **/artifacts/Gittyup macos/Gittyup*.dmg
-            **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
-            **/Gittyup-x86_64/*.flatpak
-            **/artifacts/GittyupAppImage/*
+            "**/artifacts/Gittyup win64/Gittyup*.exe"
+            "**/artifacts/Gittyup win32/Gittyup*.exe"
+            "**/artifacts/Gittyup macos/Gittyup*.dmg"
+            "**/artifact/GittyupFlatpak/*.flatpak"
+            "**/artifacts/GittyupAppImage/Gittyup*.AppImage"
 
       # needed otherwise the docs folder is not available     
       - name: Checkout repository
