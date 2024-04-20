@@ -236,7 +236,7 @@ jobs:
       - name: Install Ninja
         uses: seanmiddleditch/gha-setup-ninja@v3
         with:
-          version: 1.9.0
+          version: 1.10.2
           platform: ${{ matrix.env.ninja_platform }}
           destination: ninja
 
