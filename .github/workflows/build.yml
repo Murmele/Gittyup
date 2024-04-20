@@ -67,49 +67,43 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Clone flatpak manifest from Flathub
-      uses: GuillaumeFalourd/clone-github-repo-action@v2
-      with:
-        owner: 'flathub'
-        repository: 'com.github.Murmele.Gittyup'
-
     - name: Replace git tag by the commit id on which it runs
       if: github.ref_type != 'tag'
       run: >
-        sed -i 's@tag: .*@commit: "${{ (github.event.pull_request && github.event.pull_request.head.sha) || github.sha }}"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@tag: .*@commit: "${{ (github.event.pull_request && github.event.pull_request.head.sha) || github.sha }}"@' com.github.Murmele.Gittyup.yml
 
     - name: Use correct git tag
       if: github.ref_type == 'tag'
       run: >
-        sed -i 's@tag: .*$@tag: "${{ github.ref_name }}"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@tag: .*$@tag: "${{ github.ref_name }}"@' com.github.Murmele.Gittyup.yml
 
     - name: Replace source url
       run: >
-        sed -i "s@url: .*Gittyup.git@url: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY@" com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i "s@url: .*Gittyup.git@url: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY@" com.github.Murmele.Gittyup.yml
 
     - name: Add dev build marker to cmake options
       if: github.ref_type != 'tag'
       run: >
-        sed -i 's@config-opts: \["\(.*\)"\]@config-opts: ["\1", "-DDEV_BUILD=${{ github.ref_name }}"]@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@config-opts: \["\(.*\)"\]@config-opts: ["\1", "-DDEV_BUILD=${{ github.ref_name }}"]@' com.github.Murmele.Gittyup.yml
 
     - name: Replace desktop file name suffix
       if: github.ref_type != 'tag'
       run: >
-        sed -i 's@desktop-file-name-suffix: ""@desktop-file-name-suffix: " (Development)"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@desktop-file-name-suffix: ""@desktop-file-name-suffix: " (Development)"@' com.github.Murmele.Gittyup.yml
 
     - name: Enable automatic update
       if: github.ref_type != 'tag'
       run: >
-        sed -i 's@-DENABLE_UPDATE_OVER_GUI=OFF@-DENABLE_UPDATE_OVER_GUI=ON@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@-DENABLE_UPDATE_OVER_GUI=OFF@-DENABLE_UPDATE_OVER_GUI=ON@' com.github.Murmele.Gittyup.yml
 
     - name: Show Flatpak manifest
-      run: cat com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+      run: cat com.github.Murmele.Gittyup.yml
 
     - name: Build package
       uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v4
       with:
         bundle: Gittyup.flatpak
-        manifest-path: com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        manifest-path: com.github.Murmele.Gittyup.yml
         cache: false
         branch: ${{ steps.flatpak_release_branch.outputs.value }}
 
