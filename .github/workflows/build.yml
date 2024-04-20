@@ -100,18 +100,19 @@ jobs:
       run: cat com.github.Murmele.Gittyup.yml
 
     - name: Build package
-      uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v4
+      uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
       with:
         bundle: Gittyup.flatpak
         manifest-path: com.github.Murmele.Gittyup.yml
         cache: false
+        upload-artifact: true
+        verbose: true
         branch: ${{ steps.flatpak_release_branch.outputs.value }}
 
     - name: Publish build artifacts
       uses: actions/upload-artifact@v2
       with:
-        path: com.github.Murmele.Gittyup/*
-        name: Gittyup Flatpak
+        path: Gittyup.flatpak
 
 
   build:
