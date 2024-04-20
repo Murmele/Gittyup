@@ -389,12 +389,12 @@ jobs:
           echo "Show artifacts folder:"
           ls artifacts
           echo "Check artifacts"
-          test -e "artifacts/Gittyup win64/Gittyup*.exe" || exit 1
-          test -e "artifacts/Gittyup win32/Gittyup*.exe" || exit 1
-          test -e "artifacts/Gittyup macos/Gittyup*.dmg" || exit 1
-          test -e "artifacts/Gittyup-VERSION/Version.txt" || exit 1
-          test -e "artifacts/GittyupFlatpak/*.flatpak" || exit 1
-          test -e "artifacts/GittyupAppImage/Gittyup*.AppImage" || exit 1
+          test -e "artifacts/Gittyup win64/Gittyup*.exe" || exit
+          test -e "artifacts/Gittyup win32/Gittyup*.exe" || exit
+          test -e "artifacts/Gittyup macos/Gittyup*.dmg" || exit
+          test -e "artifacts/Gittyup-VERSION/Version.txt" || exit
+          test -e "artifacts/GittyupFlatpak/*.flatpak" || exit
+          test -e "artifacts/GittyupAppImage/Gittyup*.AppImage" || exit
 
       # version is exported from cmake to file
       - name: Retrieve version
