@@ -234,9 +234,9 @@ jobs:
           modules: qtwebengine
 
       - name: Install Ninja
-        uses: seanmiddleditch/gha-setup-ninja@v3
+        uses: seanmiddleditch/gha-setup-ninja@v4
         with:
-          version: 1.9.0
+          version: 1.11.1
           platform: ${{ matrix.env.ninja_platform }}
           destination: ninja
 
