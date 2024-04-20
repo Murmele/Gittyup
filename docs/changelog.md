@@ -1,4 +1,4 @@
-### vX.X.X - 2023-04-20 (DEV)
+### vX.X.X - 2024-04-20 (DEV)
 
 Description
 
@@ -8,12 +8,26 @@ Description
 * UI(Main Menu): Added a menu-entry to rename the current branch.
 * UI(Diff View): Added line wrapping option in Tools - Options - Diff
 * Option to open Gittyup maximized at startup
+* Hotkeys for Navigating CommitList
+* Referring repos with their git-dir instead of their work-tree.
+* Use columns for file name, directory, and state when files are shown as a list in TreeViews.
+* Possibility to change language from the settings
+* Linux: Publishing Appimage bundle
+* Hide Untracked Files option to DoubleTreeWidget
+* Add display options to the commit list
 
 #### Changed
 
 * UI(Commit List): Collapse multiple branch and tag right-click menu entries
                    into submenus. This affects the checkout and delete operations.
 * Fix(Build System): Force usage of clang-format v13 to ensure consistent formatting.
+* Fix: Commit highlighting
+* Compact commit list: move commit message closer to commit graph
+* Updating translations
+* Close the branch drop-down list after the user checks out a branch.
+* Fix: Delete timeline causes crash on windows
+* Fix: Rebase: Use original commit message as default message
+* Fix: Stage all button
 
 ----
 
