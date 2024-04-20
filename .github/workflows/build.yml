@@ -46,9 +46,7 @@ jobs:
       run: |
         pacman --noconfirm -Suy
         pacman --noconfirm -S flatpak flatpak-builder xorg-server-xvfb
-        flatpak install --assumeyes org.kde.Sdk//5.15-21.08
-        flatpak install --assumeyes org.freedesktop.Sdk.Extension.golang//21.08
-        flatpak install --assumeyes org.kde.Platform//5.15-21.08
+        flatpak install --assumeyes org.freedesktop.Sdk.Extension.golang//23.08
 
     - name: Show environment variables
       run: >
