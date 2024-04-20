@@ -13,7 +13,7 @@ Description
 * Use columns for file name, directory, and state when files are shown as a list in TreeViews.
 * Possibility to change language from the settings
 * Linux: Publishing Appimage bundle
-* "Hide Untracked Files" option to DoubleTreeWidget
+* Hide Untracked Files option to DoubleTreeWidget
 * Add display options to the commit list
 
 #### Changed
