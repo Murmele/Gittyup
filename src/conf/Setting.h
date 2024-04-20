@@ -43,6 +43,7 @@ public:
     OpenAllReposInTabs,
     HideMenuBar,
     ShowAvatars,
+    ShowMaximized,
     AutoCollapseAddedFiles,
     AutoCollapseDeletedFiles,
     FilemanagerCommand,
