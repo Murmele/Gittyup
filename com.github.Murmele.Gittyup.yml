@@ -67,7 +67,7 @@ modules:
 
   - name: Gittyup
     buildsystem: cmake-ninja
-    config-opts: [-DCMAKE_BUILD_TYPE=Release, -DFLATPAK=ON, -DGENERATE_APPDATA=ON, -DENABLE_UPDATE_OVER_GUI=OFF]
+    config-opts: [-DCMAKE_BUILD_TYPE=Release, -DFLATPAK=ON, -DGENERATE_APPDATA=ON, -DENABLE_UPDATE_OVER_GUI=OFF, -DUSE_SYSTEM_OPENSSL:BOOL=ON]
     builddir: true
     sources:
       - type: git
