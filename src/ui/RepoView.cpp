@@ -2122,6 +2122,13 @@ void RepoView::dropStash(int index) {
   LogEntry *entry = addLogEntry(msg(commit), tr("Drop Stash"));
   if (!mRepo.dropStash(index))
     error(entry, tr("drop stash"), commit.link());
+
+  if (mRepo.stashes().size() == 0) {
+    // switch back to head when there are no stashes left
+    mCommits->setReference(mRepo.head());
+  } else {
+    mCommits->setReference(mRepo.stashRef());
+  }
 }
 
 void RepoView::popStash(int index) {
@@ -2134,8 +2141,9 @@ void RepoView::popStash(int index) {
     error(entry, tr("pop stash"), commit.link());
     return;
   }
-
-  refresh(false);
+  // switch back to head
+  selectReference(mRepo.head());
+  selectFirstCommit();
 }
 
 void RepoView::promptToAddTag(const git::Commit &commit) {
