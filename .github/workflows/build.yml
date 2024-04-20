@@ -113,6 +113,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         path: Gittyup.flatpak
+        name: GittyupFlatpak
 
 
   build:
@@ -372,6 +373,34 @@ jobs:
           path: build/release/*.AppImage
           name: GittyupAppImage
 
+  # Check that all files are available
+  validateArtifactUpload:
+    if: ${{ github.ref != 'refs/heads/master' && !(github.event_name == 'push' && github.ref_type == 'tag' && startswith(github.ref_name, 'gittyup_v'))  }}
+    needs: [flatpak, build]
+    runs-on: ubuntu-latest # does not matter which
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+            path: artifacts
+
+      - name: list artifacts folder
+        run: |
+          echo "Show artifacts folder:"
+          ls artifacts
+          file artifacts/Gittyup win64/Gittyup*.exe
+          file artifacts/Gittyup win32/Gittyup*.exe
+          file artifacts/Gittyup macos/Gittyup*.dmg
+          file artifacts/Gittyup-VERSION/Version.txt
+          file artifacts/GittyupFlatpak/*.flatpak
+          file artifacts/GittyupAppImage/Gittyup*.appimage
+
+      # version is exported from cmake to file
+      - name: Retrieve version
+        run: |
+            echo "::set-output name=VERSION::$(cat artifacts/Gittyup-VERSION/Version.txt)"
+        id: version
+
   publish:
     # https://github.com/marvinpinto/actions/issues/177
     needs: [flatpak, build]
@@ -387,17 +416,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: artifacts
-
-      - name: list artifacts folder
-        run: |
-          echo "Show artifacts folder:"
-          ls artifacts
-          echo "Show artifacts/Gittyup Flatpak folder:"
-          ls "artifacts/Gittyup Flatpak"
-          echo "Show artifacts/Gittyup-x86_64:"
-          ls "artifacts/Gittyup-x86_64"
-          echo "Show artifacts/Gittyup VERSION"
-          ls "artifacts/Gittyup-VERSION"
     
       # version is exported from cmake to file
       - name: Retrieve version
@@ -416,9 +434,8 @@ jobs:
             **/artifacts/Gittyup win64/Gittyup*.exe
             **/artifacts/Gittyup win32/Gittyup*.exe
             **/artifacts/Gittyup macos/Gittyup*.dmg
-            **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
-            **/Gittyup-x86_64/*.flatpak
-            **/artifacts/GittyupAppImage/*
+            **/artifact/GittyupFlatpak/*.flatpak
+            **/artifacts/GittyupAppImage/Gittyup*.appimage
 
       - name: Update GitHub release (version tag)
         uses: marvinpinto/action-automatic-releases@latest
@@ -432,9 +449,8 @@ jobs:
             **/artifacts/Gittyup win64/Gittyup*.exe
             **/artifacts/Gittyup win32/Gittyup*.exe
             **/artifacts/Gittyup macos/Gittyup*.dmg
-            **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
-            **/Gittyup-x86_64/*.flatpak
-            **/artifacts/GittyupAppImage/*
+            **/artifact/GittyupFlatpak/*.flatpak
+            **/artifacts/GittyupAppImage/Gittyup*.appimage
 
       # needed otherwise the docs folder is not available     
       - name: Checkout repository
