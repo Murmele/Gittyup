@@ -25,12 +25,9 @@ Description
 * Compact commit list: move commit message closer to commit graph
 * Updating translations
 * Close the branch drop-down list after the user checks out a branch.
-
-#### Bug Fixes
-
-* Delete timeline causes crash on windows
-* Rebase: Use original commit message as default message
-* Fixing "Stage all" button
+* Fix: Delete timeline causes crash on windows
+* Fix: Rebase: Use original commit message as default message
+* Fix: "Stage all" button
 
 ----
 
