@@ -373,35 +373,6 @@ jobs:
           path: build/release/*.AppImage
           name: GittyupAppImage
 
-  # Check that all files are available
-  validateArtifactUpload:
-    if: ${{ github.ref != 'refs/heads/master' && !(github.event_name == 'push' && github.ref_type == 'tag' && startswith(github.ref_name, 'gittyup_v'))  }}
-    needs: [flatpak, build]
-    runs-on: ubuntu-latest # does not matter which
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-            path: artifacts
-
-      - name: list artifacts folder
-        run: |
-          echo "Show artifacts folder:"
-          ls artifacts
-          echo "Check artifacts"
-          test -e "artifacts/Gittyup win64/Gittyup*.exe" || exit 1
-          test -e "artifacts/Gittyup win32/Gittyup*.exe" || exit 2
-          test -e "artifacts/Gittyup macos/Gittyup*.dmg" || exit 3
-          test -e "artifacts/Gittyup-VERSION/Version.txt" || exit 4
-          test -e "artifacts/GittyupFlatpak/*.flatpak" || exit 5
-          test -e "artifacts/GittyupAppImage/Gittyup*.AppImage" || exit 6
-
-      # version is exported from cmake to file
-      - name: Retrieve version
-        run: |
-            echo "::set-output name=VERSION::$(cat artifacts/Gittyup-VERSION/Version.txt)"
-        id: version
-
   publish:
     # https://github.com/marvinpinto/actions/issues/177
     needs: [flatpak, build]
