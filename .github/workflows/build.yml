@@ -389,7 +389,7 @@ jobs:
           set -e
           echo "Show artifacts folder:"
           ls artifacts
-          file "artifacts/Gittyup win64/Gittyup*.exeNotFound"
+          file "artifacts/Gittyup win64/Gittyup*.exe"
           file "artifacts/Gittyup win32/Gittyup*.exe"
           file "artifacts/Gittyup macos/Gittyup*.dmg"
           file "artifacts/Gittyup-VERSION/Version.txt"
