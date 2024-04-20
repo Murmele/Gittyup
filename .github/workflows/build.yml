@@ -30,7 +30,6 @@ jobs:
 
     - name: Check CMake code style
       run: |
-        test -e "NotFound.txt" || exit 1
         pip install cmake-format==0.6.13 && \
         find \( -type d -path './dep/*/*' -prune \) -o \( -name CMakeLists.txt -exec cmake-format --check {} + \)
 
@@ -387,15 +386,15 @@ jobs:
 
       - name: list artifacts folder
         run: |
-          set -e
           echo "Show artifacts folder:"
           ls artifacts
-          file "artifacts/Gittyup win64/Gittyup*.exe"
-          file "artifacts/Gittyup win32/Gittyup*.exe"
-          file "artifacts/Gittyup macos/Gittyup*.dmg"
-          file "artifacts/Gittyup-VERSION/Version.txt"
-          file "artifacts/GittyupFlatpak/*.flatpak"
-          file "artifacts/GittyupAppImage/Gittyup*.AppImage"
+          echo "Check artifacts"
+          test -e "artifacts/Gittyup win64/Gittyup*.exe" || exit 1
+          test -e "artifacts/Gittyup win32/Gittyup*.exe" || exit 1
+          test -e "artifacts/Gittyup macos/Gittyup*.dmg" || exit 1
+          test -e "artifacts/Gittyup-VERSION/Version.txt" || exit 1
+          test -e "artifacts/GittyupFlatpak/*.flatpak" || exit 1
+          test -e "artifacts/GittyupAppImage/Gittyup*.AppImage" || exit 1
 
       # version is exported from cmake to file
       - name: Retrieve version
