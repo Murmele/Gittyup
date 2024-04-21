@@ -371,6 +371,33 @@ jobs:
           path: build/release/*.AppImage
           name: GittyupAppImage
 
+  testing_version_write:
+    # https://github.com/marvinpinto/actions/issues/177
+    needs: [flatpak, build]
+    runs-on: ubuntu-latest # does not matter which
+    # Map a step output to a job output
+    outputs:
+      version: ${{ steps.Retrieve version.outputs.VERSION }}
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      # version is exported from cmake to file
+      - name: Retrieve version
+        run: |
+          echo "VERSION=$(cat artifacts/Gittyup-VERSION/Version.txt)" >> "$GITHUB_OUTPUT"
+        id: version
+
+  testing_version_read:
+    needs: testing_version_write
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          VERSION: ${{needs.testing_version_write.outputs.version}}
+        run: echo "$VERSION"
+
   publish:
     # https://github.com/marvinpinto/actions/issues/177
     needs: [flatpak, build]
