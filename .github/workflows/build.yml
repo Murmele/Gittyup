@@ -377,7 +377,7 @@ jobs:
     runs-on: ubuntu-latest # does not matter which
     # Map a step output to a job output
     outputs:
-      version: ${{ steps.Retrieve version.outputs.VERSION }}
+      version: ${{ steps.RetrieveVersion.outputs.VERSION }}
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -385,7 +385,7 @@ jobs:
           path: artifacts
 
       # version is exported from cmake to file
-      - name: Retrieve version
+      - name: RetrieveVersion
         run: |
           echo "VERSION=$(cat artifacts/Gittyup-VERSION/Version.txt)" >> "$GITHUB_OUTPUT"
         id: version
@@ -415,7 +415,7 @@ jobs:
           path: artifacts
     
       # version is exported from cmake to file
-      - name: Retrieve version
+      - name: RetrieveVersion
         run: |
           echo "::set-output name=VERSION::$(cat artifacts/Gittyup-VERSION/Version.txt)"
         id: version
