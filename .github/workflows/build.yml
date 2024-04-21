@@ -404,7 +404,7 @@ jobs:
             **/artifacts/Gittyup win64/Gittyup*.exe
             **/artifacts/Gittyup win32/Gittyup*.exe
             **/artifacts/Gittyup macos/Gittyup*.dmg
-            **/artifact/GittyupFlatpak/*.flatpak
+            **/artifacts/GittyupFlatpak/*.flatpak
             **/artifacts/GittyupAppImage/Gittyup*.AppImage
 
       - name: Update GitHub release (version tag)
@@ -419,7 +419,7 @@ jobs:
             **/artifacts/Gittyup win64/Gittyup*.exe
             **/artifacts/Gittyup win32/Gittyup*.exe
             **/artifacts/Gittyup macos/Gittyup*.dmg
-            **/artifact/GittyupFlatpak/*.flatpak
+            **/artifacts/GittyupFlatpak/*.flatpak
             **/artifacts/GittyupAppImage/Gittyup*.AppImage
 
       # needed otherwise the docs folder is not available     
