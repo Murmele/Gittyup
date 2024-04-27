@@ -182,6 +182,7 @@ void TextEditor::applySettings() {
   setUseTabs(settings->value(Setting::Id::UseTabsForIndent).toBool());
   setIndent(settings->value(Setting::Id::IndentWidth).toInt());
   setTabWidth(settings->value(Setting::Id::TabWidth).toInt());
+  setViewWS(settings->value(Setting::Id::ShowWhitespaceInEditor).toBool());
 
   if (Settings::instance()->isTextEditorWrapLines()) {
     setWrapMode(SC_WRAP_WORD);

@@ -14,6 +14,9 @@ return {
     family = family,
     size = size
   },
+  view = {
+    showWhitespace = false
+  },
   indent = {
     tabs = true,
     width = 4,
