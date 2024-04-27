@@ -1419,7 +1419,7 @@ These settings will not be saved permanently</source>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="664"/>
         <source>Show whitespace</source>
-        <translation type="unfinished"></translation>
+        <translation>Leerzeichen zeigen</translation>
     </message>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="673"/>
@@ -1449,7 +1449,7 @@ These settings will not be saved permanently</source>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="706"/>
         <source>Whitespace:</source>
-        <translation type="unfinished">Whitespace:</translation>
+        <translation>Leerzeichen:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/SettingsDialog.cpp" line="707"/>
