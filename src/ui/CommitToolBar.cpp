@@ -155,7 +155,7 @@ CommitToolBar::CommitToolBar(QWidget *parent) : QToolBar(parent) {
 
   QAction *status = menu->addAction(tr("Show Clean Status"));
   status->setCheckable(true);
-  status->setChecked(config.value<bool>(kStatusKey, false));
+  status->setChecked(config.value<bool>(kStatusKey, true));
   connect(status, &QAction::triggered, [this](bool checked) {
     RepoView *view = RepoView::parentView(this);
     view->repo().appConfig().setValue(kStatusKey, checked);

@@ -239,7 +239,7 @@ public:
     git::Config config = mRepo.appConfig();
     mRefsAll = config.value<bool>("commit.refs.all", true);
     mSortDate = config.value<bool>("commit.sort.date", true);
-    mShowCleanStatus = config.value<bool>("commit.show.status", false);
+    mShowCleanStatus = config.value<bool>("commit.show.status", true);
     mGraphVisible = config.value<bool>("commit.graph.visible", true);
 
     if (walk)
