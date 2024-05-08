@@ -46,7 +46,6 @@
 
   <provides>
     <binary>gittyup</binary>
-    <id>com.github.Murmele.Gittyup</id>
   </provides>
 
   <releases>
