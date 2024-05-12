@@ -661,6 +661,14 @@ public:
       Settings::instance()->setValue(Setting::Id::FontSize, i);
     });
 
+    QCheckBox *showWhitespace = new QCheckBox(tr("Show whitespace"), this);
+    showWhitespace->setChecked(
+        settings->value(Setting::Id::ShowWhitespaceInEditor).toBool());
+    connect(showWhitespace, &QCheckBox::toggled, [](bool checked) {
+      Settings::instance()->setValue(Setting::Id::ShowWhitespaceInEditor,
+                                     checked);
+    });
+
     QComboBox *indent = new QComboBox(this);
     indent->addItem(tr("Tabs"));
     indent->addItem(tr("Spaces"));
@@ -695,6 +703,7 @@ public:
     QFormLayout *layout = new QFormLayout(this);
     layout->addRow(tr("Font:"), font);
     layout->addRow(tr("Font size:"), fontSize);
+    layout->addRow(tr("Whitespace:"), showWhitespace);
     layout->addRow(tr("Indent using:"), indent);
     layout->addRow(tr("Indent width:"), indentWidth);
     layout->addRow(tr("Tab width:"), tabWidth);

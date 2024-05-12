@@ -10,4 +10,4 @@ build
 .idea/
 .venv
 compile_commands.json
-
+tags

@@ -36,6 +36,7 @@ public:
     IndentWidth,
     TabWidth,
     ShowHeatmapInBlameMargin,
+    ShowWhitespaceInEditor,
     ColorTheme,
     ShowFullRepoPath,
     HideLogAutomatically,
