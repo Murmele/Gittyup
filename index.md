@@ -31,7 +31,7 @@ Report bugs in Gittyup by opening an issue in the
 Remember to search for existing issues before creating a new one.
 
 If you still need help, check out our Matrix channel
-[Gittyup:martix.org](https://matrix.to/#/#Gittyup:matrix.org).
+[Gittyup:matrix.org](https://matrix.to/#/#Gittyup:matrix.org).
 
 Multi language support
 ======================
@@ -79,6 +79,11 @@ See blame of the current version with an integrated timeline to see who changed 
 
 ![Blame View](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/BlameView.png)
 
+### Dynamic Line Wrapping
+Courtesy of Scintilla.
+
+![Line Wrapping](/rsrc/screenshots/line-wrap-demo-2.gif)
+
 ### Single line staging 
 by eighter clicking on the checkboxes next to each line or by selecting the relevant code and pressing "S". For unstaging you can uncheck the checkboxes or press "U". To revert changes, select the text and press "R".
 
@@ -93,9 +98,9 @@ Solving rebase conflicts and continuing after conflicts are solved
 
 ![Rebase Conflicts](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/RebaseConflicts.png)
 
-### Staring commits
+### Starring commits
 to find specific commits much faster
-![Staring commits](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/starring_commits.png)
+![Starring commits](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/starring_commits.png)
 
 ### Tag selection
 Use an existing tag as template for your next tag. So you never have to look which is your latest tag
