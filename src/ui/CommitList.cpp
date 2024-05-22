@@ -186,8 +186,8 @@ public:
 
     // Update status row.
     bool head = (!mRef.isValid() || mRef.isHead());
-    bool valid = (mCleanStatus || !mStatus.isFinished() || status().isValid());
-    if (head && valid && mPathspec.isEmpty()) {
+    bool valid = (!mStatus.isFinished() || status().isValid());
+    if (mShowCleanStatus && head && valid && mPathspec.isEmpty()) {
       QVector<Column> row;
       if (mGraphVisible && mRef.isValid() && mStatus.isFinished()) {
         row.append({Segment(Bottom, kTaintedColor), Segment(Dot, QColor())});
@@ -239,7 +239,7 @@ public:
     git::Config config = mRepo.appConfig();
     mRefsAll = config.value<bool>("commit.refs.all", true);
     mSortDate = config.value<bool>("commit.sort.date", true);
-    mCleanStatus = config.value<bool>("commit.status.clean", false);
+    mShowCleanStatus = config.value<bool>("commit.show.status", true);
     mGraphVisible = config.value<bool>("commit.graph.visible", true);
 
     if (walk)
@@ -559,7 +559,7 @@ private:
   bool mSuppressResetWalker{false};
   bool mRefsAll = true;
   bool mSortDate = true;
-  bool mCleanStatus = true;
+  bool mShowCleanStatus = true;
   bool mGraphVisible = true;
 };
 
