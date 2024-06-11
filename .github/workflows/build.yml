@@ -204,6 +204,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y install libssh2-1
+          sudo apt-get -y install libssh2-1-dev
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3.3.0
