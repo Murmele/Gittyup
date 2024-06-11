@@ -256,9 +256,7 @@ public:
     int i = 0;
     QList<Row> rows;
     git::Commit commit = mWalker.next(mPathspec);
-    QList<git::Commit> ignoredCommits;
     while (commit.isValid()) {
-      qDebug() << "Commit: " << commit.message();
       // Add root commits.
       bool root = false;
       if (indexOf(commit) < 0) {
@@ -272,32 +270,16 @@ public:
 
       // Replace commit with its parents.
       QList<git::Commit> replacements;
-      int count = 0;
-      bool firstCommit = false;
       foreach (const git::Commit &parent, commit.parents()) {
-        qDebug() << "\tParent commit " << count << ": " << parent.message();
         // FIXME: Mark commits that point to existing parent?
-        if (indexOf(parent) < 0 && !contains(parent, rows)) {
-          if (mRefsFilter == CommitList::RefsFilter::SelectedRefIgnoreMerge) {
-            // The first parent is the parent into which the other parent was merged
-            // To create this commit
-            if (firstCommit && parent.isValid()) {
-              ignoredCommits.append(parent);
-            } else {
-              replacements.append(parent);
-            }
-          } else {
-            replacements.append(parent);
-          }
-          firstCommit = true;
-        }
-        count ++;
+        if (indexOf(parent) < 0 && !contains(parent, rows))
+          replacements.append(parent);
       }
 
       // Set parents for next row.
       int index = indexOf(commit);
       if (index >= 0) {
-        Parent parent = mParents.takeAt(index); // This commit in the mParents List
+        Parent parent = mParents.takeAt(index);
         if (!replacements.isEmpty()) {
           git::Commit replacement = replacements.takeFirst();
           mParents.insert(index, Parent(replacement, parent.color));
@@ -318,10 +300,7 @@ public:
       if (i++ >= 64)
         break;
 
-      do {
-        commit = mWalker.next(mPathspec);
-        // TODO: child commit of this commit must also not in the ignored Commits list!
-      } while (ignoredCommits.contains(commit));
+      commit = mWalker.next(mPathspec);
     }
 
     // Update the model.
@@ -492,14 +471,7 @@ private:
       QList<git::Commit> successors;
       const Parent &parent = parents.at(i);
       if (parent.commit == commit) {
-        if (mRefsFilter == CommitList::RefsFilter::SelectedRefIgnoreMerge) {
-          const auto& p = parent.commit.parents();
-          if (!p.isEmpty()) {
-            successors.append(parent.commit.parents().at(0));
-          }
-        } else {
-         successors = parent.commit.parents();
-        }
+        successors = parent.commit.parents();
       } else {
         successors.append(parent.commit);
       }
