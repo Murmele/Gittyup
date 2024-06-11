@@ -25,7 +25,7 @@ namespace {
 const QString kRefsKey = "commit.refs.all";
 const QString kSortKey = "commit.sort.date";
 const QString kGraphKey = "commit.graph.visible";
-const QString kStatusKey = "commit.status.clean";
+const QString kStatusKey = "commit.show.status";
 const QString kStyleSheet = "QToolBar {"
                             "  border: none"
                             "}"
@@ -155,7 +155,7 @@ CommitToolBar::CommitToolBar(QWidget *parent) : QToolBar(parent) {
 
   QAction *status = menu->addAction(tr("Show Clean Status"));
   status->setCheckable(true);
-  status->setChecked(config.value<bool>(kStatusKey, false));
+  status->setChecked(config.value<bool>(kStatusKey, true));
   connect(status, &QAction::triggered, [this](bool checked) {
     RepoView *view = RepoView::parentView(this);
     view->repo().appConfig().setValue(kStatusKey, checked);

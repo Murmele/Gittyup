@@ -12,6 +12,7 @@ void Setting::initialize(QMap<Id, QString> &keys) {
   keys[Id::IndentWidth] = "editor/indent/width";
   keys[Id::TabWidth] = "editor/indent/tabwidth";
   keys[Id::ShowHeatmapInBlameMargin] = "editor/blame/heatmap";
+  keys[Id::ShowWhitespaceInEditor] = "editor/view/showWhitespace";
   keys[Id::ColorTheme] = "window/theme";
   keys[Id::ShowFullRepoPath] = "window/path/full";
   keys[Id::HideLogAutomatically] = "window/log/hide";
@@ -19,6 +20,7 @@ void Setting::initialize(QMap<Id, QString> &keys) {
   keys[Id::OpenAllReposInTabs] = "window/tabs/repository";
   keys[Id::HideMenuBar] = "window/view/menuBarHidden";
   keys[Id::ShowAvatars] = "window/view/avatarsVisible";
+  keys[Id::ShowMaximized] = "window/view/showMaximized";
   keys[Id::AutoCollapseAddedFiles] = "collapse/added";
   keys[Id::AutoCollapseDeletedFiles] = "collapse/deleted";
   keys[Id::FilemanagerCommand] = "filemanager/command";

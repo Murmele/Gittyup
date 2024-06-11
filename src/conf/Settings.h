@@ -36,6 +36,10 @@ public:
   void setHotkey(const QString &action, const QString &hotkey);
   QString hotkey(const QString &action) const;
 
+  // wrap lines in TextEditor in DiffView
+  bool isTextEditorWrapLines() const;
+  void setTextEditorWrapLines(bool wrapLines);
+
   // ignore whitespace
   bool isWhitespaceIgnored() const;
   void setWhitespaceIgnored(bool ignored);

@@ -565,6 +565,13 @@ public:
     connect(showAvatars, &QCheckBox::toggled, [](bool checked) {
       Settings::instance()->setValue(Setting::Id::ShowAvatars, checked);
     });
+    QCheckBox *showMaximized =
+        new QCheckBox(tr("Show Window Maximized when opened"));
+    showMaximized->setChecked(
+        settings->value(Setting::Id::ShowMaximized).toBool());
+    connect(showMaximized, &QCheckBox::toggled, [](bool checked) {
+      Settings::instance()->setValue(Setting::Id::ShowMaximized, checked);
+    });
 
     QString mergeText = settings->promptDescription(Prompt::Kind::Merge);
     QCheckBox *merge = new QCheckBox(mergeText, this);
@@ -619,6 +626,7 @@ public:
     layout->addRow(QString(), repoTabs);
     layout->addRow(tr("View:"), hideMenuBar);
     layout->addRow(QString(), showAvatars);
+    layout->addRow(QString(), showMaximized);
     layout->addRow(tr("Prompt:"), merge);
     layout->addRow(QString(), revert);
     layout->addRow(QString(), cherryPick);
@@ -651,6 +659,14 @@ public:
     fontSize->setValue(settings->value(Setting::Id::FontSize).toInt());
     connect(fontSize, spin, [](int i) {
       Settings::instance()->setValue(Setting::Id::FontSize, i);
+    });
+
+    QCheckBox *showWhitespace = new QCheckBox(tr("Show whitespace"), this);
+    showWhitespace->setChecked(
+        settings->value(Setting::Id::ShowWhitespaceInEditor).toBool());
+    connect(showWhitespace, &QCheckBox::toggled, [](bool checked) {
+      Settings::instance()->setValue(Setting::Id::ShowWhitespaceInEditor,
+                                     checked);
     });
 
     QComboBox *indent = new QComboBox(this);
@@ -687,6 +703,7 @@ public:
     QFormLayout *layout = new QFormLayout(this);
     layout->addRow(tr("Font:"), font);
     layout->addRow(tr("Font size:"), fontSize);
+    layout->addRow(tr("Whitespace:"), showWhitespace);
     layout->addRow(tr("Indent using:"), indent);
     layout->addRow(tr("Indent width:"), indentWidth);
     layout->addRow(tr("Tab width:"), tabWidth);

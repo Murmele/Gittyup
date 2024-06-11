@@ -79,6 +79,11 @@ See blame of the current version with an integrated timeline to see who changed 
 
 ![Blame View](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/BlameView.png)
 
+### Dynamic Line Wrapping
+Courtesy of Scintilla.
+
+![Line Wrapping](/rsrc/screenshots/line-wrap-demo-2.gif)
+
 ### Single line staging 
 by eighter clicking on the checkboxes next to each line or by selecting the relevant code and pressing "S". For unstaging you can uncheck the checkboxes or press "U". To revert changes, select the text and press "R".
 

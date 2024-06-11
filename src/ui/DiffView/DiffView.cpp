@@ -15,6 +15,7 @@
 #include "CommentWidget.h"
 #include "ui/DiffTreeModel.h"
 #include "ui/DoubleTreeWidget.h"
+#include "ui/HotkeyManager.h"
 #include "git/Tree.h"
 #include <QScrollBar>
 #include <QPushButton>
@@ -46,6 +47,12 @@ bool copy(const QString &source, const QDir &targetDir) {
 }
 
 } // namespace
+
+static Hotkey moveHalfPageDownHotKey = HotkeyManager::registerHotkey(
+    "d", "diffView/moveHalfPageDownHotKey", "DiffView/Move Half Page Down");
+
+static Hotkey moveHalfPageUpHotKey = HotkeyManager::registerHotkey(
+    "u", "diffView/moveHalfPageUpHotKey", "DiffView/Move Half Page Up");
 
 DiffView::DiffView(const git::Repository &repo, QWidget *parent)
     : QScrollArea(parent), mParent(parent) {
@@ -84,6 +91,14 @@ DiffView::DiffView(const git::Repository &repo, QWidget *parent)
                 fetchMore();
             });
   }
+
+  QShortcut *shortcut = new QShortcut(this);
+  moveHalfPageDownHotKey.use(shortcut);
+  connect(shortcut, &QShortcut::activated, [this] { moveHalfPageDown(); });
+
+  shortcut = new QShortcut(this);
+  moveHalfPageUpHotKey.use(shortcut);
+  connect(shortcut, &QShortcut::activated, [this] { moveHalfPageUp(); });
 }
 
 DiffView::~DiffView() {}
@@ -512,4 +527,14 @@ void DiffView::indexChanged(const QStringList &paths) {
   //                file->updateHunks(stagedPatch);
   //        }
   //    }
+}
+
+void DiffView::moveHalfPageDown() { moveRelative(height() / 2); }
+
+void DiffView::moveHalfPageUp() { moveRelative(-height() / 2); }
+
+void DiffView::moveRelative(int pixelsDown) {
+  int oldPosition = verticalScrollBar()->sliderPosition();
+  int newPosition = oldPosition + pixelsDown;
+  verticalScrollBar()->setSliderPosition(newPosition);
 }

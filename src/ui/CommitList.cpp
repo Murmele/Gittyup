@@ -28,6 +28,7 @@
 #include "git/Signature.h"
 #include "git/TagRef.h"
 #include "git/Tree.h"
+#include "ui/HotkeyManager.h"
 #include <QAbstractListModel>
 #include <QApplication>
 #include <QMenu>
@@ -185,8 +186,8 @@ public:
 
     // Update status row.
     bool head = (!mRef.isValid() || mRef.isHead());
-    bool valid = (mCleanStatus || !mStatus.isFinished() || status().isValid());
-    if (head && valid && mPathspec.isEmpty()) {
+    bool valid = (!mStatus.isFinished() || status().isValid());
+    if (mShowCleanStatus && head && valid && mPathspec.isEmpty()) {
       QVector<Column> row;
       if (mGraphVisible && mRef.isValid() && mStatus.isFinished()) {
         row.append({Segment(Bottom, kTaintedColor), Segment(Dot, QColor())});
@@ -238,7 +239,7 @@ public:
     git::Config config = mRepo.appConfig();
     mRefsAll = config.value<bool>("commit.refs.all", true);
     mSortDate = config.value<bool>("commit.sort.date", true);
-    mCleanStatus = config.value<bool>("commit.status.clean", false);
+    mShowCleanStatus = config.value<bool>("commit.show.status", true);
     mGraphVisible = config.value<bool>("commit.graph.visible", true);
 
     if (walk)
@@ -558,7 +559,7 @@ private:
   bool mSuppressResetWalker{false};
   bool mRefsAll = true;
   bool mSortDate = true;
-  bool mCleanStatus = true;
+  bool mShowCleanStatus = true;
   bool mGraphVisible = true;
 };
 
@@ -635,9 +636,6 @@ public:
         Settings::instance()->value(Setting::Id::ShowCommitsId, true).toBool();
     LayoutConstants constants = layoutConstants(compact);
 
-    // Draw background.
-    QStyledItemDelegate::paint(painter, opt, index);
-
     bool active = (opt.state & QStyle::State_Active);
     bool selected = (opt.state & QStyle::State_Selected);
     auto group = active ? QPalette::Active : QPalette::Inactive;
@@ -646,9 +644,15 @@ public:
     QPalette palette = Application::theme()->commitList();
     QColor text = palette.color(group, textRole);
     QColor bright = palette.color(group, brightRole);
+    QColor highlight = palette.color(group, QPalette::Highlight);
 
     painter->save();
     painter->setRenderHints(QPainter::Antialiasing);
+
+    // Draw background.
+    if (selected) {
+      painter->fillRect(opt.rect, highlight);
+    }
 
     // Draw busy indicator.
     if (opt.features & QStyleOptionViewItem::HasDecoration) {
@@ -784,7 +788,16 @@ public:
     // Draw content.
     git::Commit commit =
         index.data(CommitList::Role::CommitRole).value<git::Commit>();
-    if (commit.isValid()) {
+    if (!commit.isValid()) {
+      // special case for uncommitted changes
+      QString message = index.model()->data(index).toString();
+      painter->save();
+      QFont italic = opt.font;
+      italic.setItalic(true);
+      painter->setFont(italic);
+      painter->drawText(opt.rect, Qt::AlignCenter, message);
+      painter->restore();
+    } else {
       const QFontMetrics &fm = opt.fontMetrics;
       QRect star = rect;
 
@@ -829,6 +842,20 @@ public:
           rect.setWidth(rect.width() - timestampWidth - constants.hMargin);
         }
 
+        // Draw Name.
+        if (showAuthor) {
+          QString name = commit.author().name() + "  ";
+          painter->save();
+          QFont bold = opt.font;
+          bold.setBold(true);
+          painter->setFont(bold);
+          painter->drawText(rect, Qt::AlignRight, name);
+          painter->restore();
+          const QFontMetrics boldFm(bold);
+          rect.setWidth(rect.width() - boldFm.horizontalAdvance(name) -
+                        constants.hMargin);
+        }
+
         // Calculate remaining width for the references.
         QRect ref = rect;
         int refsWidth = ref.width() - minWidthDesc;
@@ -846,20 +873,6 @@ public:
         if (!refs.isEmpty())
           badgesWidth = Badge::paint(painter, refs, ref, &opt, Qt::AlignLeft);
         rect.setX(badgesWidth); // Comes right after the badges
-
-        // Draw Name.
-        if (showAuthor) {
-          QString name = commit.author().name();
-          painter->save();
-          QFont bold = opt.font;
-          bold.setBold(true);
-          painter->setFont(bold);
-          painter->drawText(rect, Qt::AlignLeft, name);
-          painter->restore();
-          const QFontMetrics boldFm(bold);
-          rect.setX(rect.x() + boldFm.horizontalAdvance(name) +
-                    constants.hMargin);
-        }
 
         // Draw message.
         painter->save();
@@ -1156,6 +1169,12 @@ public:
 
 } // namespace
 
+static Hotkey selectCommitDownHotKey = HotkeyManager::registerHotkey(
+    "j", "commitList/selectCommitDown", "CommitList/Select Next Commit Down");
+
+static Hotkey selectCommitUpHotKey = HotkeyManager::registerHotkey(
+    "k", "commitList/selectCommitUp", "CommitList/Select Next Commit Up");
+
 CommitList::CommitList(Index *index, QWidget *parent)
     : QListView(parent), mIndex(index) {
   Theme *theme = Application::theme();
@@ -1210,6 +1229,15 @@ CommitList::CommitList(Index *index, QWidget *parent)
 
   connect(this, &CommitList::entered,
           [this](const QModelIndex &index) { update(index); });
+
+  QShortcut *shortcut = new QShortcut(this);
+  selectCommitDownHotKey.use(shortcut);
+  connect(shortcut, &QShortcut::activated, [this] { selectCommitRelative(1); });
+
+  shortcut = new QShortcut(this);
+  selectCommitUpHotKey.use(shortcut);
+  connect(shortcut, &QShortcut::activated,
+          [this] { selectCommitRelative(-1); });
 
 #ifdef Q_OS_MAC
   QFont font = this->font();
@@ -1331,6 +1359,19 @@ void CommitList::selectFirstCommit(bool spontaneous) {
   } else {
     emit diffSelected(git::Diff());
   }
+}
+
+void CommitList::selectCommitRelative(int offset) {
+  QModelIndexList indices = selectionModel()->selectedIndexes();
+  QModelIndex index = indices[0];
+  if (!index.isValid()) {
+    return;
+  }
+  QModelIndex new_index = model()->index(index.row() + offset, index.column());
+  if (!new_index.isValid()) {
+    return;
+  }
+  selectIndexes(QItemSelection(new_index, new_index), QString(), true);
 }
 
 bool CommitList::selectRange(const QString &range, const QString &file,

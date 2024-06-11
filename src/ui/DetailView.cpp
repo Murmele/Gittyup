@@ -500,6 +500,7 @@ DetailView::DetailView(const git::Repository &repo, QWidget *parent)
   mDetail->setVisible(false);
   layout->addWidget(mDetail);
 
+  // Shown when a commit is selected
   mDetail->addWidget(new CommitDetail(this));
 
   mAuthorLabel = new QLabel(this);
@@ -508,6 +509,7 @@ DetailView::DetailView(const git::Repository &repo, QWidget *parent)
           &DetailView::authorLinkActivated);
   updateAuthor();
 
+  // Shown when the working directory is dirty
   mCommitEditor = new CommitEditor(repo, this);
 
   auto editorFrame = new QWidget(this);
