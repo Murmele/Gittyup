@@ -11,7 +11,7 @@ set(STATIC_CRT
 
 # Enabled manually. Don't search for it.
 set(USE_SSH
-	ON
+        OFF
     CACHE BOOL "" FORCE)
 
 if(WIN32)
