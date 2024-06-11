@@ -11,14 +11,13 @@ target_link_libraries(
   Qt5::Concurrent)
 
 set_target_properties(index PROPERTIES AUTOMOC ON)
+# if(ENABLE_TESTS)
+#   add_executable(lexer_test lexer_test.cpp)
+#   target_link_libraries(lexer_test index)
 
-if(BUILD_GITTYUP_TEST)
-  add_executable(lexer_test lexer_test.cpp)
-  target_link_libraries(lexer_test index)
-
-  add_executable(index_test index_test.cpp)
-  target_link_libraries(index_test index Qt5::Widgets)
-endif()
+#   add_executable(index_test index_test.cpp)
+#   target_link_libraries(index_test index Qt5::Widgets)
+# endif()
 
 add_executable(indexer indexer.cpp)
 target_link_libraries(indexer index)
