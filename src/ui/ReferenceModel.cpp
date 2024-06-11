@@ -87,7 +87,7 @@ void ReferenceModel::update() {
   if (mKinds & ReferenceView::LocalBranches) {
     QList<git::Reference> branches;
     foreach (const git::Branch &branch, mRepo.branches(GIT_BRANCH_LOCAL)) {
-      Debug("ReferenceView: Local branches: " << branch.name());
+      //Debug("ReferenceView: Local branches: " << branch.name());
       const bool branchOnCommit =
           !mCommit.isValid() || branch.annotatedCommit().commit() == mCommit;
       if ((!(mKinds & ReferenceView::ExcludeHead) || !branch.isHead()) &&
