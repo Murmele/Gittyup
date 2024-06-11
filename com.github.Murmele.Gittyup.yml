@@ -87,4 +87,4 @@ modules:
     sources:
       - type: git
         url: https://github.com/Murmele/Gittyup.git
-        branch: libgit2update
+        tag: gittyup_v1.3.0
