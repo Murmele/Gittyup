@@ -82,7 +82,7 @@ modules:
 
   - name: Gittyup
     buildsystem: cmake-ninja
-    config-opts: [-DCMAKE_BUILD_TYPE=Release, -DFLATPAK=ON, -DGENERATE_APPDATA=ON, -DENABLE_UPDATE_OVER_GUI=OFF, -DUSE_SYSTEM_OPENSSL:BOOL=ON, -DUSE_SSH=ON -DUSE_SYSTEM_LIBSSH2=ON]
+    config-opts: [-DCMAKE_BUILD_TYPE=Release, -DFLATPAK=ON, -DGENERATE_APPDATA=ON, -DENABLE_UPDATE_OVER_GUI=OFF, -DUSE_SYSTEM_OPENSSL:BOOL=ON, -DUSE_SSH=ON, -DUSE_SYSTEM_LIBSSH2=ON]
     builddir: true
     sources:
       - type: git
