@@ -190,8 +190,8 @@ void TreeView::handleSelectionChange(const QItemSelection &selected,
 }
 
 void TreeView::setCollapseCount(int value) {
-  //Debug("Name: " << mName << "Current Collapsed: " << mCollapseCount
-  //               << "; New Collapsed: " << value);
+  Debug("Name: " << mName << "Current Collapsed: " << mCollapseCount
+                 << "; New Collapsed: " << value);
   assert(value >= 0);
   mCollapseCount = value;
   emit collapseCountChanged(mCollapseCount);
