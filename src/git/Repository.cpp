@@ -615,7 +615,7 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
     return Commit();
 
   // Lookup the parent commit.
-  QVector<const git_commit *> parents;
+  QVector<git_commit *> parents;
   if (Reference ref = head()) {
     if (Commit commit = ref.target())
       parents.append(commit);
