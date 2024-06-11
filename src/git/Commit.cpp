@@ -200,13 +200,16 @@ QList<Reference> Commit::refs() const {
   return refs;
 }
 
-RevWalk Commit::walker(int sort) const {
+RevWalk Commit::walker(int sort, bool firstCommitOnly) const {
   git_revwalk *revwalk = nullptr;
   if (git_revwalk_new(&revwalk, git_object_owner(d.data())))
     return RevWalk();
 
   RevWalk walker(revwalk);
   if (git_revwalk_push(revwalk, git_object_id(d.data())))
+    return RevWalk();
+
+  if (firstCommitOnly && git_revwalk_simplify_first_parent(revwalk))
     return RevWalk();
 
   git_revwalk_sorting(revwalk, sort);

@@ -47,7 +47,7 @@ public:
   QString qualifiedName() const;
 
   // Create a walker over the referenced commit.
-  RevWalk walker(int sort = GIT_SORT_NONE) const;
+  RevWalk walker(int sort = GIT_SORT_NONE, bool firstCommitOnly = false) const;
 
   // Calculate difference in commits between this and the given reference.
   // References that have diverged calculate the distance to a common base.

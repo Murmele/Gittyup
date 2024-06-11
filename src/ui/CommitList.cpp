@@ -209,7 +209,8 @@ public:
         sort |= GIT_SORT_TOPOLOGICAL;
       }
 
-      mWalker = mRef.walker(sort);
+      mWalker = mRef.walker(
+          sort, mRefsFilter == CommitList::RefsFilter::SelectedRefIgnoreMerge);
       if (mRef.isLocalBranch()) {
         // Add the upstream branch.
         if (git::Branch upstream = git::Branch(mRef).upstream())
@@ -238,7 +239,8 @@ public:
 
   void resetSettings(bool walk = false) {
     git::Config config = mRepo.appConfig();
-    mRefsFilter = static_cast<CommitList::RefsFilter>(config.value<int>(ConfigKeys::kRefsKey, (int)CommitList::RefsFilter::AllRefs));
+    mRefsFilter = static_cast<CommitList::RefsFilter>(config.value<int>(
+        ConfigKeys::kRefsKey, (int)CommitList::RefsFilter::AllRefs));
     mSortDate = config.value<bool>(ConfigKeys::kSortKey, true);
     mShowCleanStatus = config.value<bool>(ConfigKeys::kStatusKey, true);
     mGraphVisible = config.value<bool>(ConfigKeys::kGraphKey, true);

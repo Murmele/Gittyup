@@ -32,17 +32,14 @@ const QString kStyleSheet = "QToolBar {"
                             "  border-radius: 4px;"
                             "  padding-right: 12px"
                             "}";
-template <typename T>
-struct SettingsEntry {
+template <typename T> struct SettingsEntry {
   QString key;
   T value;
 };
 
-template <typename T>
-using SettingsMap = QMap<QString, SettingsEntry<T>>;
+template <typename T> using SettingsMap = QMap<QString, SettingsEntry<T>>;
 
-template <typename T>
-class ToolButton : public QToolButton {
+template <typename T> class ToolButton : public QToolButton {
 public:
   ToolButton(const SettingsMap<T> &map, CommitToolBar *parent, T defaultValue)
       : QToolButton(parent) {
@@ -120,10 +117,16 @@ CommitToolBar::CommitToolBar(QWidget *parent) : QToolBar(parent) {
   setToolButtonStyle(Qt::ToolButtonTextOnly);
 
   SettingsMap<int> refsMap;
-  refsMap.insert(tr("Show All Branches"), {ConfigKeys::kRefsKey, (int)CommitList::RefsFilter::AllRefs});
-  refsMap.insert(tr("Show Selected Branch"), {ConfigKeys::kRefsKey, (int)CommitList::RefsFilter::SelectedRef});
-  refsMap.insert(tr("Show Selected Branch, Ignore Merge"), {ConfigKeys::kRefsKey, (int)CommitList::RefsFilter::SelectedRefIgnoreMerge});
-  addWidget(new ToolButton<int>(refsMap, this, (int)CommitList::RefsFilter::AllRefs));
+  refsMap.insert(tr("Show All Branches"),
+                 {ConfigKeys::kRefsKey, (int)CommitList::RefsFilter::AllRefs});
+  refsMap.insert(
+      tr("Show Selected Branch"),
+      {ConfigKeys::kRefsKey, (int)CommitList::RefsFilter::SelectedRef});
+  refsMap.insert(tr("Show Selected Branch, First Parent Only"),
+                 {ConfigKeys::kRefsKey,
+                  (int)CommitList::RefsFilter::SelectedRefIgnoreMerge});
+  addWidget(
+      new ToolButton<int>(refsMap, this, (int)CommitList::RefsFilter::AllRefs));
 
   SettingsMap<bool> sortMap;
   sortMap.insert(tr("Sort by Date"), {ConfigKeys::kSortKey, true});

@@ -73,9 +73,9 @@ QString Reference::qualifiedName() const {
   return git_reference_name(d.data());
 }
 
-RevWalk Reference::walker(int sort) const {
+RevWalk Reference::walker(int sort, bool firstCommitOnly) const {
   Commit commit = target();
-  return commit.isValid() ? commit.walker(sort) : RevWalk();
+  return commit.isValid() ? commit.walker(sort, firstCommitOnly) : RevWalk();
 }
 
 int Reference::difference(const Reference &ref) const {
