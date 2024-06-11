@@ -134,7 +134,7 @@ jobs:
             qt_arch: gcc_64
             openssl_arch: linux-x86_64
             ld_library_arch: linux-x86-64
-            cmake_flags: "-DGENERATE_APPDATA=ON -DCMAKE_INSTALL_PREFIX=/usr -DUSE_SYSTEM_QT=ON -DENABLE_UPDATE_OVER_GUI=OFF -DUSE_SSH -DUSE_SYSTEM_LIBSSH2 -DUSE_SYSTEM_OPENSSL"
+            cmake_flags: "-DGENERATE_APPDATA=ON -DCMAKE_INSTALL_PREFIX=/usr -DUSE_SYSTEM_QT=ON -DENABLE_UPDATE_OVER_GUI=OFF -DUSE_SSH=ON -DUSE_SYSTEM_LIBSSH2=ON -DUSE_SYSTEM_OPENSSL=ON"
             pack: 0
             cmake_env: {}
 
@@ -199,6 +199,12 @@ jobs:
         with:
           perl-version: '5.30'
 
+      - name: Install Libssh2
+        if: matrix.env.ninja_platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libssh2-1
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v3.3.0
         timeout-minutes: 10
@@ -240,12 +246,12 @@ jobs:
         if: matrix.env.ninja_platform == 'win'
         uses: ilammy/setup-nasm@v1.2.0
 
-      - name: Build OpenSSL (Linux)
-        if: matrix.env.ninja_platform == 'linux'
-        run: |
-          cd dep/openssl/openssl
-          ./config -fPIC
-          make
+      #- name: Build OpenSSL (Linux)
+      #  if: matrix.env.ninja_platform == 'linux'
+      #  run: |
+      #    cd dep/openssl/openssl
+      #    ./config -fPIC
+      #    make
 
       - name: Build OpenSSL (macOS)
         if: matrix.env.ninja_platform == 'mac'
@@ -430,4 +436,5 @@ jobs:
         with:
           branch: gh-pages # The branch the action should deploy to.
           folder: docs # The folder the action should deploy.
+...
 ...
