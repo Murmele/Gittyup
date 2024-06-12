@@ -276,6 +276,9 @@ public:
         // FIXME: Mark commits that point to existing parent?
         if (indexOf(parent) < 0 && !contains(parent, rows))
           replacements.append(parent);
+        if (mRefsFilter == CommitList::RefsFilter::SelectedRefIgnoreMerge) {
+          break;
+        }
       }
 
       // Set parents for next row.
