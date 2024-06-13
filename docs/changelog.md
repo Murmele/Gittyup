@@ -6,6 +6,8 @@ Bug Fix and Feature release
 
 * Add commit filter to show only the first parent in the commit list view
 
+----
+
 ### v1.4.0 - 2024-04-24
 
 Bug Fix and Feature release
