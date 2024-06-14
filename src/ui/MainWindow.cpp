@@ -13,7 +13,6 @@
 #include "MenuBar.h"
 #include "RepoView.h"
 #include "SearchField.h"
-#include "SideBar.h"
 #include "TabWidget.h"
 #include "ToolBar.h"
 #include "conf/RecentRepositories.h"
@@ -44,7 +43,6 @@ const QString kPathKey = "path";
 const QString kIndexKey = "index";
 const QString kStateKey = "state";
 const QString kActiveKey = "active";
-const QString kSidebarKey = "sidebar";
 const QString kGeometryKey = "geometry";
 const QString kWindowsGroup = "windows";
 
@@ -123,16 +121,8 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
             }
           });
 
-  // Create splitter.
-  QSplitter *splitter = new QSplitter(this);
-  splitter->setHandleWidth(0);
-  connect(splitter, &QSplitter::splitterMoved, [this] {
-    QSplitter *splitter = static_cast<QSplitter *>(centralWidget());
-    mIsSideBarVisible = (splitter->sizes().first() > 0);
-  });
-
   // Create tab container.
-  TabWidget *tabs = new TabWidget(splitter);
+  TabWidget *tabs = new TabWidget(this);
   connect(tabs, &TabWidget::currentChanged, [this](int index) {
     updateInterface();
     MenuBar::instance(this)->update();
@@ -143,12 +133,7 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
   connect(tabs, QOverload<>::of(&TabWidget::tabRemoved), this,
           &MainWindow::updateTabNames);
 
-  splitter->addWidget(new SideBar(tabs, splitter));
-  splitter->addWidget(tabs);
-  splitter->setCollapsible(1, false);
-  splitter->setStretchFactor(1, 1);
-
-  setCentralWidget(splitter);
+  setCentralWidget(tabs);
 
   if (repo)
     addTab(repo);
@@ -168,48 +153,12 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
   if (MainWindow *win = activeWindow())
     move(win->x() + 24, win->y() + 24);
 
-  // Restore sidebar.
-  setSideBarVisible(QSettings().value(kSidebarKey, true).toBool());
-
   // Set initial state of interface.
   updateInterface();
 }
 
-bool MainWindow::isSideBarVisible() const { return mIsSideBarVisible; }
-
-void MainWindow::setSideBarVisible(bool visible) {
-  if (visible == mIsSideBarVisible)
-    return;
-
-  mIsSideBarVisible = visible;
-
-  // Remember in settings.
-  QSettings().setValue(kSidebarKey, visible);
-
-  // Animate sidebar sliding in or out.
-  QSplitter *splitter = static_cast<QSplitter *>(centralWidget());
-  QWidget *sidebar = splitter->widget(0);
-  int pos = visible ? sidebar->sizeHint().width() : splitter->sizes().first();
-
-  QTimeLine *timeline = new QTimeLine(250, this);
-  timeline->setDirection(visible ? QTimeLine::Forward : QTimeLine::Backward);
-  timeline->setEasingCurve(QEasingCurve(QEasingCurve::Linear));
-  timeline->setUpdateInterval(20);
-
-  connect(timeline, &QTimeLine::valueChanged, [this, pos](qreal value) {
-    QSplitter *splitter = static_cast<QSplitter *>(centralWidget());
-    splitter->setSizes({static_cast<int>(pos * value), 1});
-  });
-
-  connect(timeline, &QTimeLine::finished,
-          [timeline] { timeline->deleteLater(); });
-
-  timeline->start();
-}
-
 TabWidget *MainWindow::tabWidget() const {
-  QSplitter *splitter = static_cast<QSplitter *>(centralWidget());
-  return static_cast<TabWidget *>(splitter->widget(1));
+  return static_cast<TabWidget *>(centralWidget());
 }
 
 RepoView *MainWindow::addTab(const QString &path) {

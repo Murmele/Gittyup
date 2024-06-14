@@ -31,9 +31,6 @@ public:
 
   ToolBar *toolBar() const { return mToolBar; }
 
-  bool isSideBarVisible() const;
-  void setSideBarVisible(bool visible);
-
   TabWidget *tabWidget() const;
   RepoView *addTab(const QString &path);
   RepoView *addTab(const git::Repository &repo);
@@ -77,7 +74,6 @@ private:
   MenuBar *mMenuBar;
 
   bool mFullPath = false;
-  bool mIsSideBarVisible = true;
 
   bool mShown = false;
   bool mClosing = false;
