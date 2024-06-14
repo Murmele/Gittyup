@@ -53,7 +53,8 @@ add_library(
   TreeProxy.cpp
   TreeView.cpp
   TreeWidget.cpp
-  ViewDelegate.cpp)
+  ViewDelegate.cpp
+  ConfigKeys.cpp)
 
 target_compile_definitions(ui PRIVATE BUILD_DESCRIPTION="${BUILD_DESCRIPTION}")
 

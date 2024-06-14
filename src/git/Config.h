@@ -111,13 +111,15 @@ template <> void Config::setValue<QString>(const QString &, const QString &);
 
 template <typename T>
 T Config::value(const QString &key, const T &defaultValue) const {
-  static_assert(sizeof(T) == 0, "no specialization found");
+  static_assert(sizeof(T) == 0, "no specialization found. Please implement "
+                                "specialization for this type!");
   return T();
 }
 
 template <typename T>
 void Config::setValue(const QString &key, const T &value) {
-  static_assert(sizeof(T) == 0, "no specialization found");
+  static_assert(sizeof(T) == 0, "no specialization found. Please implement "
+                                "specialization for this type!");
 }
 
 } // namespace git

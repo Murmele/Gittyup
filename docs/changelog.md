@@ -1,6 +1,16 @@
-### v1.4.0 - 2024-04-24 (DEV)
+### vX.X.X - 2024-06-13 (DEV)
 
-Description
+Bug Fix and Feature release
+
+#### Added
+
+* Add commit filter to show only the first parent in the commit list view
+
+----
+
+### v1.4.0 - 2024-04-24
+
+Bug Fix and Feature release
 
 #### Added
 
