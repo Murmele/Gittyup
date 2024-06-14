@@ -145,7 +145,7 @@ TabWidget::TabWidget(QWidget *parent) : QTabWidget(parent) {
   setTabBar(bar);
 
   // Create default widget.
-  addTab(new DefaultWidget(this))
+  addTab(new DefaultWidget(this));
 
   // Handle tab close.
   connect(this, &TabWidget::tabCloseRequested, [this](int index) {
