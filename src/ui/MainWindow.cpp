@@ -200,7 +200,8 @@ void MainWindow::setSideBarVisible(bool visible) {
     splitter->setSizes({static_cast<int>(pos * value), 1});
   });
 
-  connect(timeline, &QTimeLine::finished, [timeline] { delete timeline; });
+  connect(timeline, &QTimeLine::finished,
+          [timeline] { timeline->deleteLater(); });
 
   timeline->start();
 }
@@ -384,7 +385,15 @@ MainWindow *MainWindow::open(const git::Repository &repo) {
 
   // Create the window.
   MainWindow *window = new MainWindow(repo);
-  window->show();
+
+  const bool showMaximized =
+      Settings::instance()->value(Setting::Id::ShowMaximized).toBool();
+
+  if (showMaximized) {
+    window->showMaximized();
+  } else {
+    window->show();
+  }
 
   return window;
 }

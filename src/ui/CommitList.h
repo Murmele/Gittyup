@@ -25,6 +25,11 @@ class CommitList : public QListView {
 
 public:
   enum Role { DiffRole = Qt::UserRole, CommitRole, GraphRole, GraphColorRole };
+  enum class RefsFilter {
+    AllRefs,
+    SelectedRef,
+    SelectedRefIgnoreMerge,
+  };
 
   CommitList(Index *index, QWidget *parent = nullptr);
 
@@ -47,6 +52,7 @@ public:
   void selectReference(const git::Reference &ref);
   void resetSelection(bool spontaneous = false);
   void selectFirstCommit(bool spontaneous = false);
+  void selectCommitRelative(int offset);
   bool selectRange(const QString &range, const QString &file = QString(),
                    bool spontaneous = false);
   void suppressResetWalker(bool suppress);

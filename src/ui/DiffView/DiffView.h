@@ -103,6 +103,9 @@ public:
   void diffTreeModelDataChanged(const QModelIndex &topLeft,
                                 const QModelIndex &bottomRight,
                                 const QVector<int> &roles);
+  void moveHalfPageDown();
+  void moveHalfPageUp();
+  void moveRelative(int pixelsDown);
 
 signals:
   void diagnosticAdded(TextEditor::DiagnosticKind kind);

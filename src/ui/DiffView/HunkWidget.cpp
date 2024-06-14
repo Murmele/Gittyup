@@ -35,6 +35,17 @@ const QString noNewLineAtEndOfFile =
     HunkWidget::tr("No newline at end of file");
 } // namespace
 
+_HunkWidget::HunkLabel::HunkLabel(const QString &name, bool submodule,
+                                  QWidget *parent)
+    : QWidget(parent), mName(name) {}
+void _HunkWidget::HunkLabel::paintEvent(QPaintEvent *event) {
+  QPainter painter(this);
+  painter.setRenderHint(QPainter::Antialiasing);
+  QFontMetrics fm = fontMetrics();
+  QRect rect = fm.boundingRect(0, 0, this->rect().width(), 300, 0, mName);
+  painter.drawText(rect, Qt::AlignLeft | Qt::ElideRight, mName);
+}
+
 _HunkWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
                             int index, bool lfs, bool submodule,
                             QWidget *parent)
@@ -45,9 +56,9 @@ _HunkWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
   mCheck->setVisible(diff.isStatusDiff() && !submodule &&
                      !patch.isConflicted());
 
-  QString header = (index >= 0) ? patch.header(index) : QString();
-  QString escaped = header.trimmed().toHtmlEscaped();
-  QLabel *label = new QLabel(DiffViewStyle::kHunkFmt.arg(escaped), this);
+  QString label_string = (index >= 0) ? patch.header(index) : QString();
+  label_string = label_string.trimmed().toHtmlEscaped();
+  HunkLabel *label = new HunkLabel(label_string, submodule, this);
 
   if (patch.isConflicted()) {
     mSave = new QToolButton(this);
@@ -132,7 +143,7 @@ _HunkWidget::Header::Header(const git::Diff &diff, const git::Patch &patch,
   QHBoxLayout *layout = new QHBoxLayout(this);
   layout->setContentsMargins(4, 4, 4, 4);
   layout->addWidget(mCheck);
-  layout->addWidget(label);
+  layout->addWidget(label, 1);
   layout->addStretch();
   layout->addLayout(buttons);
 

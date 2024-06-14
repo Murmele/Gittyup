@@ -46,9 +46,7 @@ jobs:
       run: |
         pacman --noconfirm -Suy
         pacman --noconfirm -S flatpak flatpak-builder xorg-server-xvfb
-        flatpak install --assumeyes org.kde.Sdk//5.15-21.08
-        flatpak install --assumeyes org.freedesktop.Sdk.Extension.golang//21.08
-        flatpak install --assumeyes org.kde.Platform//5.15-21.08
+        flatpak install --assumeyes org.freedesktop.Sdk.Extension.golang//23.08
 
     - name: Show environment variables
       run: >
@@ -82,48 +80,50 @@ jobs:
     - name: Replace git tag by the commit id on which it runs
       if: github.ref_type != 'tag'
       run: >
-        sed -i 's@tag: .*@commit: "${{ (github.event.pull_request && github.event.pull_request.head.sha) || github.sha }}"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@tag: .*@commit: "${{ (github.event.pull_request && github.event.pull_request.head.sha) || github.sha }}"@' com.github.Murmele.Gittyup.yml
 
     - name: Use correct git tag
       if: github.ref_type == 'tag'
       run: >
-        sed -i 's@tag: .*$@tag: "${{ github.ref_name }}"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@tag: .*$@tag: "${{ github.ref_name }}"@' com.github.Murmele.Gittyup.yml
 
     - name: Replace source url
       run: >
-        sed -i "s@url: .*Gittyup.git@url: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY@" com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i "s@url: .*Gittyup.git@url: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY@" com.github.Murmele.Gittyup.yml
 
     - name: Add dev build marker to cmake options
       if: github.ref_type != 'tag'
       run: >
-        sed -i 's@config-opts: \["\(.*\)"\]@config-opts: ["\1", "-DDEV_BUILD=${{ github.ref_name }}"]@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@config-opts: \["\(.*\)"\]@config-opts: ["\1", "-DDEV_BUILD=${{ github.ref_name }}"]@' com.github.Murmele.Gittyup.yml
 
     - name: Replace desktop file name suffix
       if: github.ref_type != 'tag'
       run: >
-        sed -i 's@desktop-file-name-suffix: ""@desktop-file-name-suffix: " (Development)"@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@desktop-file-name-suffix: ""@desktop-file-name-suffix: " (Development)"@' com.github.Murmele.Gittyup.yml
 
     - name: Enable automatic update
       if: github.ref_type != 'tag'
       run: >
-        sed -i 's@-DENABLE_UPDATE_OVER_GUI=OFF@-DENABLE_UPDATE_OVER_GUI=ON@' com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        sed -i 's@-DENABLE_UPDATE_OVER_GUI=OFF@-DENABLE_UPDATE_OVER_GUI=ON@' com.github.Murmele.Gittyup.yml
 
     - name: Show Flatpak manifest
-      run: cat com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+      run: cat com.github.Murmele.Gittyup.yml
 
     - name: Build package
-      uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v4
+      uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
       with:
         bundle: Gittyup.flatpak
-        manifest-path: com.github.Murmele.Gittyup/com.github.Murmele.Gittyup.yml
+        manifest-path: com.github.Murmele.Gittyup.yml
         cache: false
+        upload-artifact: true
+        verbose: true
         branch: ${{ steps.flatpak_release_branch.outputs.value }}
 
     - name: Publish build artifacts
       uses: actions/upload-artifact@v2
       with:
-        path: com.github.Murmele.Gittyup/*
-        name: Gittyup Flatpak
+        path: Gittyup.flatpak
+        name: GittyupFlatpak
 
 
   build:
@@ -147,7 +147,7 @@ jobs:
             cmake_env: {}
 
           - name: macos
-            os: macos-latest
+            os: macos-12
             ninja_platform: mac
             qt_platform: mac
             openssl_arch: darwin64-x86_64-cc
@@ -206,9 +206,9 @@ jobs:
           modules: qtwebengine
 
       - name: Install Ninja
-        uses: seanmiddleditch/gha-setup-ninja@v3
+        uses: seanmiddleditch/gha-setup-ninja@v4
         with:
-          version: 1.9.0
+          version: 1.11.1
           platform: ${{ matrix.env.ninja_platform }}
           destination: ninja
 
@@ -366,17 +366,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: artifacts
-
-      - name: list artifacts folder
-        run: |
-          echo "Show artifacts folder:"
-          ls artifacts
-          echo "Show artifacts/Gittyup Flatpak folder:"
-          ls "artifacts/Gittyup Flatpak"
-          echo "Show artifacts/Gittyup-x86_64:"
-          ls "artifacts/Gittyup-x86_64"
-          echo "Show artifacts/Gittyup VERSION"
-          ls "artifacts/Gittyup-VERSION"
     
       # version is exported from cmake to file
       - name: Retrieve version
@@ -394,9 +383,8 @@ jobs:
           files: |
             **/artifacts/Gittyup win64/Gittyup*.exe
             **/artifacts/Gittyup macos/Gittyup*.dmg
-            **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
-            **/Gittyup-x86_64/*.flatpak
-            **/artifacts/GittyupAppImage/*
+            **/artifacts/GittyupFlatpak/*.flatpak
+            **/artifacts/GittyupAppImage/Gittyup*.AppImage
 
       - name: Update GitHub release (version tag)
         uses: marvinpinto/action-automatic-releases@latest
@@ -409,9 +397,8 @@ jobs:
           files: |
             **/artifacts/Gittyup win64/Gittyup*.exe
             **/artifacts/Gittyup macos/Gittyup*.dmg
-            **/artifacts/Gittyup Flatpak/com.github.Murmele.Gittyup.yml
-            **/Gittyup-x86_64/*.flatpak
-            **/artifacts/GittyupAppImage/*
+            **/artifacts/GittyupFlatpak/*.flatpak
+            **/artifacts/GittyupAppImage/Gittyup*.AppImage
 
       # needed otherwise the docs folder is not available     
       - name: Checkout repository

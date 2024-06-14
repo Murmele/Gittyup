@@ -1,0 +1,75 @@
+app-id: com.github.Murmele.Gittyup
+runtime: org.kde.Platform
+runtime-version: 5.15-23.08
+sdk: org.kde.Sdk
+command: gittyup
+desktop-file-name-suffix: "" # used to create development version
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --share=network
+  - --share=ipc
+  - --filesystem=home
+  - --filesystem=/tmp # Needed to store temporary files, which should be opened by external (non sandboxed) applications like kdiff3. Did not find another way to share a temporary file to the host (only creating a tmp folder in the home folder, I don't like)
+  # we use the keyring to store credentials
+  - --filesystem=xdg-run/keyring
+  # for git repos that require ssh keys
+  - --socket=ssh-auth
+  - --talk-name=org.freedesktop.secrets
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.Flatpak
+rename-icon: gittyup # Image will renamed to match the app-id konvention
+rename-desktop-file: gittyup.desktop
+rename-appdata-file: gittyup.appdata.xml
+
+build-options:
+  append-path: /usr/lib/sdk/golang/bin
+
+modules:
+  - name: git-lfs
+    buildsystem: simple
+    build-commands:
+      - PREFIX=${FLATPAK_DEST} ./install.sh
+    sources:
+      - type: archive
+        strip-components: 1
+        url: https://github.com/git-lfs/git-lfs/releases/download/v3.5.1/git-lfs-linux-amd64-v3.5.1.tar.gz
+        sha256: 6f28eb19faa7a968882dca190d92adc82493378b933958d67ceaeb9ebe4d731e
+        only-arches: [x86_64]
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/git-lfs/git-lfs/releases/latest
+          url-query: .assets[] | select(.name=="git-lfs-linux-amd64-" + $version +
+            ".tar.gz") | .browser_download_url
+          version-query: .tag_name
+      - type: archive
+        strip-components: 1
+        url: https://github.com/git-lfs/git-lfs/releases/download/v3.5.1/git-lfs-linux-arm64-v3.5.1.tar.gz
+        sha256: 4f8700aacaa0fd26ae5300fb0996aed14d1fd0ce1a63eb690629c132ff5163a9
+        only-arches: [aarch64]
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/git-lfs/git-lfs/releases/latest
+          url-query: .assets[] | select(.name=="git-lfs-linux-arm64-" + $version +
+            ".tar.gz") | .browser_download_url
+          version-query: .tag_name
+
+  - name: git
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 $(which git) ${FLATPAK_DEST}/bin/
+      - install -Dm755 $(which git-cvsserver) ${FLATPAK_DEST}/bin/
+      - install -Dm755 $(which git-receive-pack) ${FLATPAK_DEST}/bin/
+      - install -Dm755 $(which git-shell) ${FLATPAK_DEST}/bin/
+      - install -Dm755 $(which git-upload-archive) ${FLATPAK_DEST}/bin/
+      - install -Dm755 $(which git-upload-pack) ${FLATPAK_DEST}/bin/
+
+  - name: Gittyup
+    buildsystem: cmake-ninja
+    config-opts: [-DCMAKE_BUILD_TYPE=Release, -DFLATPAK=ON, -DGENERATE_APPDATA=ON, -DENABLE_UPDATE_OVER_GUI=OFF, -DUSE_SYSTEM_OPENSSL:BOOL=ON]
+    builddir: true
+    sources:
+      - type: git
+        url: https://github.com/Murmele/Gittyup.git
+        tag: gittyup_v1.3.0
