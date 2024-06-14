@@ -145,7 +145,7 @@ TabWidget::TabWidget(QWidget *parent) : QTabWidget(parent) {
   setTabBar(bar);
 
   // Create default widget.
-  mDefaultWidget = new DefaultWidget(this);
+  addTab(new DefaultWidget(this))
 
   // Handle tab close.
   connect(this, &TabWidget::tabCloseRequested, [this](int index) {
@@ -156,28 +156,18 @@ TabWidget::TabWidget(QWidget *parent) : QTabWidget(parent) {
 
 void TabWidget::resizeEvent(QResizeEvent *event) {
   QTabWidget::resizeEvent(event);
-
-  //QSize size = event->size();
-  //QSize sizeHint = mDefaultWidget->sizeHint();
-  //int x = (size.width() - sizeHint.width()) / 2;
-  //int y = (size.height() - sizeHint.height()) / 2;
-  //mDefaultWidget->move(x, y);
 }
 
 void TabWidget::tabInserted(int index) {
   QTabWidget::tabInserted(index);
   MenuBar::instance(this)->updateWindow();
   emit tabInserted();
-
-  //mDefaultWidget->setVisible(false);
 }
 
 void TabWidget::tabRemoved(int index) {
   QTabWidget::tabRemoved(index);
   MenuBar::instance(this)->updateWindow();
   emit tabRemoved();
-
-  //mDefaultWidget->setVisible(!count());
 }
 
 #include "TabWidget.moc"
