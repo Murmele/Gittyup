@@ -636,7 +636,8 @@ void Platform::DebugPrintf(const char *format, ...) {
 
 void Platform::Assert(const char *c, const char *file, int line) {
   char buffer[2000];
-  snprintf(buffer, sizeof(buffer), "Assertion [%s] failed at %s %d\n", c, file, line);
+  snprintf(buffer, sizeof(buffer), "Assertion [%s] failed at %s %d\n", c, file,
+           line);
   Platform::DebugDisplay(buffer);
 }
 
