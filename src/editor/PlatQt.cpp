@@ -629,14 +629,14 @@ void Platform::DebugPrintf(const char *format, ...) {
   char buffer[2000];
   va_list pArguments;
   va_start(pArguments, format);
-  vsprintf(buffer, format, pArguments);
+  vsnprintf(buffer, sizeof(buffer), format, pArguments);
   va_end(pArguments);
   Platform::DebugDisplay(buffer);
 }
 
 void Platform::Assert(const char *c, const char *file, int line) {
   char buffer[2000];
-  sprintf(buffer, "Assertion [%s] failed at %s %d\n", c, file, line);
+  snprintf(buffer, sizeof(buffer), "Assertion [%s] failed at %s %d\n", c, file, line);
   Platform::DebugDisplay(buffer);
 }
 

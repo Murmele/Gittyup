@@ -632,7 +632,7 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
       MoveImeCarets(-imeCharPos[preeditStrLen] + imeCharPos[imeCaretPos]);
     }
 
-    // Set candidate box position for Qt::ImMicroFocus.
+    // Set candidate box position for Qt::ImCursorRectangle.
     preeditPos = CurrentPosition();
     EnsureCaretVisible();
     updateMicroFocus();
@@ -1026,7 +1026,7 @@ bool ScintillaQt::SetIdle(bool on) {
       idler.state = false;
       QTimer *timer = static_cast<QTimer *>(idler.idlerID);
       timer->stop();
-      disconnect(timer, &QTimer::timeout, 0, 0);
+      disconnect(timer, &QTimer::timeout, nullptr, nullptr);
       delete timer;
       idler.idlerID = nullptr;
     }

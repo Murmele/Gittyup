@@ -9,7 +9,6 @@
 
 #include "Settings.h"
 #include "ConfFile.h"
-#include "Debug.h"
 #include "qtsupport.h"
 #include "languages.h"
 #include <QCoreApplication>
