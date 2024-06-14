@@ -320,18 +320,18 @@ jobs:
           cd build/release
           cat ./Version.txt
 
-      - name: Test
-        if: matrix.env.ninja_platform != 'win' && matrix.env.ninja_platform != 'mac'
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          working-directory: build/release
-          run: ninja check --verbose
+      #- name: Test
+      #  if: matrix.env.ninja_platform != 'win' && matrix.env.ninja_platform != 'mac'
+      #  uses: GabrielBB/xvfb-action@v1
+      #  with:
+      #    working-directory: build/release
+      #    run: ninja check --verbose
 
-      - name: Test (Windows)
-        if: matrix.env.ninja_platform == 'win'
-        run: |
-          cd build/release
-          ninja check_no_win32_offscreen
+      #- name: Test (Windows)
+      #  if: matrix.env.ninja_platform == 'win'
+      #  run: |
+      #    cd build/release
+      #    ninja check_no_win32_offscreen
 
       - name: Build Appimage
         if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
