@@ -18,6 +18,8 @@ QSize TabBar::minimumTabSizeHint(int index) const {
   mCalculatingMinimumSize = true;
   QSize size = QTabBar::minimumTabSizeHint(index);
   mCalculatingMinimumSize = false;
+
+  // Default Tab just a small tab size on the left
   return size;
 }
 
@@ -27,4 +29,6 @@ QSize TabBar::tabSizeHint(int index) const {
 
   int height = fontMetrics().lineSpacing() + 12;
   return QSize(parentWidget()->width() / count() + 1, height);
+
+  // Default Tab just a small tab size on the left
 }

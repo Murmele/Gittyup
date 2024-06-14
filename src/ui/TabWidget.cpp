@@ -157,11 +157,11 @@ TabWidget::TabWidget(QWidget *parent) : QTabWidget(parent) {
 void TabWidget::resizeEvent(QResizeEvent *event) {
   QTabWidget::resizeEvent(event);
 
-  QSize size = event->size();
-  QSize sizeHint = mDefaultWidget->sizeHint();
-  int x = (size.width() - sizeHint.width()) / 2;
-  int y = (size.height() - sizeHint.height()) / 2;
-  mDefaultWidget->move(x, y);
+  //QSize size = event->size();
+  //QSize sizeHint = mDefaultWidget->sizeHint();
+  //int x = (size.width() - sizeHint.width()) / 2;
+  //int y = (size.height() - sizeHint.height()) / 2;
+  //mDefaultWidget->move(x, y);
 }
 
 void TabWidget::tabInserted(int index) {
@@ -169,7 +169,7 @@ void TabWidget::tabInserted(int index) {
   MenuBar::instance(this)->updateWindow();
   emit tabInserted();
 
-  mDefaultWidget->setVisible(false);
+  //mDefaultWidget->setVisible(false);
 }
 
 void TabWidget::tabRemoved(int index) {
@@ -177,7 +177,7 @@ void TabWidget::tabRemoved(int index) {
   MenuBar::instance(this)->updateWindow();
   emit tabRemoved();
 
-  mDefaultWidget->setVisible(!count());
+  //mDefaultWidget->setVisible(!count());
 }
 
 #include "TabWidget.moc"
