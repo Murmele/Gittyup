@@ -143,7 +143,7 @@ jobs:
             ninja_platform: mac
             qt_platform: mac
             openssl_arch: darwin64-x86_64-cc
-            cmake_flags: "-DUSE_SSH=OFF"
+            cmake_flags: "-DUSE_SSH:STRING=localbuild"
             cmake_env: {}
             pack: 1
 
@@ -155,7 +155,7 @@ jobs:
             qt_arch_check_only: win64_msvc2017_64
             openssl_arch: VC-WIN64A
             msvc_arch: x64
-            cmake_flags: "-DUSE_SSH=OFF"
+            cmake_flags: "-DUSE_SSH:STRING=localbuild"
             cmake_env:
               CMAKE_RC_FLAGS: "/C 1252"
               CC: clang
@@ -170,7 +170,7 @@ jobs:
             qt_arch_check_only: win32_msvc2017
             openssl_arch: VC-WIN32
             msvc_arch: x86
-            cmake_flags: "-DUSE_SSH=OFF"
+            cmake_flags: "-DUSE_SSH:STRING=localbuild"
             cmake_env:
               CMAKE_RC_FLAGS: "/C 1252"
               CC: clang
