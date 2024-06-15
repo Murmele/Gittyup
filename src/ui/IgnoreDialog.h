@@ -7,7 +7,6 @@ class QDialogButtonBox;
 class QTextEdit;
 
 class IgnoreDialog : public QDialog {
-  Q_OBJECT
 public:
   IgnoreDialog(const QString &ignore, QWidget *parent = nullptr);
   QString ignoreText() const;
