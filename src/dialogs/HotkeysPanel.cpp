@@ -308,6 +308,7 @@ protected:
 };
 
 class KeybindDialog : public QDialog {
+  Q_OBJECT
 public:
   KeybindDialog(QWidget *parent, HotkeyModel *hotkeys, Hotkey hotkey)
       : QDialog(parent) {
