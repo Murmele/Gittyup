@@ -85,7 +85,7 @@ Courtesy of Scintilla.
 ![Line Wrapping](/rsrc/screenshots/line-wrap-demo-2.gif)
 
 ### Single line staging 
-by eighter clicking on the checkboxes next to each line or by selecting the relevant code and pressing "S". For unstaging you can uncheck the checkboxes or press "U". To revert changes, select the text and press "R".
+by either clicking on the checkboxes next to each line or by selecting the relevant code and pressing "S". For unstaging you can uncheck the checkboxes or press "U". To revert changes, select the text and press "R".
 
 ![Single line staging](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/double_treeview_single_line_staging.png)
 
