@@ -351,7 +351,9 @@ public:
               if (!mShowFullPath)
                 return mTabs->tabText(row);
 
-              RepoView *view = static_cast<RepoView *>(mTabs->widget(row));
+              RepoView *view = dynamic_cast<RepoView *>(mTabs->widget(row));
+              if (!view)
+                return QStringLiteral("");
               return view->repo().dir(false).path();
             }
 
@@ -445,7 +447,10 @@ public:
             if (!mTabs->count())
               return QVariant();
             QWidget *widget = mTabs->widget(row);
-            RepoView *view = static_cast<RepoView *>(widget);
+            RepoView *view = dynamic_cast<RepoView *>(widget);
+            if (!view) {
+              return QStringLiteral("");
+            }
             return view->repo().dir(false).path();
           }
 
@@ -492,7 +497,10 @@ public:
         switch (parent.row()) {
           case Repo:
             if (mTabs->count()) {
-              RepoView *view = static_cast<RepoView *>(mTabs->widget(row));
+              RepoView *view = dynamic_cast<RepoView *>(mTabs->widget(row));
+              if (!view) {
+                return QStringLiteral("");
+              }
               return view->repo().dir(false).path();
             }
 

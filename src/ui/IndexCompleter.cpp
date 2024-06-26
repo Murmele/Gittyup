@@ -62,7 +62,7 @@ public:
   }
 
   int rowCount(const QModelIndex &parent = QModelIndex()) const override {
-    return mWindow->count() ? dict().size() : 0;
+    return mWindow->repoCount() ? dict().size() : 0;
   }
 
 private:

@@ -43,9 +43,10 @@ public:
     connect(clone, &QPushButton::clicked, [this] {
       CloneDialog *dialog = new CloneDialog(CloneDialog::Clone, this);
       connect(dialog, &CloneDialog::accepted, [dialog] {
-        if (MainWindow *window = MainWindow::open(dialog->path()))
-          window->currentView()->addLogEntry(dialog->message(),
-                                             dialog->messageTitle());
+        if (MainWindow *window = MainWindow::open(dialog->path())) {
+          if (auto c = window->currentView())
+            c->addLogEntry(dialog->message(), dialog->messageTitle());
+        }
       });
       dialog->open();
     });
@@ -70,8 +71,8 @@ public:
       CloneDialog *dialog = new CloneDialog(CloneDialog::Init, this);
       connect(dialog, &CloneDialog::accepted, [dialog] {
         if (MainWindow *window = MainWindow::open(dialog->path()))
-          window->currentView()->addLogEntry(dialog->message(),
-                                             dialog->messageTitle());
+          if (auto c = window->currentView())
+            c->addLogEntry(dialog->message(), dialog->messageTitle());
       });
       dialog->open();
     });
@@ -140,18 +141,22 @@ private:
 
 TabWidget::TabWidget(QWidget *parent) : QTabWidget(parent) {
   TabBar *bar = new TabBar(this);
-  bar->setMovable(true);
+  bar->setMovable(false);
   bar->setTabsClosable(true);
   setTabBar(bar);
-
-  // Create default widget.
-  addTab(new DefaultWidget(this), tr("Home"));
 
   // Handle tab close.
   connect(this, &TabWidget::tabCloseRequested, [this](int index) {
     emit tabAboutToBeRemoved();
     widget(index)->close();
   });
+}
+
+void TabWidget::addWelcomeTab() {
+  // Create default widget.
+  addTab(new DefaultWidget(this), tr("Home"));
+  Q_ASSERT(count() == 1);
+  tabBar()->setTabButton(0, QTabBar::RightSide, nullptr);
 }
 
 void TabWidget::resizeEvent(QResizeEvent *event) {

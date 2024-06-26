@@ -19,10 +19,14 @@ public:
   TabBar(QWidget *parent = nullptr);
 
 protected:
+  void mousePressEvent(QMouseEvent* event) override;
+  void mouseMoveEvent(QMouseEvent* event) override;
+  void mouseReleaseEvent(QMouseEvent* event) override;
   QSize minimumTabSizeHint(int index) const override;
   QSize tabSizeHint(int index) const override;
 
 private:
+  int mClickedTabIndex = -1;
   mutable bool mCalculatingMinimumSize = false;
 };
 

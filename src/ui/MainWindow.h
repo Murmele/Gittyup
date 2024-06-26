@@ -36,6 +36,7 @@ public:
   RepoView *addTab(const git::Repository &repo);
 
   int count() const;
+  int repoCount() const;
   RepoView *currentView() const;
   RepoView *view(int index) const;
 

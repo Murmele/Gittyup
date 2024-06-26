@@ -117,7 +117,8 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
 
             if (refresh) {
               for (int i = 0; i < count(); ++i)
-                view(i)->refresh();
+                if (auto v = view(i))
+                  v->refresh();
             }
           });
 
@@ -134,6 +135,7 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
           &MainWindow::updateTabNames);
 
   setCentralWidget(tabs);
+  tabs->addWelcomeTab();
 
   if (repo)
     addTab(repo);
@@ -167,7 +169,11 @@ RepoView *MainWindow::addTab(const QString &path) {
 
   TabWidget *tabs = tabWidget();
   for (int i = 0; i < tabs->count(); i++) {
-    RepoView *view = static_cast<RepoView *>(tabs->widget(i));
+    RepoView *view = dynamic_cast<RepoView *>(tabs->widget(i));
+    if (!view) {
+      // Tab 0 is the welcome tab
+      continue;
+    }
     if (path == view->repo().dir(false).path()) {
       tabs->setCurrentIndex(i);
       return view;
@@ -190,7 +196,11 @@ RepoView *MainWindow::addTab(const git::Repository &repo) {
 
   TabWidget *tabs = tabWidget();
   for (int i = 0; i < tabs->count(); i++) {
-    RepoView *view = static_cast<RepoView *>(tabs->widget(i));
+    RepoView *view = dynamic_cast<RepoView *>(tabs->widget(i));
+    if (!view) {
+      // Tab 0 is the welcome tab
+      continue;
+    }
     if (dir.path() == view->repo().dir(false).path()) {
       tabs->setCurrentIndex(i);
       return view;
@@ -223,12 +233,14 @@ RepoView *MainWindow::addTab(const git::Repository &repo) {
 
 int MainWindow::count() const { return tabWidget()->count(); }
 
+int MainWindow::repoCount() const { return tabWidget()->count() - 1; }
+
 RepoView *MainWindow::currentView() const {
-  return static_cast<RepoView *>(tabWidget()->currentWidget());
+  return dynamic_cast<RepoView *>(tabWidget()->currentWidget());
 }
 
 RepoView *MainWindow::view(int index) const {
-  return static_cast<RepoView *>(tabWidget()->widget(index));
+  return dynamic_cast<RepoView *>(tabWidget()->widget(index));
 }
 
 MainWindow *MainWindow::activeWindow() {
@@ -428,9 +440,11 @@ void MainWindow::updateTabNames() {
   QList<TabName> fullNames;
 
   for (int i = 0; i < count(); ++i) {
-    TabName name(view(i)->repo().dir(false).path());
-    names[name.name()].append(i);
-    fullNames.append(name);
+    if (auto v = view(i)) {
+      TabName name(v->repo().dir(false).path());
+      names[name.name()].append(i);
+      fullNames.append(name);
+    }
   }
 
   QHash<QString, QList<int>>::key_iterator first;
@@ -543,8 +557,10 @@ void MainWindow::updateWindowTitle(int ahead, int behind) {
 
 QStringList MainWindow::paths() const {
   QStringList paths;
-  for (int i = 0; i < count(); ++i)
-    paths.append(view(i)->repo().dir(false).path());
+  for (int i = 0; i < count(); ++i) {
+    if (auto v = view(i))
+      paths.append(v->repo().dir(false).path());
+  }
   return paths;
 }
 

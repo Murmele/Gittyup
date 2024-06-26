@@ -17,6 +17,7 @@ class TabWidget : public QTabWidget {
 
 public:
   TabWidget(QWidget *parent = nullptr);
+  void addWelcomeTab();
 
 signals:
   void tabAboutToBeInserted();
