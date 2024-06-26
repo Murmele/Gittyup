@@ -165,8 +165,10 @@ public:
     connect(mFetch, &QCheckBox::toggled, this, [](bool checked) {
       Settings::instance()->setValue(Setting::Id::FetchAutomatically, checked);
       foreach (MainWindow *window, MainWindow::windows()) {
-        for (int i = 0; i < window->count(); ++i)
-          window->view(i)->startFetchTimer();
+        for (int i = 0; i < window->count(); ++i) {
+          if (auto v = window->view(i))
+            v->startFetchTimer();
+        }
       }
     });
 

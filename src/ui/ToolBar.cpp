@@ -103,48 +103,6 @@ public:
   QSize sizeHint() const override { return QSize(kButtonWidth, kButtonHeight); }
 };
 
-class SidebarButton : public Button {
-public:
-  enum Kind { Left, Right };
-
-  SidebarButton(Kind kind, QWidget *parent = nullptr)
-      : Button(parent), mKind(kind) {}
-
-  void paintEvent(QPaintEvent *event) {
-    Button::paintEvent(event);
-
-    QStyleOptionToolButton opt;
-    initStyleOption(&opt);
-
-    QColor color = opt.palette.buttonText().color();
-    QColor light = (isEnabled() && isActiveWindow()) ? color.lighter() : color;
-
-    QPainter painter(this);
-    painter.setPen(QPen(color, 1.0));
-    if (window()->windowHandle()->devicePixelRatio() > 1.0)
-      painter.setRenderHint(QPainter::Antialiasing);
-
-    qreal dx = 2.0;
-    qreal x = width() / 2.0;
-    qreal y = height() / 2.0;
-    if (mKind == Right)
-      dx = -dx; // invert
-
-    painter.drawRect(QRectF(x - 8, y - 7, 16, 13));
-    painter.drawLine(QLineF(x - dx, y - 7, x - dx, y + 6));
-
-    qreal dx2x = 2 * dx;
-    qreal dx3x = 3 * dx;
-    painter.setPen(QPen(light, 1.0));
-    painter.drawLine(QLineF(x - dx3x, y - 4, x - dx2x, y - 4));
-    painter.drawLine(QLineF(x - dx3x, y - 2, x - dx2x, y - 2));
-    painter.drawLine(QLineF(x - dx3x, y, x - dx2x, y));
-  }
-
-private:
-  Kind mKind;
-};
-
 class HistoryButton : public Button {
 public:
   enum Kind { Prev, Next };
@@ -732,14 +690,6 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
 
   addWidget(new Spacer(4, this));
 
-  SidebarButton *sidebarButton = new SidebarButton(SidebarButton::Left, this);
-  sidebarButton->setToolTip(tr("Show repository sidebar"));
-  addWidget(sidebarButton);
-  connect(sidebarButton, &QAbstractButton::clicked,
-          [parent] { parent->setSideBarVisible(!parent->isSideBarVisible()); });
-
-  addWidget(new Spacer(4, this));
-
   addWidget(new Spacer(4, this));
 
   SegmentedButton *historyButton = new SegmentedButton(this);
@@ -931,14 +881,6 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
 
   mSearchField = new SearchField(this);
   addWidget(mSearchField);
-
-#if 0
-  SidebarButton *searchButton = new SidebarButton(SidebarButton::Right, this);
-  addWidget(searchButton);
-  connect(searchButton, &SidebarButton::clicked, [] {
-    // ...
-  });
-#endif
 
   addWidget(new Spacer(4, this));
 
