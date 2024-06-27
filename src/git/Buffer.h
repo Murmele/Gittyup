@@ -10,8 +10,6 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "git2/buffer.h"
-
 namespace git {
 
 class Buffer {
@@ -21,7 +19,8 @@ public:
   bool isBinary() const;
 
 private:
-  git_buf d;
+  const char *data;
+  const int size;
 };
 
 } // namespace git
