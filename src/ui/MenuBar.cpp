@@ -502,7 +502,7 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
   mToggleMaximize = new StateAction(tr("Normal"), tr("Maximize"), viewMenu);
   viewMenu->addAction(mToggleMaximize);
   toggleMaximizeHotkey.use(mToggleMaximize);
-  mToggleMaximize->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_M));
+  mToggleMaximize->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_M));
   connect(mToggleMaximize, &QAction::triggered, [this] {
     bool maximize = mToggleMaximize->isActive();
     RepoView *view = this->view();

@@ -28,13 +28,13 @@ if(FLATPAK)
   qt_import_plugins(gittyup INCLUDE ${QT_PLUGINS})
 elseif(NOT USE_SYSTEM_QT)
   foreach(QT_PLUGIN ${QT_PLUGINS})
-    if(NOT TARGET Qt5::${QT_PLUGIN})
+    if(NOT TARGET Qt6::${QT_PLUGIN})
       if(UNIX OR APPLE)
         continue()
       endif()
     endif()
 
-    get_target_property(PLUGIN Qt5::${QT_PLUGIN} LOCATION_${CMAKE_BUILD_TYPE})
+    get_target_property(PLUGIN Qt6::${QT_PLUGIN} LOCATION_${CMAKE_BUILD_TYPE})
     get_filename_component(FILE_NAME ${PLUGIN} NAME)
     get_filename_component(DIR ${PLUGIN} DIRECTORY)
     get_filename_component(DIR_NAME ${DIR} NAME)
@@ -78,11 +78,16 @@ elseif(NOT USE_SYSTEM_QT)
 
   # Install Qt libraries.
   foreach(QT_MODULE ${QT_MODULES})
-    get_target_property(QT_LIBRARY Qt5::${QT_MODULE}
+    get_target_property(QT_LIBRARY Qt6::${QT_MODULE}
                         LOCATION_${CMAKE_BUILD_TYPE})
 
     if(APPLE)
       get_filename_component(QT_FRAMEWORK ${QT_LIBRARY} DIRECTORY)
+
+      # FIXME: QT_LIBRARY points directly to the library bin instead of the
+      # symlink 2 directories above (since qt6)
+      string(REGEX REPLACE "/Versions/.*" "" QT_FRAMEWORK "${QT_FRAMEWORK}")
+
       set(DEST_DIR ${CONTENTS_DIR}/Frameworks)
       install(
         DIRECTORY ${QT_FRAMEWORK}
@@ -102,7 +107,7 @@ elseif(NOT USE_SYSTEM_QT)
       else()
         # Strip minor and patch version extensions.
         get_filename_component(TARGET_NAME_WE ${QT_LIBRARY} NAME_WE)
-        set(TARGET_NAME ${TARGET_NAME_WE}.so.5)
+        set(TARGET_NAME ${TARGET_NAME_WE}.so.6)
       endif()
 
       install(
@@ -131,8 +136,8 @@ endif()
 
 # Install XcbQpa library.
 if(UNIX AND NOT APPLE)
-  set(LIB_NAME libQt5XcbQpa)
-  get_target_property(QT_CORE_LIBRARY Qt5::Core LOCATION)
+  set(LIB_NAME libQt6XcbQpa)
+  get_target_property(QT_CORE_LIBRARY Qt6::Core LOCATION)
   get_filename_component(LIB_PATH ${QT_CORE_LIBRARY} PATH)
   get_filename_component(LIB_EXT ${QT_CORE_LIBRARY} EXT)
 
@@ -148,7 +153,7 @@ if(UNIX AND NOT APPLE)
       WORLD_READ
       WORLD_EXECUTE
     COMPONENT ${GITTYUP_NAME}
-    RENAME ${LIB_NAME}.so.5)
+    RENAME ${LIB_NAME}.so.6)
 endif()
 
 # Install SSL libraries.
@@ -156,12 +161,12 @@ if(NOT APPLE)
   if(NOT USE_SYSTEM_OPENSSL)
     if(WIN32)
       if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(SSL_LIB_SUFFIX "-1_1-x64.dll")
+        set(SSL_LIB_SUFFIX "-3-x64.dll")
       else()
-        set(SSL_LIB_SUFFIX "-1_1.dll")
+        set(SSL_LIB_SUFFIX "-3.dll")
       endif()
     else()
-      set(SSL_LIB_SUFFIX ".so.1.1")
+      set(SSL_LIB_SUFFIX ".so.3")
     endif()
 
     foreach(SSL_LIB_NAME ssl crypto)

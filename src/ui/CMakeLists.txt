@@ -75,8 +75,8 @@ target_link_libraries(
   tools
   update
   watcher
-  Qt5::Concurrent
-  Qt5::Network
-  Qt5::Widgets)
+  Qt6::Concurrent
+  Qt6::Network
+  Qt6::Widgets)
 
 set_target_properties(ui PROPERTIES AUTOMOC ON)

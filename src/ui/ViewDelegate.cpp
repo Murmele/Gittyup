@@ -31,7 +31,7 @@ void ViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
     // Add extra space.
     opt.rect.adjust(leftAdjust, 0, rightAdjust, 0);
 
-    for (int i = 0; i < status.count(); ++i) {
+    for (int i = 0; i < status.size(); ++i) {
       int x = opt.rect.x() + opt.rect.width();
       int y = opt.rect.y() + (opt.rect.height() / 2);
       QRect rect(mMultiColumn ? opt.rect.x() : x - width, y - (height / 2),

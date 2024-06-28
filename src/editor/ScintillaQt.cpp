@@ -327,7 +327,9 @@ void ScintillaQt::keyPressEvent(QKeyEvent *event) {
 
     QString text = event->text();
     if (input && !text.isEmpty() && text[0].isPrint()) {
-      InsertCharacter(text.toStdString(), CharacterSource::directInput);
+      QByteArray utext = text.toUtf8();
+      InsertCharacter(std::string_view(utext.data(), utext.size()),
+                      CharacterSource::directInput);
     } else {
       event->ignore();
     }
@@ -430,7 +432,7 @@ void ScintillaQt::dragEnterEvent(QDragEnterEvent *event) {
   if (event->mimeData()->hasText()) {
     event->acceptProposedAction();
 
-    Point point = PointFromQPoint(event->pos());
+    Point point = PointFromQPoint(event->position().toPoint());
     SetDragPosition(
         SPositionFromLocation(point, false, false, UserVirtualSpace()));
   } else {
@@ -447,7 +449,7 @@ void ScintillaQt::dragMoveEvent(QDragMoveEvent *event) {
   if (event->mimeData()->hasText()) {
     event->acceptProposedAction();
 
-    Point point = PointFromQPoint(event->pos());
+    Point point = PointFromQPoint(event->position().toPoint());
     SetDragPosition(
         SPositionFromLocation(point, false, false, UserVirtualSpace()));
   } else {
@@ -460,7 +462,7 @@ void ScintillaQt::dropEvent(QDropEvent *event) {
     event->acceptProposedAction();
 
     const QMimeData *data = event->mimeData();
-    Point point = PointFromQPoint(event->pos());
+    Point point = PointFromQPoint(event->position().toPoint());
     bool move =
         (event->source() == this && event->proposedAction() == Qt::MoveAction);
 
@@ -520,8 +522,9 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
       const unsigned int ucWidth = commitStr.at(i).isHighSurrogate() ? 2 : 1;
       const QString oneCharUTF16 = commitStr.mid(i, ucWidth);
       const QByteArray oneChar = oneCharUTF16.toUtf8();
-
-      InsertCharacter(oneChar.toStdString(), CharacterSource::directInput);
+      const int oneCharLen = oneChar.length();
+      InsertCharacter(std::string_view(oneChar.data(), oneCharLen),
+                      CharacterSource::directInput);
       i += ucWidth;
     }
 
@@ -604,7 +607,8 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
       numBytes += oneCharLen;
       imeCharPos[i + 1] = numBytes;
 
-      InsertCharacter(oneChar.toStdString(), CharacterSource::directInput);
+      InsertCharacter(std::string_view(oneChar.data(), oneCharLen),
+                      CharacterSource::directInput);
 
 #ifdef Q_OS_LINUX
       // Segment marked with imeCaretPos is for target input.
@@ -628,7 +632,7 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
       MoveImeCarets(-imeCharPos[preeditStrLen] + imeCharPos[imeCaretPos]);
     }
 
-    // Set candidate box position for Qt::ImMicroFocus.
+    // Set candidate box position for Qt::ImCursorRectangle.
     preeditPos = CurrentPosition();
     EnsureCaretVisible();
     updateMicroFocus();
@@ -704,6 +708,7 @@ QVariant ScintillaQt::inputMethodQuery(Qt::InputMethodQuery query) const {
     case Qt::ImPlatformData:           // fall through
     case Qt::ImQueryInput:             // fall through
     case Qt::ImQueryAll:               // fall through
+    case Qt::ImReadOnly:               // fall through
       break;
   }
   return QVariant();
@@ -1021,7 +1026,7 @@ bool ScintillaQt::SetIdle(bool on) {
       idler.state = false;
       QTimer *timer = static_cast<QTimer *>(idler.idlerID);
       timer->stop();
-      disconnect(timer, &QTimer::timeout, 0, 0);
+      disconnect(timer, &QTimer::timeout, nullptr, nullptr);
       delete timer;
       idler.idlerID = nullptr;
     }

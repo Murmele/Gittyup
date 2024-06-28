@@ -26,6 +26,7 @@ struct AmendInfo {
 };
 
 class AmendDialog : public QDialog {
+  Q_OBJECT
 public:
   AmendDialog(const git::Signature &author, const git::Signature &committer,
               const QString &commitMessage, QWidget *parent = nullptr);

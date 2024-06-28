@@ -22,6 +22,8 @@
 #include <QSettings>
 #include <QtConcurrent>
 
+#include <stdexcept>
+
 namespace {
 
 const QString kLogKey = "debug/indexer";

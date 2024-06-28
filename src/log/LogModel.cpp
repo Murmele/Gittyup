@@ -11,6 +11,7 @@
 #include "LogEntry.h"
 #include <QLocale>
 #include <QStyle>
+#include <QLocale>
 
 namespace {
 

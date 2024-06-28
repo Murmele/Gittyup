@@ -46,6 +46,6 @@ target_link_libraries(
   cred
   host
   index
-  Qt5::Widgets)
+  Qt6::Widgets)
 
 set_target_properties(dialogs PROPERTIES AUTOMOC ON)

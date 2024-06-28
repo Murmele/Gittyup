@@ -7,8 +7,8 @@ target_link_libraries(
   git
   lpeg
   lua
-  Qt5::Core
-  Qt5::Concurrent)
+  Qt6::Core
+  Qt6::Concurrent)
 
 set_target_properties(index PROPERTIES AUTOMOC ON)
 
@@ -16,7 +16,7 @@ add_executable(lexer_test lexer_test.cpp)
 target_link_libraries(lexer_test index)
 
 add_executable(index_test index_test.cpp)
-target_link_libraries(index_test index Qt5::Widgets)
+target_link_libraries(index_test index Qt6::Widgets)
 
 add_executable(indexer indexer.cpp)
 target_link_libraries(indexer index)

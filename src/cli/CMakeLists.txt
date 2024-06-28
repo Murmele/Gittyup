@@ -7,4 +7,4 @@ endif()
 
 add_library(cli Installer.cpp ${INSTALLER_IMPL_FILE})
 
-target_link_libraries(cli Qt5::Core ${INSTALLER_IMPL_LIBS})
+target_link_libraries(cli Qt6::Core ${INSTALLER_IMPL_LIBS})

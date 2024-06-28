@@ -1,7 +1,7 @@
 add_library(conf ConfFile.cpp Settings.cpp Setting.cpp RecentRepositories.cpp
                  RecentRepository.cpp)
 
-target_link_libraries(conf lua Qt5::Core util translation)
+target_link_libraries(conf lua Qt6::Core util translation)
 
 # SRC_ definitions point to the source directly
 target_compile_definitions(
