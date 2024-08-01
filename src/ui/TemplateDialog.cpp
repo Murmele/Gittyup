@@ -53,6 +53,17 @@ TemplateDialog::TemplateDialog(QList<TemplateButton::Template> &templates,
                                  .arg(TemplateButton::cursorPositionString),
                              this));
   vBox->addWidget(
+      new QLabel(tr("use ${author} to add the author of the commit"), this));
+
+  vBox->addWidget(
+      new QLabel(tr("use ${branch} to add the name of the branch."), this));
+
+  vBox->addWidget(new QLabel(
+      tr("use ${branch:x} to add part of the name of the branch.,\nx (regex)"
+         "determines the regular expression used to extract the desired part"),
+      this));
+
+  vBox->addWidget(
       new QLabel(tr("use ${files:x} to add all updated file names,\nx (number) "
                     "determines the number of maximum files shown"),
                  this));
