@@ -8,8 +8,10 @@
 //
 
 #include "CommitToolBar.h"
+#include "CommitList.h"
 #include "ContextMenuButton.h"
 #include "RepoView.h"
+#include "ConfigKeys.h"
 #include "conf/Settings.h"
 #include "git/Config.h"
 #include <QApplication>
@@ -22,10 +24,6 @@
 
 namespace {
 
-const QString kRefsKey = "commit.refs.all";
-const QString kSortKey = "commit.sort.date";
-const QString kGraphKey = "commit.graph.visible";
-const QString kStatusKey = "commit.show.status";
 const QString kStyleSheet = "QToolBar {"
                             "  border: none"
                             "}"
@@ -34,17 +32,16 @@ const QString kStyleSheet = "QToolBar {"
                             "  border-radius: 4px;"
                             "  padding-right: 12px"
                             "}";
-
-struct SettingsEntry {
+template <typename T> struct SettingsEntry {
   QString key;
-  bool value;
+  T value;
 };
 
-using SettingsMap = QMap<QString, SettingsEntry>;
+template <typename T> using SettingsMap = QMap<QString, SettingsEntry<T>>;
 
-class ToolButton : public QToolButton {
+template <typename T> class ToolButton : public QToolButton {
 public:
-  ToolButton(const SettingsMap &map, CommitToolBar *parent)
+  ToolButton(const SettingsMap<T> &map, CommitToolBar *parent, T defaultValue)
       : QToolButton(parent) {
     setPopupMode(QToolButton::InstantPopup);
 
@@ -58,8 +55,8 @@ public:
       action->setCheckable(true);
       actions->addAction(action);
 
-      const SettingsEntry &entry = map.value(key);
-      if (config.value<bool>(entry.key, true) == entry.value) {
+      const SettingsEntry<T> &entry = map.value(key);
+      if (config.value<T>(entry.key, defaultValue) == entry.value) {
         action->setChecked(true);
         setText(action->text());
       }
@@ -119,15 +116,22 @@ CommitToolBar::CommitToolBar(QWidget *parent) : QToolBar(parent) {
   setStyleSheet(kStyleSheet);
   setToolButtonStyle(Qt::ToolButtonTextOnly);
 
-  SettingsMap refsMap;
-  refsMap.insert(tr("Show All Branches"), {kRefsKey, true});
-  refsMap.insert(tr("Show Selected Branch"), {kRefsKey, false});
-  addWidget(new ToolButton(refsMap, this));
+  SettingsMap<int> refsMap;
+  refsMap.insert(tr("Show All Branches"),
+                 {ConfigKeys::kRefsKey, (int)CommitList::RefsFilter::AllRefs});
+  refsMap.insert(
+      tr("Show Selected Branch"),
+      {ConfigKeys::kRefsKey, (int)CommitList::RefsFilter::SelectedRef});
+  refsMap.insert(tr("Show Selected Branch, First Parent Only"),
+                 {ConfigKeys::kRefsKey,
+                  (int)CommitList::RefsFilter::SelectedRefIgnoreMerge});
+  addWidget(
+      new ToolButton<int>(refsMap, this, (int)CommitList::RefsFilter::AllRefs));
 
-  SettingsMap sortMap;
-  sortMap.insert(tr("Sort by Date"), {kSortKey, true});
-  sortMap.insert(tr("Sort Topologically"), {kSortKey, false});
-  addWidget(new ToolButton(sortMap, this));
+  SettingsMap<bool> sortMap;
+  sortMap.insert(tr("Sort by Date"), {ConfigKeys::kSortKey, true});
+  sortMap.insert(tr("Sort Topologically"), {ConfigKeys::kSortKey, false});
+  addWidget(new ToolButton(sortMap, this, true));
 
   QWidget *spacer = new QWidget(this);
   spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -145,20 +149,20 @@ CommitToolBar::CommitToolBar(QWidget *parent) : QToolBar(parent) {
 
   QAction *graph = menu->addAction(tr("Show Graph"));
   graph->setCheckable(true);
-  graph->setChecked(config.value<bool>(kGraphKey, true));
+  graph->setChecked(config.value<bool>(ConfigKeys::kGraphKey, true));
   connect(graph, &QAction::triggered, [this](bool checked) {
     RepoView *view = RepoView::parentView(this);
     git::Config config = view->repo().appConfig();
-    config.setValue(kGraphKey, checked);
+    config.setValue(ConfigKeys::kGraphKey, checked);
     emit settingsChanged();
   });
 
   QAction *status = menu->addAction(tr("Show Clean Status"));
   status->setCheckable(true);
-  status->setChecked(config.value<bool>(kStatusKey, true));
+  status->setChecked(config.value<bool>(ConfigKeys::kStatusKey, true));
   connect(status, &QAction::triggered, [this](bool checked) {
     RepoView *view = RepoView::parentView(this);
-    view->repo().appConfig().setValue(kStatusKey, checked);
+    view->repo().appConfig().setValue(ConfigKeys::kStatusKey, checked);
     emit settingsChanged();
   });
 

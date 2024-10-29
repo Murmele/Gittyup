@@ -25,6 +25,11 @@ class CommitList : public QListView {
 
 public:
   enum Role { DiffRole = Qt::UserRole, CommitRole, GraphRole, GraphColorRole };
+  enum class RefsFilter {
+    AllRefs,
+    SelectedRef,
+    SelectedRefIgnoreMerge,
+  };
 
   CommitList(Index *index, QWidget *parent = nullptr);
 

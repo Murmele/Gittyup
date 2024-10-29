@@ -9,6 +9,7 @@
 
 #include "ReferenceWidget.h"
 #include "ExpandButton.h"
+#include "ConfigKeys.h"
 #include "git/Config.h"
 #include "git/Reference.h"
 #include "git/Repository.h"
@@ -88,7 +89,7 @@ public:
                        QItemSelectionModel::SelectionFlags command) override {
     QModelIndex current = index;
     git::Reference head = mRepo.head();
-    bool all = mRepo.appConfig().value<bool>("commit.refs.all", true);
+    bool all = mRepo.appConfig().value<bool>(ConfigKeys::kRefsKey, true);
     git::Reference ref = index.data(Qt::UserRole).value<git::Reference>();
     if (all && ref && !ref.isHead() && !ref.isStash() && head.isValid())
       current = findReference(model(), head);
@@ -201,7 +202,7 @@ void ReferenceWidget::updateLabel(const git::Reference &ref) {
 
 git::Reference ReferenceWidget::currentReference() const {
   git::Reference ref = mView->currentReference();
-  bool all = mRepo.appConfig().value<bool>("commit.refs.all", true);
+  bool all = mRepo.appConfig().value<bool>(ConfigKeys::kRefsKey, true);
   return (!all || (ref.isValid() && ref.isStash())) ? ref : mRepo.head();
 }
 

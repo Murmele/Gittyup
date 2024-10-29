@@ -56,7 +56,7 @@ public:
   QList<Reference> refs() const;
 
   // Create a walker starting from this commit.
-  RevWalk walker(int sort = GIT_SORT_NONE) const;
+  RevWalk walker(int sort = GIT_SORT_NONE, bool firstCommitOnly = false) const;
 
   // Calculate difference in commits between this and the given commit.
   // Commits that have diverged calculate the distance to a common base.
