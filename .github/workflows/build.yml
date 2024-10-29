@@ -108,7 +108,7 @@ jobs:
         branch: ${{ steps.flatpak_release_branch.outputs.value }}
 
     - name: Publish build artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         path: Gittyup.flatpak
         name: GittyupFlatpak
@@ -303,14 +303,14 @@ jobs:
 
       - name: Publish build artifacts
         if: matrix.env.pack && !matrix.qt.check_only
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: build/release/pack/Gittyup-*
           name: Gittyup ${{ matrix.env.name }}
 
       - name: Publish version file
         if: matrix.env.pack && !matrix.qt.check_only
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: build/release/Version.txt
           name: Gittyup-VERSION
@@ -366,7 +366,7 @@ jobs:
 
       - name: Publish Appimage
         if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: build/release/*.AppImage
           name: GittyupAppImage
