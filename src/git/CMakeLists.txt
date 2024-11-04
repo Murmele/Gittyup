@@ -27,6 +27,9 @@ add_library(
   TagRef.cpp
   Tree.cpp)
 
-target_link_libraries(git git2 Qt5::Core Qt5::Network util)
+# we need both libgit2package and libgit2 otherwise we can't find the header
+# files
+target_link_libraries(git libgit2package libgit2 gittyupUtil Qt5::Core
+                      Qt5::Network)
 
 set_target_properties(git PROPERTIES AUTOMOC ON)

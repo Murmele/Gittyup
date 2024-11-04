@@ -106,7 +106,8 @@ void ReferenceModel::update() {
     // Add bottom references.
     const bool stashOnCommit =
         !mCommit.isValid() ||
-        mRepo.stashRef().annotatedCommit().commit() == mCommit;
+        (mRepo.stashRef().isValid() &&
+         mRepo.stashRef().annotatedCommit().commit() == mCommit);
     if ((mKinds & ReferenceView::Stash) && stashOnCommit) {
       if (git::Reference stash = mRepo.stashRef())
         branches.append(stash);
@@ -180,8 +181,9 @@ QModelIndex ReferenceModel::firstBranch() {
         // use the first valid ref after the invalid ref but only
         // it is not the stash
         if (ref.refs.count() > 1 &&
-            ref.refs.at(1).annotatedCommit().commit() !=
-                mRepo.stashRef().annotatedCommit().commit())
+            (!mRepo.stashRef().isValid() ||
+             ref.refs.at(1).annotatedCommit().commit() !=
+                 mRepo.stashRef().annotatedCommit().commit()))
           return createIndex(1, 0, ReferenceType::Branches);
       } else if (ref.refs.count() > 0)
         return createIndex(0, 0, ReferenceType::Branches);

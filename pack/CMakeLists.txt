@@ -156,12 +156,12 @@ if(NOT APPLE)
   if(NOT USE_SYSTEM_OPENSSL)
     if(WIN32)
       if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(SSL_LIB_SUFFIX "-1_1-x64.dll")
+        set(SSL_LIB_SUFFIX "-3_4-x64.dll")
       else()
-        set(SSL_LIB_SUFFIX "-1_1.dll")
+        set(SSL_LIB_SUFFIX "-3_4.dll")
       endif()
     else()
-      set(SSL_LIB_SUFFIX ".so.1.1")
+      set(SSL_LIB_SUFFIX ".so.3.4")
     endif()
 
     foreach(SSL_LIB_NAME ssl crypto)
@@ -183,7 +183,6 @@ if(NOT APPLE)
           WORLD_READ
           WORLD_EXECUTE
         COMPONENT ${GITTYUP_NAME}
-        OPTIONAL # if we use the system libssh, we have not built openssl
       )
     endforeach()
   endif()
