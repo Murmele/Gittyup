@@ -139,7 +139,7 @@ jobs:
             cmake_env: {}
 
           - name: macos
-            os: macos-12
+            os: macos-13
             ninja_platform: mac
             qt_platform: mac
             openssl_arch: darwin64-x86_64-cc
