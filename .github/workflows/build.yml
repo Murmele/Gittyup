@@ -143,7 +143,7 @@ jobs:
             ninja_platform: mac
             qt_platform: mac
             openssl_arch: darwin64-x86_64-cc
-            cmake_flags: "-DUSE_SSH:STRING=localbuild"
+            cmake_flags: "-DUSE_SYSTEM_OPENSSL=ON -DUSE_SSH:STRING=localbuild"
             cmake_env: {}
             pack: 1
 
@@ -234,25 +234,6 @@ jobs:
       - name: Install NASM
         if: matrix.env.ninja_platform == 'win'
         uses: ilammy/setup-nasm@v1.2.0
-
-      #- name: Build OpenSSL (Linux)
-      #  if: matrix.env.ninja_platform == 'linux'
-      #  run: |
-      #    cd dep/openssl/openssl
-      #    ./config -fPIC
-      #    make
-
-      - name: Build OpenSSL (macOS)
-        if: matrix.env.ninja_platform == 'mac'
-        run: |
-          cd dep/openssl/openssl
-
-          # this is necessary until https://github.com/openssl/openssl/issues/18720
-          # is fixed in OpenSSL 1.1.1r
-          export CFLAGS=-Wno-error=implicit-function-declaration
-
-          ./Configure ${{ matrix.env.openssl_arch }} no-shared
-          make
 
       - name: Build OpenSSL (Windows)
         if: matrix.env.ninja_platform == 'win'
