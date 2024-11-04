@@ -384,7 +384,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/master' || (github.event_name == 'push' && github.ref_type == 'tag' && startswith(github.ref_name, 'gittyup_v'))  }}
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
     
