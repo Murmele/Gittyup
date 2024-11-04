@@ -308,8 +308,9 @@ jobs:
           path: build/release/pack/Gittyup-*
           name: Gittyup ${{ matrix.env.name }}
 
+      # Publish only once!
       - name: Publish version file
-        if: matrix.env.pack && !matrix.qt.check_only
+        if: matrix.env.pack && !matrix.qt.check_only && matrix.env.name == 'win64'
         uses: actions/upload-artifact@v4
         with:
           path: build/release/Version.txt
