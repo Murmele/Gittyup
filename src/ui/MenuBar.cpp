@@ -56,7 +56,8 @@ void openCloneDialog(CloneDialog::Kind kind) {
   QObject::connect(dialog, &CloneDialog::accepted, [dialog] {
     if (MainWindow *window = MainWindow::open(dialog->path())) {
       RepoView *view = window->currentView();
-      view->addLogEntry(dialog->message(), dialog->messageTitle());
+      if (view)
+        view->addLogEntry(dialog->message(), dialog->messageTitle());
     }
   });
 
@@ -322,8 +323,9 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
       return;
 
     if (MainWindow *win = qobject_cast<MainWindow *>(window)) {
-      if (win->count() > 0) {
-        win->currentView()->close();
+      if (win->count() > 1) {
+        if (auto c = win->currentView())
+          c->close();
         return;
       }
     }
@@ -439,7 +441,8 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
   connect(mFind, &QAction::triggered, [] {
     QWidget *widget = QApplication::activeWindow();
     if (MainWindow *window = qobject_cast<MainWindow *>(widget)) {
-      window->currentView()->find();
+      if (auto c = window->currentView())
+        c->find();
     } else if (EditorWindow *window = qobject_cast<EditorWindow *>(widget)) {
       window->widget()->find();
     }
@@ -450,7 +453,8 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
   connect(mFindNext, &QAction::triggered, [] {
     QWidget *widget = QApplication::activeWindow();
     if (MainWindow *window = qobject_cast<MainWindow *>(widget)) {
-      window->currentView()->findNext();
+      if (auto c = window->currentView())
+        c->findNext();
     } else if (EditorWindow *window = qobject_cast<EditorWindow *>(widget)) {
       window->widget()->findNext();
     }
@@ -461,7 +465,8 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
   connect(mFindPrevious, &QAction::triggered, [] {
     QWidget *widget = QApplication::activeWindow();
     if (MainWindow *window = qobject_cast<MainWindow *>(widget)) {
-      window->currentView()->findPrevious();
+      if (auto c = window->currentView())
+        c->findPrevious();
     } else if (EditorWindow *window = qobject_cast<EditorWindow *>(widget)) {
       window->widget()->findPrevious();
     }
@@ -753,10 +758,12 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
       return;
 
     RepoView *view = win->currentView();
-    foreach (const git::Submodule &submodule, view->repo().submodules()) {
-      QAction *action = mOpenSubmodule->addAction(submodule.name());
-      connect(action, &QAction::triggered,
-              [view, submodule] { view->openSubmodule(submodule); });
+    if (view) {
+      foreach (const git::Submodule &submodule, view->repo().submodules()) {
+        QAction *action = mOpenSubmodule->addAction(submodule.name());
+        connect(action, &QAction::triggered,
+                [view, submodule] { view->openSubmodule(submodule); });
+      }
     }
   });
 
@@ -893,13 +900,14 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
     QAction *diffs = debug->addAction(tr("Load All Diffs"));
     connect(diffs, &QAction::triggered, [this] {
       if (MainWindow *win = qobject_cast<MainWindow *>(window())) {
-        RepoView *view = win->currentView();
-        CommitList *commits = view->commitList();
-        QAbstractItemModel *model = commits->model();
-        for (int i = 0; i < model->rowCount(); ++i) {
-          commits->setCurrentIndex(model->index(i, 0));
-          view->find(); // Force editors to load.
-          QCoreApplication::processEvents();
+        if (RepoView *view = win->currentView()) {
+          CommitList *commits = view->commitList();
+          QAbstractItemModel *model = commits->model();
+          for (int i = 0; i < model->rowCount(); ++i) {
+            commits->setCurrentIndex(model->index(i, 0));
+            view->find(); // Force editors to load.
+            QCoreApplication::processEvents();
+          }
         }
       }
     });
@@ -907,9 +915,11 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
     QAction *walk = debug->addAction(tr("Walk Commits"));
     connect(walk, &QAction::triggered, [this] {
       if (MainWindow *win = qobject_cast<MainWindow *>(window())) {
-        git::RevWalk walker = win->currentView()->repo().walker();
-        while (git::Commit commit = walker.next())
-          (void)commit;
+        if (auto c = win->currentView()) {
+          git::RevWalk walker = c->repo().walker();
+          while (git::Commit commit = walker.next())
+            (void)commit;
+        }
       }
     });
   }
@@ -1132,8 +1142,9 @@ void MenuBar::updateHistory() {
 
 void MenuBar::updateWindow() {
   MainWindow *win = qobject_cast<MainWindow *>(window());
-  mPrevTab->setEnabled(win && win->count() > 1);
-  mNextTab->setEnabled(win && win->count() > 1);
+  // First tab is the welcome tab
+  mPrevTab->setEnabled(win && win->count() > 2);
+  mNextTab->setEnabled(win && win->count() > 2);
 }
 
 QWidget *MenuBar::window() const {
@@ -1150,7 +1161,10 @@ QList<RepoView *> MenuBar::views() const {
 
   QList<RepoView *> repos;
   for (int i = 0; i < win->count(); i++) {
-    repos.append(win->view(i));
+    auto* view = win->view(i);
+    if (view) {
+      repos.append(view);
+    }
   }
   return repos;
 }

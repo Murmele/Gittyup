@@ -39,8 +39,10 @@ DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
   connect(context, contextSignal, [this](int value) {
     mConfig.setValue("diff.context", value);
     foreach (MainWindow *window, MainWindow::windows()) {
-      for (int i = 0; i < window->count(); ++i)
-        window->view(i)->refresh();
+      for (int i = 0; i < window->count(); ++i) {
+        if (auto v = window->view(i))
+          v->refresh();
+      }
     }
   });
 
@@ -64,8 +66,10 @@ DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
     }
 
     foreach (MainWindow *window, MainWindow::windows()) {
-      for (int i = 0; i < window->count(); ++i)
-        window->view(i)->refresh();
+      for (int i = 0; i < window->count(); ++i) {
+        if (auto v = window->view(i))
+          v->refresh();
+      }
     }
   });
 
