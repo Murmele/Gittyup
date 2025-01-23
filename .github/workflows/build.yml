@@ -65,18 +65,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Clone flatpak manifest from Flathub
-      uses: GuillaumeFalourd/clone-github-repo-action@v2
-      with:
-        owner: 'flathub'
-        repository: 'com.github.Murmele.Gittyup'
-
-    # just until the new release is out
-    - name: Checkout restructureCMake
-      run: |
-        cd com.github.Murmele.Gittyup
-        git checkout Qt6
-
     - name: Replace git tag by the commit id on which it runs
       if: github.ref_type != 'tag'
       run: >
