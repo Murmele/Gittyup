@@ -4,8 +4,8 @@ Gittyup is a graphical Git client designed to help you understand and manage you
 
 Stable versions for different packages are available for
 - Flatpak for Linux [![Flathub](https://img.shields.io/badge/Flathub-gray?logo=Flathub&logoColor=23FBB04)](https://flathub.org/apps/details/com.github.Murmele.Gittyup)
-- [32 / 64 binary for Windows](https://github.com/Murmele/Gittyup/releases/stable) or
-- [macOS](https://github.com/Murmele/Gittyup/releases/stable) or from [![homebrew](https://img.shields.io/badge/Homebrew-gray?logo=Homebrew&logoColor=%23FBB040)](https://formulae.brew.sh/cask/gittyup)
+- [32 / 64 binary for Windows](https://github.com/Murmele/Gittyup/releases/latest) or
+- [macOS](https://github.com/Murmele/Gittyup/releases/latest) or from [![homebrew](https://img.shields.io/badge/Homebrew-gray?logo=Homebrew&logoColor=%23FBB040)](https://formulae.brew.sh/cask/gittyup)
 
 The [latest development version](https://github.com/Murmele/Gittyup/releases/tag/development) is available either as pre-built for
 - flatpak for Linux,

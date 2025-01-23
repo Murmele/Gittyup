@@ -108,7 +108,7 @@ jobs:
         branch: ${{ steps.flatpak_release_branch.outputs.value }}
 
     - name: Publish build artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         path: Gittyup.flatpak
         name: GittyupFlatpak
@@ -135,7 +135,7 @@ jobs:
             cmake_env: {}
 
           - name: macos
-            os: macos-12
+            os: macos-13
             ninja_platform: mac
             qt_platform: mac
             openssl_arch: darwin64-x86_64-cc
@@ -265,14 +265,15 @@ jobs:
 
       - name: Publish build artifacts
         if: matrix.env.pack
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: build/release/pack/Gittyup-*
           name: Gittyup ${{ matrix.env.name }}
 
+      # Publish only once!
       - name: Publish version file
         if: matrix.env.pack
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: build/release/Version.txt
           name: Gittyup-VERSION
@@ -335,7 +336,7 @@ jobs:
 
       - name: Publish Appimage
         if: matrix.env.ninja_platform == 'linux'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: build/release/*.AppImage
           name: GittyupAppImage
@@ -352,7 +353,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/master' || (github.event_name == 'push' && github.ref_type == 'tag' && startswith(github.ref_name, 'gittyup_v'))  }}
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
     
