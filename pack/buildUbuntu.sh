@@ -1,14 +1,9 @@
-sudo apt install build-essential libgl1-mesa-dev
-sudo apt install cmake
-sudo apt install libgit2-dev
-sudo apt install cmark
-sudo apt install git
-sudo apt install libssh2-1-dev
-sudo apt install openssl
-sudo apt install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
-sudo apt install qttools5-dev
-sudo apt install ninja-build
-cd ../../..
+#!/bin/bash
+
+sudo apt update
+sudo apt install -y build-essential libgl1-mesa-dev cmake libgit2-dev cmark git \
+                    libssh2-1-dev openssl qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools qttools5-dev ninja-build
+cd ..
 git fetch
 git submodule init
 git submodule update
@@ -17,10 +12,8 @@ git checkout deps
 cd dep/openssl/openssl/
 ./config -fPIC
 make
-cd 
+cd -
 mkdir -vp build/release
 cd build/release
 cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ../..
 ninja
-
-
