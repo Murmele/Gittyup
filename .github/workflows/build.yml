@@ -120,7 +120,7 @@ jobs:
       fail-fast: false
       matrix:
         qt:
-          - version: 6.8.1
+          - version: 6.8.0
 
         env:
           - name: linux
