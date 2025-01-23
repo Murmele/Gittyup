@@ -75,6 +75,7 @@ target_link_libraries(
   tools
   update
   watcher
+  ${LIBSSH2_LIBRARIES}
   Qt5::Concurrent
   Qt5::Network
   Qt5::Widgets)
