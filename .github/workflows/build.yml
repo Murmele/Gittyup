@@ -308,6 +308,7 @@ jobs:
           DESTDIR=AppDir ninja install
 
           export QTDIR=$RUNNER_WORKSPACE/Qt/${{ matrix.qt.version }}/${{ matrix.env.qt_arch }}
+          export QT_ROOT_DIR=$QTDIR
 
           rm -rf ./AppDir/usr/include/
           strip ./AppDir/usr/bin/cmark ./AppDir/usr/bin/gittyup ./AppDir/usr/bin/indexer ./AppDir/usr/bin/relauncher
