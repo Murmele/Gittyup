@@ -72,6 +72,10 @@ set(LUA_MODULES_PATH
       "Path to the directory with native Lua modules (only relevant if system-wide Lua installation is used)"
 )
 
+if (NOT USE_SYSTEM_LIBSSH2)
+  set(USE_SSH "localbuild")
+endif()
+
 # Require C++17.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
