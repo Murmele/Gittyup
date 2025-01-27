@@ -146,7 +146,7 @@ jobs:
             os: windows-latest
             ninja_platform: win
             qt_platform: windows
-            qt_arch: win64_msvc2022_64
+            qt_arch: win64_msvc2019_64
             openssl_arch: VC-WIN64A
             msvc_arch: x64
             cmake_flags: "-DUSE_BUNDLED_ZLIB=1"
