@@ -271,7 +271,7 @@ jobs:
 
       # Publish only once!
       - name: Publish version file
-        if: matrix.env.pack
+        if: matrix.env.ninja_platform == 'linux'
         uses: actions/upload-artifact@v4
         with:
           path: build/release/Version.txt
