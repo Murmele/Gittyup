@@ -130,7 +130,7 @@ jobs:
             qt_arch: gcc_64
             openssl_arch: linux-x86_64
             ld_library_arch: linux-x86-64
-            cmake_flags: "-DGENERATE_APPDATA=ON -DCMAKE_INSTALL_PREFIX=/usr -DUSE_SYSTEM_QT=ON -DENABLE_UPDATE_OVER_GUI=OFF"
+            cmake_flags: "-DGENERATE_APPDATA=ON -DCMAKE_INSTALL_PREFIX=/usr -DUSE_SYSTEM_QT=ON -DENABLE_UPDATE_OVER_GUI=OFF -DUSE_SSH=ON -DUSE_SYSTEM_LIBSSH2=ON -DUSE_SYSTEM_OPENSSL=ON"
             pack: 0
             cmake_env: {}
 
@@ -139,6 +139,7 @@ jobs:
             ninja_platform: mac
             qt_platform: mac
             openssl_arch: darwin64-x86_64-cc
+            cmake_flags: "-DUSE_SYSTEM_OPENSSL=ON -DUSE_SSH:STRING=localbuild"
             cmake_env: {}
             pack: 1
 
@@ -149,7 +150,7 @@ jobs:
             qt_arch: win64_msvc2019_64
             openssl_arch: VC-WIN64A
             msvc_arch: x64
-            cmake_flags: "-DUSE_BUNDLED_ZLIB=1"
+            cmake_flags: "-DUSE_BUNDLED_ZLIB=1 -DUSE_SSH:STRING=localbuild"
             cmake_env:
               CMAKE_RC_FLAGS: "/C 1252"
               CC: clang
@@ -181,6 +182,13 @@ jobs:
         with:
           perl-version: '5.30'
 
+      - name: Install Libssh2
+        if: matrix.env.ninja_platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libssh2-1
+          sudo apt-get -y install libssh2-1-dev
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         timeout-minutes: 10
@@ -208,21 +216,6 @@ jobs:
       - name: Install NASM
         if: matrix.env.ninja_platform == 'win'
         uses: ilammy/setup-nasm@v1.2.0
-
-      - name: Build OpenSSL (Linux)
-        if: matrix.env.ninja_platform == 'linux'
-        run: |
-          cd dep/openssl/openssl
-          ./config -fPIC
-          make
-
-      - name: Build OpenSSL (macOS)
-        if: matrix.env.ninja_platform == 'mac'
-        run: |
-          cd dep/openssl/openssl
-
-          ./Configure ${{ matrix.env.openssl_arch }} no-shared
-          make
 
       - name: Build OpenSSL (Windows)
         if: matrix.env.ninja_platform == 'win'
