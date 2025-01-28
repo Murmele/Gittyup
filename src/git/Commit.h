@@ -15,6 +15,7 @@
 #include "git2/revwalk.h"
 #include "git2/reset.h"
 #include "Blob.h"
+#include <QStringList>
 
 class QDateTime;
 

@@ -40,7 +40,8 @@ public:
   FilterProxyModel(QObject *parent = nullptr) : QSortFilterProxyModel(parent) {}
 
   void setFilter(const QString &filter) {
-    setFilterRegExp(QRegExp(filter, Qt::CaseInsensitive, QRegExp::FixedString));
+    setFilterCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
+    setFilterFixedString(filter);
   }
 
 protected:

@@ -28,9 +28,9 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/languages.cpp.inc"
 
 if(UPDATE_TRANSLATIONS)
   # FIXME: Clean removes the .ts files.
-  qt5_create_translation(QM_FILES ${SOURCE_FILES} ${TS_FILES})
+  qt6_create_translation(QM_FILES ${SOURCE_FILES} ${TS_FILES})
 else()
-  qt5_add_translation(QM_FILES ${TS_FILES})
+  qt6_add_translation(QM_FILES ${TS_FILES})
 endif()
 
 add_custom_target(translations DEPENDS ${QM_FILES})
@@ -38,7 +38,7 @@ add_dependencies(gittyup translations)
 
 add_library(translation ${LANGUAGE_SOURCE_FILE})
 target_include_directories(translation PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(translation Qt5::Core)
+target_link_libraries(translation Qt6::Core)
 
 # install language files
 

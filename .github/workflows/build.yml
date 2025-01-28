@@ -120,11 +120,7 @@ jobs:
       fail-fast: false
       matrix:
         qt:
-          - version: 5.15.2
-            check_only: false
-
-          - version: 5.12.0
-            check_only: true
+          - version: 6.6.0
 
         env:
           - name: linux
@@ -151,7 +147,6 @@ jobs:
             ninja_platform: win
             qt_platform: windows
             qt_arch: win64_msvc2019_64
-            qt_arch_check_only: win64_msvc2017_64
             openssl_arch: VC-WIN64A
             msvc_arch: x64
             cmake_flags: "-DUSE_BUNDLED_ZLIB=1"
@@ -159,23 +154,6 @@ jobs:
               CMAKE_RC_FLAGS: "/C 1252"
               CC: clang
               CXX: clang++
-            pack: 1
-
-          - name: win32
-            os: windows-latest
-            ninja_platform: win
-            qt_platform: windows
-            qt_arch: win32_msvc2019
-            qt_arch_check_only: win32_msvc2017
-            openssl_arch: VC-WIN32
-            msvc_arch: x86
-            cmake_flags: "-DUSE_BUNDLED_ZLIB=1"
-            cmake_env:
-              CMAKE_RC_FLAGS: "/C 1252"
-              CC: clang
-              CXX: clang++
-              CMAKE_C_FLAGS: -m32
-              CMAKE_CXX_FLAGS: -m32
             pack: 1
 
     steps:
@@ -204,26 +182,13 @@ jobs:
           perl-version: '5.30'
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v3.3.0
+        uses: jurplel/install-qt-action@v4
         timeout-minutes: 10
-        if: "!matrix.qt.check_only"
         with:
           version: ${{ matrix.qt.version }}
           target: desktop
           host: ${{ matrix.env.qt_platform }}
           arch: ${{ matrix.env.qt_arch }}
-          install-deps: true
-          modules: qtwebengine
-
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3.3.0
-        timeout-minutes: 10
-        if: matrix.qt.check_only
-        with:
-          version: ${{ matrix.qt.version }}
-          target: desktop
-          host: ${{ matrix.env.qt_platform }}
-          arch: ${{ matrix.env.qt_arch_check_only }}
           install-deps: true
           modules: qtwebengine
 
@@ -256,10 +221,6 @@ jobs:
         run: |
           cd dep/openssl/openssl
 
-          # this is necessary until https://github.com/openssl/openssl/issues/18720
-          # is fixed in OpenSSL 1.1.1r
-          export CFLAGS=-Wno-error=implicit-function-declaration
-
           ./Configure ${{ matrix.env.openssl_arch }} no-shared
           make
 
@@ -291,7 +252,7 @@ jobs:
 
       # Command copied from flathub build process
       - name: Validate appdata file
-        if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
+        if: matrix.env.ninja_platform == 'linux'
         run: |
           echo "Show generated appdata file"
           cat ./build/release/rsrc/linux/com.github.Murmele.Gittyup.appdata.xml
@@ -302,7 +263,7 @@ jobs:
           flatpak run --env=G_DEBUG=fatal-criticals org.freedesktop.appstream-glib validate ./build/release/rsrc/linux/com.github.Murmele.Gittyup.appdata.xml
 
       - name: Publish build artifacts
-        if: matrix.env.pack && !matrix.qt.check_only
+        if: matrix.env.pack
         uses: actions/upload-artifact@v4
         with:
           path: build/release/pack/Gittyup-*
@@ -310,7 +271,7 @@ jobs:
 
       # Publish only once!
       - name: Publish version file
-        if: matrix.env.pack && !matrix.qt.check_only && matrix.env.name == 'win64'
+        if: matrix.env.ninja_platform == 'linux'
         uses: actions/upload-artifact@v4
         with:
           path: build/release/Version.txt
@@ -335,24 +296,31 @@ jobs:
           ninja check_no_win32_offscreen
 
       - name: Build Appimage
-        if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
+        if: matrix.env.ninja_platform == 'linux'
         run: |
           cd build/release
           sudo apt -y install appstream
           sudo apt -y install libfuse2
-          sudo apt -y install libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0
+          sudo apt -y install libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-cursor0 libxkbcommon0 libx11-xcb1
           sudo apt -y install libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xinerama0 libxcb-xinput0 libxcb-xkb1 libxcb-xrm0 libxcb-xv0 libxcb-xvmc0 libxcb1
           
           mkdir -p AppDir
           DESTDIR=AppDir ninja install
 
           export QTDIR=$RUNNER_WORKSPACE/Qt/${{ matrix.qt.version }}/${{ matrix.env.qt_arch }}
+          export QT_ROOT_DIR=$QTDIR
 
           rm -rf ./AppDir/usr/include/
           strip ./AppDir/usr/bin/cmark ./AppDir/usr/bin/gittyup ./AppDir/usr/bin/indexer ./AppDir/usr/bin/relauncher
 
           wget -c https://github.com/$(wget -q https://github.com/probonopd/go-appimage/releases/expanded_assets/continuous -O - | grep "appimagetool-.*-x86_64.AppImage" | head -n 1 | cut -d '"' -f 2)
           chmod +x appimagetool-*.AppImage
+          echo Show QTDIR
+          ls $QTDIR
+          echo Show QTDIR plugins
+          ls $QTDIR/plugins
+          echo Show QTDIR plugins platforms
+          ls $QTDIR/plugins/platforms
           QTDIR=$QTDIR ./appimagetool-*.AppImage -s deploy ./AppDir/usr/share/applications/*.desktop --appimage-extract-and-run # Bundle EVERYTHING
 
           # Modify the AppDir: move ld-linux into the same directory as the payload application
@@ -366,7 +334,7 @@ jobs:
           #ls -lh Gittyup-*
 
       - name: Publish Appimage
-        if: matrix.env.ninja_platform == 'linux' && !matrix.qt.check_only
+        if: matrix.env.ninja_platform == 'linux'
         uses: actions/upload-artifact@v4
         with:
           path: build/release/*.AppImage
@@ -402,11 +370,12 @@ jobs:
           title: 'Latest Build (Development)'
           automatic_release_tag: 'development'
           files: |
-            **/artifacts/Gittyup win64/Gittyup*.exe
-            **/artifacts/Gittyup win32/Gittyup*.exe
-            **/artifacts/Gittyup macos/Gittyup*.dmg
             **/artifacts/GittyupFlatpak/*.flatpak
             **/artifacts/GittyupAppImage/Gittyup*.AppImage
+
+          # Currently disabled, because we have problems with the theme
+          # **/artifacts/Gittyup win64/Gittyup*.exe
+          # **/artifacts/Gittyup macos/Gittyup*.dmg
 
       - name: Update GitHub release (version tag)
         uses: marvinpinto/action-automatic-releases@latest
@@ -417,11 +386,12 @@ jobs:
           title: Gittyup Release ${{ steps.version.outputs.VERSION }}
           automatic_release_tag: ${{ github.ref_name }}
           files: |
-            **/artifacts/Gittyup win64/Gittyup*.exe
-            **/artifacts/Gittyup win32/Gittyup*.exe
-            **/artifacts/Gittyup macos/Gittyup*.dmg
             **/artifacts/GittyupFlatpak/*.flatpak
             **/artifacts/GittyupAppImage/Gittyup*.AppImage
+
+          # Currently disabled, because we have problems with the theme
+          # **/artifacts/Gittyup win64/Gittyup*.exe
+          # **/artifacts/Gittyup macos/Gittyup*.dmg
 
       # needed otherwise the docs folder is not available     
       - name: Checkout repository

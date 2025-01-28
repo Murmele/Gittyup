@@ -157,7 +157,7 @@ bool BlameEditor::load(const QString &name, const git::Blob &blob,
   // Calculate blame.
   if (mRepo.isValid() && !content.isEmpty()) {
     mMargin->startBlame(name);
-    mBlame.setFuture(QtConcurrent::run(mRepo, &git::Repository::blame, name,
+    mBlame.setFuture(QtConcurrent::run(&git::Repository::blame, mRepo, name,
                                        commit, mCallbacks.data()));
   }
 
@@ -192,8 +192,7 @@ void BlameEditor::save() {
 
   QTextStream out(&file);
   if (mRepo.isValid())
-    out.setCodec(mRepo.codec());
-
+    out.setEncoding(mRepo.encoding());
   out << mEditor->text();
   file.commit();
 

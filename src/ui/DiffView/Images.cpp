@@ -120,7 +120,7 @@ QPixmap Images::loadPixmap(git::Diff::File type, int &size, bool lfs) {
   QFileIconProvider provider;
   QString path = mPatch.repo().workdir().filePath(mPatch.name());
   QIcon icon = provider.icon(QFileInfo(path));
-  return icon.pixmap(windowHandle(), QSize(64, 64));
+  return icon.pixmap(QSize(64, 64), window()->devicePixelRatio());
 }
 
 QVBoxLayout *Images::imageLayout(const QPixmap pixmap, int size) {
