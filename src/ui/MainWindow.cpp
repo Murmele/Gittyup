@@ -13,7 +13,6 @@
 #include "MenuBar.h"
 #include "RepoView.h"
 #include "SearchField.h"
-#include "SideBar.h"
 #include "TabWidget.h"
 #include "ToolBar.h"
 #include "conf/RecentRepositories.h"
@@ -43,7 +42,6 @@ const QString kPathKey = "path";
 const QString kIndexKey = "index";
 const QString kStateKey = "state";
 const QString kActiveKey = "active";
-const QString kSidebarKey = "sidebar";
 const QString kGeometryKey = "geometry";
 const QString kWindowsGroup = "windows";
 
@@ -118,20 +116,13 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
 
             if (refresh) {
               for (int i = 0; i < count(); ++i)
-                view(i)->refresh();
+                if (auto v = view(i))
+                  v->refresh();
             }
           });
 
-  // Create splitter.
-  QSplitter *splitter = new QSplitter(this);
-  splitter->setHandleWidth(0);
-  connect(splitter, &QSplitter::splitterMoved, [this] {
-    QSplitter *splitter = static_cast<QSplitter *>(centralWidget());
-    mIsSideBarVisible = (splitter->sizes().first() > 0);
-  });
-
   // Create tab container.
-  TabWidget *tabs = new TabWidget(splitter);
+  TabWidget *tabs = new TabWidget(this);
   connect(tabs, &TabWidget::currentChanged, [this](int index) {
     updateInterface();
     MenuBar::instance(this)->update();
@@ -142,12 +133,8 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
   connect(tabs, QOverload<>::of(&TabWidget::tabRemoved), this,
           &MainWindow::updateTabNames);
 
-  splitter->addWidget(new SideBar(tabs, splitter));
-  splitter->addWidget(tabs);
-  splitter->setCollapsible(1, false);
-  splitter->setStretchFactor(1, 1);
-
-  setCentralWidget(splitter);
+  setCentralWidget(tabs);
+  tabs->addWelcomeTab();
 
   if (repo)
     addTab(repo);
@@ -167,48 +154,12 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
   if (MainWindow *win = activeWindow())
     move(win->x() + 24, win->y() + 24);
 
-  // Restore sidebar.
-  setSideBarVisible(QSettings().value(kSidebarKey, true).toBool());
-
   // Set initial state of interface.
   updateInterface();
 }
 
-bool MainWindow::isSideBarVisible() const { return mIsSideBarVisible; }
-
-void MainWindow::setSideBarVisible(bool visible) {
-  if (visible == mIsSideBarVisible)
-    return;
-
-  mIsSideBarVisible = visible;
-
-  // Remember in settings.
-  QSettings().setValue(kSidebarKey, visible);
-
-  // Animate sidebar sliding in or out.
-  QSplitter *splitter = static_cast<QSplitter *>(centralWidget());
-  QWidget *sidebar = splitter->widget(0);
-  int pos = visible ? sidebar->sizeHint().width() : splitter->sizes().first();
-
-  QTimeLine *timeline = new QTimeLine(250, this);
-  timeline->setDirection(visible ? QTimeLine::Forward : QTimeLine::Backward);
-  timeline->setEasingCurve(QEasingCurve(QEasingCurve::Linear));
-  timeline->setUpdateInterval(20);
-
-  connect(timeline, &QTimeLine::valueChanged, [this, pos](qreal value) {
-    QSplitter *splitter = static_cast<QSplitter *>(centralWidget());
-    splitter->setSizes({static_cast<int>(pos * value), 1});
-  });
-
-  connect(timeline, &QTimeLine::finished,
-          [timeline] { timeline->deleteLater(); });
-
-  timeline->start();
-}
-
 TabWidget *MainWindow::tabWidget() const {
-  QSplitter *splitter = static_cast<QSplitter *>(centralWidget());
-  return static_cast<TabWidget *>(splitter->widget(1));
+  return static_cast<TabWidget *>(centralWidget());
 }
 
 RepoView *MainWindow::addTab(const QString &path) {
@@ -217,7 +168,11 @@ RepoView *MainWindow::addTab(const QString &path) {
 
   TabWidget *tabs = tabWidget();
   for (int i = 0; i < tabs->count(); i++) {
-    RepoView *view = static_cast<RepoView *>(tabs->widget(i));
+    RepoView *view = dynamic_cast<RepoView *>(tabs->widget(i));
+    if (!view) {
+      // Tab 0 is the welcome tab
+      continue;
+    }
     if (path == view->repo().dir(false).path()) {
       tabs->setCurrentIndex(i);
       return view;
@@ -240,7 +195,11 @@ RepoView *MainWindow::addTab(const git::Repository &repo) {
 
   TabWidget *tabs = tabWidget();
   for (int i = 0; i < tabs->count(); i++) {
-    RepoView *view = static_cast<RepoView *>(tabs->widget(i));
+    RepoView *view = dynamic_cast<RepoView *>(tabs->widget(i));
+    if (!view) {
+      // Tab 0 is the welcome tab
+      continue;
+    }
     if (dir.path() == view->repo().dir(false).path()) {
       tabs->setCurrentIndex(i);
       return view;
@@ -273,12 +232,14 @@ RepoView *MainWindow::addTab(const git::Repository &repo) {
 
 int MainWindow::count() const { return tabWidget()->count(); }
 
+int MainWindow::repoCount() const { return tabWidget()->count() - 1; }
+
 RepoView *MainWindow::currentView() const {
-  return static_cast<RepoView *>(tabWidget()->currentWidget());
+  return dynamic_cast<RepoView *>(tabWidget()->currentWidget());
 }
 
 RepoView *MainWindow::view(int index) const {
-  return static_cast<RepoView *>(tabWidget()->widget(index));
+  return dynamic_cast<RepoView *>(tabWidget()->widget(index));
 }
 
 MainWindow *MainWindow::activeWindow() {
@@ -478,9 +439,11 @@ void MainWindow::updateTabNames() {
   QList<TabName> fullNames;
 
   for (int i = 0; i < count(); ++i) {
-    TabName name(view(i)->repo().dir(false).path());
-    names[name.name()].append(i);
-    fullNames.append(name);
+    if (auto v = view(i)) {
+      TabName name(v->repo().dir(false).path());
+      names[name.name()].append(i);
+      fullNames.append(name);
+    }
   }
 
   QHash<QString, QList<int>>::key_iterator first;
@@ -593,8 +556,10 @@ void MainWindow::updateWindowTitle(int ahead, int behind) {
 
 QStringList MainWindow::paths() const {
   QStringList paths;
-  for (int i = 0; i < count(); ++i)
-    paths.append(view(i)->repo().dir(false).path());
+  for (int i = 0; i < count(); ++i) {
+    if (auto v = view(i))
+      paths.append(v->repo().dir(false).path());
+  }
   return paths;
 }
 
