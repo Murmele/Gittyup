@@ -26,6 +26,7 @@
 #include <QObject>
 #include <QSet>
 #include <QSharedPointer>
+#include <QStringConverter>
 
 struct git_repository;
 class QProcess;
@@ -226,7 +227,7 @@ public:
   void cleanupState();
 
   // encoding
-  QTextCodec *codec() const;
+  QStringConverter::Encoding encoding() const;
   QString decode(const QByteArray &text) const;
 
   // clean

@@ -15,6 +15,8 @@
 #include <QCoreApplication>
 #include <QTextStream>
 
+#include <stdexcept>
+
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"

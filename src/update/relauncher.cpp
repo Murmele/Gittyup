@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 #endif
 
   // Restart from the path argument.
-  QProcess::startDetached(args.first());
+  QProcess::startDetached(args.first(), QStringList());
 
   return 0;
 }

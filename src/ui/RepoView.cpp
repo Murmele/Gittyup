@@ -1807,8 +1807,11 @@ void RepoView::push(const git::Remote &rmt, const git::Reference &src,
           &RepoView::notifyReferenceUpdated);
 
   entry->setBusy(true);
-  mWatcher->setFuture(QtConcurrent::run(remote, &git::Remote::push, mCallbacks,
-                                        ref, dst, force, tags));
+  git::Result (git::Remote::*push)(git::Remote::Callbacks *,
+                                   const git::Reference &, const QString &,
+                                   bool, bool) = &git::Remote::push;
+  mWatcher->setFuture(
+      QtConcurrent::run(push, remote, mCallbacks, ref, dst, force, tags));
 }
 
 bool RepoView::commit(const QString &message,
@@ -2377,7 +2380,7 @@ void RepoView::resetSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
                                    QString(), mWatcher, repo);
 
   entry->setBusy(true);
-  mWatcher->setFuture(QtConcurrent::run(submodule, &git::Submodule::update,
+  mWatcher->setFuture(QtConcurrent::run(&git::Submodule::update, submodule,
                                         mCallbacks, false, true));
 }
 
@@ -2540,7 +2543,7 @@ void RepoView::updateSubmodulesAsync(const QList<SubmoduleInfo> &submodules,
                                    QString(), mWatcher, repo);
 
   entry->setBusy(true);
-  mWatcher->setFuture(QtConcurrent::run(submodule, &git::Submodule::update,
+  mWatcher->setFuture(QtConcurrent::run(&git::Submodule::update, submodule,
                                         mCallbacks, init, checkout_force));
 }
 

@@ -17,7 +17,6 @@
 #include <QScreen>
 #include <QCalendarWidget>
 #include <QComboBox>
-#include <QDesktopWidget>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -144,7 +143,7 @@ void AdvancedSearchWidget::exec(QLineEdit *parent, Index *index) {
   }
 
   // Load completion data in the background.
-  QtConcurrent::run([this, index] {
+  std::ignore = QtConcurrent::run([this, index] {
     QMap<Index::Field, QStringList> fields = index->fieldMap();
     foreach (QLineEdit *lineEdit, mLineEdits) {
       QVariant var = lineEdit->property(kFieldProp);

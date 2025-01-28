@@ -21,7 +21,6 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QSpinBox>
-#include <QTextCodec>
 
 DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
     : QWidget(parent),
@@ -45,12 +44,18 @@ DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
   });
 
   // encoding
+
+  static std::array encodings{
+      "Utf8",  "Utf16",   "Utf16LE", "Utf16BE",
+      "Utf32", "Utf32LE", "Utf32BE", "Latin1",
+  };
+
   QComboBox *encoding = new QComboBox(this);
   encoding->addItem(tr("System Locale"), -1);
   encoding->insertSeparator(encoding->count());
-  foreach (int mib, QTextCodec::availableMibs())
-    encoding->addItem(QTextCodec::codecForMib(mib)->name(), mib);
-
+  for (int i = 0; i < encodings.size(); i++) {
+    encoding->addItem(encodings[i], i);
+  }
   QString name = mConfig.value<QString>("gui.encoding");
   if (!name.isEmpty())
     encoding->setCurrentIndex(encoding->findText(name));

@@ -63,19 +63,20 @@ static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info) {
   SYSTEMTIME localTime;
   GetLocalTime(&localTime);
 
-  char temp[MAX_PATH];
+  wchar_t temp[MAX_PATH];
   GetTempPath(MAX_PATH, temp);
 
-  char dir[MAX_PATH];
-  StringCchPrintf(dir, MAX_PATH, "%sGittyup", temp);
+  wchar_t dir[MAX_PATH];
+  const wchar_t *gittyup_name = L"%sGittyup";
+  StringCchPrintf(dir, MAX_PATH, gittyup_name, temp);
   CreateDirectory(dir, NULL);
 
-  char fileName[MAX_PATH];
-  StringCchPrintf(
-      fileName, MAX_PATH, "%s\\%s-%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp",
-      dir, GITTYUP_NAME, GITTYUP_VERSION, localTime.wYear, localTime.wMonth,
-      localTime.wDay, localTime.wHour, localTime.wMinute, localTime.wSecond,
-      GetCurrentProcessId(), GetCurrentThreadId());
+  wchar_t fileName[MAX_PATH];
+  const wchar_t *s = L"%s\\%s-%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp";
+  StringCchPrintf(fileName, MAX_PATH, s, dir, GITTYUP_NAME, GITTYUP_VERSION,
+                  localTime.wYear, localTime.wMonth, localTime.wDay,
+                  localTime.wHour, localTime.wMinute, localTime.wSecond,
+                  GetCurrentProcessId(), GetCurrentThreadId());
 
   HANDLE dumpFile =
       CreateFile(fileName, GENERIC_READ | GENERIC_WRITE,
@@ -359,7 +360,7 @@ public:
 
 protected:
   virtual bool nativeEvent(const QByteArray &eventType, void *message,
-                           long *result) Q_DECL_OVERRIDE {
+                           qintptr *result) Q_DECL_OVERRIDE {
     MSG *msg = (MSG *)message;
 
     if (msg->message == WM_COPYDATA) {
