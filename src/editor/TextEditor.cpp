@@ -11,7 +11,6 @@
 #include "app/Application.h"
 #include "conf/Settings.h"
 #include <QFocusEvent>
-#include <QMainWindow>
 #include <QScrollBar>
 #include <QStyle>
 #include <QWindow>
@@ -19,6 +18,8 @@
 #include <QCheckBox>
 
 #include "PlatQt.h"
+
+QList<TextEditor*> TextEditor::instances;
 
 using namespace Scintilla;
 
@@ -52,18 +53,7 @@ const float textHeightFactorCheckBoxSize = 2.0;
 extern LexerModule lmLPeg;
 
 TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
-  // Load colors.
-  Theme *theme = Application::theme();
-  mOursColor = theme->diff(Theme::Diff::Ours);
-  mTheirsColor = theme->diff(Theme::Diff::Theirs);
-  mAdditionColor = theme->diff(Theme::Diff::Addition);
-  mDeletionColor = theme->diff(Theme::Diff::Deletion);
-
-  // Load icons.
-  QStyle *style = this->style();
-  mNoteIcon = style->standardIcon(QStyle::SP_MessageBoxInformation);
-  mWarningIcon = style->standardIcon(QStyle::SP_MessageBoxWarning);
-  mErrorIcon = style->standardIcon(QStyle::SP_MessageBoxCritical);
+  instances.append(this);
 
   // Register the LPeg lexer.
   static bool initialized = false;
@@ -105,63 +95,18 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
   clearCmdKey(SCK_ADD + (SCI_CTRL << 16));
   clearCmdKey(SCK_SUBTRACT + (SCI_CTRL << 16));
 
-  // Set find indicators.
-  indicSetStyle(FindAll, INDIC_STRAIGHTBOX);
-  indicSetFore(FindAll, Qt::white);
-  indicSetAlpha(FindAll, 255);
-  indicSetUnder(FindAll, true);
+  applyThemeAndSettings();
 
-  indicSetStyle(FindCurrent, INDIC_STRAIGHTBOX);
-  indicSetFore(FindCurrent, Qt::yellow);
-  indicSetAlpha(FindCurrent, 255);
-  indicSetUnder(FindCurrent, true);
-
-  // Set word diff indicators.
-  indicSetStyle(WordAddition, INDIC_STRAIGHTBOX);
-  indicSetFore(WordAddition, theme->diff(Theme::Diff::WordAddition));
-  indicSetAlpha(WordAddition, 255);
-  indicSetUnder(WordAddition, true);
-
-  indicSetStyle(WordDeletion, INDIC_STRAIGHTBOX);
-  indicSetFore(WordDeletion, theme->diff(Theme::Diff::WordDeletion));
-  indicSetAlpha(WordDeletion, 255);
-  indicSetUnder(WordDeletion, true);
-
-  indicSetStyle(NoteIndicator, INDIC_SQUIGGLE);
-  indicSetFore(NoteIndicator, theme->diff(Theme::Diff::Note));
-  indicSetAlpha(NoteIndicator, 255);
-  indicSetUnder(NoteIndicator, true);
-
-  indicSetStyle(WarningIndicator, INDIC_STRAIGHTBOX);
-  indicSetFore(WarningIndicator, theme->diff(Theme::Diff::Warning));
-  indicSetAlpha(WarningIndicator, 255);
-  indicSetUnder(WarningIndicator, true);
-
-  indicSetStyle(ErrorIndicator, INDIC_STRAIGHTBOX);
-  indicSetFore(ErrorIndicator, theme->diff(Theme::Diff::Error));
-  indicSetAlpha(ErrorIndicator, 255);
-  indicSetUnder(ErrorIndicator, true);
-
-  // Initialize LPeg lexer.
-  QColor base = palette().color(QPalette::Base);
-  QColor text = palette().color(QPalette::Text);
-  bool dark = (text.lightnessF() > base.lightnessF());
-
-  setLexerLanguage("lpeg");
-  setProperty("lexer.lpeg.home", Settings::lexerDir().path());
-  setProperty("lexer.lpeg.themes", theme->dir().path());
-  setProperty("lexer.lpeg.theme", theme->name());
-  setProperty("lexer.lpeg.theme.mode", dark ? "dark" : "light");
-  setCaretFore(text);
-
-  // Apply default settings.
-  applySettings();
   connect(Settings::instance(), &Settings::settingsChanged, this,
           &TextEditor::applySettings);
 
   // Update geometry when the scroll bar becomes visible.
   connect(horizontalScrollBar(), &QScrollBar::rangeChanged, this,
           &TextEditor::updateGeometry);
+}
+
+TextEditor::~TextEditor() {
+  instances.removeOne(this);
 }
 
 void TextEditor::contextMenuEvent(QContextMenuEvent *event) {
@@ -245,22 +190,6 @@ void TextEditor::applySettings() {
 
   // Missing newline style.
   styleSetFont(EofNewline, italic);
-
-  // Remote comment styles
-  Theme *theme = Application::theme();
-  styleSetFont(CommentBody, regular);
-  styleSetFore(CommentBody, theme->remoteComment(Theme::Comment::Body));
-  styleSetBack(CommentBody, theme->remoteComment(Theme::Comment::Background));
-
-  styleSetFont(CommentAuthor, bold);
-  styleSetFore(CommentAuthor, theme->remoteComment(Theme::Comment::Author));
-  styleSetBack(CommentAuthor, theme->remoteComment(Theme::Comment::Background));
-
-  styleSetFont(CommentTimestamp, regular);
-  styleSetFore(CommentTimestamp,
-               theme->remoteComment(Theme::Comment::Timestamp));
-  styleSetBack(CommentTimestamp,
-               theme->remoteComment(Theme::Comment::Background));
 
   // Emit own signal.
   emit settingsChanged();
@@ -629,4 +558,94 @@ void TextEditor::keyPressEvent(QKeyEvent *ke) {
   }
 
   ScintillaIFace::keyPressEvent(ke);
+}
+void TextEditor::applyThemeAndSettingsToAllInstances() {
+  for (const auto& instance : instances)
+    instance->applyThemeAndSettings();
+}
+
+void TextEditor::applyThemeAndSettings() {
+  // Load colors.
+  Theme *theme = Application::theme();
+  mOursColor = theme->diff(Theme::Diff::Ours);
+  mTheirsColor = theme->diff(Theme::Diff::Theirs);
+  mAdditionColor = theme->diff(Theme::Diff::Addition);
+  mDeletionColor = theme->diff(Theme::Diff::Deletion);
+
+  // Load icons.
+  QStyle *style = this->style();
+  mNoteIcon = style->standardIcon(QStyle::SP_MessageBoxInformation);
+  mWarningIcon = style->standardIcon(QStyle::SP_MessageBoxWarning);
+  mErrorIcon = style->standardIcon(QStyle::SP_MessageBoxCritical);
+
+  // Set find indicators.
+  indicSetStyle(FindAll, INDIC_STRAIGHTBOX);
+  indicSetFore(FindAll, Qt::white);
+  indicSetAlpha(FindAll, 255);
+  indicSetUnder(FindAll, true);
+
+  indicSetStyle(FindCurrent, INDIC_STRAIGHTBOX);
+  indicSetFore(FindCurrent, Qt::yellow);
+  indicSetAlpha(FindCurrent, 255);
+  indicSetUnder(FindCurrent, true);
+
+  // Set word diff indicators.
+  indicSetStyle(WordAddition, INDIC_STRAIGHTBOX);
+  indicSetFore(WordAddition, theme->diff(Theme::Diff::WordAddition));
+  indicSetAlpha(WordAddition, 255);
+  indicSetUnder(WordAddition, true);
+
+  indicSetStyle(WordDeletion, INDIC_STRAIGHTBOX);
+  indicSetFore(WordDeletion, theme->diff(Theme::Diff::WordDeletion));
+  indicSetAlpha(WordDeletion, 255);
+  indicSetUnder(WordDeletion, true);
+
+  indicSetStyle(NoteIndicator, INDIC_SQUIGGLE);
+  indicSetFore(NoteIndicator, theme->diff(Theme::Diff::Note));
+  indicSetAlpha(NoteIndicator, 255);
+  indicSetUnder(NoteIndicator, true);
+
+  indicSetStyle(WarningIndicator, INDIC_STRAIGHTBOX);
+  indicSetFore(WarningIndicator, theme->diff(Theme::Diff::Warning));
+  indicSetAlpha(WarningIndicator, 255);
+  indicSetUnder(WarningIndicator, true);
+
+  indicSetStyle(ErrorIndicator, INDIC_STRAIGHTBOX);
+  indicSetFore(ErrorIndicator, theme->diff(Theme::Diff::Error));
+  indicSetAlpha(ErrorIndicator, 255);
+  indicSetUnder(ErrorIndicator, true);
+
+  // Initialize LPeg lexer.
+  QColor base = palette().color(QPalette::Base);
+  QColor text = palette().color(QPalette::Text);
+  bool dark = (text.lightnessF() > base.lightnessF());
+
+  setLexerLanguage("lpeg");
+  setProperty("lexer.lpeg.home", Settings::lexerDir().path());
+  setProperty("lexer.lpeg.themes", theme->dir().path());
+  setProperty("lexer.lpeg.theme", theme->name());
+  setProperty("lexer.lpeg.theme.mode", dark ? "dark" : "light");
+  setCaretFore(text);
+
+  QFont regular = font();
+  QFont bold = regular;
+  bold.setBold(true);
+
+  // Remote comment styles
+  styleSetFont(CommentBody, regular);
+  styleSetFore(CommentBody, theme->remoteComment(Theme::Comment::Body));
+  styleSetBack(CommentBody, theme->remoteComment(Theme::Comment::Background));
+
+  styleSetFont(CommentAuthor, bold);
+  styleSetFore(CommentAuthor, theme->remoteComment(Theme::Comment::Author));
+  styleSetBack(CommentAuthor, theme->remoteComment(Theme::Comment::Background));
+
+  styleSetFont(CommentTimestamp, regular);
+  styleSetFore(CommentTimestamp,
+			   theme->remoteComment(Theme::Comment::Timestamp));
+  styleSetBack(CommentTimestamp,
+			   theme->remoteComment(Theme::Comment::Background));
+
+  // Apply default settings.
+  applySettings();
 }

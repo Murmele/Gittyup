@@ -22,6 +22,8 @@
 #include "git/Config.h"
 #include "git/Submodule.h"
 #include "qmap.h"
+#include "app/Application.h"
+#include "editor/TextEditor.h"
 #include <QApplication>
 #include <QCloseEvent>
 #include <QGuiApplication>
@@ -602,4 +604,19 @@ QString MainWindow::windowGroup() const {
   QByteArray group = paths().join(';').toUtf8();
   QByteArray hash = QCryptographicHash::hash(group, QCryptographicHash::Md5);
   return QString::fromUtf8(hash.toHex());
+}
+
+void MainWindow::changeEvent(QEvent *event) {
+#ifdef Q_OS_MAC
+  if (event->type() == QEvent::PaletteChange) {
+#else
+  if (event->type() == QEvent::ThemeChange) {
+#endif
+    Application *app = qobject_cast<Application *>(QApplication::instance());
+    if (app)
+      app->applyTheme();
+      TextEditor::applyThemeAndSettingsToAllInstances();
+  }
+
+  QMainWindow::changeEvent(event);
 }
