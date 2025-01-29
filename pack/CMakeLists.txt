@@ -203,6 +203,13 @@ if(NOT APPLE)
   endif()
 endif()
 
+
+if (NOT USE_SYSTEM_LIBSSH2)
+  install(TARGETS libssh2
+          DESTINATION ${INSTALL_LIBDIR}
+  )
+endif()
+
 if(UNIX AND NOT APPLE)
   foreach(icon 16 32 64 128 256 512)
     install(
