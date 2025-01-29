@@ -188,7 +188,6 @@ if(NOT APPLE)
           WORLD_READ
           WORLD_EXECUTE
         COMPONENT ${GITTYUP_NAME}
-        OPTIONAL # if we use the system libssh, we have not built openssl
       )
     endforeach()
   endif()
@@ -202,6 +201,13 @@ if(NOT APPLE)
         $<${MAC}:${RESOURCES_DIR}>$<$<PLATFORM_ID:Windows>:${INSTALL_LIBDIR}>
       COMPONENT ${GITTYUP_NAME})
   endif()
+endif()
+
+
+if (NOT USE_SYSTEM_LIBSSH2)
+  install(TARGETS libssh2
+          DESTINATION ${INSTALL_LIBDIR}
+  )
 endif()
 
 if(UNIX AND NOT APPLE)
