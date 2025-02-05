@@ -44,14 +44,6 @@ public:
   Id indexId() const;
   Id workdirId() const;
 
-  /*!
-   * \brief status
-   * Return the status of the submodule as a combination of flags described in
-   * https://libgit2.org/libgit2/index.html#HEAD/type/git_submodule_status_t
-   * \return current status
-   */
-  int status() const;
-
   Result update(Remote::Callbacks *callbacks, bool init = false,
                 bool checkout_force = false);
 
