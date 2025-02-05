@@ -6,6 +6,11 @@ Bug Fix and Feature release
 
 * Add commit filter to show only the first parent in the commit list view
 
+#### Changed
+
+* Use Qt6
+* Update libgit2 library
+
 ----
 
 ### v1.4.0 - 2024-04-24
