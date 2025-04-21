@@ -187,8 +187,7 @@ if(NOT APPLE)
           GROUP_EXECUTE
           WORLD_READ
           WORLD_EXECUTE
-        COMPONENT ${GITTYUP_NAME}
-      )
+        COMPONENT ${GITTYUP_NAME})
     endforeach()
   endif()
 
