@@ -72,8 +72,15 @@ set(LUA_MODULES_PATH
       "Path to the directory with native Lua modules (only relevant if system-wide Lua installation is used)"
 )
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
+include(FindPkgLibraries)
 if (NOT USE_SYSTEM_LIBSSH2)
   set(USE_SSH "localbuild")
+else()
+    find_pkglibraries(LIBSSH2 libssh2)
+    if(NOT LIBSSH2_FOUND)
+        find_package(LIBSSH2 REQUIRED)
+    endif()
 endif()
 
 # Require C++17.
