@@ -67,7 +67,7 @@ target_link_libraries(
   dialogs
   editor
   git
-  ssh2
+  libssh2::libssh2
   host
   hunspell
   index
