@@ -80,7 +80,7 @@ else()
   set(USE_SSH ON)
   find_pkglibraries(LIBSSH2 libssh2)
   if(NOT LIBSSH2_FOUND)
-    find_package(LIBSSH2 REQUIRED)
+    find_package(libssh2 REQUIRED)
   endif()
 endif()
 
