@@ -787,6 +787,8 @@ l_noret luaG_runerror (lua_State *L, const char *fmt, ...) {
 ** previous instruction 'oldpc'.
 */
 static int changedline (const Proto *p, int oldpc, int newpc) {
+  if (p->lineinfo == NULL)  /* no debug information? */
+    return 0;
   while (oldpc++ < newpc) {
     if (p->lineinfo[oldpc] != 0)
       return (luaG_getfuncline(p, oldpc - 1) != luaG_getfuncline(p, newpc));
