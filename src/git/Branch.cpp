@@ -83,7 +83,7 @@ Remote Branch::remote() const {
     return up.isValid() ? up.remote() : Remote();
   }
 
-  git_buf buf = GIT_BUF_INIT_CONST(nullptr, 0);
+  git_buf buf = GIT_BUF_INIT;
   git_repository *repo = git_reference_owner(d.data());
   if (git_branch_remote_name(&buf, repo, qualifiedName().toUtf8()))
     return Remote();

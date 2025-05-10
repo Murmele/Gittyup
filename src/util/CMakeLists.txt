@@ -1,6 +1,6 @@
-add_library(util Path.cpp Debug.h Debug.cpp)
+add_library(gittyupUtil Path.cpp Debug.h Debug.cpp)
 
-target_link_libraries(util Qt6::Core)
-target_include_directories(util INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(gittyupUtil Qt6::Core)
+target_include_directories(gittyupUtil INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
-set_target_properties(util PROPERTIES AUTOMOC ON)
+set_target_properties(gittyupUtil PROPERTIES AUTOMOC ON)

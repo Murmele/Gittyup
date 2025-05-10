@@ -14,6 +14,7 @@
 #include "git/Command.h"
 #include "git/Id.h"
 #include "git/RevWalk.h"
+#include "git2/sys/errors.h"
 #include "log/LogEntry.h"
 #include <libssh2.h>
 #include <QDialog>
