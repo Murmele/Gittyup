@@ -6,7 +6,6 @@ target_link_libraries(
   conf
   git
   lpeg
-  lua
   Qt6::Core
   Qt6::Concurrent)
 
