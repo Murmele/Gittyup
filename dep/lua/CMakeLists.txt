@@ -45,4 +45,6 @@ elseif(NOT USE_SYSTEM_LUA)
 
   target_include_directories(
     lua INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/${LUA_DIR}/src)
+
+  set_property(TARGET lua PROPERTY C_STANDARD 99)
 endif()

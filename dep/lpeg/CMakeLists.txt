@@ -7,3 +7,4 @@ target_link_libraries(lpeg lua)
 
 target_include_directories(lpeg
                            INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/${LPEG_DIR})
+set_property(TARGET lpeg PROPERTY C_STANDARD 99)
