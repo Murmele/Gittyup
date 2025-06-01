@@ -627,7 +627,7 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
   // Create the commit.
   git_oid id;
   if (git_commit_create(&id, d->repo, "HEAD", author, committer, 0,
-                        message.toUtf8(), tree, parents.size(), parents.data()))
+                        message.toUtf8(), tree, parents.size(), (const git_commit **)parents.data()))
     return Commit();
 
   // Cleanup merge state.
