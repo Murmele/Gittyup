@@ -14,7 +14,7 @@ elseif(NOT USE_SYSTEM_LUA)
     ${LUA_DIR}/lbaselib.c  ${LUA_DIR}/lctype.c    ${LUA_DIR}/ldo.c     ${LUA_DIR}/lgc.c    ${LUA_DIR}/llex.c    ${LUA_DIR}/loadlib.c   ${LUA_DIR}/loslib.c    ${LUA_DIR}/lstring.c  ${LUA_DIR}/ltablib.c  ${LUA_DIR}/lua.c     ${LUA_DIR}/lvm.c)
 
   target_include_directories(
-    lua INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/${LUA_DIR}/src)
+    lua INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/${LUA_DIR})
 
   set_property(TARGET lua PROPERTY C_STANDARD 99)
 endif()

@@ -87,6 +87,7 @@ endif()
 # Require C++17.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_C_STANDARD 99)
 
 if(HAIKU)
   # qsort_r in libgit2 requires this
