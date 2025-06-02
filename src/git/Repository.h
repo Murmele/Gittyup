@@ -233,6 +233,8 @@ public:
   // clean
   bool clean(const QString &name);
 
+  QString attributeValue(const QString &attribute, const QString& path);
+
   // LFS
   bool lfsIsInitialized();
   bool lfsInitialize();

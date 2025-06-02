@@ -45,6 +45,7 @@
 #include "git2/tag.h"
 #include "git2/sys/repository.h"
 #include "git2/sys/errors.h"
+#include "git2/attr.h"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -1053,6 +1054,15 @@ QStringConverter::Encoding Repository::encoding() const {
 
 QString Repository::decode(const QByteArray &text) const {
   return QStringDecoder{encoding()}.decode(text);
+}
+
+QString Repository::attributeValue(const QString& attribute, const QString& path) {
+  const char* value;
+  uint32_t flags = 0;
+  git_attr_get(&value, d->repo, flags, path.toLocal8Bit().data(), attribute.toLocal8Bit().data());
+
+  // value must not be freed!
+  return QString(value);
 }
 
 bool Repository::lfsIsInitialized() { return dir().exists("hooks/pre-push"); }
