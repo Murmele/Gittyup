@@ -6,11 +6,12 @@ target_link_libraries(
   conf
   git
   lpeg
-  lua
   Qt6::Core
   Qt6::Concurrent)
 
 set_target_properties(index PROPERTIES AUTOMOC ON)
+# if(ENABLE_TESTS) add_executable(lexer_test lexer_test.cpp)
+# target_link_libraries(lexer_test index)
 
 add_executable(lexer_test lexer_test.cpp)
 target_link_libraries(lexer_test index)

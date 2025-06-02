@@ -2,15 +2,10 @@
 set(BUILD_SHARED_LIBS
     OFF
     CACHE BOOL "" FORCE)
-set(BUILD_CLAR
+set(BUILD_TESTS
     OFF
     CACHE BOOL "" FORCE)
 set(STATIC_CRT
-    OFF
-    CACHE BOOL "" FORCE)
-
-# Enabled manually. Don't search for it.
-set(USE_SSH
     OFF
     CACHE BOOL "" FORCE)
 
@@ -34,6 +29,8 @@ endif()
 
 if(NOT USE_SYSTEM_LIBGIT2)
   add_subdirectory(libgit2)
+
+  # Include the generated experimental.h
   target_include_directories(
-    git2 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libgit2/include)
+    libgit2 INTERFACE ${PROJECT_BINARY_DIR}/dep/libgit2/libgit2/include/git2)
 endif()

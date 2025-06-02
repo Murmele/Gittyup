@@ -1,6 +1,6 @@
 if(USE_SYSTEM_LIBSSH2)
   if(PKG_CONFIG_FOUND)
-    pkg_check_modules(LIBSSH2 libssh2)
+    pkg_check_modules(LIBSSH2 REQUIRED libssh2)
   endif()
 
 else()

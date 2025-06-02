@@ -52,7 +52,7 @@ static Hotkey moveHalfPageDownHotKey = HotkeyManager::registerHotkey(
     "d", "diffView/moveHalfPageDownHotKey", "DiffView/Move Half Page Down");
 
 static Hotkey moveHalfPageUpHotKey = HotkeyManager::registerHotkey(
-    "u", "diffView/moveHalfPageUpHotKey", "DiffView/Move Half Page Up");
+    "w", "diffView/moveHalfPageUpHotKey", "DiffView/Move Half Page Up");
 
 DiffView::DiffView(const git::Repository &repo, QWidget *parent)
     : QScrollArea(parent), mParent(parent) {
