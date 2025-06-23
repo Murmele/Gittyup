@@ -72,7 +72,7 @@ enable_testing()
 set(CMAKE_DISABLE_TESTING ON)
 add_subdirectory(dep/zip)
 if(NOT WIN32)
-    target_compile_definitions(zip PRIVATE _GNU_SOURCE)
+  target_compile_definitions(zip PRIVATE _GNU_SOURCE)
 endif()
 
 add_library(testlib EXCLUDE_FROM_ALL Test.cpp)

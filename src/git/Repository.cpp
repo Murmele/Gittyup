@@ -338,8 +338,7 @@ Diff Repository::diffIndexToWorkdir(const Index &index,
                                     Diff::Callbacks *callbacks,
                                     bool ignoreWhitespace) const {
   git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
-  opts.flags |=
-      GIT_DIFF_INCLUDE_TYPECHANGE; // GIT_DIFF_DISABLE_MMAP flag really needed?
+  opts.flags |= (GIT_DIFF_INCLUDE_TYPECHANGE | GIT_DIFF_DISABLE_MMAP);
 
   if (!appConfig().value<bool>("untracked.hide", false))
     opts.flags |= GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS;
@@ -628,7 +627,8 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
   // Create the commit.
   git_oid id;
   if (git_commit_create(&id, d->repo, "HEAD", author, committer, 0,
-                        message.toUtf8(), tree, parents.size(), (const git_commit **)parents.data()))
+                        message.toUtf8(), tree, parents.size(),
+                        (const git_commit **)parents.data()))
     return Commit();
 
   // Cleanup merge state.
@@ -1056,10 +1056,12 @@ QString Repository::decode(const QByteArray &text) const {
   return QStringDecoder{encoding()}.decode(text);
 }
 
-QString Repository::attributeValue(const QString& attribute, const QString& path) {
-  const char* value;
+QString Repository::attributeValue(const QString &attribute,
+                                   const QString &path) {
+  const char *value;
   uint32_t flags = 0;
-  git_attr_get(&value, d->repo, flags, path.toLocal8Bit().data(), attribute.toLocal8Bit().data());
+  git_attr_get(&value, d->repo, flags, path.toLocal8Bit().data(),
+               attribute.toLocal8Bit().data());
 
   // value must not be freed!
   return QString(value);

@@ -41,7 +41,7 @@ struct FilterInfo {
 QString quote(const QString &path) { return QString("\"%1\"").arg(path); }
 
 struct Stream {
-  int init(git_filter* self, const git_filter_source *src, git_writestream *);
+  int init(git_filter *self, const git_filter_source *src, git_writestream *);
   git_writestream parent; // must be the first. No pointer!
   git_writestream *next;
   git_filter_mode_t mode;
@@ -69,10 +69,11 @@ static int stream_close(git_writestream *s) {
 
   QByteArray writeBuf;
   if (error == GIT_PASSTHROUGH) {
-    //writeBuf = &stream->input;
-    // TODO: must be implemented!!!!
-    // Problem is that we don't have the complete data.
-    // Shall we really store the complete data, or maybe just reading the file again?
+    // writeBuf = &stream->input;
+    //  TODO: must be implemented!!!!
+    //  Problem is that we don't have the complete data.
+    //  Shall we really store the complete data, or maybe just reading the file
+    //  again?
     assert(false);
     return error;
   } else if (error == 0) {
@@ -102,7 +103,8 @@ static int stream_write(git_writestream *s, const char *buffer, size_t len) {
   return 0;
 }
 
-int Stream::init(git_filter* self, const git_filter_source * src, git_writestream * next) {
+int Stream::init(git_filter *self, const git_filter_source *src,
+                 git_writestream *next) {
   filter_source = src;
   filter = self;
   this->next = next;
@@ -114,7 +116,7 @@ int Stream::init(git_filter* self, const git_filter_source * src, git_writestrea
   git_filter_mode_t mode = git_filter_source_mode(src);
   QString command = (mode == GIT_FILTER_SMUDGE) ? info->smudge : info->clean;
 
-         // Substitute path.
+  // Substitute path.
   command.replace("%f", quote(git_filter_source_path(src)));
 
   QString bash = Command::bashPath();
@@ -150,9 +152,7 @@ static int stream_init(git_writestream **out, git_filter *self, void **payload,
 
 } // namespace
 
-static void shutdown(git_filter *) {
-
-}
+static void shutdown(git_filter *) {}
 
 void Filter::init() {
   static QMap<QString, FilterInfo> filters;
@@ -184,8 +184,9 @@ void Filter::init() {
     info.filter.stream = stream_init;
     info.filter.shutdown = shutdown;
     info.filter.attributes = info.attributes.constData();
-    // &info.filter can be used and reinterpret cast afterwards works, because filter is the
-    // first member of FilterInfo. This is also proposed in filter.h of libgit2
+    // &info.filter can be used and reinterpret cast afterwards works, because
+    // filter is the first member of FilterInfo. This is also proposed in
+    // filter.h of libgit2
     git_filter_register(info.name.constData(), &info.filter,
                         GIT_FILTER_DRIVER_PRIORITY);
   }
