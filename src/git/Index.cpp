@@ -20,6 +20,7 @@
 #include "git2/repository.h"
 #include "git2/status.h"
 #include "git2/tree.h"
+#include "git2/attr.h"
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
@@ -224,10 +225,20 @@ void Index::setStaged(const QStringList &files, bool staged, bool yieldFocus) {
           dirAdded = true;
 
         } else {
+          bool allow = false;
+          if (repo.lfsIsInitialized()) {
+            const auto value = repo.attributeValue("filter", file);
+            if (value == "lfs") {
+              allow = true;
+            }
+          }
           int size = QFileInfo(repo.workdir(), file).size();
-          bool allow = true;
-          if (size > 10000000) // 10MB
+          if (size <= 10000000) // 10MB
+            allow = true;
+          else if (!allow) {
+            allow = true;
             emit notifier->largeFileAboutToBeStaged(file, size, allow);
+          }
 
           if (!allow)
             continue;

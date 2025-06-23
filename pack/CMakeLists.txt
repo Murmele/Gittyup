@@ -187,9 +187,7 @@ if(NOT APPLE)
           GROUP_EXECUTE
           WORLD_READ
           WORLD_EXECUTE
-        COMPONENT ${GITTYUP_NAME}
-        OPTIONAL # if we use the system libssh, we have not built openssl
-      )
+        COMPONENT ${GITTYUP_NAME})
     endforeach()
   endif()
 

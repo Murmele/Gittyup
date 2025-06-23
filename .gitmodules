@@ -1,6 +1,6 @@
 [submodule "dep/libgit2/libgit2"]
 	path = dep/libgit2/libgit2
-	url = https://github.com/stinb/libgit2.git
+	url = https://github.com/Murmele/libgit2.git
 [submodule "dep/libssh2/libssh2"]
 	path = dep/libssh2/libssh2
 	url = https://github.com/libssh2/libssh2.git
@@ -25,3 +25,6 @@
 [submodule "dep/scintilla/scintillua"]
 	path = dep/scintilla/scintillua
 	url = https://github.com/orbitalquark/scintillua.git
+[submodule "dep/lua/lua"]
+	path = dep/lua/lua
+	url = https://github.com/lua/lua.git

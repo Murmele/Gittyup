@@ -5,9 +5,10 @@ build
 .vscode/
 CMakeLists.txt.user
 cmake-build-debug/
+build*
 cmake-build-release/
 build
 .idea/
 .venv
 compile_commands.json
-tags
+.flatpak-builder

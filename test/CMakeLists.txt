@@ -71,6 +71,9 @@ enable_testing()
 # Add test library.
 set(CMAKE_DISABLE_TESTING ON)
 add_subdirectory(dep/zip)
+if(NOT WIN32)
+  target_compile_definitions(zip PRIVATE _GNU_SOURCE)
+endif()
 
 add_library(testlib EXCLUDE_FROM_ALL Test.cpp)
 target_link_libraries(testlib app git ui Qt6::Test zip)

@@ -53,14 +53,14 @@ set(BUILD_SHARED_LIBS OFF)
 option(FLATPAK "Building for flatpak" OFF)
 option(DEBUG_FLATPAK "Building but using flatpak urls for testing" OFF)
 option(ENABLE_UPDATE_OVER_GUI "Enable updating from the Gittyup gui" ON)
-option(USE_SYSTEM_OPENSSL "Use the system-wide OpenSSL installation" OFF)
+option(USE_SYSTEM_OPENSSL "Use the system-wide OpenSSL installation" ON)
 option(
   USE_SYSTEM_LIBGIT2
   "Use the system-wide libgit2 installation (Gittyup requires the current development branch)"
   OFF)
-option(USE_SYSTEM_LIBSSH2 "Use the system-wide libssh2 installation" OFF)
+option(USE_SYSTEM_LIBSSH2 "Use the system-wide libssh2 installation" ON)
 option(USE_SYSTEM_GIT "Use the system-wide GIT installation" OFF)
-option(USE_SYSTEM_QT "Don't copy QT files into the installation directory" OFF)
+option(USE_SYSTEM_QT "Don't copy QT files into the installation directory" ON)
 option(USE_SYSTEM_LUA "Use the system-wide Lua installation" OFF)
 option(USE_SYSTEM_HUNSPELL "Use the system-wide hunspell installation" OFF)
 option(USE_SYSTEM_CMARK "Use the system-wide cmark installation" OFF)
@@ -72,9 +72,26 @@ set(LUA_MODULES_PATH
       "Path to the directory with native Lua modules (only relevant if system-wide Lua installation is used)"
 )
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
+include(FindPkgLibraries)
+if(NOT USE_SYSTEM_LIBSSH2)
+  set(USE_SSH
+      "localbuild"
+      CACHE BOOL "Use ssh")
+else()
+  set(USE_SSH
+      ON
+      CACHE BOOL "Use ssh")
+  find_pkglibraries(LIBSSH2 libssh2)
+  if(NOT LIBSSH2_FOUND)
+    find_package(libssh2 REQUIRED)
+  endif()
+endif()
+
 # Require C++17.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_C_STANDARD 99)
 
 if(HAIKU)
   # qsort_r in libgit2 requires this

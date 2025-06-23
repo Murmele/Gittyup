@@ -44,6 +44,8 @@
 #include "git2/stash.h"
 #include "git2/tag.h"
 #include "git2/sys/repository.h"
+#include "git2/sys/errors.h"
+#include "git2/attr.h"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -178,7 +180,7 @@ Id Repository::workdirId(const QString &path) const {
 }
 
 QString Repository::message() const {
-  git_buf buf = GIT_BUF_INIT_CONST(nullptr, 0);
+  git_buf buf = GIT_BUF_INIT;
   git_repository_message(&buf, d->repo);
   return QString::fromUtf8(buf.ptr, buf.size);
 }
@@ -336,7 +338,7 @@ Diff Repository::diffIndexToWorkdir(const Index &index,
                                     Diff::Callbacks *callbacks,
                                     bool ignoreWhitespace) const {
   git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
-  opts.flags |= (GIT_DIFF_DISABLE_MMAP | GIT_DIFF_INCLUDE_TYPECHANGE);
+  opts.flags |= (GIT_DIFF_INCLUDE_TYPECHANGE | GIT_DIFF_DISABLE_MMAP);
 
   if (!appConfig().value<bool>("untracked.hide", false))
     opts.flags |= GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS;
@@ -612,7 +614,7 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
     return Commit();
 
   // Lookup the parent commit.
-  QVector<const git_commit *> parents;
+  QVector<git_commit *> parents;
   if (Reference ref = head()) {
     if (Commit commit = ref.target())
       parents.append(commit);
@@ -625,7 +627,8 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
   // Create the commit.
   git_oid id;
   if (git_commit_create(&id, d->repo, "HEAD", author, committer, 0,
-                        message.toUtf8(), tree, parents.size(), parents.data()))
+                        message.toUtf8(), tree, parents.size(),
+                        (const git_commit **)parents.data()))
     return Commit();
 
   // Cleanup merge state.
@@ -706,6 +709,18 @@ Submodule Repository::lookupSubmodule(const QString &name) const {
   git_submodule *submodule = nullptr;
   git_submodule_lookup(&submodule, d->repo, name.toUtf8());
   return Submodule(submodule);
+}
+
+int Repository::submoduleStatus(const QString &name) const {
+
+  unsigned int status;
+  // TODO: testing!!!!
+  int returnValue =
+      git_submodule_status(&status, d->repo, name.toLocal8Bit().data(),
+                           GIT_SUBMODULE_IGNORE_UNSPECIFIED);
+  if (returnValue < 0)
+    return returnValue;
+  return status;
 }
 
 Remote Repository::addRemote(const QString &name, const QString &url) {
@@ -1039,6 +1054,17 @@ QStringConverter::Encoding Repository::encoding() const {
 
 QString Repository::decode(const QByteArray &text) const {
   return QStringDecoder{encoding()}.decode(text);
+}
+
+QString Repository::attributeValue(const QString &attribute,
+                                   const QString &path) {
+  const char *value;
+  uint32_t flags = 0;
+  git_attr_get(&value, d->repo, flags, path.toLocal8Bit().data(),
+               attribute.toLocal8Bit().data());
+
+  // value must not be freed!
+  return QString(value);
 }
 
 bool Repository::lfsIsInitialized() { return dir().exists("hooks/pre-push"); }

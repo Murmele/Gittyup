@@ -19,6 +19,7 @@
 #include <QCheckBox>
 
 #include "PlatQt.h"
+#include "ui/HotkeyManager.h"
 
 using namespace Scintilla;
 
@@ -46,6 +47,15 @@ QPixmap stagedUnstagedIcon(const bool &checked, const QColor &background,
 #if defined(FLATPAK)
 const float textHeightFactorCheckBoxSize = 2.0;
 #endif
+
+static Hotkey stage = HotkeyManager::registerHotkey(
+    "s", "stage selected changes", "DiffView/Stage Selected Lines");
+
+static Hotkey unstage = HotkeyManager::registerHotkey(
+    "u", "unstage selected changes", "DiffView/Unstage Selected Lines");
+
+static Hotkey discard = HotkeyManager::registerHotkey(
+    "r", "discard selected changes", "DiffView/Discard Selected Changes");
 
 } // namespace
 
@@ -456,9 +466,20 @@ void TextEditor::ContextMenu(Scintilla::Point pt) {
     AddToPopUp("Delete", idcmdDelete, writable && !sel.Empty());
     if (mStatusDiff) {
       AddToPopUp("");
-      AddToPopUp("Stage selected\tS", stageSelected, diffLines - staged > 0);
-      AddToPopUp("Unstage selected\tU", unstageSelected, staged > 0);
-      AddToPopUp("Discard selected\tR", discardSelected, diffLines > 0);
+      AddToPopUp((QString("Stage selected\t") + stage.currentKeys().toString())
+                     .toStdString()
+                     .data(),
+                 stageSelected, diffLines - staged > 0);
+      AddToPopUp(
+          (QString("Unstage selected\t") + unstage.currentKeys().toString())
+              .toStdString()
+              .data(),
+          unstageSelected, staged > 0);
+      AddToPopUp(
+          (QString("Discard selected\t") + discard.currentKeys().toString())
+              .toStdString()
+              .data(),
+          discardSelected, diffLines > 0);
     }
     AddToPopUp("");
     AddToPopUp("Select All", idcmdSelectAll);

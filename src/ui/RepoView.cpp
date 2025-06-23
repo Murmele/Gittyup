@@ -1051,7 +1051,8 @@ QFuture<git::Result> RepoView::fetch(const git::Remote &rmt, bool tags,
         if (result && submodules) {
           // Scan for unmodified submodules on the fetch thread.
           foreach (const git::Submodule &submodule, mRepo.submodules()) {
-            if (GIT_SUBMODULE_STATUS_IS_UNMODIFIED(submodule.status()))
+            if (GIT_SUBMODULE_STATUS_IS_UNMODIFIED(
+                    mRepo.submoduleStatus(submodule.name())))
               submodules->append(submodule.name());
           }
         }
@@ -2400,7 +2401,7 @@ RepoView::submoduleResetInfoList(const git::Repository &repo,
   // Only reset modified submodules
   QList<git::Submodule> modules;
   foreach (const git::Submodule &submodule, submodules) {
-    int status = submodule.status();
+    int status = repo.submoduleStatus(submodule.name());
 
     if (status & (GIT_SUBMODULE_STATUS_WD_MODIFIED |
                   GIT_SUBMODULE_STATUS_WD_WD_MODIFIED |
