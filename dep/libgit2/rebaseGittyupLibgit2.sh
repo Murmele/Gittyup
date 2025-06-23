@@ -4,7 +4,7 @@ cd libgit2
 
 git remote remove origin
 git remote remove upstream
-git remote add origin https://github.com/Murmele/libgit2.git
+git remote add origin git@github.com:Murmele/libgit2.git
 git remote add upstream https://github.com/libgit2/libgit2.git
 
 git fetch --all
