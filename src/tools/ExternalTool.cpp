@@ -97,7 +97,7 @@ QList<ExternalTool::Info> ExternalTool::readBuiltInTools(const QString &key) {
 }
 
 ExternalTool *ExternalTool::create(const QString &file, const git::Diff &diff,
-                                   const git::Repository &repo,
+                                   const git::Repository &repo, bool againstWorkingDir,
                                    QObject *parent) {
   if (!diff.isValid())
     return nullptr;
@@ -110,7 +110,7 @@ ExternalTool *ExternalTool::create(const QString &file, const git::Diff &diff,
   QString path = repo.workdir().filePath(file);
 
   // Create merge tool.
-  if (diff.status(index) == GIT_DELTA_CONFLICTED) {
+  if (!againstWorkingDir && diff.status(index) == GIT_DELTA_CONFLICTED) {
     git::Index::Conflict conflict = repo.index().conflict(file);
     git::Blob local = repo.lookupBlob(conflict.ours);
     git::Blob remote = repo.lookupBlob(conflict.theirs);
@@ -121,5 +121,5 @@ ExternalTool *ExternalTool::create(const QString &file, const git::Diff &diff,
   // Create diff tool.
   git::Blob local = repo.lookupBlob(diff.id(index, git::Diff::OldFile));
   git::Blob remote = repo.lookupBlob(diff.id(index, git::Diff::NewFile));
-  return new DiffTool(path, local, remote, parent);
+  return againstWorkingDir ? new DiffTool(path, remote, parent) : new DiffTool(path, local, remote, parent);
 }
