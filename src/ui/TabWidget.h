@@ -17,6 +17,7 @@ class TabWidget : public QTabWidget {
 
 public:
   TabWidget(QWidget *parent = nullptr);
+  void addWelcomeTab();
 
 signals:
   void tabAboutToBeInserted();
@@ -28,9 +29,6 @@ protected:
   void resizeEvent(QResizeEvent *event) override;
   void tabInserted(int index) override;
   void tabRemoved(int index) override;
-
-private:
-  QWidget *mDefaultWidget;
 };
 
 #endif
