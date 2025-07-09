@@ -7,6 +7,7 @@ if(NOT USE_SYSTEM_GIT)
     set_target_properties(
       ${TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                            $<TARGET_FILE_DIR:gittyup>/credential-helpers)
+    set_target_properties(${TARGET} PROPERTIES C_EXTENSIONS ON)
 
     if(${ARGC} GREATER 1)
       target_link_libraries(${TARGET} ${ARGV1})
