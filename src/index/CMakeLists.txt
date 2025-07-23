@@ -1,5 +1,5 @@
 add_library(index GenericLexer.cpp Index.cpp IndexModel.cpp Lexer.cpp
-                  LPegLexer.cpp Query.cpp)
+                  LPegLexer.cpp MmapFileReader.cpp Query.cpp)
 
 target_link_libraries(index conf git lpeg Qt6::Core Qt6::Concurrent)
 
