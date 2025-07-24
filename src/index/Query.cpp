@@ -229,6 +229,17 @@ bool isOperator(const Lexer::Lexeme &lexeme, const QByteArray &chars) {
   return (lexeme.token == Lexer::Operator && chars.contains(lexeme.text));
 }
 
+QByteArray getOperators(Index::Field field) {
+  switch (field) {
+      // Accept a limited set of special characters for emails
+    case Index::Email:
+      return ".+@";
+
+    default:
+      return "/.*?";
+  }
+}
+
 QueryRef parse(QList<Lexer::Lexeme> &lexemes, Index::Field start = Index::Any) {
   QueryRef result;
   while (!lexemes.isEmpty()) {
@@ -340,10 +351,11 @@ QueryRef parse(QList<Lexer::Lexeme> &lexemes, Index::Field start = Index::Any) {
       }
 
     } else if (lexeme.token == Lexer::Identifier) {
+      const QByteArray operators = getOperators(field);
       // Parse file path and wildcards.
       QByteArray text = lexeme.text;
-      while (!lexemes.isEmpty() && isOperator(lexemes.first(), "/.*?")) {
-        while (!lexemes.isEmpty() && isOperator(lexemes.first(), "/.*?"))
+      while (!lexemes.isEmpty() && isOperator(lexemes.first(), operators)) {
+        while (!lexemes.isEmpty() && isOperator(lexemes.first(), operators))
           text += lexemes.takeFirst().text;
         if (!lexemes.isEmpty() && lexemes.first().token == Lexer::Identifier)
           text += lexemes.takeFirst().text;
