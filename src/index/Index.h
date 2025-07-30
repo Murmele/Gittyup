@@ -12,6 +12,7 @@
 
 #include "git/Id.h"
 #include "git/Repository.h"
+#include "MmapFileReader.h"
 #include <QList>
 #include <QObject>
 #include <QVector>
@@ -113,11 +114,10 @@ public:
   static QString lockFile(const git::Repository &repo);
 
   // vint
-  static quint32 readVInt(QDataStream &in);
   static void writeVInt(QDataStream &out, quint32 arg);
 
   // positions
-  static void readPositions(QDataStream &in, QVector<quint32> &positions);
+  static void readPositions(MmapFileReader &in, QVector<quint32> &positions);
   static void writePositions(QDataStream &out,
                              const QVector<quint32> &positions);
 
