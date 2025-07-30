@@ -11,7 +11,7 @@
 
 namespace {
 
-const QByteArray kOperators = ":/.()*?";
+const QByteArray kOperators = ":/.()*?+@";
 
 char safeAt(const QByteArray &buffer, int i) {
   return (i < buffer.length()) ? buffer.at(i) : 0;
