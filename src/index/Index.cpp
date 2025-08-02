@@ -64,12 +64,15 @@ void Index::reset() {
   mIds.clear();
   mDict.clear();
 
+  git_oid_t id_type = mRepo.oidType();
+  uint8_t id_size = git::Id::getSize(id_type);
+
   // Read already indexed ids.
   QDir dir = indexDir();
   QFile idFile(dir.filePath(kIdFile));
   if (idFile.open(QIODevice::ReadOnly)) {
     while (idFile.bytesAvailable() > 0)
-      mIds.append(idFile.read(GIT_OID_SHA1_SIZE));
+      mIds.append(git::Id(idFile.read(id_size), id_type));
   }
 
   // Read dictionary.
@@ -142,7 +145,7 @@ bool Index::write(PostingMap map) {
 
   // Write id file.
   foreach (const git::Id &id, mIds)
-    idFile.write(id.toByteArray(), GIT_OID_SHA1_SIZE);
+    idFile.write(id.toByteArray(), id.getSize());
 
   // Merge new entries into existing postings file.
   // Write dictionary and postings files in lockstep.

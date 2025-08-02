@@ -19,7 +19,7 @@ namespace git {
 class Id {
 public:
   Id();
-  Id(const QByteArray &id);
+  Id(const QByteArray &id, git_oid_t type);
   Id(const git_oid &id);
   Id(const git_oid *id);
 
@@ -34,6 +34,8 @@ public:
   bool operator!=(const Id &rhs) const;
 
   static Id invalidId();
+  uint8_t getSize() const;
+  static uint8_t getSize(const git_oid_t type);
 
 private:
   operator const git_oid *() const;

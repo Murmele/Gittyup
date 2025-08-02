@@ -146,6 +146,8 @@ if(DEBUG_FLATPAK)
   add_compile_definitions(DEBUG_FLATPAK)
 endif()
 
+add_compile_definitions(GIT_EXPERIMENTAL_SHA256)
+
 include(GNUInstallDirs) # Defines some variables as BINDIR, LIBDIR, ...
 
 set(QT_TRANSLATIONS_DIR "${Qt6_DIR}/../../../translations")
