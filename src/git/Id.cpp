@@ -13,12 +13,6 @@
 
 namespace git {
 
-namespace {
-
-const Id kInvalidId(QByteArray(GIT_OID_SHA1_SIZE, -1), GIT_OID_SHA1);
-
-} // namespace
-
 Id::Id() {
 #ifdef GIT_EXPERIMENTAL_SHA256
   d.type = 0;
@@ -52,13 +46,7 @@ Id::operator const git_oid *() const { return &d; }
 
 bool Id::isNull() const { return git_oid_is_zero(&d); }
 
-bool Id::isValid() const {
-  return
-#ifdef GIT_EXPERIMENTAL_SHA256
-      d.type != 0 &&
-#endif
-      !git_oid_equal(&d, kInvalidId);
-}
+bool Id::isValid() const { return isNull() == false; }
 
 QString Id::toString() const { return toByteArray().toHex(); }
 
@@ -72,8 +60,6 @@ bool Id::operator<(const Id &rhs) const { return (git_oid_cmp(&d, rhs) < 0); }
 bool Id::operator==(const Id &rhs) const { return git_oid_equal(&d, rhs); }
 
 bool Id::operator!=(const Id &rhs) const { return !git_oid_equal(&d, rhs); }
-
-Id Id::invalidId() { return kInvalidId; }
 
 uint8_t Id::getSize() const {
 #ifdef GIT_EXPERIMENTAL_SHA256

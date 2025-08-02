@@ -33,7 +33,6 @@ public:
   bool operator==(const Id &rhs) const;
   bool operator!=(const Id &rhs) const;
 
-  static Id invalidId();
   uint8_t getSize() const;
   static uint8_t getSize(const git_oid_t type);
 

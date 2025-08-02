@@ -81,7 +81,8 @@ private:
 
   Id headId(const QString &path, uint32_t *mode = nullptr) const;
   Id indexId(const QString &path, uint32_t *mode = nullptr) const;
-  Id workdirId(const QString &path, uint32_t *mode = nullptr) const;
+  std::optional<Id> workdirId(const QString &path,
+                              uint32_t *mode = nullptr) const;
 
   QSharedPointer<Data> d;
 
