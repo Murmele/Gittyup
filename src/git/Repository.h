@@ -85,6 +85,9 @@ public:
   Config gitConfig() const;
   Config appConfig() const;
 
+  // OID type
+  git_oid_t oidType() const;
+
   // bare
   bool isBare() const;
 

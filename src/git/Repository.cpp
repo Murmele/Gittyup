@@ -110,6 +110,7 @@ QMap<git_repository *, QWeakPointer<Repository::Data>> Repository::registry;
 Repository::Data::Data(git_repository *repo)
     : repo(repo), notifier(new RepositoryNotifier) {
   // Load starred commits.
+  git_oid_t hash_type = git_repository_oid_type(repo);
   QDir dir(git_repository_path(repo));
   QFile file(appDir(dir).filePath(kStarFile));
   if (!file.open(QIODevice::ReadOnly))
@@ -120,7 +121,7 @@ Repository::Data::Data(git_repository *repo)
     return;
 
   foreach (const QByteArray &id, ids.split('\n'))
-    starredCommits.insert(QByteArray::fromHex(id));
+    starredCommits.insert(git::Id(QByteArray::fromHex(id), hash_type));
 }
 
 Repository::Data::~Data() {
@@ -200,6 +201,10 @@ Config Repository::appConfig() const {
   QString path = appDir().filePath(kConfigFile);
   config.addFile(path, GIT_CONFIG_LEVEL_LOCAL, d->repo);
   return config;
+}
+
+git_oid_t Repository::oidType() const {
+  return git_repository_oid_type(d->repo);
 }
 
 bool Repository::isBare() const { return git_repository_is_bare(d->repo); }

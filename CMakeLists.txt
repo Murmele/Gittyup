@@ -65,6 +65,7 @@ option(USE_SYSTEM_LUA "Use the system-wide Lua installation" OFF)
 option(USE_SYSTEM_HUNSPELL "Use the system-wide hunspell installation" OFF)
 option(USE_SYSTEM_CMARK "Use the system-wide cmark installation" OFF)
 option(ENABLE_TESTS "Enable Gittyup Unittests" ON)
+option(ENABLE_SHA256 "Enable SHA256 support within Gittyup" ON)
 
 set(LUA_MODULES_PATH
     CACHE
@@ -144,6 +145,10 @@ endif()
 
 if(DEBUG_FLATPAK)
   add_compile_definitions(DEBUG_FLATPAK)
+endif()
+
+if(ENABLE_SHA256)
+  add_compile_definitions(GIT_EXPERIMENTAL_SHA256)
 endif()
 
 include(GNUInstallDirs) # Defines some variables as BINDIR, LIBDIR, ...
