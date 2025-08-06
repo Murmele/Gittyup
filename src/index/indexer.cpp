@@ -11,6 +11,7 @@
 #include "GenericLexer.h"
 #include "LPegLexer.h"
 #include "qtsupport.h"
+#include "WorkerQueue.h"
 #include "conf/Settings.h"
 #include "git/Config.h"
 #include "git/Index.h"
@@ -227,176 +228,302 @@ private:
   QMultiMap<QByteArray, Lexer *> mLexers;
 };
 
-class Map {
+/// @brief Runnable mapping git commits and diffs into Intermediate objects.
+/// This includes running lexing on the diff and commit
+class Map : public QRunnable {
 public:
   typedef Intermediate result_type;
 
-  Map(const git::Repository &repo, LexerPool &lexers, QFile *out)
-      : mLexers(lexers), mOut(out) {
+  Map(const git::Repository &repo, LexerPool &lexers, QFile *out,
+      WorkerQueue<QPair<git::Commit, git::Diff>> &inQueue,
+      WorkerQueue<Intermediate> &outQueue)
+      : mLexers(lexers), mOut(out), mInQueue(inQueue), mOutQueue(outQueue) {
     git::Config config = repo.appConfig();
     mTermLimit = config.value<int>("index.termlimit", mTermLimit);
     mContextLines = config.value<int>("index.contextlines", mContextLines);
   }
 
-  Intermediate operator()(const git::Commit &commit) {
-    log(mOut, "map: %1", commit.id());
+  void run() override {
+    std::optional<QPair<git::Commit, git::Diff>> commitOpt = mInQueue.dequeue();
+    while (!canceled && commitOpt.has_value()) {
+      auto commitPair = commitOpt.value();
+      auto commit = commitPair.first;
+      auto diff = commitPair.second;
 
-    quint32 filePos = 0;
-    quint32 hunkPos = 0;
+      log(mOut, "map: %1", commit.id());
 
-    Intermediate result;
-    result.id = commit.id();
+      quint32 filePos = 0;
+      quint32 hunkPos = 0;
 
-    // Index id.
-    result.fields[Index::Id][commit.id().toString().toUtf8()].append(0);
+      Intermediate result;
+      result.id = commit.id();
 
-    // Index committer date.
-    QDateTime time = commit.committer().date();
-    QByteArray date = time.date().toString(Index::dateFormat()).toUtf8();
-    result.fields[Index::Date][date].append(0);
+      // Index id.
+      result.fields[Index::Id][commit.id().toString().toUtf8()].append(0);
 
-    // Index author name and email.
-    git::Signature author = commit.author();
-    QByteArray email = author.email().toUtf8().toLower();
-    result.fields[Index::Email][email].append(0);
+      // Index committer date.
+      QDateTime time = commit.committer().date();
+      QByteArray date = time.date().toString(Index::dateFormat()).toUtf8();
+      result.fields[Index::Date][date].append(0);
 
-    quint32 namePos = 0;
-    foreach (const QString &name, author.name().split(kWsRe)) {
-      QByteArray key = name.toUtf8().toLower();
-      result.fields[Index::Author][key].append(namePos++);
-    }
+      // Index author name and email.
+      git::Signature author = commit.author();
+      QByteArray email = author.email().toUtf8().toLower();
+      result.fields[Index::Email][email].append(0);
 
-    // Index message.
-    GenericLexer generic;
-    quint32 messagePos = 0;
-    generic.lex(commit.message().toUtf8());
-    while (generic.hasNext())
-      index(generic.next(), result.fields, Index::Message, messagePos);
+      quint32 namePos = 0;
+      foreach (const QString &name, author.name().split(kWsRe)) {
+        QByteArray key = name.toUtf8().toLower();
+        result.fields[Index::Author][key].append(namePos++);
+      }
 
-    // Index diff.
-    quint32 diffPos = 0;
-    git::Diff diff = commit.diff(git::Commit(), mContextLines, true);
-    int patches = diff.count();
-    for (int pidx = 0; pidx < patches; ++pidx) {
-      // Truncate commits after term limit.
-      if (canceled || diffPos > mTermLimit)
-        break;
+      // Index message.
+      GenericLexer generic;
+      quint32 messagePos = 0;
+      generic.lex(commit.message().toUtf8());
+      while (generic.hasNext())
+        index(generic.next(), result.fields, Index::Message, messagePos);
 
-      // Skip binary deltas.
-      if (diff.isBinary(pidx))
-        continue;
-
-      // Generate patch.
-      git::Patch patch = diff.patch(pidx);
-      if (!patch.isValid())
-        continue;
-
-      // Index file name and path.
-      QFileInfo info(patch.name().toLower());
-      result.fields[Index::Path][info.filePath().toUtf8()].append(filePos);
-      result.fields[Index::File][info.fileName().toUtf8()].append(filePos++);
-
-      // Look up lexer.
-      QByteArray name = Settings::instance()->lexer(patch.name()).toUtf8();
-      Lexer *lexer = (name == "null") ? &generic : mLexers.acquire(name);
-
-      // Lex one line at a time.
-      int hunks = patch.count();
-      for (int hidx = 0; hidx < hunks; ++hidx) {
+      // Index diff.
+      quint32 diffPos = 0;
+      int patches = diff.count();
+      for (int pidx = 0; pidx < patches; ++pidx) {
+        // Truncate commits after term limit.
         if (canceled || diffPos > mTermLimit)
           break;
 
-        // Index hunk header.
-        QByteArray header = patch.header(hidx);
-        if (lexer->lex(header)) {
-          while (lexer->hasNext())
-            index(lexer->next(), result.fields, Index::Scope, hunkPos);
-        }
+        // Skip binary deltas.
+        if (diff.isBinary(pidx))
+          continue;
 
-        // Index content.
-        int lines = patch.lineCount(hidx);
-        for (int line = 0; line < lines; ++line) {
+        // Generate patch.
+        git::Patch patch = diff.patch(pidx);
+        if (!patch.isValid())
+          continue;
+
+        // Index file name and path.
+        QFileInfo info(patch.name().toLower());
+        result.fields[Index::Path][info.filePath().toUtf8()].append(filePos);
+        result.fields[Index::File][info.fileName().toUtf8()].append(filePos++);
+
+        // Look up lexer.
+        QByteArray name = Settings::instance()->lexer(patch.name()).toUtf8();
+        Lexer *lexer = (name == "null") ? &generic : mLexers.acquire(name);
+
+        // Lex one line at a time.
+        int hunks = patch.count();
+        for (int hidx = 0; hidx < hunks; ++hidx) {
           if (canceled || diffPos > mTermLimit)
             break;
 
-          Index::Field field;
-          switch (patch.lineOrigin(hidx, line)) {
-            case GIT_DIFF_LINE_CONTEXT:
-              field = Index::Context;
-              break;
-            case GIT_DIFF_LINE_ADDITION:
-              field = Index::Addition;
-              break;
-            case GIT_DIFF_LINE_DELETION:
-              field = Index::Deletion;
-              break;
-            default:
-              continue;
+          // Index hunk header.
+          QByteArray header = patch.header(hidx);
+          if (lexer->lex(header)) {
+            while (lexer->hasNext())
+              index(lexer->next(), result.fields, Index::Scope, hunkPos);
           }
 
-          if (lexer->lex(patch.lineContent(hidx, line))) {
-            while (!canceled && lexer->hasNext())
-              index(lexer->next(), result.fields, field, diffPos);
+          // Index content.
+          int lines = patch.lineCount(hidx);
+          for (int line = 0; line < lines; ++line) {
+            if (canceled || diffPos > mTermLimit)
+              break;
+
+            Index::Field field;
+            switch (patch.lineOrigin(hidx, line)) {
+              case GIT_DIFF_LINE_CONTEXT:
+                field = Index::Context;
+                break;
+              case GIT_DIFF_LINE_ADDITION:
+                field = Index::Addition;
+                break;
+              case GIT_DIFF_LINE_DELETION:
+                field = Index::Deletion;
+                break;
+              default:
+                continue;
+            }
+
+            if (lexer->lex(patch.lineContent(hidx, line))) {
+              while (!canceled && lexer->hasNext())
+                index(lexer->next(), result.fields, field, diffPos);
+            }
           }
         }
+
+        // Return lexer to the pool.
+        if (lexer != &generic)
+          mLexers.release(lexer);
       }
 
-      // Return lexer to the pool.
-      if (lexer != &generic)
-        mLexers.release(lexer);
-    }
+      mOutQueue.enqueue(std::move(result));
 
-    return result;
+      // Grab next value
+      commitOpt = mInQueue.dequeue();
+    }
   }
 
 private:
   LexerPool &mLexers;
   QFile *mOut;
+  WorkerQueue<QPair<git::Commit, git::Diff>> &mInQueue;
+  WorkerQueue<Intermediate> &mOutQueue;
 
   int mContextLines = 3;
   quint32 mTermLimit = 1000000;
 };
 
-class Reduce {
+/// @brief Overlay over Index::ids() in order to allow multi-threading and
+/// unnecessary copying of the list
+class IdStorage {
 public:
-  Reduce(Index::IdList &ids, QFile *out) : mIds(ids), mOut(out) {}
+  IdStorage(Index &index)
+      : mIndex(index), mIds(mIndex.ids().begin(), mIndex.ids().end()) {}
 
-  void operator()(Index::PostingMap &result, const Intermediate &intermediate) {
-    if (canceled || intermediate.fields.isEmpty())
-      return;
+  bool contains(const git::Id &id) {
+    bool result;
+    mLock.lockForRead();
+    result = mIds.contains(id);
+    mLock.unlock();
+    return result;
+  }
 
-    log(mOut, "reduce: %1", intermediate.id);
-
-    quint32 id = mIds.size();
-    mIds.append(intermediate.id);
-
-    Intermediate::FieldMap::const_iterator it;
-    Intermediate::FieldMap::const_iterator end = intermediate.fields.end();
-    for (it = intermediate.fields.begin(); it != end; ++it) {
-      Intermediate::TermMap::const_iterator termIt;
-      Intermediate::TermMap::const_iterator termEnd = it.value().end();
-      for (termIt = it.value().begin(); termIt != termEnd; ++termIt) {
-        Index::Posting posting;
-        posting.id = id;
-        posting.field = it.key();
-        posting.positions = termIt.value();
-        result[termIt.key()].append(posting);
-      }
-    }
+  qsizetype append(const git::Id &id) {
+    auto &listIds = mIndex.ids();
+    qsizetype size;
+    mLock.lockForWrite();
+    size = listIds.size();
+    listIds.append(id);
+    mIds.insert(id);
+    mLock.unlock();
+    return size;
   }
 
 private:
-  Index::IdList &mIds;
+  QReadWriteLock mLock;
+  Index &mIndex;
+  QSet<git::Id> mIds;
+};
+
+/// @brief This will convert Intermediate into a posting map
+/// @note This is extracted from explicitly single-thread code, thus only one
+/// thread should be started!
+class Reduce : public QThread {
+public:
+  Reduce(IdStorage &ids, QFile *out, WorkerQueue<Intermediate> &queue,
+         WorkerQueue<Index::PostingMap> &results, Index &index,
+         QObject *parent = nullptr)
+      : QThread(parent), mIds(ids), mOut(out), mQueue(queue), mResults(results),
+        mIndex(index) {}
+
+private:
+  void run() override {
+    Index::PostingMap result;
+    std::optional<Intermediate> intermediateOpt = mQueue.dequeue();
+    while (!canceled && intermediateOpt.has_value()) {
+      auto intermediate = intermediateOpt.value();
+      mProcessedElemenets++;
+      log(mOut, "reduce: %1", intermediate.id);
+
+      quint32 id = mIds.append(intermediate.id);
+
+      Intermediate::FieldMap::const_iterator it;
+      Intermediate::FieldMap::const_iterator end = intermediate.fields.end();
+      for (it = intermediate.fields.begin(); it != end; ++it) {
+        Intermediate::TermMap::const_iterator termIt;
+        Intermediate::TermMap::const_iterator termEnd = it.value().end();
+        for (termIt = it.value().begin(); termIt != termEnd; ++termIt) {
+          Index::Posting posting;
+          posting.id = id;
+          posting.field = it.key();
+          posting.positions = termIt.value();
+          result[termIt.key()].append(posting);
+        }
+      }
+
+      if (mProcessedElemenets >= 8192) {
+        mResults.enqueue(std::move(result));
+        result = Index::PostingMap();
+        mProcessedElemenets = 0;
+      }
+
+      // Grab next value
+      intermediateOpt = mQueue.dequeue();
+    }
+    if (mProcessedElemenets > 0)
+      mResults.enqueue(std::move(result));
+  }
+
+private:
+  IdStorage &mIds;
   QFile *mOut;
+  WorkerQueue<Intermediate> &mQueue;
+  WorkerQueue<Index::PostingMap> &mResults;
+  Index &mIndex;
+  quint16 mProcessedElemenets = 0;
+};
+
+/// @brief Runnable grabbing the git diff from libgit2
+/// @note This is somewhat expensive and easily hits multi-threading limits in
+/// libgit2. It should be run in a 1:1 ratio with Map runnables
+class DiffGrabber : public QRunnable {
+public:
+  DiffGrabber(WorkerQueue<git::Commit> &commits,
+              WorkerQueue<QPair<git::Commit, git::Diff>> &diffedCommits)
+      : mCommits(commits), mDiffedCommits(diffedCommits) {}
+
+private:
+  WorkerQueue<git::Commit> &mCommits;
+  WorkerQueue<QPair<git::Commit, git::Diff>> &mDiffedCommits;
+
+  void run() override {
+    std::optional<git::Commit> commitOpt = mCommits.dequeue();
+    while (!canceled && commitOpt.has_value()) {
+      auto commit = commitOpt.value();
+      git::Diff diff = commit.diff(git::Commit(), 3, true);
+      mDiffedCommits.enqueue(QPair<git::Commit, git::Diff>(commit, diff));
+      commitOpt = mCommits.dequeue();
+    }
+  }
+};
+
+/// @brief Writes results to the index files
+/// @note Only instantiate one instance of this class!
+class ResultWriter : public QThread {
+public:
+  ResultWriter(QFile *out, Index &index,
+               WorkerQueue<Index::PostingMap> &results, bool notify)
+      : mOut(out), mNotify(notify), mIndex(index), mResults(results) {}
+
+private:
+  QFile *mOut;
+  bool mNotify;
+  Index &mIndex;
+  WorkerQueue<Index::PostingMap> &mResults;
+
+  void run() override {
+    std::optional<Index::PostingMap> resultOpt = mResults.dequeue();
+    while (!canceled && resultOpt.has_value()) {
+      auto result = resultOpt.value();
+      // Write to disk.
+      log(mOut, "start write");
+      if (mIndex.write(result) && mNotify)
+        QTextStream(stdout) << "write" << Qt::endl;
+      log(mOut, "end write");
+
+      // Grab next value
+      resultOpt = mResults.dequeue();
+    }
+  }
 };
 
 class Indexer : public QObject, public QAbstractNativeEventFilter {
 public:
   Indexer(Index &index, QFile *out, bool notify, QObject *parent = nullptr)
-      : QObject(parent), mIndex(index), mOut(out), mNotify(notify) {
+      : QObject(parent), mIndex(index), mOut(out), mIds(index),
+        mReduce(mIds, out, mIntermediateQueue, mResults, mIndex),
+        mResultWriter(out, index, mResults, notify) {
     mWalker = mIndex.repo().walker();
-    connect(&mWatcher, &QFutureWatcher<Index::PostingMap>::finished, this,
-            &Indexer::finish);
 
 #ifdef Q_OS_UNIX
     if (!socketpair(AF_UNIX, SOCK_STREAM, 0, fds)) {
@@ -422,54 +549,66 @@ public:
   }
 
   bool start() {
+    // NOTE: Limiting the worker and grabber pool to 3 threads
+    //  Adding more threads doesn't seem to improve performance at all
+    // since they'll just start badly hammering the libgit2 cache system's
+    // read-write lock
+    int numWorkers = std::min(3, (QThread::idealThreadCount() / 2) - 1);
+    int numGabbers = numWorkers;
     log(mOut, "start");
+    mReduce.start();
+    mResultWriter.start();
+    for (int i = 0; i < numWorkers; i++) {
+      mWorkers.start(new Map(mIndex.repo(), mLexers, mOut, mDiffedCommits,
+                             mIntermediateQueue));
+    }
+    for (int i = 0; i < numGabbers; i++) {
+      mGrabbers.start(new DiffGrabber(mCommits, mDiffedCommits));
+    }
 
-    // Get list of commits.
-    int count = 0;
-    QList<git::Commit> commits;
     git::Commit commit = mWalker.next();
-    QSet<git::Id> ids(mIndex.ids().begin(), mIndex.ids().end());
 
-    while (commit.isValid() && count < 8192) {
+    while (commit.isValid()) {
       // Don't index merge commits.
-      if (!commit.isMerge() && !ids.contains(commit.id())) {
-        commits.append(commit);
-        ++count;
+      if (!commit.isMerge() && !mIds.contains(commit.id())) {
+        mCommits.enqueue(std::move(commit));
       }
-
       commit = mWalker.next();
     }
 
-    if (commits.isEmpty()) {
-      log(mOut, "nothing to index");
-      QCoreApplication::quit();
-      return false;
-    }
-
-    // Start map-reduce.
-    using CommitList = QList<git::Commit>;
-    mWatcher.setFuture(
-        QtConcurrent::mappedReduced<Index::PostingMap, CommitList, Map, Reduce>(
-            std::move(commits), Map(mIndex.repo(), mLexers, mOut),
-            Reduce(mIndex.ids(), mOut)));
-    return true;
+    finish();
+    return false;
   }
 
   void finish() {
     log(mOut, "finish");
 
+    if (!canceled) {
+      // Since this thread was the one feeding mCommits, we know we're
+      //  done processing if it gets empty
+      mCommits.awaitEmpty();
+      // If the above queue is empty, we can wait for the rest of the queue
+      //  empty out
+      mDiffedCommits.awaitEmpty();
+      mIntermediateQueue.awaitEmpty();
+      mResults.awaitEmpty();
+    }
+    // Since we either are aborting or is done, we can now shut down and
+    // unblock everyone waiting on queues
+    mCommits.stop();
+    mDiffedCommits.stop();
+    mIntermediateQueue.stop();
+    mResults.stop();
+    // ...and also shut down all threads
+    mGrabbers.waitForDone();
+    mWorkers.waitForDone();
+    mReduce.wait();
+    mResultWriter.wait();
+
     if (canceled) {
       QCoreApplication::exit(1);
-    } else {
-      // Write to disk.
-      log(mOut, "start write");
-      if (mIndex.write(mWatcher.result()) && mNotify)
-        QTextStream(stdout) << "write" << Qt::endl;
-      log(mOut, "end write");
-
-      // Restart.
-      start();
     }
+    QCoreApplication::quit();
   }
 
   bool nativeEventFilter(const QByteArray &type, void *message,
@@ -490,17 +629,28 @@ public:
 private:
   void cancel() {
     canceled = true;
-    mWatcher.cancel();
-    mWatcher.waitForFinished();
+    finish();
   }
 
   Index &mIndex;
   QFile *mOut;
-  bool mNotify;
 
+  IdStorage mIds;
   git::RevWalk mWalker;
   LexerPool mLexers;
-  QFutureWatcher<Index::PostingMap> mWatcher;
+
+  // Variables to hold the threads
+  Reduce mReduce;
+  QThreadPool mGrabbers;
+  QThreadPool mWorkers;
+  ResultWriter mResultWriter;
+  // Various worker queues to synchronise data between threads
+  WorkerQueue<git::Commit> mCommits = WorkerQueue<git::Commit>(256);
+  WorkerQueue<QPair<git::Commit, git::Diff>> mDiffedCommits =
+      WorkerQueue<QPair<git::Commit, git::Diff>>(256);
+  WorkerQueue<Intermediate> mIntermediateQueue = WorkerQueue<Intermediate>(256);
+  // NOTE: The posting map is rather large, so it's limited to one item
+  WorkerQueue<Index::PostingMap> mResults = WorkerQueue<Index::PostingMap>(1);
 };
 
 class RepoInit {
