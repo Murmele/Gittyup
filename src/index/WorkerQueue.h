@@ -23,7 +23,7 @@ private:
   QWaitCondition mNotEmpty;
   QWaitCondition mNotFull;
   QWaitCondition mEmpty;
-  volatile bool mStop = false;
+  std::atomic<bool> mStop = false;
 
 public:
   WorkerQueue(QObject *parent = nullptr)
@@ -34,14 +34,17 @@ public:
   void stop() {
     mStop = true;
     mNotEmpty.wakeAll();
+    mNotFull.wakeAll();
     mEmpty.wakeAll();
   }
   void enqueue(T &&item) {
     QMutexLocker lock(&mMutex);
     while (mQueue.size() == mMaxSize && !mStop)
       mNotFull.wait(&mMutex);
-    mQueue.enqueue(std::move(item));
-    mNotEmpty.wakeOne();
+    if (!mStop) {
+      mQueue.enqueue(std::move(item));
+      mNotEmpty.wakeOne();
+    }
   }
 
   void awaitEmpty() {
