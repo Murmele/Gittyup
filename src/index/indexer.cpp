@@ -549,12 +549,21 @@ public:
   }
 
   bool start() {
-    // NOTE: Limiting the worker and grabber pool to 3 threads
-    //  Adding more threads doesn't seem to improve performance at all
-    // since they'll just start badly hammering the libgit2 cache system's
-    // read-write lock
-    int numWorkers = std::min(3, (QThread::idealThreadCount() / 2) - 1);
-    int numGabbers = numWorkers;
+    // The distribution of threads is as follows
+    // This thread iterates over mWalker
+    // 1x thread runs the Reduction class
+    // 1x thread runs the ResultWriter
+    // Up-to 4 threads running a DiffGrabber. Even three seems to oversature
+    // libgit2. On top of this, one worker is spawned per cpu thread
+    // NOTE: This will always overcommit by up-to 7 threads. This is
+    // intentional since the non-worker threads are lighter than the
+    // rest of the threads. Additionally, for low-core cout machines, we need to
+    // ensure there's at least one thread of each type. In some cases, the
+    // processing done in the worker threads are the limiting factor. Aside from
+    // using more RAM, the over-commitment doesn't seem to impact performance
+    int numGabbers = std::min(4, std::max(1, QThread::idealThreadCount() / 2));
+    int numWorkers = QThread::idealThreadCount();
+
     log(mOut, "start");
     mReduce.start();
     mResultWriter.start();
