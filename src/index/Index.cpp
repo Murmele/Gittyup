@@ -124,7 +124,7 @@ bool Index::remove() {
   return true;
 }
 
-bool Index::write(PostingMap map) {
+bool Index::write(const PostingMap &map) {
   if (map.isEmpty())
     return false;
 

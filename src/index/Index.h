@@ -91,7 +91,7 @@ public:
   void reset();
   void clean();
   bool remove();
-  bool write(PostingMap map);
+  bool write(const PostingMap &map);
 
   QList<git::Commit> commits(const QString &filter) const;
   QList<git::Commit> commits(const QList<Posting> &postings) const;
