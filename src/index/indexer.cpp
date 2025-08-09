@@ -583,26 +583,35 @@ public:
   void finish() {
     log(mOut, "finish");
 
-    if (!canceled) {
-      // Since this thread was the one feeding mCommits, we know we're
-      //  done processing if it gets empty
+    // NOTE: This requires a staged, sequenced shutdown, otherwise data is
+    // ignored. The order is thus intentional and 'if (!canceled)' is necessary
+
+    // Since this thread was the one feeding mCommits, we know we're
+    //  done processing if it gets empty
+    // If we're not aborting, wait for the queue to be empty, then stop/wake up
+    // threads blocked on it, and lastly wait for the grabbers to finish up
+    if (!canceled)
       mCommits.awaitEmpty();
-      // If the above queue is empty, we can wait for the rest of the queue
-      //  empty out
-      mDiffedCommits.awaitEmpty();
-      mIntermediateQueue.awaitEmpty();
-      mResults.awaitEmpty();
-    }
-    // Since we either are aborting or is done, we can now shut down and
-    // unblock everyone waiting on queues
     mCommits.stop();
-    mDiffedCommits.stop();
-    mIntermediateQueue.stop();
-    mResults.stop();
-    // ...and also shut down all threads
     mGrabbers.waitForDone();
+
+    // Now we can do the same thing with the next queue in the line, and stop
+    // the worker threads
+    if (!canceled)
+      mDiffedCommits.awaitEmpty();
+    mDiffedCommits.stop();
     mWorkers.waitForDone();
+
+    // Next is the intermediate queue and the reduction thread
+    if (!canceled)
+      mIntermediateQueue.awaitEmpty();
+    mIntermediateQueue.stop();
     mReduce.wait();
+
+    // Before we finish up with the results queue and writer thread
+    if (!canceled)
+      mResults.awaitEmpty();
+    mResults.stop();
     mResultWriter.wait();
 
     if (canceled) {
