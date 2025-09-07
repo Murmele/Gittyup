@@ -113,11 +113,14 @@ Index::StagedState Index::isStaged(const QString &path) const {
     return d->stagedCache.insert(path, Unstaged).value();
 
   uint32_t workdirMode = GIT_FILEMODE_UNREADABLE;
-  Id workdir = sm.isValid() ? sm.workdirId() : workdirId(path, &workdirMode);
+  std::optional<Id> workdirOpt =
+      sm.isValid() ? sm.workdirId() : workdirId(path, &workdirMode);
 
   // Handle filter callback error.
-  if (!workdir.isValid())
+  if (!workdirOpt.has_value())
     return d->stagedCache.insert(path, Unstaged).value();
+
+  Id workdir = workdirOpt.value();
 
   // Handle dirty submodules.
   if (sm.isValid() && head == workdir)
@@ -401,13 +404,13 @@ Id Index::indexId(const QString &path, uint32_t *mode) const {
   return entry->id;
 }
 
-Id Index::workdirId(const QString &path, uint32_t *mode) const {
+std::optional<Id> Index::workdirId(const QString &path, uint32_t *mode) const {
   Repository repo(git_index_owner(d->index));
 
   git_oid id;
   if (int error = git_repository_hashfile(&id, repo, path.toUtf8(),
                                           GIT_OBJECT_BLOB, nullptr))
-    return (error == GIT_EUSER) ? Id::invalidId() : Id();
+    return (error == GIT_EUSER) ? std::nullopt : std::optional<Id>(Id());
 
   if (mode) {
     *mode = GIT_FILEMODE_BLOB;
