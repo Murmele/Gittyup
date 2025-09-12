@@ -19,13 +19,18 @@ DiffTool::DiffTool(const QString &file, const git::Blob &localBlob,
     : ExternalTool(file, parent), mLocalBlob(localBlob),
       mRemoteBlob(remoteBlob) {}
 
+DiffTool::DiffTool(const QString &file,
+                   const git::Blob &remoteBlob, QObject *parent)
+    : ExternalTool(file, parent),
+      mRemoteBlob(remoteBlob) { Q_ASSERT(!mLocalBlob); }
+
 bool DiffTool::isValid() const {
-  return (ExternalTool::isValid() && mLocalBlob.isValid());
+  return (ExternalTool::isValid() && mRemoteBlob.isValid());
 }
 
 ExternalTool::Kind DiffTool::kind() const { return Diff; }
 
-QString DiffTool::name() const { return tr("External Diff"); }
+QString DiffTool::name() const { return mLocalBlob ? tr("External Diff") : tr("External Diff to working copy"); }
 
 bool DiffTool::start() {
   Q_ASSERT(isValid());
@@ -37,12 +42,15 @@ bool DiffTool::start() {
 
   // Write temporary files.
   QString templatePath = QDir::temp().filePath(QFileInfo(mFile).fileName());
-  QTemporaryFile *local = new QTemporaryFile(templatePath, this);
-  if (!local->open())
-    return false;
+  QTemporaryFile *local = nullptr;
+  if (mLocalBlob.isValid()) {
+    local = new QTemporaryFile(templatePath, this);
+    if (!local->open())
+      return false;
 
-  local->write(mLocalBlob.content());
-  local->flush();
+    local->write(mLocalBlob.content());
+    local->flush();
+  }
 
   QString remotePath;
   if (!mRemoteBlob.isValid()) {
@@ -71,7 +79,7 @@ bool DiffTool::start() {
   });
 
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
-  QStringList arguments = {"--host", "--env=LOCAL=" + local->fileName(),
+  QStringList arguments = {"--host", "--env=LOCAL=" + local ? local->fileName() : QFileInfo(mFile).absoluteFilePath(),
                            "--env=REMOTE=" + remotePath,
                            "--env=MERGED=" + mFile, "--env=BASE=" + mFile};
   arguments.append("sh");
@@ -81,7 +89,7 @@ bool DiffTool::start() {
 #else
 
   QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-  env.insert("LOCAL", local->fileName());
+  env.insert("LOCAL", local ? local->fileName() : QFileInfo(mFile).absoluteFilePath());
   env.insert("REMOTE", remotePath);
   env.insert("MERGED", mFile);
   env.insert("BASE", mFile);
