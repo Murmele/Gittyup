@@ -100,7 +100,7 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
 
   setApplicationName(GITTYUP_NAME);
   setApplicationVersion(GITTYUP_VERSION);
-  setOrganizationDomain("gittyup.github.com");
+  setOrganizationDomain(GITTYUP_ORGANIZATION_DOMAIN);
 
   // Register types that are queued at runtime.
   qRegisterMetaType<git::Id>();
