@@ -46,7 +46,7 @@
   <url type="donation">https://liberapay.com/Gittyup/donate</url>
 
   <provides>
-    <binary>Gittyup</binary>
+    <binary>gittyup</binary>
   </provides>
 
   <releases>
