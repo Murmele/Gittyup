@@ -99,8 +99,10 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
   Q_INIT_RESOURCE(resources);
 
   setApplicationName(GITTYUP_NAME);
+  setApplicationDisplayName(GITTYUP_NAME);
   setApplicationVersion(GITTYUP_VERSION);
-  setOrganizationDomain("gittyup.github.com");
+  setOrganizationDomain(GITTYUP_ORGANIZATION_DOMAIN);
+  setDesktopFileName(GITTYUP_IDENTIFIER);
 
   // Register types that are queued at runtime.
   qRegisterMetaType<git::Id>();

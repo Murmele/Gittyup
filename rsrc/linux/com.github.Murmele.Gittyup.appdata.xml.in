@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.github.Murmele.Gittyup</id>
+  <id>@GITTYUP_IDENTIFIER@</id>
   <metadata_license>FSFAP</metadata_license>
   <project_license>MIT</project_license>
   <name>Gittyup</name>
@@ -22,7 +22,7 @@
     </ul>
   </description>
 
-  <launchable type="desktop-id">com.github.Murmele.Gittyup.desktop</launchable>
+  <launchable type="desktop-id">@GITTYUP_IDENTIFIER@.desktop</launchable>
 
   <screenshots>
     <screenshot type="default">
