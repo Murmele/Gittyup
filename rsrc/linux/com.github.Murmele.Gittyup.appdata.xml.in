@@ -22,7 +22,7 @@
     </ul>
   </description>
 
-  <launchable type="desktop-id">com.github.Murmele.Gittyup.desktop</launchable>
+  <launchable type="desktop-id">@GITTYUP_IDENTIFIER@.desktop</launchable>
 
   <screenshots>
     <screenshot type="default">
