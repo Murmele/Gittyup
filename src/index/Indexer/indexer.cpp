@@ -148,11 +148,11 @@ void index(const Lexer::Lexeme &lexeme, Intermediate::FieldMap &fields,
   }
 }
 
-Indexer::Indexer(Index &index, QFile *out, bool notify, QObject *parent)
-    : QObject(parent), mIndex(index), mOut(out), mIds(index),
+Indexer::Indexer(Index &index, bool notify, QObject *parent)
+    : QObject(parent), mIndex(index), mIds(index),
       // mIntermediateQueue will be filled by the workers spawned in the start() method below.
-      mReduce(mIds, out, mIntermediateQueue, mResults, mIndex), // Receives intermediate and converts them to results
-      mResultWriter(out, index, mResults, notify) { // Receives results and writes them down to file
+      mReduce(mIds, mIntermediateQueue, mResults, mIndex), // Receives intermediate and converts them to results
+      mResultWriter(index, mResults, notify) { // Receives results and writes them down to file
   mWalker = mIndex.repo().walker();
 
 #ifdef Q_OS_UNIX
@@ -194,11 +194,11 @@ bool Indexer:: start() {
   int numGabbers = std::min(4, std::max(1, QThread::idealThreadCount() / 2));
   int numWorkers = QThread::idealThreadCount();
 
-  log(mOut, "start");
+  log("start");
   mReduce.start();
   mResultWriter.start();
   for (int i = 0; i < numWorkers; i++) {
-    mWorkers.start(new Map(mIndex.repo(), mLexers, mOut, mDiffedCommits,
+    mWorkers.start(new Map(mIndex.repo(), mLexers, mDiffedCommits,
                            mIntermediateQueue));
   }
   for (int i = 0; i < numGabbers; i++) {
@@ -220,7 +220,7 @@ bool Indexer:: start() {
 }
 
 void Indexer::finish() {
-  log(mOut, "finish");
+  log("finish");
 
   // NOTE: This requires a staged, sequenced shutdown, otherwise data is
   // ignored. The order is thus intentional and 'if (!canceled)' is necessary

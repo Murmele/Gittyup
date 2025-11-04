@@ -6,10 +6,10 @@ void ResultWriter::run() {
   while (!canceled && resultOpt.has_value()) {
     auto result = resultOpt.value();
     // Write to disk.
-    log(mOut, "start write");
+    log("start write");
     if (mIndex.write(result) && mNotify)
       QTextStream(stdout) << "write" << Qt::endl;
-    log(mOut, "end write");
+    log("end write");
 
     // Grab next value
     resultOpt = mResults.dequeue();

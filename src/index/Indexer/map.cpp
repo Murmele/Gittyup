@@ -13,10 +13,10 @@ namespace {
     const QRegularExpression kWsRe("\\s+");
 } // namespace
 
-Map::Map(const git::Repository &repo, LexerPool &lexers, QFile *out,
-    WorkerQueue<QPair<git::Commit, git::Diff>> &inQueue,
-    WorkerQueue<Intermediate> &outQueue)
-    : mLexers(lexers), mOut(out), mInQueue(inQueue), mOutQueue(outQueue) {
+Map::Map(const git::Repository &repo, LexerPool &lexers,
+         WorkerQueue<QPair<git::Commit, git::Diff>> &inQueue,
+         WorkerQueue<Intermediate> &outQueue)
+    : mLexers(lexers), mInQueue(inQueue), mOutQueue(outQueue) {
   git::Config config = repo.appConfig();
   mTermLimit = config.value<int>("index.termlimit", mTermLimit);
   mContextLines = config.value<int>("index.contextlines", mContextLines);
@@ -29,7 +29,7 @@ void Map::run() {
     auto commit = commitPair.first;
     auto diff = commitPair.second;
 
-    log(mOut, "map: %1", commit.id());
+    log("map: %1", commit.id());
 
     quint32 filePos = 0;
     quint32 hunkPos = 0;

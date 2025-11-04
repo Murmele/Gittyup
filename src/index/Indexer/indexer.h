@@ -19,7 +19,7 @@ void index(const Lexer::Lexeme &lexeme, Intermediate::FieldMap &fields, quint8 f
 
 class Indexer : public QObject, public QAbstractNativeEventFilter {
 public:
-  Indexer(Index &index, QFile *out, bool notify, QObject *parent = nullptr);
+  Indexer(Index &index, bool notify, QObject *parent = nullptr);
 
   bool start();
   void finish();
@@ -28,7 +28,6 @@ private:
   void cancel();
 
   Index &mIndex;
-  QFile *mOut;
 
   IdStorage mIds;
   git::RevWalk mWalker;

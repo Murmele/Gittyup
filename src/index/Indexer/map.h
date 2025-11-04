@@ -14,7 +14,7 @@ class Map : public QRunnable {
 public:
   typedef Intermediate result_type;
 
-  Map(const git::Repository &repo, LexerPool &lexers, QFile *out,
+  Map(const git::Repository &repo, LexerPool &lexers,
       WorkerQueue<QPair<git::Commit, git::Diff>> &inQueue,
       WorkerQueue<Intermediate> &outQueue);
 
@@ -22,7 +22,6 @@ public:
 
 private:
   LexerPool &mLexers;
-  QFile *mOut;
   WorkerQueue<QPair<git::Commit, git::Diff>> &mInQueue;
   WorkerQueue<Intermediate> &mOutQueue;
 

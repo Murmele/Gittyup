@@ -7,7 +7,7 @@ void Reduce::run() {
   while (!canceled && intermediateOpt.has_value()) {
     auto intermediate = intermediateOpt.value();
     mProcessedElemenets++;
-    log(mOut, "reduce: %1", intermediate.id);
+    log("reduce: %1", intermediate.id);
 
     quint32 id = mIds.append(intermediate.id);
 

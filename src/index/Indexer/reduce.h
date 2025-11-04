@@ -16,10 +16,10 @@ class Index;
 /// thread should be started!
 class Reduce : public QThread {
 public:
-  Reduce(IdStorage &ids, QFile *out, WorkerQueue<Intermediate> &queue,
+  Reduce(IdStorage &ids, WorkerQueue<Intermediate> &queue,
          WorkerQueue<Index::PostingMap> &results, Index &index,
          QObject *parent = nullptr)
-      : QThread(parent), mIds(ids), mOut(out), mQueue(queue), mResults(results),
+      : QThread(parent), mIds(ids), mQueue(queue), mResults(results),
         mIndex(index) {}
 
 private:
@@ -27,7 +27,6 @@ private:
 
 private:
   IdStorage &mIds;
-  QFile *mOut;
   WorkerQueue<Intermediate> &mQueue;
   WorkerQueue<Index::PostingMap> &mResults;
   Index &mIndex;

@@ -6,17 +6,29 @@
 
 bool canceled = false;
 
-void log(QFile *out, const QString &text) {
-  if (!out)
-    return;
-
-  QString time = QTime::currentTime().toString(Qt::ISODateWithMs);
-  QTextStream(out) << time << " - " << text << Qt::endl;
+namespace {
+    QFile* file = nullptr;
+    QMutex mutex = QMutex();
 }
 
-void log(QFile *out, const QString &fmt, const git::Id &id) {
-  if (!out)
-    return;
+void setLogFile(QFile* f) {
+    mutex.lock();
+    file = f;
+    mutex.unlock();
+}
 
-  log(out, fmt.arg(id.toString()));
+void log(const QString &fmt, const git::Id &id) {
+    log(fmt.arg(id.toString()));
+}
+
+void log(const QString &text) {
+    if (!file)
+        return;
+    mutex.lock();
+    // Drop QTextStream to flush the complete text
+    {
+      QString time = QTime::currentTime().toString(Qt::ISODateWithMs);
+      QTextStream(file) << time << " - " << text << Qt::endl;
+    }
+    mutex.unlock();
 }

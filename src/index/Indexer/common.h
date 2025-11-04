@@ -5,6 +5,8 @@
 
 #include <QMap>
 #include <QHash>
+#include <QMutex>
+#include <QFile>
 
 class QFile;
 class QString;
@@ -20,7 +22,10 @@ struct Intermediate {
   FieldMap fields;
 };
 
-void log(QFile *out, const QString &text);
-void log(QFile *out, const QString &fmt, const git::Id &id);
+
+void setLogFile(QFile* file);
+void log(const QString &text);
+void log(const QString &fmt, const git::Id &id);
+
 
 #endif // COMMON_H

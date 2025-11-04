@@ -85,19 +85,20 @@ int main(int argc, char *argv[]) {
   repo.setIndex(git::Index::create());
 
   // Set output file.
-  QFile *out = nullptr;
   if (parser.isSet("log")) {
-    out = new QFile(Index::indexDir(repo).filePath(kLogFile), &app);
+    auto* out = new QFile(Index::indexDir(repo).filePath(kLogFile), &app);
     if (!out->open(QIODevice::WriteOnly | QIODevice::Append)) {
       delete out;
       out = nullptr;
     }
+    setLogFile(out);
   } else if (parser.isSet("verbose")) {
-    out = new QFile(&app);
+    auto* out = new QFile(&app);
     if (!out->open(stdout, QIODevice::WriteOnly | QIODevice::Append)) {
       delete out;
       out = nullptr;
     }
+    setLogFile(out);
   }
 
   // Set priority.
@@ -117,7 +118,7 @@ int main(int argc, char *argv[]) {
 
   // Start the indexer.
   Index index(repo);
-  Indexer indexer(index, out, parser.isSet("notify"));
+  Indexer indexer(index, parser.isSet("notify"));
   app.installNativeEventFilter(&indexer);
   return indexer.start() ? app.exec() : 0;
 }
