@@ -82,6 +82,7 @@ void Map::run() {
 
       // Index file name and path.
       QFileInfo info(patch.name().toLower());
+      log(QString("\tFilepath: %1").arg(info.filePath()));
       result.fields[Index::Path][info.filePath().toUtf8()].append(filePos);
       result.fields[Index::File][info.fileName().toUtf8()].append(filePos++);
 
