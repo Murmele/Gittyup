@@ -47,8 +47,7 @@ Index::Index(const git::Repository &repo, QObject *parent)
   // Read log setting.
   sLoggingEnabled = QSettings().value(kLogKey).toBool();
 
-  // Clean up temporary files.
-  clean();
+  cleanTemporaryFiles();
 
   // Check version.
   if (readVersion() < version())
@@ -90,7 +89,7 @@ void Index::reset() {
   emit indexReset();
 }
 
-void Index::clean() {
+void Index::cleanTemporaryFiles() {
   QStringList filters;
   foreach (const QString &file, kIndexFiles)
     filters.append(file + ".*");
@@ -103,7 +102,7 @@ void Index::clean() {
   // Try to lock the index for writing.
   QLockFile lock(lockFile(mRepo));
   lock.setStaleLockTime(staleLockTime());
-  if (!lock.tryLock())
+  if (!lock.tryLock(1000))
     return;
 
   foreach (const QString &file, files)
@@ -127,6 +126,13 @@ bool Index::remove() {
   return true;
 }
 
+/*!
+ * \brief Index::write
+ * Write postings to the related files (kIdFile, kPostFile, kProxFile, kDictFile)
+ * This is used by the indexer application not by gittyup. Gittyup just reads those files
+ * \param map
+ * \return
+ */
 bool Index::write(const PostingMap &map) {
   if (map.isEmpty())
     return false;

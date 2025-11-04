@@ -89,7 +89,7 @@ public:
   Dictionary &dict() { return mDict; }
 
   void reset();
-  void clean();
+  void cleanTemporaryFiles();
   bool remove();
   bool write(const PostingMap &map);
 
