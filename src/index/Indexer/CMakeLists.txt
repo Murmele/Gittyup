@@ -1,12 +1,14 @@
-add_executable(indexer main.cpp
-                        indexer.cpp
-                        diffgrabber.cpp
-                        map.cpp
-                        reduce.cpp
-                        resultwriter.cpp
-                        common.cpp
-                        lexerpool.cpp
-                        idstorage.cpp)
+add_executable(
+  indexer
+  main.cpp
+  indexer.cpp
+  diffgrabber.cpp
+  map.cpp
+  reduce.cpp
+  resultwriter.cpp
+  common.cpp
+  lexerpool.cpp
+  idstorage.cpp)
 target_link_libraries(indexer index)
 target_compile_definitions(indexer PRIVATE GITTYUP_VERSION="${GITTYUP_VERSION}")
 

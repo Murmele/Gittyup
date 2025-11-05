@@ -13,8 +13,8 @@ class Index;
 /// @note Only instantiate one instance of this class!
 class ResultWriter : public QThread {
 public:
-  ResultWriter(Index &index,
-               WorkerQueue<Index::PostingMap> &results, bool notify)
+  ResultWriter(Index &index, WorkerQueue<Index::PostingMap> &results,
+               bool notify)
       : mNotify(notify), mIndex(index), mResults(results) {}
 
 private:

@@ -3,7 +3,7 @@
 
 LexerPool::LexerPool() : mHome(Settings::lexerDir().path().toUtf8()) {}
 
-Lexer* LexerPool::acquire(const QByteArray &name) {
+Lexer *LexerPool::acquire(const QByteArray &name) {
   QMutexLocker locker(&mMutex);
   (void)locker;
 

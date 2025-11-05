@@ -22,10 +22,8 @@ struct Intermediate {
   FieldMap fields;
 };
 
-
-void setLogFile(QFile* file);
+void setLogFile(QFile *file);
 void log(const QString &text);
 void log(const QString &fmt, const git::Id &id);
-
 
 #endif // COMMON_H

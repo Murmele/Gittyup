@@ -15,7 +15,8 @@
 class Index;
 class QFile;
 
-void index(const Lexer::Lexeme &lexeme, Intermediate::FieldMap &fields, quint8 field, quint32 &pos);
+void index(const Lexer::Lexeme &lexeme, Intermediate::FieldMap &fields,
+           quint8 field, quint32 &pos);
 
 class Indexer : public QObject, public QAbstractNativeEventFilter {
 public:
@@ -23,7 +24,9 @@ public:
 
   bool start();
   void finish();
-  bool nativeEventFilter(const QByteArray &type, void *message, qintptr *result) override;
+  bool nativeEventFilter(const QByteArray &type, void *message,
+                         qintptr *result) override;
+
 private:
   void cancel();
 

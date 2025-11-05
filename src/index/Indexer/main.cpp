@@ -86,14 +86,14 @@ int main(int argc, char *argv[]) {
 
   // Set output file.
   if (parser.isSet("log")) {
-    auto* out = new QFile(Index::indexDir(repo).filePath(kLogFile), &app);
+    auto *out = new QFile(Index::indexDir(repo).filePath(kLogFile), &app);
     if (!out->open(QIODevice::WriteOnly | QIODevice::Append)) {
       delete out;
       out = nullptr;
     }
     setLogFile(out);
   } else if (parser.isSet("verbose")) {
-    auto* out = new QFile(&app);
+    auto *out = new QFile(&app);
     if (!out->open(stdout, QIODevice::WriteOnly | QIODevice::Append)) {
       delete out;
       out = nullptr;

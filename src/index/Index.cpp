@@ -128,10 +128,9 @@ bool Index::remove() {
 
 /*!
  * \brief Index::write
- * Write postings to the related files (kIdFile, kPostFile, kProxFile, kDictFile)
- * This is used by the indexer application not by gittyup. Gittyup just reads those files
- * \param map
- * \return
+ * Write postings to the related files (kIdFile, kPostFile, kProxFile,
+ * kDictFile) This is used by the indexer application not by gittyup. Gittyup
+ * just reads those files \param map \return
  */
 bool Index::write(const PostingMap &map) {
   if (map.isEmpty())

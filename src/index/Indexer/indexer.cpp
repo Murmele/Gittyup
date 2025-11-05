@@ -63,15 +63,15 @@ static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info) {
 #endif
 
 namespace {
-    #ifdef Q_OS_UNIX
-    // signal handler
-    int fds[2];
-    void term(int) {
-      char ch = 1;
-      write(fds[0], &ch, sizeof(ch));
-    }
-    #endif
+#ifdef Q_OS_UNIX
+// signal handler
+int fds[2];
+void term(int) {
+  char ch = 1;
+  write(fds[0], &ch, sizeof(ch));
 }
+#endif
+} // namespace
 
 void index(const Lexer::Lexeme &lexeme, Intermediate::FieldMap &fields,
            quint8 field, quint32 &pos) {
@@ -150,9 +150,12 @@ void index(const Lexer::Lexeme &lexeme, Intermediate::FieldMap &fields,
 
 Indexer::Indexer(Index &index, bool notify, QObject *parent)
     : QObject(parent), mIndex(index), mIds(index),
-      // mIntermediateQueue will be filled by the workers spawned in the start() method below.
-      mReduce(mIds, mIntermediateQueue, mResults, mIndex), // Receives intermediate and converts them to results
-      mResultWriter(index, mResults, notify) { // Receives results and writes them down to file
+      // mIntermediateQueue will be filled by the workers spawned in the start()
+      // method below.
+      mReduce(mIds, mIntermediateQueue, mResults,
+              mIndex), // Receives intermediate and converts them to results
+      mResultWriter(index, mResults,
+                    notify) { // Receives results and writes them down to file
   mWalker = mIndex.repo().walker();
 
 #ifdef Q_OS_UNIX
@@ -178,7 +181,7 @@ Indexer::Indexer(Index &index, bool notify, QObject *parent)
 #endif
 }
 
-bool Indexer:: start() {
+bool Indexer::start() {
   // The distribution of threads is as follows
   // This thread iterates over mWalker
   // 1x thread runs the Reduction class
@@ -198,8 +201,8 @@ bool Indexer:: start() {
   mReduce.start();
   mResultWriter.start();
   for (int i = 0; i < numWorkers; i++) {
-    mWorkers.start(new Map(mIndex.repo(), mLexers, mDiffedCommits,
-                           mIntermediateQueue));
+    mWorkers.start(
+        new Map(mIndex.repo(), mLexers, mDiffedCommits, mIntermediateQueue));
   }
   for (int i = 0; i < numGabbers; i++) {
     mGrabbers.start(new DiffGrabber(mCommits, mDiffedCommits));
@@ -260,7 +263,7 @@ void Indexer::finish() {
 }
 
 bool Indexer::nativeEventFilter(const QByteArray &type, void *message,
-                       qintptr *result) {
+                                qintptr *result) {
   Q_UNUSED(result);
 #ifdef Q_OS_WIN
   MSG *msg = static_cast<MSG *>(message);

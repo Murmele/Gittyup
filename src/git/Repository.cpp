@@ -1024,7 +1024,10 @@ bool Repository::checkout(const Commit &commit, CheckoutCallbacks *callbacks,
   QVector<QByteArray> storage;
   if (!paths.isEmpty()) {
     // Paths are assumed to be exact matches.
-    opts.checkout_strategy |= GIT_CHECKOUT_DISABLE_PATHSPEC_MATCH | GIT_CHECKOUT_UPDATE_SUBMODULES; // GIT_CHECKOUT_UPDATE_SUBMODULES is not yet implemented from libgit2
+    opts.checkout_strategy |=
+        GIT_CHECKOUT_DISABLE_PATHSPEC_MATCH |
+        GIT_CHECKOUT_UPDATE_SUBMODULES; // GIT_CHECKOUT_UPDATE_SUBMODULES is not
+                                        // yet implemented from libgit2
 
     foreach (const QString &path, paths) {
       storage.append(path.toUtf8());

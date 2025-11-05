@@ -10,7 +10,7 @@
 #include <QRegularExpression>
 
 namespace {
-    const QRegularExpression kWsRe("\\s+");
+const QRegularExpression kWsRe("\\s+");
 } // namespace
 
 Map::Map(const git::Repository &repo, LexerPool &lexers,
