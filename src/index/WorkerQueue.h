@@ -10,6 +10,7 @@
 #ifndef WORKERQUEUE_H
 #define WORKERQUEUE_H
 
+#include <QObject>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QQueue>
