@@ -1,4 +1,4 @@
-### v1.5.0 - 2025-10-30
+### v1.5.0 - 2025-11-05
 
 Bug Fix and Feature release
 
