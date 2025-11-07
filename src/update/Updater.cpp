@@ -178,19 +178,20 @@ void Updater::update(bool spontaneous) {
     Debug("Download url of the update: " << link);
 
     // Check if the url exists
-    auto* reply = mMgr.head(QNetworkRequest(link));
-    connect(reply, &QNetworkReply::finished, [this, spontaneous, reply, platform, version, html, link] {
-      // Destroy the reply later.
-      reply->deleteLater();
+    auto *reply = mMgr.head(QNetworkRequest(link));
+    connect(reply, &QNetworkReply::finished,
+            [this, spontaneous, reply, platform, version, html, link] {
+              // Destroy the reply later.
+              reply->deleteLater();
 
-      if (reply->error() == QNetworkReply::NoError) {
-        emit updateAvailable(platform, version, html, link);
-      } else {
-        // We don't have a new version for this platform
-        if (!spontaneous)
-          emit upToDate();
-      }
-    });
+              if (reply->error() == QNetworkReply::NoError) {
+                emit updateAvailable(platform, version, html, link);
+              } else {
+                // We don't have a new version for this platform
+                if (!spontaneous)
+                  emit upToDate();
+              }
+            });
   });
 }
 
