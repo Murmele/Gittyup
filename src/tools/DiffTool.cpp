@@ -22,15 +22,15 @@ DiffTool::DiffTool(const QString &file, const git::Blob &localBlob,
 DiffTool::DiffTool(const QString &file,
                    const git::Blob &remoteBlob, QObject *parent)
     : ExternalTool(file, parent),
-      mRemoteBlob(remoteBlob) { Q_ASSERT(!mLocalBlob); }
+      mLocalBlob(remoteBlob) { Q_ASSERT(!mRemoteBlob); } // make local file the right side
 
 bool DiffTool::isValid() const {
-  return (ExternalTool::isValid() && mRemoteBlob.isValid());
+  return (ExternalTool::isValid() && mLocalBlob.isValid());
 }
 
 ExternalTool::Kind DiffTool::kind() const { return Diff; }
 
-QString DiffTool::name() const { return mLocalBlob ? tr("External Diff") : tr("External Diff to working copy"); }
+QString DiffTool::name() const { return mRemoteBlob ? tr("External Diff") : tr("External Diff to working copy"); }
 
 bool DiffTool::start() {
   Q_ASSERT(isValid());
