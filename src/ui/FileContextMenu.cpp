@@ -146,7 +146,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
   // Add external tool actions.
   addExternalToolsAction(showTools);
   addExternalToolsAction(editTools);
-  addExternalToolsAction(diffTools);
+  mDoubleClickAction = addExternalToolsAction(diffTools);
   addExternalToolsAction(mergeTools);
 
   if (!isEmpty())
@@ -505,10 +505,10 @@ bool FileContextMenu::exportFile(const RepoView *view, const QString &folder,
   return true;
 }
 
-void FileContextMenu::addExternalToolsAction(
-    const QList<ExternalTool *> &tools) {
+QAction *
+FileContextMenu::addExternalToolsAction(const QList<ExternalTool *> &tools) {
   if (tools.isEmpty())
-    return;
+    return nullptr;
 
   // Add action.
   QAction *action = addAction(tools.first()->name(), [this, tools] {
@@ -548,4 +548,5 @@ void FileContextMenu::addExternalToolsAction(
       break;
     }
   }
+  return action->isEnabled() ? action : nullptr;
 }

@@ -25,11 +25,14 @@ public:
   FileContextMenu(RepoView *view, const QStringList &files,
                   const git::Index &index = git::Index(),
                   QWidget *parent = nullptr);
+
+  QAction* doubleClickAction() { return mDoubleClickAction; }
+
 private slots:
   void ignoreFile();
 
 private:
-  void addExternalToolsAction(const QList<ExternalTool *> &tools);
+  QAction* addExternalToolsAction(const QList<ExternalTool*>& tools);
   bool exportFile(const RepoView *view, const QString &folder,
                   const QString &file);
   void handleUncommittedChanges(const git::Index &index,
@@ -39,6 +42,7 @@ private:
 
   RepoView *mView;
   QStringList mFiles;
+  QAction* mDoubleClickAction;
 
   friend class TestTreeView;
 };
