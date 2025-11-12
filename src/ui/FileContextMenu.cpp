@@ -113,7 +113,8 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     editTools.append(new EditTool(path, this));
 
     // Add diff or merge tool.
-    if (ExternalTool *tool = ExternalTool::create(file, diff, repo, true, this)) {
+    if (ExternalTool *tool =
+            ExternalTool::create(file, diff, repo, true, this)) {
       Q_ASSERT(tool->kind() == ExternalTool::Diff);
       diffToLocalTools.append(tool);
       connect(tool, &ExternalTool::error, [this](ExternalTool::Error error) {
@@ -131,7 +132,8 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     }
 
     // Add diff or merge tool.
-    if (ExternalTool *tool = ExternalTool::create(file, diff, repo, false, this)) {
+    if (ExternalTool *tool =
+            ExternalTool::create(file, diff, repo, false, this)) {
       switch (tool->kind()) {
         case ExternalTool::Diff:
           diffTools.append(tool);

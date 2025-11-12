@@ -19,10 +19,11 @@ DiffTool::DiffTool(const QString &file, const git::Blob &localBlob,
     : ExternalTool(file, parent), mLocalBlob(localBlob),
       mRemoteBlob(remoteBlob) {}
 
-DiffTool::DiffTool(const QString &file,
-                   const git::Blob &remoteBlob, QObject *parent)
-    : ExternalTool(file, parent),
-      mLocalBlob(remoteBlob) { Q_ASSERT(!mRemoteBlob); } // make local file the right side
+DiffTool::DiffTool(const QString &file, const git::Blob &remoteBlob,
+                   QObject *parent)
+    : ExternalTool(file, parent), mLocalBlob(remoteBlob) {
+  Q_ASSERT(!mRemoteBlob);
+} // make local file the right side
 
 bool DiffTool::isValid() const {
   return (ExternalTool::isValid() && mLocalBlob.isValid());
@@ -30,7 +31,10 @@ bool DiffTool::isValid() const {
 
 ExternalTool::Kind DiffTool::kind() const { return Diff; }
 
-QString DiffTool::name() const { return mRemoteBlob ? tr("External Diff") : tr("External Diff to working copy"); }
+QString DiffTool::name() const {
+  return mRemoteBlob ? tr("External Diff")
+                     : tr("External Diff to working copy");
+}
 
 bool DiffTool::start() {
   Q_ASSERT(isValid());
@@ -79,7 +83,10 @@ bool DiffTool::start() {
   });
 
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
-  QStringList arguments = {"--host", "--env=LOCAL=" + local ? local->fileName() : QFileInfo(mFile).absoluteFilePath(),
+  QStringList arguments = {"--host",
+                           "--env=LOCAL=" + local
+                               ? local->fileName()
+                               : QFileInfo(mFile).absoluteFilePath(),
                            "--env=REMOTE=" + remotePath,
                            "--env=MERGED=" + mFile, "--env=BASE=" + mFile};
   arguments.append("sh");
@@ -89,7 +96,8 @@ bool DiffTool::start() {
 #else
 
   QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-  env.insert("LOCAL", local ? local->fileName() : QFileInfo(mFile).absoluteFilePath());
+  env.insert("LOCAL",
+             local ? local->fileName() : QFileInfo(mFile).absoluteFilePath());
   env.insert("REMOTE", remotePath);
   env.insert("MERGED", mFile);
   env.insert("BASE", mFile);

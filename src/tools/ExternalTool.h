@@ -54,7 +54,8 @@ public:
   static QList<Info> readBuiltInTools(const QString &key);
 
   static ExternalTool *create(const QString &file, const git::Diff &diff,
-                              const git::Repository &repo, bool againstWorkingDir = false,
+                              const git::Repository &repo,
+                              bool againstWorkingDir = false,
                               QObject *parent = nullptr);
 
 signals:

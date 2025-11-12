@@ -97,8 +97,8 @@ QList<ExternalTool::Info> ExternalTool::readBuiltInTools(const QString &key) {
 }
 
 ExternalTool *ExternalTool::create(const QString &file, const git::Diff &diff,
-                                   const git::Repository &repo, bool againstWorkingDir,
-                                   QObject *parent) {
+                                   const git::Repository &repo,
+                                   bool againstWorkingDir, QObject *parent) {
   if (!diff.isValid())
     return nullptr;
 
@@ -121,5 +121,6 @@ ExternalTool *ExternalTool::create(const QString &file, const git::Diff &diff,
   // Create diff tool.
   git::Blob local = repo.lookupBlob(diff.id(index, git::Diff::OldFile));
   git::Blob remote = repo.lookupBlob(diff.id(index, git::Diff::NewFile));
-  return againstWorkingDir ? new DiffTool(path, remote, parent) : new DiffTool(path, local, remote, parent);
+  return againstWorkingDir ? new DiffTool(path, remote, parent)
+                           : new DiffTool(path, local, remote, parent);
 }
