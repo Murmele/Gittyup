@@ -84,9 +84,9 @@ bool DiffTool::start() {
 
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
   QStringList arguments = {"--host",
-                           "--env=LOCAL=" + local
+                           QStringLiteral("--env=LOCAL=") + (local
                                ? local->fileName()
-                               : QFileInfo(mFile).absoluteFilePath(),
+                               : QFileInfo(mFile).absoluteFilePath()),
                            "--env=REMOTE=" + remotePath,
                            "--env=MERGED=" + mFile, "--env=BASE=" + mFile};
   arguments.append("sh");
