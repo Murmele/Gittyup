@@ -19,21 +19,17 @@ DiffTool::DiffTool(const QString &file, const git::Blob &localBlob,
     : ExternalTool(file, parent), mLocalBlob(localBlob),
       mRemoteBlob(remoteBlob) {}
 
-DiffTool::DiffTool(const QString &file, const git::Blob &remoteBlob,
+DiffTool::DiffTool(const QString &file, const git::Blob &localBlob,
                    QObject *parent)
-    : ExternalTool(file, parent), mLocalBlob(remoteBlob) {
+    : ExternalTool(file, parent), mLocalBlob(localBlob) {
   Q_ASSERT(!mRemoteBlob);
-} // make local file the right side
-
-bool DiffTool::isValid() const {
-  return (ExternalTool::isValid() && mLocalBlob.isValid());
 }
 
 ExternalTool::Kind DiffTool::kind() const { return Diff; }
 
 QString DiffTool::name() const {
   return mRemoteBlob ? tr("External Diff")
-                     : tr("External Diff to working copy");
+                     : tr("External Diff to Working Copy");
 }
 
 bool DiffTool::start() {
@@ -82,11 +78,10 @@ bool DiffTool::start() {
     deleteLater();
   });
 
+  QString localPath =
+      local ? local->fileName() : QFileInfo(mFile).absoluteFilePath();
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
-  QStringList arguments = {"--host",
-                           QStringLiteral("--env=LOCAL=") + (local
-                               ? local->fileName()
-                               : QFileInfo(mFile).absoluteFilePath()),
+  QStringList arguments = {"--host", QStringLiteral("--env=LOCAL=") + localPath,
                            "--env=REMOTE=" + remotePath,
                            "--env=MERGED=" + mFile, "--env=BASE=" + mFile};
   arguments.append("sh");
@@ -96,8 +91,7 @@ bool DiffTool::start() {
 #else
 
   QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-  env.insert("LOCAL",
-             local ? local->fileName() : QFileInfo(mFile).absoluteFilePath());
+  env.insert("LOCAL", localPath);
   env.insert("REMOTE", remotePath);
   env.insert("MERGED", mFile);
   env.insert("BASE", mFile);
