@@ -100,6 +100,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
   QList<ExternalTool *> showTools;
   QList<ExternalTool *> editTools;
   QList<ExternalTool *> diffTools;
+  QList<ExternalTool *> diffToLocalTools;
   QList<ExternalTool *> mergeTools;
   foreach (const QString &file, files) {
     // Convert to absolute path.
@@ -111,8 +112,28 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     // Add edit tool.
     editTools.append(new EditTool(path, this));
 
+    ExternalTool *tool = nullptr;
+    // Add diff to local
+    if (tool = ExternalTool::create(file, diff, repo, true, this)) {
+      Q_ASSERT(tool->kind() == ExternalTool::Diff);
+      diffToLocalTools.append(tool);
+      connect(tool, &ExternalTool::error, [this](ExternalTool::Error error) {
+        if (error != ExternalTool::BashNotFound)
+          return;
+
+        QString title = tr("Bash Not Found");
+        QString text = tr("Bash was not found on your PATH.");
+        QMessageBox msg(QMessageBox::Warning, title, text, QMessageBox::Ok,
+                        this);
+        msg.setInformativeText(
+            tr("Bash is required to execute external tools."));
+        msg.exec();
+      });
+    }
+
     // Add diff or merge tool.
-    if (ExternalTool *tool = ExternalTool::create(file, diff, repo, this)) {
+    if (!diff.isStatusDiff() &&
+        (tool = ExternalTool::create(file, diff, repo, false, this))) {
       switch (tool->kind()) {
         case ExternalTool::Diff:
           diffTools.append(tool);
@@ -147,6 +168,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
   addExternalToolsAction(showTools);
   addExternalToolsAction(editTools);
   addExternalToolsAction(diffTools);
+  addExternalToolsAction(diffToLocalTools);
   addExternalToolsAction(mergeTools);
 
   if (!isEmpty())
