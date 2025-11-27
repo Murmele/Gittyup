@@ -82,6 +82,11 @@
     <content_attribute id="money-purchasing">none</content_attribute>
     <content_attribute id="money-gambling">none</content_attribute>
   </content_rating>
+  <keywords>
+    <keyword>git client</keyword>
+    <keyword>source code manager</keyword>
+    <keyword>version control tool</keyword>
+  </keywords>
 
 </component>
 
