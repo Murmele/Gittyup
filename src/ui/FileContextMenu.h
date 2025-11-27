@@ -26,13 +26,13 @@ public:
                   const git::Index &index = git::Index(),
                   QWidget *parent = nullptr);
 
-  QAction* doubleClickAction() { return mDoubleClickAction; }
+  QAction *doubleClickAction() { return mDoubleClickAction; }
 
 private slots:
   void ignoreFile();
 
 private:
-  QAction* addExternalToolsAction(const QList<ExternalTool*>& tools);
+  QAction *addExternalToolsAction(const QList<ExternalTool *> &tools);
   bool exportFile(const RepoView *view, const QString &folder,
                   const QString &file);
   void handleUncommittedChanges(const git::Index &index,
@@ -42,7 +42,7 @@ private:
 
   RepoView *mView;
   QStringList mFiles;
-  QAction* mDoubleClickAction;
+  QAction *mDoubleClickAction;
 
   friend class TestTreeView;
 };

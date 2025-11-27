@@ -158,9 +158,10 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
           });
 
   stagedFiles->setModel(new TreeProxy(true, mDiffTreeModel, this));
-  connect(stagedFiles, &QAbstractItemView::doubleClicked, [this, repoView](const QModelIndex &index) {
-      openExternalDiffTool(index, repoView, true);
-  });
+  connect(stagedFiles, &QAbstractItemView::doubleClicked,
+          [this, repoView](const QModelIndex &index) {
+            openExternalDiffTool(index, repoView, true);
+          });
 
   QHBoxLayout *hBoxLayout = new QHBoxLayout();
   QLabel *label = new QLabel(kStagedFiles);
@@ -187,9 +188,10 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
           });
 
   unstagedFiles->setModel(new TreeProxy(false, mDiffTreeModel, this));
-  connect(unstagedFiles, &QAbstractItemView::doubleClicked, [this, repoView](const QModelIndex &index) {
-      openExternalDiffTool(index, repoView, false);
-  });
+  connect(unstagedFiles, &QAbstractItemView::doubleClicked,
+          [this, repoView](const QModelIndex &index) {
+            openExternalDiffTool(index, repoView, false);
+          });
 
   hBoxLayout = new QHBoxLayout();
   mUnstagedCommitedFiles = new QLabel(kUnstagedFiles);
@@ -353,23 +355,23 @@ void DoubleTreeWidget::showFileContextMenu(const QPoint &pos, RepoView *view,
   menu->popup(tree->mapToGlobal(pos));
 }
 
-void DoubleTreeWidget::openExternalDiffTool(const QModelIndex& index, RepoView* view, bool staged)
-{
-    const auto diff = view->diff();
-    if (!diff.isValid())
-        return;
+void DoubleTreeWidget::openExternalDiffTool(const QModelIndex &index,
+                                            RepoView *view, bool staged) {
+  const auto diff = view->diff();
+  if (!diff.isValid())
+    return;
 
-    const bool statusDiff = diff.isStatusDiff();
-    QStringList files;
-    auto node = index.data(Qt::UserRole).value<Node *>();
-    addNodeToMenu(view->repo().index(), files, node, staged, statusDiff);
-    if (files.isEmpty())
-        return;
+  const bool statusDiff = diff.isStatusDiff();
+  QStringList files;
+  auto node = index.data(Qt::UserRole).value<Node *>();
+  addNodeToMenu(view->repo().index(), files, node, staged, statusDiff);
+  if (files.isEmpty())
+    return;
 
-    FileContextMenu fileMenu(view, files, git::Index(), nullptr);
-    auto doubleClickAction = fileMenu.doubleClickAction();
-    if(doubleClickAction)
-        doubleClickAction->trigger();
+  FileContextMenu fileMenu(view, files, git::Index(), nullptr);
+  auto doubleClickAction = fileMenu.doubleClickAction();
+  if (doubleClickAction)
+    doubleClickAction->trigger();
 }
 
 QList<QModelIndex> DoubleTreeWidget::selectedIndices() const {

@@ -54,7 +54,8 @@ private slots:
   void collapseCountChanged(int count);
   static void showFileContextMenu(const QPoint &pos, RepoView *view,
                                   QTreeView *tree, bool staged);
-  static void openExternalDiffTool(const QModelIndex& index, RepoView *view, bool staged);
+  static void openExternalDiffTool(const QModelIndex &index, RepoView *view,
+                                   bool staged);
 
 private:
   enum View {
