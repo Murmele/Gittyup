@@ -1,4 +1,4 @@
-### v2.0.0 - 2025-11-21
+### v2.0.0 - 2025-11-30
 
 Bug Fix and Feature release
 
