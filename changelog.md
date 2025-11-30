@@ -1,6 +1,24 @@
-### v1.4.0 - 2024-05-14
+### v2.0.0 - 2025-11-30
 
-Description
+Bug Fix and Feature release
+
+#### Added
+
+* Add commit filter to show only the first parent in the commit list view
+* Add backend support for SHA256 repos
+* Fix email filter being not returning any results
+* Add mmap based reading to speed up indexer
+
+#### Changed
+
+* Use Qt6
+* Update libgit2 library
+
+----
+
+### v1.4.0 - 2024-04-24
+
+Bug Fix and Feature release
 
 #### Added
 
