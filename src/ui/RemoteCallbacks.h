@@ -72,7 +72,7 @@ signals:
       const QVector<git::Remote::SshInteractivePrompt> &prompts,
       QVector<QString> &responses, QString &error);
   void queueSideband(const QString &text, const QString &fmt = QString());
-  void queueTransfer(int total, int current, int bytes, int elapsed);
+  void queueTransfer(int total, int current, size_t bytes, int elapsed);
   void queueResolve(int total, int current);
   void queueUpdate(const QString &name, const git::Id &a, const git::Id &b);
   void queueRejected(const QString &name, const QString &status);
@@ -87,7 +87,7 @@ private:
                       const QVector<git::Remote::SshInteractivePrompt> &prompts,
                       QVector<QString> &responses, QString &error);
   void sidebandImpl(const QString &text, const QString &fmt = QString());
-  void transferImpl(int total, int current, int bytes, int elapsed);
+  void transferImpl(int total, int current, size_t bytes, int elapsed);
   void resolveImpl(int total, int current);
   void updateImpl(const QString &name, const git::Id &a, const git::Id &b);
   void rejectedImpl(const QString &name, const QString &status);

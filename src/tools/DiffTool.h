@@ -20,7 +20,8 @@ public:
   DiffTool(const QString &file, const git::Blob &localBlob,
            const git::Blob &remoteBlob, QObject *parent = nullptr);
 
-  bool isValid() const override;
+  DiffTool(const QString &file, const git::Blob &localBlob,
+           QObject *parent = nullptr);
 
   Kind kind() const override;
   QString name() const override;
