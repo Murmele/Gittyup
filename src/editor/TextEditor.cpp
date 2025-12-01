@@ -487,7 +487,7 @@ void TextEditor::ContextMenu(Scintilla::Point pt) {
   }
 }
 
-sptr_t TextEditor::WndProc(unsigned int message, uptr_t wParam, sptr_t lParam) {
+sptr_t TextEditor::WndProc(Message message, uptr_t wParam, sptr_t lParam) {
   switch (message) {
 
     case stageSelected:

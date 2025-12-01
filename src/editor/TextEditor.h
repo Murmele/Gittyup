@@ -17,6 +17,7 @@
 #include <SciLexer.h>
 #include "ScintillaIFace.h"
 #include <Platform.h>
+#include "Geometry.h"
 
 class TextEditor : public Scintilla::ScintillaIFace {
   Q_OBJECT
@@ -114,7 +115,7 @@ public:
   void keyPressEvent(QKeyEvent *ke) override;
 
   QRect textRectangle() const {
-    Scintilla::PRectangle pr = GetTextRectangle();
+    Scintilla::Internal::PRectangle pr = GetTextRectangle();
     return QRect(pr.left, pr.top, pr.Width(), pr.Height());
   }
 

@@ -8,9 +8,11 @@
 #ifndef AUTOCOMPLETE_H
 #define AUTOCOMPLETE_H
 
+#include "Platform.h"
 #include "ScintillaTypes.h"
 #include "Position.h"
 #include <memory>
+#include <vector>
 
 namespace Scintilla::Internal {
 

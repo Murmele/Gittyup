@@ -72,6 +72,7 @@
 
 namespace Scintilla::Internal {
 class SelectionText;
+class CaseFolder;
 }
 
 namespace Scintilla {
@@ -172,9 +173,9 @@ private:
   void SetMouseCapture(bool on) override;
   bool HaveMouseCapture() override;
   void StartDrag() override;
-  CaseFolder *CaseFolderForEncoding() override;
+  Internal::CaseFolder *CaseFolderForEncoding() override;
   std::string CaseMapString(const std::string &s, int caseMapping) override;
-  void CreateCallTipWindow(PRectangle rc) override;
+  void CreateCallTipWindow(Internal::PRectangle rc) override;
   void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) override;
   sptr_t DefWndProc(unsigned int iMessage, uptr_t wParam,
                     sptr_t lParam) override;
