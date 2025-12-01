@@ -8,7 +8,16 @@
 #ifndef POSITIONCACHE_H
 #define POSITIONCACHE_H
 
+#include "Geometry.h"
+#include "Position.h"
+#include "Document.h"
+#include <memory>
+#include <string_view>
+#include <vector>
+
 namespace Scintilla::Internal {
+
+class Selection;
 
 /**
 * A point in document space.

@@ -8,7 +8,20 @@
 #ifndef EDITVIEW_H
 #define EDITVIEW_H
 
+#include "ScintillaTypes.h"
+#include "ScintillaStructures.h"
+#include "PositionCache.h"
+#include "MarginView.h"
+#include "Selection.h"
+#include <memory>
+
 namespace Scintilla::Internal {
+
+class EditModel;
+class IPositionCache;
+struct StyledText;
+class Surface;
+class ViewStyle;
 
 struct PrintParameters {
 	int magnification;

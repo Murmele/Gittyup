@@ -8,7 +8,14 @@
 #ifndef EDITMODEL_H
 #define EDITMODEL_H
 
+#include "UniqueString.h"
+#include <memory>
+#include <map>
+
 namespace Scintilla::Internal {
+
+class IContractionState;
+class SpecialRepresentations;
 
 /**
 */

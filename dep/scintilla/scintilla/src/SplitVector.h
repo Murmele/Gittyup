@@ -9,6 +9,9 @@
 #ifndef SPLITVECTOR_H
 #define SPLITVECTOR_H
 
+#include "Debugging.h"
+#include <vector>
+
 namespace Scintilla::Internal {
 
 template <typename T>

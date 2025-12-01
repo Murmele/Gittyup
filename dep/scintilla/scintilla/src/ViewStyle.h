@@ -8,6 +8,16 @@
 #ifndef VIEWSTYLE_H
 #define VIEWSTYLE_H
 
+#include "Style.h"
+#include "Platform.h"
+#include "UniqueString.h"
+#include "LineMarker.h"
+#include "Indicator.h"
+#include <vector>
+#include <map>
+#include <set>
+#include <memory>
+
 namespace Scintilla::Internal {
 
 /**

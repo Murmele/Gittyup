@@ -9,6 +9,12 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+#include "ScintillaTypes.h"
+#include "Geometry.h"
+#include <optional>
+#include <memory>
+#include <string_view>
+
 // PLAT_GTK = GTK+ on Linux or Win32
 // PLAT_GTK_WIN32 is defined additionally when running PLAT_GTK under Win32
 // PLAT_WIN = Win32 API on Win32 OS

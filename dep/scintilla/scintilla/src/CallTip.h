@@ -8,7 +8,13 @@
 #ifndef CALLTIP_H
 #define CALLTIP_H
 
+#include "Geometry.h"
+#include <string>
+#include <memory>
+
 namespace Scintilla::Internal {
+
+class Surface;
 
 struct Chunk {
 	size_t start;

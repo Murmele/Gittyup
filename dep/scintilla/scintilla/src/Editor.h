@@ -8,7 +8,16 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
+#include "Platform.h"
+#include "KeyMap.h"
+#include "ViewStyle.h"
+#include "EditView.h"
+#include "MarginView.h"
+#include "EditModel.h"
+
 namespace Scintilla::Internal {
+
+class Document;
 
 /**
  */

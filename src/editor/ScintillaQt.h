@@ -25,7 +25,9 @@
 #include <memory>
 
 #include <Scintilla.h>
+#include <ScintillaBase.h>
 #include <Platform.h>
+#include <Geometry.h>
 #include <ILexer.h>
 #include <Position.h>
 #include <SplitVector.h>
@@ -68,9 +70,13 @@
 #include <QElapsedTimer>
 #include <QPaintEvent>
 
+namespace Scintilla::Internal {
+class SelectionText;
+}
+
 namespace Scintilla {
 
-class ScintillaQt : public QAbstractScrollArea, public ScintillaBase {
+class ScintillaQt : public QAbstractScrollArea, public Internal::ScintillaBase {
   Q_OBJECT
 
 public:
@@ -139,7 +145,7 @@ protected:
 
 private:
   void PasteFromMode(QClipboard::Mode);
-  void CopyToModeClipboard(const SelectionText &, QClipboard::Mode);
+  void CopyToModeClipboard(const Internal::SelectionText &, QClipboard::Mode);
 
   void MoveImeCarets(int offset);
   void DrawImeIndicator(int indicator, int len);
@@ -154,7 +160,7 @@ private:
   bool ModifyScrollBars(Sci::Line nMax, Sci::Line nPage) override;
   void ReconfigureScrollBars() override;
   void Copy() override;
-  void CopyToClipboard(const SelectionText &selectedText) override;
+  void CopyToClipboard(const Internal::SelectionText &selectedText) override;
   void Paste() override;
   void ClaimSelection() override;
   void NotifyChange() override;

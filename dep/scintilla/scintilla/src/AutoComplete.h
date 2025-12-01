@@ -8,7 +8,13 @@
 #ifndef AUTOCOMPLETE_H
 #define AUTOCOMPLETE_H
 
+#include "ScintillaTypes.h"
+#include "Position.h"
+#include <memory>
+
 namespace Scintilla::Internal {
+
+class ListBox;
 
 /**
  */

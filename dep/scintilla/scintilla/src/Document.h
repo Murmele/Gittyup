@@ -8,11 +8,26 @@
 #ifndef DOCUMENT_H
 #define DOCUMENT_H
 
+#include "CharacterCategoryMap.h"
+#include "CellBuffer.h"
+#include "CharClassify.h"
+#include "ILoader.h"
+#include "ILexer.h"
+#include <memory>
+#include <vector>
+#include <map>
+
+namespace Scintilla {
+  class ILexer5;
+}
+
 namespace Scintilla::Internal {
 
+class CaseFolder;
 class DocWatcher;
 class DocModification;
 class Document;
+class IDecorationList;
 class LineMarkers;
 class LineLevels;
 class LineState;

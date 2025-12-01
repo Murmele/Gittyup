@@ -8,6 +8,12 @@
 #ifndef SCINTILLABASE_H
 #define SCINTILLABASE_H
 
+#include "AutoComplete.h"
+#include "CallTip.h"
+#include "Editor.h"
+#include "Platform.h"
+#include "ScintillaMessages.h"
+
 namespace Scintilla::Internal {
 
 // For most platforms (not Cocoa) all IME indicators are drawn in same colour,
@@ -40,7 +46,7 @@ protected:
 
 	Scintilla::PopUp displayPopupMenu;
 	Menu popup;
-	Scintilla::Internal::AutoComplete ac;
+        AutoComplete ac;
 
 	CallTip ct;
 

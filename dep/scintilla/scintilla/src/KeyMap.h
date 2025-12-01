@@ -8,6 +8,10 @@
 #ifndef KEYMAP_H
 #define KEYMAP_H
 
+#include "ScintillaMessages.h"
+#include "ScintillaTypes.h"
+#include <map>
+
 namespace Scintilla::Internal {
 
 #define SCI_NORM KeyMod::Norm
