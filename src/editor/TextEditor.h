@@ -14,7 +14,6 @@
 #include <cstddef>
 #include <ILexer.h>
 #include <LexerModule.h>
-#include <Catalogue.h>
 #include <SciLexer.h>
 #include "ScintillaIFace.h"
 #include <Platform.h>
