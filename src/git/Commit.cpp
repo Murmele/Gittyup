@@ -65,6 +65,10 @@ QString Commit::message(MessageOptions options) const {
   return (options & SubstituteEmoji) ? substituteEmoji(msg) : msg;
 }
 
+QString Commit::debug() const {
+  return this->shortId() + " " + this->message() + "; Is merge: " + QString::number(isMerge()) + "; Is valid: " + QString::number(isValid());
+}
+
 QString Commit::description() const {
   // Build list of candidates.
   QHash<Id, TagRef> candidates;

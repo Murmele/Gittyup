@@ -48,6 +48,8 @@ public:
   Signature author() const;
   Signature committer() const;
 
+  QString debug() const;
+
   Diff diff(const Commit &commit = git::Commit(), int contextLines = -1,
             bool ignoreWhitespace = false) const;
   Tree tree() const;

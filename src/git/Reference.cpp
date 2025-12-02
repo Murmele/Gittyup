@@ -75,6 +75,7 @@ QString Reference::qualifiedName() const {
 
 RevWalk Reference::walker(int sort, bool firstCommitOnly) const {
   Commit commit = target();
+  const auto& c = commit.debug();
   return commit.isValid() ? commit.walker(sort, firstCommitOnly) : RevWalk();
 }
 

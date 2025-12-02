@@ -19,6 +19,7 @@
 #include "conf/Settings.h"
 #include "dialogs/MergeDialog.h"
 #include "index/Index.h"
+#include "Debug.h"
 #include "git/Branch.h"
 #include "git/Commit.h"
 #include "git/Config.h"
@@ -258,6 +259,8 @@ public:
     int i = 0;
     QList<Row> rows;
     git::Commit commit = mWalker.next(mPathspec);
+    const auto& info = commit.debug();
+    Debug(info);
     while (commit.isValid()) {
       // Add root commits.
       bool root = false;
