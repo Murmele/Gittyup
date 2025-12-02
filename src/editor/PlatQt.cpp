@@ -9,7 +9,7 @@
 
 #include "PlatQt.h"
 #include "Scintilla.h"
-#include "FontQuality.h"
+#include "Platform.h"
 #include <QApplication>
 #include <QFont>
 #include <QPaintDevice>
@@ -25,16 +25,20 @@
 #include <QTextLine>
 #include <QLibrary>
 #include <cstdio>
+#include <memory>
 
-namespace Scintilla {
+namespace Scintilla::Internal {
 
-Font::Font() noexcept : fid(nullptr) {}
+class MyFont: public Font {
+public:
+  MyFont(std::unique_ptr<QFont> font) : mFont(std::move(font)) {}
+  MyFont() = delete;
 
-Font::~Font() { Release(); }
+private:
+  std::unique_ptr<QFont> mFont;
+};
 
-void Font::Create(const FontParameters &fp) {
-  Release();
-
+void std::shared_ptr<Font> Font::Allocate(const FontParameters &fp) {
   QFont::StyleStrategy strategy;
   switch (fp.extraFontFlag) {
     case SC_EFF_QUALITY_NON_ANTIALIASED:
@@ -52,19 +56,14 @@ void Font::Create(const FontParameters &fp) {
       break;
   }
 
-  QFont *font = new QFont;
+  auto font = std::make_unique<QFont>();
   font->setStyleStrategy(strategy);
   font->setFamily(QString::fromUtf8(fp.faceName));
   font->setPointSize(fp.size);
   font->setBold(fp.weight > 500);
   font->setItalic(fp.italic);
 
-  fid = font;
-}
-
-void Font::Release() {
-  delete static_cast<QFont *>(fid);
-  fid = nullptr;
+  return std::unique_ptr<Font>(new MyFont(std::move(font)));
 }
 
 SurfaceImpl::SurfaceImpl() {}

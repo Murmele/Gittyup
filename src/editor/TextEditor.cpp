@@ -438,7 +438,7 @@ void TextEditor::addDiagnostic(int line, const Diagnostic &diag) {
  * \brief TextEditor::ContextMenu
  * \param pt
  */
-void TextEditor::ContextMenu(Scintilla::Point pt) {
+void TextEditor::ContextMenu(Internal::Point pt) {
 
   int startLine = lineFromPosition(selectionStart());
   int end = lineFromPosition(selectionEnd()) + 1;

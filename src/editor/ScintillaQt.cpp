@@ -9,6 +9,7 @@
 
 #include "PlatQt.h"
 #include "ScintillaQt.h"
+#include "CaseFolder.h"
 #ifdef SCI_LEXER
 #include <LexerModule.h>
 #include <ExternalLexer.h>
@@ -150,8 +151,8 @@ bool ScintillaQt::event(QEvent *event) {
 }
 
 void ScintillaQt::timerEvent(QTimerEvent *event) {
-  for (int tr = tickCaret; tr <= tickDwell; ++tr) {
-    if (timers[tr] == event->timerId())
+  for (int tr = TickReason::caret; tr <= TickReason::dwell; ++tr) {
+    if (timers.at(tr) == event->timerId())
       TickFor(static_cast<TickReason>(tr));
   }
 }
@@ -772,7 +773,7 @@ void ScintillaQt::Initialise() {
   });
 
   for (int tr = tickCaret; tr <= tickDwell; ++tr)
-    timers[tr] = 0;
+    timers.at(tr) = 0;
 }
 
 void ScintillaQt::Finalise() {
@@ -781,7 +782,7 @@ void ScintillaQt::Finalise() {
   ScintillaBase::Finalise();
 }
 
-bool ScintillaQt::DragThreshold(Point ptStart, Point ptNow) {
+bool ScintillaQt::DragThreshold(Internal::Point ptStart, Internal::Point ptNow) {
   return (std::abs(ptStart.x - ptNow.x) > QApplication::startDragDistance()) ||
          (std::abs(ptStart.y - ptNow.y) > QApplication::startDragDistance());
 }
@@ -875,7 +876,7 @@ void ScintillaQt::ClaimSelection() {
 
 void ScintillaQt::NotifyChange() {}
 
-void ScintillaQt::NotifyParent(SCNotification scn) {
+void ScintillaQt::NotifyParent(NotificationData scn) {
   switch (scn.nmhdr.code) {
     case SCN_STYLENEEDED:
       emit styleNeeded(scn.position);
@@ -1036,18 +1037,18 @@ bool ScintillaQt::SetIdle(bool on) {
   return true;
 }
 
-CaseFolder *ScintillaQt::CaseFolderForEncoding() {
+std::unique_ptr<CaseFolder> ScintillaQt::CaseFolderForEncoding() {
   return new CaseFolderUnicode();
 }
 
-std::string ScintillaQt::CaseMapString(const std::string &s, int caseMapping) {
-  if (s.size() == 0 || caseMapping == cmSame)
+std::string ScintillaQt::CaseMapString(const std::string &s, CaseMapping caseMapping) {
+  if (s.size() == 0 || caseMapping == CaseMapping::same)
     return s;
 
   std::string mapped(s.length() * maxExpansionCaseConversion, 0);
   mapped.resize(CaseConvertString(
       &mapped[0], mapped.length(), s.c_str(), s.length(),
-      (caseMapping == cmUpper) ? CaseConversionUpper : CaseConversionLower));
+      (caseMapping == CaseMapping::Upper) ? CaseConversionUpper : CaseConversionLower));
 
   return mapped;
 }
@@ -1110,7 +1111,7 @@ void ScintillaQt::AddToPopUp(const char *label, int cmd, bool enabled) {
           [this](QAction *action) { Command(action->data().toInt()); });
 }
 
-sptr_t ScintillaQt::WndProc(unsigned int message, uptr_t wParam,
+sptr_t ScintillaQt::WndProc(Message message, uptr_t wParam,
                             sptr_t lParam) {
   switch (message) {
     case SCI_SETIMEINTERACTION:
@@ -1134,7 +1135,7 @@ sptr_t ScintillaQt::WndProc(unsigned int message, uptr_t wParam,
   return 0;
 }
 
-sptr_t ScintillaQt::DefWndProc(unsigned int, uptr_t, sptr_t) { return 0; }
+sptr_t ScintillaQt::DefWndProc(Message, uptr_t, sptr_t) { return 0; }
 
 sptr_t ScintillaQt::DirectFunction(sptr_t ptr, unsigned int iMessage,
                                    uptr_t wParam, sptr_t lParam) {

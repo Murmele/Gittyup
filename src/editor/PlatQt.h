@@ -21,7 +21,7 @@
 class QPaintDevice;
 class QPainter;
 
-namespace Scintilla {
+namespace Scintilla::Internal {
 
 inline QColor QColorFromCA(ColourDesired ca) {
   int c = ca.AsInteger();

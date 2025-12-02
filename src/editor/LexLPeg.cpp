@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <memory>
 
 #include "ILexer.h"
 #include "Scintilla.h"
@@ -81,7 +82,7 @@ class LexerLPeg : public ILexer5 {
   // The set of properties for the lexer.
   // The `lexer.name`, `lexer.lpeg.home`, and `lexer.lpeg.color.theme`
   // properties must be defined before running the lexer.
-  PropSetSimple props;
+  Lexilla::PropSetSimple props;
 
   // The function to send Scintilla messages with.
   SciFnDirect fn;
@@ -118,7 +119,7 @@ class LexerLPeg : public ILexer5 {
     lua_getfield(L, LUA_REGISTRYINDEX, "sci_buffer");
     IDocument *buffer = static_cast<IDocument *>(lua_touserdata(L, -1));
     lua_getfield(L, LUA_REGISTRYINDEX, "sci_props");
-    PropSetSimple *props = static_cast<PropSetSimple *>(lua_touserdata(L, -1));
+    Lexilla::PropSetSimple *props = static_cast<Lexilla::PropSetSimple *>(lua_touserdata(L, -1));
     lua_pop(L, 2); // sci_props and sci_buffer
 
     if (is_lexer)
@@ -145,9 +146,9 @@ class LexerLPeg : public ILexer5 {
       } else if (!newindex) {
         lua_pushstring(L, props->Get(luaL_checkstring(L, 2)));
       } else {
-        const char *key = luaL_checkstring(L, 2);
-        const char *val = luaL_checkstring(L, 3);
-        props->Set(key, val, strlen(key), strlen(val));
+        const auto key = std::string(luaL_checkstring(L, 2));
+        const auto val = std::string(luaL_checkstring(L, 3));
+        props->Set(key, val);
       }
     } else if (strcmp(key, "property_int") == 0) {
       luaL_argcheck(L, !newindex, 3, "read-only property");
@@ -258,9 +259,9 @@ class LexerLPeg : public ILexer5 {
       if (lua_isstring(L, -2) && lua_isstring(L, -1)) {
         lua_pushstring(L, "style."), lua_pushvalue(L, -3), lua_concat(L, 2);
         if (!*props.Get(lua_tostring(L, -1))) {
-          const char *key = lua_tostring(L, -1);
-          const char *val = lua_tostring(L, -2);
-          props.Set(key, val, strlen(key), strlen(val));
+          const auto key = std::string_view(lua_tostring(L, -1));
+          const auto val = std::string_view(lua_tostring(L, -2));
+          props.Set(key, val);
         }
         lua_pop(L, 1); // style name
       }
@@ -299,13 +300,15 @@ class LexerLPeg : public ILexer5 {
    * Initializes the lexer once the `lexer.lpeg.home` and `lexer.name`
    * properties are set.
    */
-  bool init(const char *lexer) {
-    char home[FILENAME_MAX], themes[FILENAME_MAX], theme[FILENAME_MAX];
-    props.GetExpanded("lexer.lpeg.home", home);
-    props.GetExpanded("lexer.lpeg.themes", themes);
-    props.GetExpanded("lexer.lpeg.theme", theme);
-    if (!*home || !*lexer)
-      return false;
+  std::unique_ptr<ILexer5> init(const char *lexer) {
+    const auto* home = props.Get("lexer.lpeg.home");
+    const auto* themes = props.Get("lexer.lpeg.themes");
+    const auto* theme = props.Get("lexer.lpeg.theme");
+    if ((strlen(home) == 0) || (strlen(lexer) == 0))
+      return nullptr;
+
+    auto pLexer = std::unique_ptr<ILexer5>(new LexerLPeg());
+    // pLexer->setLanguage(lexer);
 
     lua_pushlightuserdata(L, reinterpret_cast<void *>(&props));
     lua_setfield(L, LUA_REGISTRYINDEX, "sci_props");
@@ -322,15 +325,14 @@ class LexerLPeg : public ILexer5 {
     lua_getglobal(L, "require");
     lua_pushstring(L, "lexer");
     if (lua_pcall(L, 1, 1, 0) != LUA_OK)
-      return (l_error(L), false);
+      return (l_error(L), nullptr);
     lua_pushvalue(L, -1), lua_setglobal(L, "lexer");
     l_setconstant(L, SC_FOLDLEVELBASE, "FOLD_BASE");
     l_setconstant(L, SC_FOLDLEVELWHITEFLAG, "FOLD_BLANK");
     l_setconstant(L, SC_FOLDLEVELHEADERFLAG, "FOLD_HEADER");
     l_setmetatable(L, "sci_lexer", llexer_property);
     if (*theme) {
-      char mode[FILENAME_MAX];
-      props.GetExpanded("lexer.lpeg.theme.mode", mode);
+      const auto* mode = props.Get("lexer.lpeg.theme.mode");
 
       lua_newtable(L);
       lua_pushboolean(L, strcmp(mode, "dark") == 0);
@@ -349,7 +351,7 @@ class LexerLPeg : public ILexer5 {
         lua_pushstring(L, theme); // path to theme
       if (luaL_loadfile(L, lua_tostring(L, -1)) != LUA_OK ||
           lua_pcall(L, 0, 0, 0) != LUA_OK)
-        return (l_error(L), false);
+        return (l_error(L), nullptr);
       lua_pop(L, 1); // theme
     }
 
@@ -358,16 +360,16 @@ class LexerLPeg : public ILexer5 {
     if (lua_isfunction(L, -1)) {
       lua_pushstring(L, lexer);
       if (lua_pcall(L, 1, 1, 0) != LUA_OK)
-        return (l_error(L), false);
+        return (l_error(L), nullptr);
     } else
-      return (l_error(L, "'lexer.load' function not found"), false);
+      return (l_error(L, "'lexer.load' function not found"), nullptr);
     lua_getfield(L, LUA_REGISTRYINDEX, "sci_lexers");
     lua_pushlightuserdata(L, reinterpret_cast<void *>(this));
     lua_pushvalue(L, -3), lua_settable(L, -3), lua_pop(L, 1); // sci_lexers
     lua_pushvalue(L, -1), lua_setfield(L, LUA_REGISTRYINDEX, "sci_lexer_obj");
     lua_remove(L, -2); // lexer module
     if (!SetStyles())
-      return false;
+      return nullptr;
 
     // If the lexer is a parent, it will have children in its _CHILDREN table.
     lua_getfield(L, -1, "_CHILDREN");
@@ -384,7 +386,7 @@ class LexerLPeg : public ILexer5 {
     }
     lua_pop(L, 2); // _CHILDREN and lexer object
 
-    return true;
+    return std::move(pLexer);
   }
 
 public:
@@ -434,7 +436,7 @@ public:
     lua_setfield(L, LUA_REGISTRYINDEX, "sci_props");
     lua_pushlightuserdata(L, reinterpret_cast<void *>(buffer));
     lua_setfield(L, LUA_REGISTRYINDEX, "sci_buffer");
-    LexAccessor styler(buffer);
+    Lexilla::LexAccessor styler(buffer);
 
     // Ensure the lexer has a grammar.
     // This could be done in the lexer module's `lex()`, but for large files,
@@ -520,7 +522,7 @@ public:
     lua_setfield(L, LUA_REGISTRYINDEX, "sci_props");
     lua_pushlightuserdata(L, reinterpret_cast<void *>(buffer));
     lua_setfield(L, LUA_REGISTRYINDEX, "sci_buffer");
-    LexAccessor styler(buffer);
+    Lexilla::LexAccessor styler(buffer);
 
     l_getlexerfield(L, "fold");
     if (lua_isfunction(L, -1)) {
@@ -546,18 +548,18 @@ public:
       l_error(L, "'lexer.fold' function not found");
   }
 
-  /**
-   * Sets the *key* lexer property to *value*.
-   * If *key* starts with "style.", also set the style for the token.
-   * @param key The string keyword.
-   * @param val The string value.
-   */
-  Sci_Position SCI_METHOD PropertySet(const char *key,
-                                      const char *value) override {
-    const char *val = *value ? value : " ";
-    props.Set(key, val, strlen(key), strlen(val)); // ensure property is cleared
-    return -1;                                     // no need to re-lex
-  }
+  // /**
+  //  * Sets the *key* lexer property to *value*.
+  //  * If *key* starts with "style.", also set the style for the token.
+  //  * @param key The string keyword.
+  //  * @param val The string value.
+  //  */
+  // Sci_Position SCI_METHOD PropertySet(const char *key,
+  //                                     const char *value) override {
+  //   const char *val = *value ? value : " ";
+  //   props.Set(key, val, strlen(key), strlen(val)); // ensure property is cleared
+  //   return -1;                                     // no need to re-lex
+  // }
 
   /**
    * Allows for direct communication between the application and the lexer.
@@ -576,11 +578,10 @@ public:
       case SCI_SETDOCPOINTER:
         sci = reinterpret_cast<sptr_t>(arg);
         return nullptr;
-
-      case SCI_SETLEXERLANGUAGE:
-        init(reinterpret_cast<const char *>(arg));
-        return nullptr;
-
+      case SCI_SETILEXER: {
+        std::unique_ptr<ILexer5> pLexer = init(reinterpret_cast<const char *>(arg));
+        return pLexer.release();
+      }
       default:
         if (code < 0 || code > STYLE_MAX)
           return nullptr;
@@ -608,6 +609,7 @@ public:
   const char *SCI_METHOD PropertyNames() override { return ""; }
   int SCI_METHOD PropertyType(const char *) override { return 0; }
   const char *SCI_METHOD DescribeProperty(const char *) override { return ""; }
+  Sci_Position SCI_METHOD PropertySet(const char *key, const char *val) override { return 0; } //TODO: Correct????
   const char *SCI_METHOD DescribeWordListSets() override { return ""; }
   Sci_Position SCI_METHOD WordListSet(int, const char *) override { return -1; }
 
@@ -642,6 +644,5 @@ public:
   /** Constructs a new instance of the lexer. */
   static ILexer5 *LexerFactoryLPeg() { return new LexerLPeg(); }
 };
-
 lua_State *LexerLPeg::L = NULL;
-LexerModule lmLPeg(SCLEX_AUTOMATIC - 1, LexerLPeg::LexerFactoryLPeg, "lpeg");
+Lexilla::LexerModule lmLPeg(SCLEX_AUTOMATIC - 1, LexerLPeg::LexerFactoryLPeg, "lpeg");

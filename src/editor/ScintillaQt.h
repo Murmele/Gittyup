@@ -23,6 +23,7 @@
 #include <map>
 #include <algorithm>
 #include <memory>
+#include <array>
 
 #include <Scintilla.h>
 #include <ScintillaBase.h>
@@ -142,7 +143,7 @@ protected:
   void scrollContentsBy(int dx, int dy) override {}
   static sptr_t DirectFunction(sptr_t ptr, unsigned int iMessage, uptr_t wParam,
                                sptr_t lParam);
-  sptr_t WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) override;
+  sptr_t WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) override;
 
 private:
   void PasteFromMode(QClipboard::Mode);
@@ -153,7 +154,7 @@ private:
 
   void Initialise() override;
   void Finalise() override;
-  bool DragThreshold(Point ptStart, Point ptNow) override;
+  bool DragThreshold(Internal::Point ptStart, Internal::Point ptNow) override;
   bool ValidCodePage(int codePage) const override;
   void ScrollText(Sci::Line linesToMove) override;
   void SetVerticalScrollPos() override;
@@ -165,7 +166,7 @@ private:
   void Paste() override;
   void ClaimSelection() override;
   void NotifyChange() override;
-  void NotifyParent(SCNotification scn) override;
+  void NotifyParent(NotificationData scn) override;
   bool FineTickerRunning(TickReason reason) override;
   void FineTickerStart(TickReason reason, int millis, int tolerance) override;
   void FineTickerCancel(TickReason reason) override;
@@ -173,12 +174,11 @@ private:
   void SetMouseCapture(bool on) override;
   bool HaveMouseCapture() override;
   void StartDrag() override;
-  Internal::CaseFolder *CaseFolderForEncoding() override;
-  std::string CaseMapString(const std::string &s, int caseMapping) override;
+  std::unique_ptr<Internal::CaseFolder> CaseFolderForEncoding() override;
+  std::string CaseMapString(const std::string &s, CaseMapping caseMapping) override;
   void CreateCallTipWindow(Internal::PRectangle rc) override;
   void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) override;
-  sptr_t DefWndProc(unsigned int iMessage, uptr_t wParam,
-                    sptr_t lParam) override;
+  sptr_t DefWndProc(Message iMessage, uptr_t wParam, sptr_t lParam) override;
 
 private:
   QElapsedTimer timer;
@@ -186,7 +186,7 @@ private:
   int preeditPos = -1;
   QString preeditString;
 
-  int timers[tickDwell + 1];
+  std::array<int, (int)TickReason::dwell + 1> timers;
 
   int vMax = 0, hMax = 0;   // Scroll bar maximums.
   int vPage = 0, hPage = 0; // Scroll bar page sizes.
