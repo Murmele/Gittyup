@@ -60,6 +60,11 @@ static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info) {
 
   return defaultFilter ? defaultFilter(info) : EXCEPTION_CONTINUE_SEARCH;
 }
+
+// Install exception filter.
+void installExceptionFilter() {
+	defaultFilter = SetUnhandledExceptionFilter(&exceptionFilter);
+}
 #endif
 
 namespace {
