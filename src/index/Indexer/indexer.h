@@ -50,4 +50,8 @@ private:
   WorkerQueue<Index::PostingMap> mResults = WorkerQueue<Index::PostingMap>(1);
 };
 
+#ifdef Q_OS_WIN
+void installExceptionFilter();
+#endif
+
 #endif // INDEXER
