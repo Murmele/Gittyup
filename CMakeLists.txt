@@ -94,6 +94,7 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_EXTENSIONS ON)
 
 if(HAIKU)
   # qsort_r in libgit2 requires this
