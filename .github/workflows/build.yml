@@ -365,10 +365,8 @@ jobs:
           files: |
             **/artifacts/GittyupFlatpak/*.flatpak
             **/artifacts/GittyupAppImage/Gittyup*.AppImage
-
-          # Currently disabled, because we have problems with the theme
-          # **/artifacts/Gittyup win64/Gittyup*.exe
-          # **/artifacts/Gittyup macos/Gittyup*.dmg
+            **/artifacts/Gittyup win64/Gittyup*.exe
+            **/artifacts/Gittyup macos/Gittyup*.dmg
 
       - name: Update GitHub release (version tag)
         uses: marvinpinto/action-automatic-releases@latest
