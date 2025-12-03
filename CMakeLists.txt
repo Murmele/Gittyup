@@ -93,7 +93,7 @@ endif()
 # Require C++17.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD "99" CACHE STRING "The C standard to compile against") # Use cache, because in libgit2 also cache is used
 set(CMAKE_C_EXTENSIONS ON)
 
 if(HAIKU)
