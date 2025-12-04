@@ -201,7 +201,14 @@ bool Indexer::start() {
   // ensure there's at least one thread of each type. In some cases, the
   // processing done in the worker threads are the limiting factor. Aside from
   // using more RAM, the over-commitment doesn't seem to impact performance
+#ifndef Q_OS_WIN
   int numGabbers = std::min(4, std::max(1, QThread::idealThreadCount() / 2));
+#else
+  // TODO: Why do I there is a min/max macro defined here which conflicts with the std::min/max?
+  // C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\shared\minwindef.h:197:29: note: expanded from macro 'min'
+  // 197 | #define min(a,b)            (((a) < (b)) ? (a) : (b))
+  int numGabbers = min(4, max(1, QThread::idealThreadCount() / 2));
+#endif
   int numWorkers = QThread::idealThreadCount();
 
   log("start");
