@@ -182,6 +182,10 @@ jobs:
         with:
           perl-version: '5.30'
 
+      - name: Install NSIS
+        if: matrix.env.ninja_platform == 'win'
+        uses: negrutiu/nsis-install@v2
+
       - name: Install Libssh2
         if: matrix.env.ninja_platform == 'linux'
         run: |
