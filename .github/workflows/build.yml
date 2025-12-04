@@ -220,6 +220,14 @@ jobs:
       - name: Install NASM
         if: matrix.env.ninja_platform == 'win'
         uses: ilammy/setup-nasm@v1.2.0
+        
+      - name: Build OpenSSL (macOS)
+        if: matrix.env.ninja_platform == 'mac'
+        run: |
+          cd dep/openssl/openssl
+
+          ./Configure ${{ matrix.env.openssl_arch }} no-shared
+          make
 
       - name: Build OpenSSL (Windows)
         if: matrix.env.ninja_platform == 'win'
