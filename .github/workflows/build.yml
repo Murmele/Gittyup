@@ -264,8 +264,8 @@ jobs:
           echo "Start validating appdata file"
           sudo apt install flatpak
           sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          sudo flatpak install -y org.freedesktop.appstream.cli
-          flatpak run --env=G_DEBUG=fatal-criticals org.freedesktop.appstream.cli validate ./build/release/rsrc/linux/com.github.Murmele.Gittyup.appdata.xml
+          sudo flatpak install -y flathub org.flatpak.Builder
+          flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream ./build/release/rsrc/linux/com.github.Murmele.Gittyup.appdata.xml
 
       - name: Publish build artifacts
         if: matrix.env.pack
