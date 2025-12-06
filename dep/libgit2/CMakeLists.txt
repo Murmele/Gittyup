@@ -28,6 +28,7 @@ if(WIN32)
 endif()
 
 if(NOT USE_SYSTEM_LIBGIT2)
+  set(BUILD_CLI OFF)
   add_subdirectory(libgit2)
 
   # Include the generated experimental.h
