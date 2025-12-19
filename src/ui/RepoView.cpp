@@ -2674,7 +2674,7 @@ void RepoView::openTerminal() {
         if (!exePath.isEmpty()) {
           detectedCandidate = candidate;
           detectedTerminal =
-              '"' + exePath.replace("\\", "\\\\").replace("\"", "\\\"") + " --tab" + '"';
+              '"' + exePath.replace("\\", "\\\\").replace("\"", "\\\"") + '"';
           break;
         }
 #endif
@@ -2741,27 +2741,6 @@ void RepoView::openTerminal() {
   CloseHandle(processInfo.hThread);
 
 #elif defined(Q_OS_UNIX)
-
-//   auto* child = new QProcess;
-// #if defined(FLATPAK)
-//   child->setProgram("flatpak-spawn");
-//   child->setArguments(QStringList() << "--host" << terminalCmd);
-// #else
-//   child->setProgram("sh");
-//   child->setArguments(QStringList() << "-c" << terminalCmd);
-// #endif // FLATPAK
-
-//   child->setWorkingDirectory(mRepo.workdir().absolutePath());
-//   Debug("Execute Terminal: Arguments: " << child->arguments());
-//   connect(child,  QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), [child] (int exitCode, QProcess::ExitStatus exitStatus) {
-//     if (exitStatus != QProcess::ExitStatus::NormalExit) {
-//       QMessageBox msgBox(QMessageBox::Warning, QStringLiteral("Failed to open terminal"), QStringLiteral("Failed to open the terminal"));
-//       msgBox.setDetailedText(QString(child->readAllStandardError()));
-//       msgBox.exec();
-//     }
-//     child->deleteLater();
-//   });
-//   child->start();
 
   QProcess child;
 #if defined(FLATPAK)
