@@ -2688,7 +2688,14 @@ void RepoView::openTerminal() {
     messagebox->setWindowTitle(tr("No terminal executable found"));
     messagebox->setText(tr("No terminal executable was found. Please configure "
                            "a terminal in the configuration."));
-    messagebox->setDetailedText(QStringLiteral("The following terminal executables are searched, but any found: %1").arg(candidates));
+    QString candidatesString;
+    for (const auto& candidate: candidates) {
+      candidatesString.append(candidate);
+      candidatesString.append(", ");
+    }
+    candidatesString.chop(2);
+
+    messagebox->setDetailedText(QStringLiteral("The following terminal executables are searched, but any found: %1").arg(candidatesString));
     messagebox->setStandardButtons(QMessageBox::Ok);
     messagebox->addButton(tr("Open Configuration"), QMessageBox::ApplyRole);
     messagebox->setAttribute(Qt::WA_DeleteOnClose);
