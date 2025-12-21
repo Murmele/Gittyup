@@ -135,7 +135,9 @@ elseif(NOT USE_SYSTEM_QT)
 endif()
 
 # Install XcbQpa library.
-if(UNIX AND NOT APPLE AND NOT FLATPAK)
+if(UNIX
+   AND NOT APPLE
+   AND NOT FLATPAK)
   set(LIB_NAME libQt6XcbQpa)
   get_target_property(QT_CORE_LIBRARY Qt6::Core LOCATION)
   get_filename_component(LIB_PATH ${QT_CORE_LIBRARY} PATH)
