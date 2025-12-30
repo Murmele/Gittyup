@@ -134,28 +134,6 @@ elseif(NOT USE_SYSTEM_QT)
   endforeach()
 endif()
 
-# Install XcbQpa library.
-if(UNIX AND NOT APPLE)
-  set(LIB_NAME libQt6XcbQpa)
-  get_target_property(QT_CORE_LIBRARY Qt6::Core LOCATION)
-  get_filename_component(LIB_PATH ${QT_CORE_LIBRARY} PATH)
-  get_filename_component(LIB_EXT ${QT_CORE_LIBRARY} EXT)
-
-  install(
-    FILES "${LIB_PATH}/${LIB_NAME}${LIB_EXT}"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PERMISSIONS
-      OWNER_READ
-      OWNER_WRITE
-      OWNER_EXECUTE
-      GROUP_READ
-      GROUP_EXECUTE
-      WORLD_READ
-      WORLD_EXECUTE
-    COMPONENT ${GITTYUP_NAME}
-    RENAME ${LIB_NAME}.so.6)
-endif()
-
 # Install SSL libraries.
 if(NOT APPLE)
   if(NOT USE_SYSTEM_OPENSSL)
