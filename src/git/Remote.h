@@ -93,9 +93,11 @@ public:
     virtual bool connectToAgent() const { return false; }
 
     // static callback wrappers
+#ifndef USE_SYSTEM_LIBGIT2
     static void connected(git_remote *remote, void *payload);
 
     static void about_to_disconnect(git_remote *remote, void *payload);
+#endif
 
     static int sideband(const char *str, int len, void *payload);
 
@@ -120,7 +122,9 @@ public:
     Repository mRepo;
     State mState = Transfer;
     QSet<QString> mAgentNames;
+#ifndef USE_SYSTEM_LIBGIT2
     git_remote *mRemote = nullptr;
+#endif
     QSet<QString> mKeyFiles;
   };
 

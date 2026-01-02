@@ -17,6 +17,7 @@
 #include "TagRef.h"
 #include "Tree.h"
 #include "git2/annotated_commit.h"
+#include "git2/config.h"
 #include "git2/diff.h"
 #include "git2/refs.h"
 #include "git2/revert.h"
@@ -124,8 +125,7 @@ Signature Commit::committer() const {
   return const_cast<git_signature *>(git_commit_committer(*this));
 }
 
-Diff Commit::diff(const git::Commit &commit, int contextLines,
-                  bool ignoreWhitespace) const {
+Diff Commit::diff(const git::Commit &commit, bool ignoreWhitespace) const {
   Tree old;
   if (commit.isValid()) {
     old = commit.tree();
@@ -135,14 +135,27 @@ Diff Commit::diff(const git::Commit &commit, int contextLines,
       old = parents.first().tree();
   }
 
+  git_repository *repo = git_object_owner(d.data());
+
+  git_config *cfg = NULL;
+  int32_t context_lines = 3;
+
+  if (git_repository_config(&cfg, repo) == 0) {
+    git_config_get_int32(&context_lines, cfg, "diff.context");
+    git_config_free(cfg);
+  }
+
   git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
-  opts.context_lines = contextLines;
+#ifdef USE_SYSTEM_LIBGIT2
+  opts.context_lines = (uint32_t)context_lines;
+#else
+  opts.context_lines = context_lines;
+#endif
   opts.flags |= GIT_DIFF_INCLUDE_TYPECHANGE;
   if (ignoreWhitespace)
     opts.flags |= GIT_DIFF_IGNORE_WHITESPACE;
 
   git_diff *diff = nullptr;
-  git_repository *repo = git_object_owner(d.data());
   git_diff_tree_to_tree(&diff, repo, old, tree(), &opts);
   return Diff(diff);
 }

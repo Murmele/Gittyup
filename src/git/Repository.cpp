@@ -343,7 +343,10 @@ Diff Repository::diffIndexToWorkdir(const Index &index,
                                     Diff::Callbacks *callbacks,
                                     bool ignoreWhitespace) const {
   git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
-  opts.flags |= (GIT_DIFF_INCLUDE_TYPECHANGE | GIT_DIFF_DISABLE_MMAP);
+  opts.flags |= GIT_DIFF_INCLUDE_TYPECHANGE;
+#ifndef USE_SYSTEM_LIBGIT2
+  opts.flags |= GIT_DIFF_DISABLE_MMAP;
+#endif
 
   if (!appConfig().value<bool>("untracked.hide", false))
     opts.flags |= GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS;
@@ -862,10 +865,12 @@ Blame Repository::blame(const QString &name, const Commit &from,
   git_blame_options options = GIT_BLAME_OPTIONS_INIT;
   if (from.isValid()) // Set start commit.
     options.newest_commit = *git_commit_id(from);
+#ifndef USE_SYSTEM_LIBGIT2
   if (callbacks) {
     options.progress_cb = blame_progress;
     options.payload = callbacks;
   }
+#endif
   git_blame_file(&blame, d->repo, name.toUtf8(), &options);
   return Blame(blame, d->repo);
 }

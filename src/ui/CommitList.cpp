@@ -365,7 +365,7 @@ public:
           return QVariant::fromValue(this->status());
 
         bool ignoreWhitespace = Settings::instance()->isWhitespaceIgnored();
-        git::Diff diff = row.commit.diff(git::Commit(), -1, ignoreWhitespace);
+        git::Diff diff = row.commit.diff(git::Commit(), ignoreWhitespace);
         diff.findSimilar();
         return QVariant::fromValue(diff);
       }
@@ -595,7 +595,7 @@ public:
       case CommitList::Role::DiffRole: {
         git::Commit commit = mCommits.at(index.row());
         bool ignoreWhitespace = Settings::instance()->isWhitespaceIgnored();
-        git::Diff diff = commit.diff(git::Commit(), -1, ignoreWhitespace);
+        git::Diff diff = commit.diff(git::Commit(), ignoreWhitespace);
         diff.findSimilar();
         return QVariant::fromValue(diff);
       }
@@ -1293,7 +1293,7 @@ git::Diff CommitList::selectedDiff() const {
 
   git::Commit last = indexes.last().data(CommitRole).value<git::Commit>();
   bool ignoreWhitespace = Settings::instance()->isWhitespaceIgnored();
-  git::Diff diff = first.diff(last, -1, ignoreWhitespace);
+  git::Diff diff = first.diff(last, ignoreWhitespace);
   diff.findSimilar();
   return diff;
 }

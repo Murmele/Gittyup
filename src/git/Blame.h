@@ -10,6 +10,9 @@
 #ifndef BLAME_H
 #define BLAME_H
 
+struct git_signature;
+struct git_repository;
+
 #include "git2/blame.h"
 #include <QSharedPointer>
 
