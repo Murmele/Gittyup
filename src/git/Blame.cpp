@@ -51,7 +51,7 @@ int Blame::line(int index) const {
 }
 
 Id Blame::id(int index) const {
-  const auto* hunk = git_blame_get_hunk_byindex(d.data(), index);
+  const auto *hunk = git_blame_get_hunk_byindex(d.data(), index);
   if (!hunk) {
     return Id();
   }

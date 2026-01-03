@@ -211,8 +211,9 @@ void BlameMargin::paintEvent(QPaintEvent *event) {
     int line = mBlame.line(index);
     git::Id id = mBlame.id(index);
     if (id.isNull()) {
-      // This can happen when the commit is for some reason not valid, for example if the email address is not specified
-      index ++;
+      // This can happen when the commit is for some reason not valid, for
+      // example if the email address is not specified
+      index++;
       continue;
     }
     while (index + 1 < count && mBlame.id(index + 1) == id)
@@ -225,13 +226,13 @@ void BlameMargin::paintEvent(QPaintEvent *event) {
         invalid = true;
         break;
       } else if (idNext == id) {
-       index++;
+        index++;
       } else {
         break;
       }
     }
     if (invalid) {
-      index ++;
+      index++;
       continue;
     }
 
