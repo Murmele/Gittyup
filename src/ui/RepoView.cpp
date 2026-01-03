@@ -2577,19 +2577,18 @@ ConfigDialog *RepoView::configureSettings(ConfigDialog::Index index) {
 void RepoView::openTerminal() {
   QString terminalCmd =
       Settings::instance()->value(Setting::Id::TerminalCommand).toString();
+  static QString detectedCandidate;
 
+  QStringList candidates;
   if (terminalCmd.isEmpty()) {
-#if defined(Q_OS_WIN)
     static QString detectedTerminal = nullptr;
-
+#if defined(Q_OS_WIN)
     if (detectedTerminal.isNull()) {
       detectedTerminal = "";
 
       QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
       QString programFilesDir = env.value("PROGRAMFILES");
       QString programFiles32Dir = env.value("PROGRAMFILES(x86)");
-
-      QStringList candidates;
 
       candidates.append("git-bash");
       if (!programFilesDir.isEmpty())
@@ -2602,7 +2601,7 @@ void RepoView::openTerminal() {
         candidates.append(programFiles32Dir + "/Git/bin/bash.exe");
       candidates.append("cmd");
 
-      for (QString candidate : candidates) {
+      for (const auto& candidate : candidates) {
         QString exePath;
 
         if (QDir::isAbsolutePath(candidate)) {
@@ -2617,6 +2616,7 @@ void RepoView::openTerminal() {
           detectedTerminal =
               '"' + QDir::toNativeSeparators(exePath.replace("\"", "\"\"")) +
               '"';
+          detectedCandidate = candidate;
           break;
         }
       }
@@ -2625,21 +2625,22 @@ void RepoView::openTerminal() {
     terminalCmd = detectedTerminal;
 
 #elif defined(Q_OS_MACOS)
-    static QString detectedTerminal = nullptr;
-    static const char *candidates[] = {"com.googlecode.iterm2",
-                                       "com.apple.Terminal", nullptr};
+    candidates = {
+        "com.googlecode.iterm2", "com.apple.Terminal"
+    };
 
     if (detectedTerminal.isNull()) {
       detectedTerminal = "";
 
-      for (const char **candidate = candidates; *candidate; ++candidate) {
+      for (const auto& candidate : candidates) {
         int res = QProcess::execute(
             "osascript", {"-e", QString("tell application \"Finder\" to get "
                                         "application file id \"%1\"")
-                                    .arg(*candidate)});
+                                    .arg(candidate)});
 
         if (res == 0) {
-          detectedTerminal = QString("open -b %1").arg(*candidate) + " .";
+          detectedTerminal = QString("open -b %1").arg(candidate) + " .";
+          detectedCandidate = candidate;
           break;
         }
       }
@@ -2648,16 +2649,16 @@ void RepoView::openTerminal() {
     terminalCmd = detectedTerminal;
 
 #elif defined(Q_OS_UNIX)
-    static QString detectedTerminal = nullptr;
-    static const QStringList candidates = {
+    candidates = {
         "x-terminal-emulator", "xdg-terminal", "i3-sensible-terminal",
-        "gnome-terminal",      "konsole",      "xterm",
+        "gnome-terminal",      "konsole",      "xterm", "ptyxis"
     };
 
+    // Caching the string
     if (detectedTerminal.isNull()) {
       detectedTerminal = "";
 
-      for (auto candidate : candidates) {
+      for (const auto& candidate : candidates) {
 #if defined(FLATPAK)
         // There is no graphical terminal in the flatpak environment. Use the
         // host terminal
@@ -2671,6 +2672,7 @@ void RepoView::openTerminal() {
 #else
         QString exePath = QStandardPaths::findExecutable(candidate);
         if (!exePath.isEmpty()) {
+          detectedCandidate = candidate;
           detectedTerminal =
               '"' + exePath.replace("\\", "\\\\").replace("\"", "\\\"") + '"';
           break;
@@ -2688,6 +2690,14 @@ void RepoView::openTerminal() {
     messagebox->setWindowTitle(tr("No terminal executable found"));
     messagebox->setText(tr("No terminal executable was found. Please configure "
                            "a terminal in the configuration."));
+    QString candidatesString;
+    for (const auto& candidate: candidates) {
+      candidatesString.append(candidate);
+      candidatesString.append(", ");
+    }
+    candidatesString.chop(2);
+
+    messagebox->setDetailedText(QStringLiteral("The following terminal executables are searched, but any found: %1").arg(candidatesString));
     messagebox->setStandardButtons(QMessageBox::Ok);
     messagebox->addButton(tr("Open Configuration"), QMessageBox::ApplyRole);
     messagebox->setAttribute(Qt::WA_DeleteOnClose);
@@ -2735,15 +2745,21 @@ void RepoView::openTerminal() {
   QProcess child;
 #if defined(FLATPAK)
   child.setProgram("flatpak-spawn");
-  child.setArguments(QStringList() << "--host" << terminalCmd);
+  QStringList arguments = { "--host", terminalCmd };
 #else
   child.setProgram("sh");
-  child.setArguments(QStringList() << "-c" << terminalCmd);
+  QStringList arguments = { "-c", terminalCmd };
 #endif
+
+  if (detectedCandidate == QStringLiteral("ptyxis")) {
+    arguments.append("--tab");
+    arguments.append(QStringLiteral("--working-directory='%1'").arg(mRepo.workdir().absolutePath()));
+  }
+  child.setArguments(arguments);
   child.setWorkingDirectory(mRepo.workdir().absolutePath());
   Debug("Execute Terminal: Arguments: " << child.arguments());
   child.startDetached();
-#endif
+#endif // Q_OS_UNIX
 }
 
 void RepoView::openFileManager() {
