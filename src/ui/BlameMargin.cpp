@@ -210,8 +210,30 @@ void BlameMargin::paintEvent(QPaintEvent *event) {
     // Combine adjacent lines with the same id.
     int line = mBlame.line(index);
     git::Id id = mBlame.id(index);
+    if (id.isNull()) {
+      // This can happen when the commit is for some reason not valid, for example if the email address is not specified
+      index ++;
+      continue;
+    }
     while (index + 1 < count && mBlame.id(index + 1) == id)
       ++index;
+
+    bool invalid = false;
+    while (index + 1 < count) {
+      const auto idNext = mBlame.id(index + 1);
+      if (idNext.isNull()) {
+        invalid = true;
+        break;
+      } else if (idNext == id) {
+       index++;
+      } else {
+        break;
+      }
+    }
+    if (invalid) {
+      index ++;
+      continue;
+    }
 
     // Calculate outer rectangle.
     int next = (index + 1 < count) ? mBlame.line(index + 1) : lc;
