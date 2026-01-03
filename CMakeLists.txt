@@ -66,7 +66,15 @@ option(USE_SYSTEM_LUA "Use the system-wide Lua installation" OFF)
 option(USE_SYSTEM_HUNSPELL "Use the system-wide hunspell installation" OFF)
 option(USE_SYSTEM_CMARK "Use the system-wide cmark installation" OFF)
 option(ENABLE_TESTS "Enable Gittyup Unittests" ON)
-option(ENABLE_SHA256 "Enable SHA256 support within Gittyup" ON)
+
+#Typically system libgit2 does NOT have experimental settings enabled,
+# hence we need to disable SHA256 support
+if(USE_SYSTEM_LIBGIT2)
+  set(_DEFAULT_ENABLE_SHA256 OFF)
+else()
+  set(_DEFAULT_ENABLE_SHA256 ON)
+endif()
+option(ENABLE_SHA256 "Enable SHA256 support within Gittyup" ${_DEFAULT_ENABLE_SHA256})
 
 set(LUA_MODULES_PATH
     CACHE
@@ -150,6 +158,10 @@ endif()
 
 if(ENABLE_SHA256)
   add_compile_definitions(GIT_EXPERIMENTAL_SHA256)
+endif()
+
+if(USE_SYSTEM_LIBGIT2)
+  add_compile_definitions(USE_SYSTEM_LIBGIT2)
 endif()
 
 include(GNUInstallDirs) # Defines some variables as BINDIR, LIBDIR, ...

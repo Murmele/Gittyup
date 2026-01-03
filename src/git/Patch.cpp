@@ -11,6 +11,7 @@
 #include "Blob.h"
 #include "Id.h"
 #include "Repository.h"
+#include "git2/config.h"
 #include "git2/filter.h"
 #include "git2/index.h"
 #include <QDataStream>
@@ -69,7 +70,13 @@ Patch::Patch(git_patch *patch) : d(patch, git_patch_free) {
   }
 
   int lineCount = lines.size();
-  int context = git_patch_context_lines(patch);
+  git_config *cfg = NULL;
+  int32_t context = 3;
+
+  if (git_repository_config(&cfg, repo) == 0) {
+    git_config_get_int32(&context, cfg, "diff.context");
+    git_config_free(cfg);
+  }
   for (int i = 0; i < lineCount; ++i) {
     if (!lines.at(i).startsWith("<<<<<<<"))
       continue;

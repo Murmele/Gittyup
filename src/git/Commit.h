@@ -48,7 +48,7 @@ public:
   Signature author() const;
   Signature committer() const;
 
-  Diff diff(const Commit &commit = git::Commit(), int contextLines = -1,
+  Diff diff(const Commit &commit = git::Commit(),
             bool ignoreWhitespace = false) const;
   Tree tree() const;
   QList<Commit> parents() const;

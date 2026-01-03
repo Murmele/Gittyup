@@ -83,9 +83,11 @@ Id Submodule::workdirId() const { return git_submodule_wd_id(d.data()); }
 Result Submodule::update(Remote::Callbacks *callbacks, bool init,
                          bool checkout_force) {
   git_submodule_update_options opts = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
+#ifndef USE_SYSTEM_LIBGIT2
   opts.fetch_opts.callbacks.connected = &Remote::Callbacks::connected;
   opts.fetch_opts.callbacks.about_to_disconnect =
       &Remote::Callbacks::about_to_disconnect;
+#endif
   opts.fetch_opts.callbacks.sideband_progress = &Remote::Callbacks::sideband;
   opts.fetch_opts.callbacks.credentials = &Remote::Callbacks::credentials;
   opts.fetch_opts.callbacks.certificate_check = &Remote::Callbacks::certificate;
