@@ -49,6 +49,7 @@
 #include <QStackedWidget>
 #include <QStandardItemModel>
 #include <QToolBar>
+#include <QMessageBox>
 
 #ifdef Q_OS_UNIX
 #include "cli/Installer.h"
@@ -124,6 +125,8 @@ public:
     connect(privacy, &QLabel::linkActivated,
             [] { AboutDialog::openSharedInstance(AboutDialog::Privacy); });
 
+    mCredentialStoresDescription = new QLabel();
+
     QFormLayout *form = new QFormLayout;
     form->addRow(tr("User name:"), mName);
     form->addRow(tr("User email:"), mEmail);
@@ -135,6 +138,8 @@ public:
     form->addRow(tr("Language:"), mLanguages);
     form->addRow(tr("Credentials:"), mStoreCredentials);
     form->addRow(tr("Credential store type:"), mAvailableStores);
+    form->addRow(tr("Available Credential stores:"),
+                 mCredentialStoresDescription);
     form->addRow(QString(), privacy);
 
     mSingleInstance =
@@ -260,12 +265,25 @@ public:
 
     auto currentHelper = config.value<QString>("credential.helper");
     auto checked = CredentialHelper::isHelperValid(currentHelper);
+    if (!checked) {
+      QMessageBox msg(QMessageBox::Information, tr("No credential store set"),
+                      tr("No credential store is set. Go to the application "
+                         "settings to set the desired credential store"));
+      msg.exec();
+    }
     mStoreCredentials->setChecked(checked);
 
-    auto availableHelpers = CredentialHelper::getAvailableHelperNames();
-    foreach (auto helper, availableHelpers) {
-      mAvailableStores->addItem(helper);
+    QString info = tr("") + "<table>";
+    for (const auto &helper :
+         CredentialHelper::getAvailableHelperInformation()) {
+      info += QStringLiteral("<tr><td><b>%1</b></td><td>%2</td><td>")
+                  .arg(helper.name, helper.description);
+      mAvailableStores->addItem(helper.name);
     }
+    info += "</table>";
+    mCredentialStoresDescription->setText(info);
+    mAvailableStores->setToolTip(tr("Available Credential stores"));
+    mAvailableStores->setWhatsThis(info);
     mAvailableStores->setEditable(true);
     mAvailableStores->setCurrentText(currentHelper);
 
@@ -286,6 +304,7 @@ private:
   QComboBox *mLanguages;
   QCheckBox *mStoreCredentials;
   QComboBox *mAvailableStores;
+  QLabel *mCredentialStoresDescription;
   QCheckBox *mSingleInstance;
 };
 
