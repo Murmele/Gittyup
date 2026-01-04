@@ -33,7 +33,14 @@ public:
   static bool isLoggingEnabled();
   static void setLoggingEnabled(bool enabled);
 
-  static QStringList getAvailableHelperNames();
+  struct HelperInformation {
+    HelperInformation(const QString &name, const QString &description)
+        : name(name), description(description) {}
+    QString name;
+    QString description;
+  };
+
+  static QVector<HelperInformation> getAvailableHelperInformation();
   static bool isHelperValid(const QString &name);
 
 protected:

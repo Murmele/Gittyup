@@ -25,7 +25,8 @@ namespace {
 const QString kLogKey = "credential/log";
 
 const QString cacheStoreName = "cache";
-const QString storeStoreName = "store";
+const QString storeStoreName = "git-credential-store";
+const QString storeStoreNameOld = "store";
 const QString osxKeyChainStoreName = "osxkeychain";
 const QString winCredStoreName = "wincred";
 const QString libSecretStoreName = "libsecret";
@@ -41,7 +42,8 @@ CredentialHelper *CredentialHelper::instance() {
     if (isHelperValid(helperName)) {
       if (helperName == cacheStoreName) {
         instance = new Cache;
-      } else if (helperName == storeStoreName) {
+      } else if (helperName == storeStoreName ||
+                 helperName == storeStoreNameOld) {
         auto path =
             QString::fromLocal8Bit(qgetenv("HOME") + "/.git-credentials");
         instance = new Store(path);
@@ -61,22 +63,37 @@ bool CredentialHelper::isHelperValid(const QString &name) {
   return !name.isEmpty();
 }
 
-QStringList CredentialHelper::getAvailableHelperNames() {
-  QStringList list;
-  list.append(cacheStoreName);
-  list.append(storeStoreName);
+QVector<CredentialHelper::HelperInformation>
+CredentialHelper::getAvailableHelperInformation() {
+  QVector<HelperInformation> list;
+  list.append(HelperInformation(
+      cacheStoreName, tr("Caching the credentials in the RAM. Required to "
+                         "enter credentials on every startup")));
+  list.append(HelperInformation(
+      storeStoreName,
+      tr("Storing the credentials encoded but unencrypted on disk. <a "
+         "href=\"https://git-scm.com/docs/"
+         "git-credential-store\">git-credential-store</a>")));
 #if defined(Q_OS_MAC)
-  list.append(osxKeyChainStoreName);
+  list.append(
+      HelperInformation(osxKeyChainStoreName, tr("MacOs credential manager")));
 #elif defined(Q_OS_WIN)
-  list.append(winCredStoreName);
+  list.append(
+      HelperInformation(winCredStoreName, tr("Windows credential manager")));
 #else
   QLibrary lib("secret-1", 0);
   if (lib.load()) {
-    list.append(libSecretStoreName);
+    list.append(HelperInformation(libSecretStoreName,
+                                  tr("Secret Service D-Bus client library")));
   }
+  // libsecret replaces libgnome-keyring.
   QLibrary lib2(gnomeKeyringStoreName, 0);
   if (lib2.load()) {
-    list.append(gnomeKeyringStoreName);
+    list.append(HelperInformation(
+        gnomeKeyringStoreName,
+        tr("Prefer <a "
+           "href=\"https://wiki.gnome.org/Projects/Libsecret\">libsecret</a> "
+           "over gnome-keyring if available")));
   }
 #endif
   return list;

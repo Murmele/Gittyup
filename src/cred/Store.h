@@ -13,6 +13,12 @@
 #include "CredentialHelper.h"
 #include <QMap>
 
+/*!
+ * \brief The Store class
+ * git-credential-store
+ * https://git-scm.com/docs/git-credential-store
+ * Storing the credentials encoded but unencrypted on disk
+ */
 class Store : public CredentialHelper {
 public:
   Store(const QString &path);
