@@ -70,13 +70,13 @@ CredentialHelper::getAvailableHelperInformation() {
       cacheStoreName, tr("Caching the credentials in the RAM. Required to "
                          "enter credentials on every startup")));
   list.append(HelperInformation(
-      storeStoreName,
-      tr("Storing the credentials encoded but unencrypted on disk. <a "
-         "href=\"https://git-scm.com/docs/"
-         "git-credential-store\">git-credential-store</a>")));
+      storeStoreName, tr("Storing the credentials unencrypted on disk, "
+                         "protected only by filesystem permissions <a "
+                         "href=\"https://git-scm.com/docs/"
+                         "git-credential-store\">git-credential-store</a>")));
 #if defined(Q_OS_MAC)
   list.append(
-      HelperInformation(osxKeyChainStoreName, tr("MacOs credential manager")));
+      HelperInformation(osxKeyChainStoreName, tr("MacOS credential manager")));
 #elif defined(Q_OS_WIN)
   list.append(
       HelperInformation(winCredStoreName, tr("Windows credential manager")));
