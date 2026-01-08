@@ -1,3 +1,13 @@
+### vX.X.X - 2026-01-07 (DEV)
+
+Bug Fix and Feature release
+
+#### Added
+
+* Add more information about the credential stores to give the user the possibility to easily see the tradeoffs of every credential store
+
+----
+
 ### v2.0.0 - 2025-11-30
 
 Bug Fix and Feature release
