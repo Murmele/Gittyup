@@ -1,4 +1,4 @@
-declare -a branches=("fetch_annotated_tags" "blame_abort" "checkout_deletion_notification" "fix_push_callback_issues" "disable_mmap" "context_line_accessor´" "hash" "callback_connect_disconnect" "libgit2_includes_public" "local_libssh2")
+declare -a branches=("fetch_annotated_tags" "blame_abort" "checkout_deletion_notification" "fix_push_callback_issues" "disable_mmap" "context_line_accessor´" "hash" "callback_connect_disconnect" "libgit2_includes_public" "local_libssh2" "free_broken_hunk")
 
 cd libgit2
 

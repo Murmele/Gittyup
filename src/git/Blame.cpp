@@ -11,6 +11,9 @@
 #include "Commit.h"
 #include "Id.h"
 #include "Signature.h"
+#include "git2/errors.h"
+#include "git2/sys/errors.h"
+#include "Debug.h"
 
 namespace git {
 
@@ -40,11 +43,19 @@ int Blame::index(int line) const {
 }
 
 int Blame::line(int index) const {
-  return git_blame_get_hunk_byindex(d.data(), index)->final_start_line_number;
+  const auto hunk = git_blame_get_hunk_byindex(d.data(), index);
+  if (!hunk) {
+    return -1;
+  }
+  return hunk->final_start_line_number;
 }
 
 Id Blame::id(int index) const {
-  return git_blame_get_hunk_byindex(d.data(), index)->final_commit_id;
+  const auto *hunk = git_blame_get_hunk_byindex(d.data(), index);
+  if (!hunk) {
+    return Id();
+  }
+  return hunk->final_commit_id;
 }
 
 QString Blame::message(int index) const {
