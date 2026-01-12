@@ -67,14 +67,15 @@ option(USE_SYSTEM_HUNSPELL "Use the system-wide hunspell installation" OFF)
 option(USE_SYSTEM_CMARK "Use the system-wide cmark installation" OFF)
 option(ENABLE_TESTS "Enable Gittyup Unittests" ON)
 
-#Typically system libgit2 does NOT have experimental settings enabled,
-# hence we need to disable SHA256 support
+# Typically system libgit2 does NOT have experimental settings enabled, hence we
+# need to disable SHA256 support
 if(USE_SYSTEM_LIBGIT2)
   set(_DEFAULT_ENABLE_SHA256 OFF)
 else()
   set(_DEFAULT_ENABLE_SHA256 ON)
 endif()
-option(ENABLE_SHA256 "Enable SHA256 support within Gittyup" ${_DEFAULT_ENABLE_SHA256})
+option(ENABLE_SHA256 "Enable SHA256 support within Gittyup"
+       ${_DEFAULT_ENABLE_SHA256})
 
 set(LUA_MODULES_PATH
     CACHE
