@@ -110,12 +110,16 @@ ExternalTool *ExternalTool::create(const QString &file, const git::Diff &diff,
   QString path = repo.workdir().filePath(file);
 
   // Create merge tool.
-  if (!againstWorkingDir && diff.status(index) == GIT_DELTA_CONFLICTED) {
-    git::Index::Conflict conflict = repo.index().conflict(file);
-    git::Blob local = repo.lookupBlob(conflict.ours);
-    git::Blob remote = repo.lookupBlob(conflict.theirs);
-    git::Blob base = repo.lookupBlob(conflict.ancestor);
-    return new MergeTool(path, local, remote, base, parent);
+  if (diff.status(index) == GIT_DELTA_CONFLICTED) {
+    if (!againstWorkingDir) {
+      git::Index::Conflict conflict = repo.index().conflict(file);
+      git::Blob local = repo.lookupBlob(conflict.ours);
+      git::Blob remote = repo.lookupBlob(conflict.theirs);
+      git::Blob base = repo.lookupBlob(conflict.ancestor);
+      return new MergeTool(path, local, remote, base, parent);
+    } else {
+      return nullptr;
+    }
   }
 
   // Create diff tool.

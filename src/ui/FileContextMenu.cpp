@@ -132,8 +132,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     }
 
     // Add diff or merge tool.
-    if (!diff.isStatusDiff() &&
-        (tool = ExternalTool::create(file, diff, repo, false, this))) {
+    if (tool = ExternalTool::create(file, diff, repo, false, this)) {
       switch (tool->kind()) {
         case ExternalTool::Diff:
           diffTools.append(tool);
