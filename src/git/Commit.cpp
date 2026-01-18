@@ -125,7 +125,8 @@ Signature Commit::committer() const {
   return const_cast<git_signature *>(git_commit_committer(*this));
 }
 
-Diff Commit::diff(const git::Commit &commit, bool ignoreWhitespace) const {
+Diff Commit::diff(const git::Commit &commit, int contextLines,
+                  bool ignoreWhitespace) const {
   Tree old;
   if (commit.isValid()) {
     old = commit.tree();
@@ -140,9 +141,14 @@ Diff Commit::diff(const git::Commit &commit, bool ignoreWhitespace) const {
   git_config *cfg = NULL;
   int32_t context_lines = 3;
 
-  if (git_repository_config(&cfg, repo) == 0) {
-    git_config_get_int32(&context_lines, cfg, "diff.context");
-    git_config_free(cfg);
+  // Fetch the config value if contextLines is invalid
+  if (contextLines < 0) {
+    if (git_repository_config(&cfg, repo) == 0) {
+      git_config_get_int32(&context_lines, cfg, "diff.context");
+      git_config_free(cfg);
+    }
+  } else {
+    context_lines = contextLines;
   }
 
   git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
