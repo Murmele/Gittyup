@@ -142,7 +142,7 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
   connect(tabs, QOverload<>::of(&TabWidget::tabRemoved), this,
           &MainWindow::updateTabNames);
 
-  splitter->addWidget(new SideBar(tabs, splitter));
+  splitter->addWidget(new SideBar(tabs, this, splitter));
   splitter->addWidget(tabs);
   splitter->setCollapsible(1, false);
   splitter->setStretchFactor(1, 1);
