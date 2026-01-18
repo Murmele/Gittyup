@@ -315,13 +315,13 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
 
     // Convert language_COUNTRY format from dictionary filename to string
     QString language = QLocale::languageToString(locale.language());
-    QString country = QLocale::countryToString(locale.country());
+    QString territory = QLocale::territoryToString(locale.territory());
     QString text;
 
     if (language != "C") {
       text = language;
-      if (country != "Default")
-        text.append(QString(" (%1)").arg(country));
+      if (territory != "Default")
+        text.append(QString(" (%1)").arg(territory));
     } else {
       text = dict;
       while (text.count("_") > 1)
