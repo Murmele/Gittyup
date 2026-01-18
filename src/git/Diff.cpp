@@ -130,7 +130,8 @@ bool Diff::isConflicted() const {
 }
 
 bool Diff::isStatusDiff() const {
-  // if true we have a diff against an index (example: working tree) otherwise we have a diff against another commit
+  // if true we have a diff against an index (example: working tree) otherwise
+  // we have a diff against another commit
   return d->index.isValid();
 }
 
