@@ -311,9 +311,9 @@ if(WIN32)
             ${PACKAGE_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/Gittyup.pdb
             ${PACKAGE_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/indexer.exe
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/gittyup-indexer.exe
             ${PACKAGE_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/indexer.pdb
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/gittyup-indexer.pdb
             ${PACKAGE_DIR})
 
   add_dependencies(deploy package)
