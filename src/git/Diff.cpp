@@ -129,7 +129,11 @@ bool Diff::isConflicted() const {
   return false;
 }
 
-bool Diff::isStatusDiff() const { return d->index.isValid(); }
+bool Diff::isStatusDiff() const {
+  // if true we have a diff against an index (example: working tree) otherwise
+  // we have a diff against another commit
+  return d->index.isValid();
+}
 
 void Diff::setIndex(const Index &index) { d->index = index; }
 
