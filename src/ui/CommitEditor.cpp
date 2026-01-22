@@ -278,7 +278,17 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
                 }
               }
             }
-            applyTemplate(t, files);
+
+            RepoView *view = RepoView::parentView(this);
+            git::Reference head = view ? view->repo().head() : git::Reference();
+            git::Branch headBranch = head;
+
+            QString branchName = git::Branch(head).name();
+            git::Config config =
+                view ? view->repo().gitConfig() : git::Config::global();
+            QString author = config.value<QString>("user.name").toHtmlEscaped();
+
+            applyTemplate(t, author, branchName, files);
           });
 
   QLabel *label = new QLabel(tr("<b>Commit Message:</b>"), this);
@@ -606,9 +616,11 @@ QString CommitEditor::createFileList(const QStringList &list, int maxFiles) {
   return msg;
 }
 
-void CommitEditor::setMessage(const QStringList &files) {
+void CommitEditor::setMessage(const QString author, const QString branchName,
+                              const QStringList &files) {
   if (mTemplate->templates().count() > 0) {
-    applyTemplate(mTemplate->templates().first().value, files);
+    applyTemplate(mTemplate->templates().first().value, author, branchName,
+                  files);
   } else {
     QString msg = createFileList(files, 3);
     if (!msg.isEmpty())
@@ -635,38 +647,18 @@ void CommitEditor::setDiff(const git::Diff &diff) {
 }
 
 // public slots
-void CommitEditor::applyTemplate(const QString &t, const QStringList &files) {
+void CommitEditor::applyTemplate(const QString &t, const QString &author,
+                                 const QString &branchName,
+                                 const QStringList &files) {
 
   QString templ = t;
+  templ = applyAuthorTemplate(templ, author);
+  templ = applyBranchTemplate(templ, branchName);
+  templ = applyFileTemplate(templ, files);
 
-  QString pattern = TemplateButton::filesPosition;
-  pattern.replace("{", "\\{");
-  pattern.replace("}", "\\}");
-  pattern.replace("$", "\\$");
-  QRegularExpression re(pattern);
-  QRegularExpressionMatch match = re.match(templ);
-  int start = -1;
-  int offset = 0;
-  if (match.hasMatch()) {
-    start = match.capturedStart(0);
-    int origLength = match.capturedLength(0);
-    const auto matchComplete = match.captured(0);
-    bool ok;
-    const auto number = match.captured(1).toInt(&ok);
-
-    if (ok) {
-      const QString filesStr = createFileList(files, number);
-      templ.replace(matchComplete, filesStr);
-      offset = filesStr.length() - origLength;
-    }
-  }
-
-  auto index = t.indexOf(TemplateButton::cursorPositionString);
-  if (index < 0)
+  auto index = templ.indexOf(TemplateButton::cursorPositionString);
+  if (index < 0) {
     index = templ.length();
-  else if (start > 0 && index > start) {
-    // offset, because fileStr has different length than matchComplete
-    index += offset;
   }
 
   templ.replace(TemplateButton::cursorPositionString, "");
@@ -676,7 +668,75 @@ void CommitEditor::applyTemplate(const QString &t, const QStringList &files) {
   mMessage->setTextCursor(cursor);
 }
 
-void CommitEditor::applyTemplate(const QString &t) { applyTemplate(t, {}); }
+void CommitEditor::applyTemplate(const QString &t, const QString &author,
+                                 const QString &branchName) {
+  applyTemplate(t, author, branchName, {});
+}
+
+QString CommitEditor::applyAuthorTemplate(const QString &t,
+                                          const QString author) {
+  QString templateText = t;
+  //${author}
+  QString pattern = TemplateButton::authorPattern;
+  pattern.replace("{", "\\{");
+  pattern.replace("}", "\\}");
+  pattern.replace("$", "\\$");
+  QRegularExpression re(pattern);
+  QRegularExpressionMatch match = re.match(templateText);
+  if (match.hasMatch()) {
+    const auto matchComplete = match.captured(0);
+    templateText.replace(matchComplete, author);
+  }
+  return templateText;
+}
+
+QString CommitEditor::applyBranchTemplate(const QString &t,
+                                          const QString branchName) {
+  QString templateText = t;
+  //${branch(:.*){0,1}}
+  QString pattern = TemplateButton::branchPattern;
+  pattern = pattern.replace(QRegularExpression("^\\$\\{"), "\\$\\{");
+  pattern = pattern.replace(QRegularExpression("\\}$"), "\\}");
+  QRegularExpression re(pattern);
+  QRegularExpressionMatch match = re.match(templateText);
+  if (match.hasMatch()) {
+    const auto matchComplete = match.captured(0);
+    QString branchPart = branchName;
+    int idx = matchComplete.indexOf(':');
+    if (idx > 0) {
+      QRegularExpression branchRegex(
+          "(" + matchComplete.mid(idx + 1, matchComplete.length() - idx - 2) +
+          ")");
+      match = branchRegex.match(branchName);
+      branchPart = match.captured(1);
+    }
+    templateText.replace(matchComplete, branchPart);
+  }
+  return templateText;
+}
+
+QString CommitEditor::applyFileTemplate(const QString &t,
+                                        const QStringList &files) {
+  QString templateText = t;
+  //${file:}
+  QString pattern = TemplateButton::filesPosition;
+  pattern.replace("{", "\\{");
+  pattern.replace("}", "\\}");
+  pattern.replace("$", "\\$");
+  QRegularExpression re(pattern);
+  QRegularExpressionMatch match = re.match(templateText);
+  if (match.hasMatch()) {
+    const auto matchComplete = match.captured(0);
+    bool ok;
+    const auto number = match.captured(1).toInt(&ok);
+
+    if (ok) {
+      const QString filesStr = createFileList(files, number);
+      templateText.replace(matchComplete, filesStr);
+    }
+  }
+  return templateText;
+}
 
 void CommitEditor::updateButtons(bool yieldFocus) {
   RepoView *view = RepoView::parentView(this);
@@ -721,6 +781,10 @@ void CommitEditor::updateButtons(bool yieldFocus) {
   git::Reference head = view ? view->repo().head() : git::Reference();
   git::Branch headBranch = head;
 
+  QString branchName = git::Branch(head).name();
+  git::Config config = view ? view->repo().gitConfig() : git::Config::global();
+  QString author = config.value<QString>("user.name").toHtmlEscaped();
+
   mMergeAbort->setText(tr("Abort %1").arg(text));
   mMergeAbort->setVisible(headBranch.isValid() && merging);
 
@@ -764,7 +828,7 @@ void CommitEditor::updateButtons(bool yieldFocus) {
     QSignalBlocker blocker(mMessage);
     (void)blocker;
 
-    setMessage(files);
+    setMessage(author, branchName, files);
     if (yieldFocus && !mMessage->toPlainText().isEmpty())
       mMessage->setFocus();
   }
