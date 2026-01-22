@@ -27,7 +27,9 @@ if(WIN32)
       CACHE BOOL "" FORCE)
 endif()
 
-if(NOT USE_SYSTEM_LIBGIT2)
+if(USE_SYSTEM_LIBGIT2)
+  pkg_check_modules(LIBGIT2 REQUIRED libgit2)
+else()
   set(BUILD_CLI OFF)
   add_subdirectory(libgit2)
 

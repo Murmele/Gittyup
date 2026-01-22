@@ -245,6 +245,7 @@ private:
 
 } // namespace
 
+#ifndef USE_SYSTEM_LIBGIT2
 void Remote::Callbacks::connected(git_remote *remote, void *payload) {
   Remote::Callbacks *cbs = reinterpret_cast<Remote::Callbacks *>(payload);
   cbs->mRemote = remote;
@@ -256,6 +257,7 @@ void Remote::Callbacks::about_to_disconnect(git_remote *remote, void *payload) {
   Remote::Callbacks *cbs = reinterpret_cast<Remote::Callbacks *>(payload);
   cbs->mRemote = nullptr;
 }
+#endif
 
 int Remote::Callbacks::sideband(const char *str, int len, void *payload) {
   Remote::Callbacks *cbs = reinterpret_cast<Remote::Callbacks *>(payload);
@@ -499,8 +501,10 @@ int Remote::Callbacks::remoteReady(git_remote *remote, int direction,
 }
 
 void Remote::Callbacks::stop() {
+#ifndef USE_SYSTEM_LIBGIT2
   if (mRemote)
     git_remote_stop(mRemote);
+#endif
 }
 
 Remote::Remote() {}
@@ -532,8 +536,10 @@ void Remote::setUrl(const QString &url) {
 
 Result Remote::fetch(Callbacks *callbacks, bool tags, bool prune) {
   git_fetch_options opts = GIT_FETCH_OPTIONS_INIT;
+#ifndef USE_SYSTEM_LIBGIT2
   opts.callbacks.connected = &Remote::Callbacks::connected;
   opts.callbacks.about_to_disconnect = &Remote::Callbacks::about_to_disconnect;
+#endif
   opts.callbacks.sideband_progress = &Remote::Callbacks::sideband;
   opts.callbacks.credentials = &Remote::Callbacks::credentials;
   opts.callbacks.certificate_check = &Remote::Callbacks::certificate;
@@ -559,8 +565,10 @@ Result Remote::fetch(Callbacks *callbacks, bool tags, bool prune) {
 
 Result Remote::push(Callbacks *callbacks, const QStringList &refspecs) {
   git_push_options opts = GIT_PUSH_OPTIONS_INIT;
+#ifndef USE_SYSTEM_LIBGIT2
   opts.callbacks.connected = &Remote::Callbacks::connected;
   opts.callbacks.about_to_disconnect = &Remote::Callbacks::about_to_disconnect;
+#endif
   opts.callbacks.sideband_progress = &Remote::Callbacks::sideband;
   opts.callbacks.credentials = &Remote::Callbacks::credentials;
   opts.callbacks.certificate_check = &Remote::Callbacks::certificate;
@@ -617,9 +625,11 @@ Result Remote::clone(Callbacks *callbacks, const QString &url,
                      const QString &path, bool bare) {
   git_repository *repo = nullptr;
   git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
+#ifndef USE_SYSTEM_LIBGIT2
   opts.fetch_opts.callbacks.connected = &Remote::Callbacks::connected;
   opts.fetch_opts.callbacks.about_to_disconnect =
       &Remote::Callbacks::about_to_disconnect;
+#endif
   opts.fetch_opts.callbacks.sideband_progress = &Remote::Callbacks::sideband;
   opts.fetch_opts.callbacks.credentials = &Remote::Callbacks::credentials;
   opts.fetch_opts.callbacks.certificate_check = &Remote::Callbacks::certificate;
