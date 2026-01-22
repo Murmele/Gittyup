@@ -18,47 +18,54 @@
 #include <dbghelp.h>
 #include <strsafe.h>
 
-static LPTOP_LEVEL_EXCEPTION_FILTER defaultFilter = nullptr;
+namespace {
+	static LPTOP_LEVEL_EXCEPTION_FILTER defaultFilter = nullptr;
 
-static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info) {
-  // Protect against reentering.
-  static bool entered = false;
-  if (entered)
-    ExitProcess(1);
-  entered = true;
+	static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info) {
+	  // Protect against reentering.
+	  static bool entered = false;
+	  if (entered)
+		ExitProcess(1);
+	  entered = true;
 
-  // Write dump file.
-  SYSTEMTIME localTime;
-  GetLocalTime(&localTime);
+	  // Write dump file.
+	  SYSTEMTIME localTime;
+	  GetLocalTime(&localTime);
 
-  wchar_t temp[MAX_PATH];
-  GetTempPath(MAX_PATH, temp);
+	  wchar_t temp[MAX_PATH];
+	  GetTempPath(MAX_PATH, temp);
 
-  wchar_t dir[MAX_PATH];
-  const wchar_t *gittyup_name = L"%sGittyup";
-  StringCchPrintf(dir, MAX_PATH, gittyup_name, temp);
-  CreateDirectory(dir, NULL);
+	  wchar_t dir[MAX_PATH];
+	  const wchar_t *gittyup_name = L"%sGittyup";
+	  StringCchPrintf(dir, MAX_PATH, gittyup_name, temp);
+	  CreateDirectory(dir, NULL);
 
-  wchar_t fileName[MAX_PATH];
-  const wchar_t *s = L"%s\\%s-%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp";
-  StringCchPrintf(fileName, MAX_PATH, s, dir, "indexer", GITTYUP_VERSION,
-                  localTime.wYear, localTime.wMonth, localTime.wDay,
-                  localTime.wHour, localTime.wMinute, localTime.wSecond,
-                  GetCurrentProcessId(), GetCurrentThreadId());
+	  wchar_t fileName[MAX_PATH];
+	  const wchar_t *s = L"%s\\%s-%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp";
+	  StringCchPrintf(fileName, MAX_PATH, s, dir, "indexer", GITTYUP_VERSION,
+					  localTime.wYear, localTime.wMonth, localTime.wDay,
+					  localTime.wHour, localTime.wMinute, localTime.wSecond,
+					  GetCurrentProcessId(), GetCurrentThreadId());
 
-  HANDLE dumpFile =
-      CreateFile(fileName, GENERIC_READ | GENERIC_WRITE,
-                 FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
+	  HANDLE dumpFile =
+		  CreateFile(fileName, GENERIC_READ | GENERIC_WRITE,
+					 FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
 
-  MINIDUMP_EXCEPTION_INFORMATION expParam;
-  expParam.ThreadId = GetCurrentThreadId();
-  expParam.ExceptionPointers = info;
-  expParam.ClientPointers = TRUE;
+	  MINIDUMP_EXCEPTION_INFORMATION expParam;
+	  expParam.ThreadId = GetCurrentThreadId();
+	  expParam.ExceptionPointers = info;
+	  expParam.ClientPointers = TRUE;
 
-  MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dumpFile,
-                    MiniDumpWithDataSegs, &expParam, NULL, NULL);
+	  MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dumpFile,
+						MiniDumpWithDataSegs, &expParam, NULL, NULL);
 
-  return defaultFilter ? defaultFilter(info) : EXCEPTION_CONTINUE_SEARCH;
+	  return defaultFilter ? defaultFilter(info) : EXCEPTION_CONTINUE_SEARCH;
+	}
+} // namespace
+
+// Install exception filter.
+void installExceptionFilter() {
+	defaultFilter = SetUnhandledExceptionFilter(&exceptionFilter);
 }
 #endif
 
@@ -194,7 +201,14 @@ bool Indexer::start() {
   // ensure there's at least one thread of each type. In some cases, the
   // processing done in the worker threads are the limiting factor. Aside from
   // using more RAM, the over-commitment doesn't seem to impact performance
+#ifndef Q_OS_WIN
   int numGabbers = std::min(4, std::max(1, QThread::idealThreadCount() / 2));
+#else
+  // TODO: Why do I there is a min/max macro defined here which conflicts with the std::min/max?
+  // C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\shared\minwindef.h:197:29: note: expanded from macro 'min'
+  // 197 | #define min(a,b)            (((a) < (b)) ? (a) : (b))
+  int numGabbers = min(4, max(1, QThread::idealThreadCount() / 2));
+#endif
   int numWorkers = QThread::idealThreadCount();
 
   log("start");

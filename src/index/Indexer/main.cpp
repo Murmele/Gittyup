@@ -30,8 +30,6 @@
 #include <sys/resource.h>
 #else
 #include <windows.h>
-#include <dbghelp.h>
-#include <strsafe.h>
 #endif
 
 namespace {
@@ -54,8 +52,7 @@ public:
 
 int main(int argc, char *argv[]) {
 #ifdef Q_OS_WIN
-  // Install exception filter.
-  defaultFilter = SetUnhandledExceptionFilter(&exceptionFilter);
+  installExceptionFilter();
 #endif
 
   QCoreApplication app(argc, argv);
