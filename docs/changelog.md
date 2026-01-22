@@ -6,6 +6,10 @@ Bug Fix and Feature release
 
 * Add more information about the credential stores to give the user the possibility to easily see the tradeoffs of every credential store
 
+#### Changed
+
+* Autohide sidebar when opening repository
+
 ----
 
 ### v2.0.0 - 2025-11-30

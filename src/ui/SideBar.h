@@ -14,12 +14,13 @@
 
 class Account;
 class TabWidget;
+class MainWindow;
 
 class SideBar : public QWidget {
   Q_OBJECT
 
 public:
-  SideBar(TabWidget *tabs, QWidget *parent = nullptr);
+  SideBar(TabWidget *tabs, MainWindow *mainWindow, QWidget *parent = nullptr);
 
   QSize sizeHint() const override;
   QSize minimumSizeHint() const override;
