@@ -338,7 +338,7 @@ bool Updater::install(const DownloadRef &download, QString &error) {
   }
   p->deleteLater();
 
-  auto relauncher_cmd = dir.filePath("relauncher");
+  auto relauncher_cmd = dir.filePath("gittyup-relauncher");
   Debug("Relauncher command: " << relauncher_cmd);
 
   // Start the relaunch helper.
@@ -365,7 +365,8 @@ bool Updater::install(const DownloadRef &download, QString &error) {
   // Start the relaunch helper.
   QString app = QCoreApplication::applicationFilePath();
   QString pid = QString::number(QCoreApplication::applicationPid());
-  if (!QProcess::startDetached(dir.filePath("relauncher"), {app, pid})) {
+  if (!QProcess::startDetached(dir.filePath("gittyup-relauncher"),
+                               {app, pid})) {
     error = tr("Helper application failed to start");
     return false;
   }

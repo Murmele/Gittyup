@@ -165,7 +165,7 @@ else()
   endif()
 endif()
 
-add_dependencies(gittyup indexer relauncher)
+add_dependencies(gittyup gittyup-indexer gittyup-relauncher)
 
 install(
   TARGETS gittyup
@@ -178,7 +178,7 @@ if(APPLE)
   get_filename_component(RPATH ${QT_FRAMEWORK} DIRECTORY)
 
   # Fixup relauncher RPATH.
-  set(RELAUNCHER ${CONTENTS_DIR}/MacOS/relauncher)
+  set(RELAUNCHER ${CONTENTS_DIR}/MacOS/gittyup-relauncher)
   install(
     CODE "execute_process(COMMAND
 		${CMAKE_INSTALL_NAME_TOOL} -delete_rpath \"${RPATH}\"
@@ -195,7 +195,7 @@ execute_process(COMMAND
     COMPONENT ${GITTYUP_NAME})
 
   # Fixup indexer RPATH.
-  set(INDEXER ${CONTENTS_DIR}/MacOS/indexer)
+  set(INDEXER ${CONTENTS_DIR}/MacOS/gittyup-indexer)
   install(
     CODE "execute_process(COMMAND
 		${CMAKE_INSTALL_NAME_TOOL} -delete_rpath \"${RPATH}\"
