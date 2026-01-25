@@ -424,7 +424,7 @@ void RemoteCallbacks::transferImpl(int total, int current, size_t bytes,
 
   // Calculate the transfer rate.
   float seconds = static_cast<float>(qMax(elapsed, 1)) / 1000;
-  int transferRate = (bytes - mBytesReceived) / seconds;
+  auto transferRate = (bytes - mBytesReceived) / seconds;
   mBytesReceived = bytes;
 
   // Write text.
