@@ -100,7 +100,7 @@ private:
 
   QElapsedTimer mTimer;
   QString mSideband;
-  int mBytesReceived = 0;
+  size_t mBytesReceived = 0;
   bool mCanceled = false;
 
   LogEntry *mSidebandItem = nullptr;
