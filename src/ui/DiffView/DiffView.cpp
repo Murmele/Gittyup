@@ -374,12 +374,34 @@ bool DiffView::canFetchMore() {
          mFiles.size() < mDiffTreeModel->fileCount(dtw->selectedIndex());
 }
 
+class Guard {
+public:
+  Guard(bool& variable, bool initValue): m_variable(variable), m_initValue(initValue) {
+    m_variable = m_initValue;
+    // qDebug() << "Guarding variable" << m_variable;
+  }
+  ~Guard() {
+    m_variable = !m_initValue;
+    // qDebug() << "Releasing variable" << m_variable;
+  }
+private:
+  bool& m_variable;
+  bool m_initValue;
+};
+
 /*!
  * \brief DiffView::fetchMore
  * Fetch maxNewFiles more patches
  * use a while loop with canFetchMore() to get all
  */
 void DiffView::fetchMore(int fetchWidgets) {
+  if (mFetchMoreInProgress) {
+    mCancelFetchMore = true;
+    // We cannot wait here because then processEvents() from below will never return
+    return;
+  }
+  auto g = Guard(mFetchMoreInProgress, true);
+
   QVBoxLayout *layout = static_cast<QVBoxLayout *>(widget()->layout());
 
   // Add widgets.
@@ -403,6 +425,9 @@ void DiffView::fetchMore(int fetchWidgets) {
 
       // Load hunk(s) and update scrollbar
       QApplication::processEvents();
+      if (mCancelFetchMore) {
+        return;
+      }
 
       // Running the eventloop may trigger a view refresh
       if (mFiles.isEmpty())
