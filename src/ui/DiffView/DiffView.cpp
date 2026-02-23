@@ -376,7 +376,8 @@ bool DiffView::canFetchMore() {
 
 class Guard {
 public:
-  Guard(bool& variable, bool initValue): m_variable(variable), m_initValue(initValue) {
+  Guard(bool &variable, bool initValue)
+      : m_variable(variable), m_initValue(initValue) {
     m_variable = m_initValue;
     // qDebug() << "Guarding variable" << m_variable;
   }
@@ -384,8 +385,9 @@ public:
     m_variable = !m_initValue;
     // qDebug() << "Releasing variable" << m_variable;
   }
+
 private:
-  bool& m_variable;
+  bool &m_variable;
   bool m_initValue;
 };
 
@@ -397,7 +399,8 @@ private:
 void DiffView::fetchMore(int fetchWidgets) {
   if (mFetchMoreInProgress) {
     mCancelFetchMore = true;
-    // We cannot wait here because then processEvents() from below will never return
+    // We cannot wait here because then processEvents() from below will never
+    // return
     return;
   }
   auto g = Guard(mFetchMoreInProgress, true);
