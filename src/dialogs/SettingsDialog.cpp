@@ -48,6 +48,7 @@
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QStandardItemModel>
+#include <QTextEdit>
 #include <QToolBar>
 #include <QMessageBox>
 
@@ -792,10 +793,141 @@ public:
       Settings::instance()->setValue(Setting::Id::SshKeyFilePath, text);
     });
 
+    // AI Commit Message settings
+    QCheckBox *enableAiCommitMessages =
+        new QCheckBox(tr("Enable AI commit messages"), this);
+    enableAiCommitMessages->setChecked(
+        settings->value(Setting::Id::EnableAiCommitMessages, AiCommitConstants::enabled).toBool());
+    connect(enableAiCommitMessages, &QCheckBox::toggled, [](bool checked) {
+      Settings::instance()->setValue(Setting::Id::EnableAiCommitMessages,
+                                     checked);
+    });
+
+    // Initialize default AI service URL if not set
+    QString aiServiceUrl =
+        settings->value(Setting::Id::AiServiceUrl).toString();
+    if (aiServiceUrl.isEmpty()) {
+      aiServiceUrl = AiCommitConstants::DefaultServiceUrl;
+      settings->setValue(Setting::Id::AiServiceUrl, aiServiceUrl);
+    }
+
+    QLineEdit *aiServiceUrlBox = new QLineEdit(aiServiceUrl, this);
+    connect(aiServiceUrlBox, &QLineEdit::textChanged, [](const QString &text) {
+      Settings::instance()->setValue(Setting::Id::AiServiceUrl, text);
+    });
+
+    // AI Service API Key - stored securely using credential helper
+    QLineEdit *aiApiKeyBox = new QLineEdit(this);
+
+    // Load API key from credential helper using the API URL as key
+    QString aiApiKey;
+    CredentialHelper *credHelper = CredentialHelper::instance();
+    if (credHelper && !aiServiceUrl.isEmpty()) {
+      credHelper->get(aiServiceUrl, aiApiKey, aiApiKey);
+      if (!aiApiKey.isEmpty()) {
+        aiApiKeyBox->setText(tr("Api key found for specified api url"));
+      }
+    }
+
+    connect(
+        aiApiKeyBox, &QLineEdit::textChanged,
+        [aiServiceUrlBox, aiApiKeyBox](const QString &apiKey) {
+          QString aiServiceUrl = aiServiceUrlBox->text();
+          CredentialHelper *credHelper = CredentialHelper::instance();
+          if (credHelper && !apiKey.isEmpty() && !aiServiceUrl.isEmpty()) {
+            bool success =
+                credHelper->store(aiServiceUrl, "ai-commit-key", apiKey);
+            if (!success) {
+              QMessageBox::warning(
+                  aiApiKeyBox, QObject::tr("Credential Storage Failed"),
+                  QObject::tr("Failed to store API key in secure storage. The "
+                              "key will not be saved."));
+            }
+          } else if (credHelper && apiKey.isEmpty() &&
+                     !aiServiceUrl.isEmpty()) {
+            // If key is empty, remove it from storage
+            bool success = credHelper->store(aiServiceUrl, "ai-commit-key", "");
+            if (!success) {
+              QMessageBox::warning(
+                  aiApiKeyBox, QObject::tr("Credential Removal Failed"),
+                  QObject::tr("Failed to remove API key from secure storage."));
+            }
+          }
+        });
+
+    // Configurable AI settings
+    QLineEdit *aiCommitModelBox = new QLineEdit(
+        settings
+            ->value(Setting::Id::AiCommitModel, AiCommitConstants::DefaultModel)
+            .toString(),
+        this);
+    connect(aiCommitModelBox, &QLineEdit::textChanged, [](const QString &text) {
+      Settings::instance()->setValue(Setting::Id::AiCommitModel, text);
+    });
+
+    // Hide temperature and system message for now
+    QDoubleSpinBox *aiCommitTemperatureBox = new QDoubleSpinBox(this);
+    aiCommitTemperatureBox->setRange(0.0, 2.0);
+    aiCommitTemperatureBox->setSingleStep(0.1);
+    aiCommitTemperatureBox->setValue(
+        settings
+            ->value(Setting::Id::AiCommitTemperature,
+                    AiCommitConstants::DefaultTemperature)
+            .toDouble());
+    aiCommitTemperatureBox->setVisible(false);
+    connect(aiCommitTemperatureBox,
+            QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            [](double value) {
+              Settings::instance()->setValue(Setting::Id::AiCommitTemperature,
+                                             value);
+            });
+
+    QTextEdit *aiCommitSystemMessageBox = new QTextEdit(this);
+    aiCommitSystemMessageBox->setPlainText(
+        settings
+            ->value(
+                Setting::Id::AiCommitSystemMessage,
+                QObject::tr(
+                    "You are a helpful assistant that generates concise git "
+                    "commit messages following conventional commits format. "
+                    "Start directly with the commit message without any "
+                    "prefixes like 'Commit Message:', 'Git', or markdown code "
+                    "blocks. "
+                    "Follow the format: type(scope): subject\n\nbody"))
+            .toString());
+    aiCommitSystemMessageBox->setVisible(false);
+    connect(aiCommitSystemMessageBox, &QTextEdit::textChanged,
+            [aiCommitSystemMessageBox]() {
+              Settings::instance()->setValue(
+                  Setting::Id::AiCommitSystemMessage,
+                  aiCommitSystemMessageBox->toPlainText());
+            });
+
+    // Add prompt message configuration
+    QTextEdit *aiCommitPromptMessageBox = new QTextEdit(this);
+    aiCommitPromptMessageBox->setPlainText(
+        settings
+            ->value(Setting::Id::AiCommitPromptMessage,
+                    AiCommitConstants::DefaultPromptMessage)
+            .toString());
+    connect(aiCommitPromptMessageBox, &QTextEdit::textChanged,
+            [aiCommitPromptMessageBox]() {
+              Settings::instance()->setValue(
+                  Setting::Id::AiCommitPromptMessage,
+                  aiCommitPromptMessageBox->toPlainText());
+            });
+
     QFormLayout *layout = new QFormLayout(this);
     layout->addRow(tr("Path to SSH config file:"), sshConfigPathBox);
     layout->addRow(tr("Path to default / fallback SSH key file:"),
                    sshKeyPathBox);
+
+    layout->addRow(new QLabel(tr("<b>AI Commit Message Generation</b>")));
+    layout->addRow(tr("Enable AI commit messages:"), enableAiCommitMessages);
+    layout->addRow(tr("AI Service URL:"), aiServiceUrlBox);
+    layout->addRow(tr("AI Service API Key:"), aiApiKeyBox);
+    layout->addRow(tr("AI Commit Model:"), aiCommitModelBox);
+    layout->addRow(tr("AI Prompt Message:"), aiCommitPromptMessageBox);
   }
 };
 

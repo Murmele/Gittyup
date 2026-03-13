@@ -6,12 +6,15 @@
 
 #include <QFrame>
 #include <QTextCharFormat>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 class QPushButton;
 class QLabel;
 class TemplateButton;
 class TextEdit;
 class QTextEdit;
+class QNetworkAccessManager;
 
 /*!
  * \brief The CommitEditor class
@@ -39,6 +42,7 @@ public:
   void setMessage(const QString &message);
   QString message() const;
   void setDiff(const git::Diff &diff);
+  void generateCommitMessage();
 
 public slots:
   void applyTemplate(const QString &t, const QStringList &files);
@@ -60,6 +64,8 @@ private:
   QPushButton *mRebaseContinue;
   QPushButton *mMergeAbort;
   TemplateButton *mTemplate;
+  QPushButton *mGenerateCommitMessage;
+  QNetworkAccessManager *mNetworkManager;
 
   bool mEditorEmpty = true;
   bool mPopulate = true;
