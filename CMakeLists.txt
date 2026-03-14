@@ -77,13 +77,14 @@ set(LUA_MODULES_PATH
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
 include(FindPkgLibraries)
 if(NOT USE_SYSTEM_LIBSSH2)
+  message(WARNING "Using local build of ssh")
   set(USE_SSH
       "localbuild"
-      CACHE BOOL "Use ssh")
+      CACHE STRING "Use ssh")
 else()
   set(USE_SSH
       ON
-      CACHE BOOL "Use ssh")
+      CACHE STRING "Use ssh")
   find_pkglibraries(LIBSSH2 libssh2)
   if(NOT LIBSSH2_FOUND)
     find_package(libssh2 REQUIRED)
