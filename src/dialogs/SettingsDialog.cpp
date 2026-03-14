@@ -797,7 +797,10 @@ public:
     QCheckBox *enableAiCommitMessages =
         new QCheckBox(tr("Enable AI commit messages"), this);
     enableAiCommitMessages->setChecked(
-        settings->value(Setting::Id::EnableAiCommitMessages, AiCommitConstants::enabled).toBool());
+        settings
+            ->value(Setting::Id::EnableAiCommitMessages,
+                    AiCommitConstants::enabled)
+            .toBool());
     connect(enableAiCommitMessages, &QCheckBox::toggled, [](bool checked) {
       Settings::instance()->setValue(Setting::Id::EnableAiCommitMessages,
                                      checked);
@@ -820,9 +823,9 @@ public:
     QLineEdit *aiApiKeyBox = new QLineEdit(this);
 
     // Load API key from credential helper using the API URL as key
-    QString aiApiKey;
     CredentialHelper *credHelper = CredentialHelper::instance();
     if (credHelper && !aiServiceUrl.isEmpty()) {
+      QString aiApiKey;
       credHelper->get(aiServiceUrl, aiApiKey, aiApiKey);
       if (!aiApiKey.isEmpty()) {
         aiApiKeyBox->setText(tr("Api key found for specified api url"));
@@ -885,15 +888,8 @@ public:
     QTextEdit *aiCommitSystemMessageBox = new QTextEdit(this);
     aiCommitSystemMessageBox->setPlainText(
         settings
-            ->value(
-                Setting::Id::AiCommitSystemMessage,
-                QObject::tr(
-                    "You are a helpful assistant that generates concise git "
-                    "commit messages following conventional commits format. "
-                    "Start directly with the commit message without any "
-                    "prefixes like 'Commit Message:', 'Git', or markdown code "
-                    "blocks. "
-                    "Follow the format: type(scope): subject\n\nbody"))
+            ->value(Setting::Id::AiCommitSystemMessage,
+                    QObject::tr(AiCommitConstants::DefaultSystemMessage))
             .toString());
     aiCommitSystemMessageBox->setVisible(false);
     connect(aiCommitSystemMessageBox, &QTextEdit::textChanged,

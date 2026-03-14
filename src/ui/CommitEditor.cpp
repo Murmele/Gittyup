@@ -51,7 +51,8 @@ void debugWriteJsonObject(const QJsonObject &obj, const QString &filename) {
 }
 
 void prepareAiCommitRequest(const git::Diff &diff, Settings *settings,
-                            QJsonObject &requestBody, const QString &currentMessage = QString()) {
+                            QJsonObject &requestBody,
+                            const QString &currentMessage = QString()) {
   // Use configurable prompt message from settings
   QString promptMessage = settings
                               ->value(Setting::Id::AiCommitPromptMessage,
@@ -212,9 +213,11 @@ void prepareAiCommitRequest(const git::Diff &diff, Settings *settings,
   requestBody["messages"] = messages;
 
   // Debug: Write JSON to file for inspection
-debugWriteJsonObject(requestBody,
- QStandardPaths::writableLocation(QStandardPaths::TempLocation) +
-"/gittyup_ai_commit_request.json");
+  if (false) {
+    debugWriteJsonObject(requestBody, QStandardPaths::writableLocation(
+                                          QStandardPaths::TempLocation) +
+                                          "/gittyup_ai_commit_request.json");
+  }
 }
 
 } // namespace
@@ -702,7 +705,11 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
   mGenerateCommitMessage->setObjectName("GenerateCommitMessage");
   connect(mGenerateCommitMessage, &QPushButton::clicked, this,
           &CommitEditor::generateCommitMessage);
-  mGenerateCommitMessage->setVisible(Settings::instance()->value(Setting::Id::EnableAiCommitMessages, AiCommitConstants::enabled).toBool());
+  mGenerateCommitMessage->setVisible(
+      Settings::instance()
+          ->value(Setting::Id::EnableAiCommitMessages,
+                  AiCommitConstants::enabled)
+          .toBool());
 
   mNetworkManager = new QNetworkAccessManager(this);
 
@@ -1026,8 +1033,10 @@ void CommitEditor::updateButtons(bool yieldFocus) {
 void CommitEditor::generateCommitMessage() {
   // Check if AI commit messages are enabled
   Settings *settings = Settings::instance();
-  bool aiEnabled =
-      settings->value(Setting::Id::EnableAiCommitMessages, AiCommitConstants::enabled).toBool();
+  bool aiEnabled = settings
+                       ->value(Setting::Id::EnableAiCommitMessages,
+                               AiCommitConstants::enabled)
+                       .toBool();
 
   if (!aiEnabled) {
     QString errorMsg = tr("AI commit message generation is disabled. Please "
