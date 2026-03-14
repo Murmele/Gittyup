@@ -134,6 +134,28 @@ elseif(NOT USE_SYSTEM_QT)
   endforeach()
 endif()
 
+# Install SSH libraries.
+if(WIN32 AND NOT USE_SYSTEM_LIBSSH2)
+  set(SSH_LIB "${CMAKE_BINARY_DIR}/dep/libssh2/libssh2/src/${CMAKE_STATIC_LIBRARY_PREFIX}ssh2${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  
+  # Copy into build dir.
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SSH_LIB}
+                          ${CMAKE_BINARY_DIR})
+
+  install(
+    FILES ${SSH_LIB}
+    DESTINATION ${INSTALL_LIBDIR}
+    PERMISSIONS
+      OWNER_READ
+      OWNER_WRITE
+      OWNER_EXECUTE
+      GROUP_READ
+      GROUP_EXECUTE
+      WORLD_READ
+      WORLD_EXECUTE
+    COMPONENT ${GITTYUP_NAME})
+endif()
+
 # Install SSL libraries.
 if(NOT APPLE)
   if(NOT USE_SYSTEM_OPENSSL)
