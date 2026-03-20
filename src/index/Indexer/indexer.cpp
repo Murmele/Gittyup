@@ -14,13 +14,16 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #else
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #include <dbghelp.h>
 #include <strsafe.h>
 
-static LPTOP_LEVEL_EXCEPTION_FILTER defaultFilter = nullptr;
+LPTOP_LEVEL_EXCEPTION_FILTER defaultFilter = nullptr;
 
-static LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info) {
+LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info) {
   // Protect against reentering.
   static bool entered = false;
   if (entered)

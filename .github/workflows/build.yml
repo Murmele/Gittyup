@@ -143,19 +143,17 @@ jobs:
             cmake_env: {}
             pack: 1
 
-          #- name: win64
-          #  os: windows-latest
-          #  ninja_platform: win
-          #  qt_platform: windows
-          #  qt_arch: win64_msvc2019_64
-          #  openssl_arch: VC-WIN64A
-          #  msvc_arch: x64
-          #  cmake_flags: "-DUSE_SYSTEM_QT=OFF -DUSE_SYSTEM_LIBSSH2=OFF -DUSE_BUNDLED_ZLIB=1 -DUSE_SSH:STRING=localbuild -DUSE_SYSTEM_OPENSSL=OFF"
-          #  cmake_env:
-          #    CMAKE_RC_FLAGS: "/C 1252"
-          #    CC: clang
-          #    CXX: clang++
-          #  pack: 1
+          - name: win64
+            os: windows-latest
+            ninja_platform: win
+            qt_platform: windows
+            qt_arch: win64_msvc2019_64
+            openssl_arch: VC-WIN64A
+            msvc_arch: x64
+            cmake_flags: "-DUSE_SYSTEM_QT=OFF -DUSE_SYSTEM_LIBSSH2=OFF -DUSE_BUNDLED_ZLIB=1 -DUSE_SSH:STRING=localbuild -DUSE_SYSTEM_OPENSSL=OFF -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl"
+            cmake_env:
+              CMAKE_RC_FLAGS: "/C 1252"
+            pack: 1
 
     steps:
       # otherwise the testcases will fail, because signature is invalid
@@ -230,6 +228,38 @@ jobs:
           mkdir -p build/release
           cd build/release
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DUPDATE_TRANSLATIONS=ON -DGITTYUP_CI_TESTS=ON ${{ env.CMAKE_FLAGS }} ${{ matrix.env.cmake_flags }} ../..
+
+      - name: Fix libssh2 import lib name (Windows)
+        if: matrix.env.ninja_platform == 'win'
+        shell: pwsh
+        run: |
+          $searchRoot = "build/release/dep/libssh2"
+          $libssh2Candidates = Get-ChildItem -Path $searchRoot -Recurse -File -Filter "libssh2.lib" -ErrorAction SilentlyContinue
+          $ssh2Candidates = Get-ChildItem -Path $searchRoot -Recurse -File -Filter "ssh2.lib" -ErrorAction SilentlyContinue
+
+          if ($libssh2Candidates) {
+            foreach ($lib in $libssh2Candidates) {
+              $ssh2 = Join-Path $lib.DirectoryName "ssh2.lib"
+              if (-not (Test-Path $ssh2)) {
+                Copy-Item -Path $lib.FullName -Destination $ssh2
+                Write-Host "Created compatibility import library: $ssh2"
+              } else {
+                Write-Host "Compatibility import library already exists: $ssh2"
+              }
+            }
+          } elseif ($ssh2Candidates) {
+            foreach ($lib in $ssh2Candidates) {
+              $libssh2 = Join-Path $lib.DirectoryName "libssh2.lib"
+              if (-not (Test-Path $libssh2)) {
+                Copy-Item -Path $lib.FullName -Destination $libssh2
+                Write-Host "Created compatibility import library: $libssh2"
+              } else {
+                Write-Host "Compatibility import library already exists: $libssh2"
+              }
+            }
+          } else {
+            Write-Warning "No libssh2/ssh2 import library found under $searchRoot. Continuing without compatibility copy."
+          }
 
       - name: Build Information
         run: |
