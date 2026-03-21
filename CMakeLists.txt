@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.12)
+# 3.19+: install(FILES $<TARGET_FILE:...>) in pack/CMakeLists.txt (libssh2.dll).
+cmake_minimum_required(VERSION 3.19)
 project(Gittyup)
 
 # Set name and version.
