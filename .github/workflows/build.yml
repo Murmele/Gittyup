@@ -241,37 +241,6 @@ jobs:
           cd build/release
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DUPDATE_TRANSLATIONS=ON -DGITTYUP_CI_TESTS=ON ${{ env.CMAKE_FLAGS }} ${{ matrix.env.cmake_flags }} ../..
 
-      - name: Fix libssh2 import lib name (Windows)
-        if: matrix.env.ninja_platform == 'win'
-        shell: pwsh
-        run: |
-          $searchRoot = "build/release/dep/libssh2"
-          $libssh2Candidates = Get-ChildItem -Path $searchRoot -Recurse -File -Filter "libssh2.lib" -ErrorAction SilentlyContinue
-          $ssh2Candidates = Get-ChildItem -Path $searchRoot -Recurse -File -Filter "ssh2.lib" -ErrorAction SilentlyContinue
-
-          if ($libssh2Candidates) {
-            foreach ($lib in $libssh2Candidates) {
-              $ssh2 = Join-Path $lib.DirectoryName "ssh2.lib"
-              if (-not (Test-Path $ssh2)) {
-                Copy-Item -Path $lib.FullName -Destination $ssh2
-                Write-Host "Created compatibility import library: $ssh2"
-              } else {
-                Write-Host "Compatibility import library already exists: $ssh2"
-              }
-            }
-          } elseif ($ssh2Candidates) {
-            foreach ($lib in $ssh2Candidates) {
-              $libssh2 = Join-Path $lib.DirectoryName "libssh2.lib"
-              if (-not (Test-Path $libssh2)) {
-                Copy-Item -Path $lib.FullName -Destination $libssh2
-                Write-Host "Created compatibility import library: $libssh2"
-              } else {
-                Write-Host "Compatibility import library already exists: $libssh2"
-              }
-            }
-          } else {
-            Write-Warning "No libssh2/ssh2 import library found under $searchRoot. Continuing without compatibility copy."
-          }
 
       - name: Build Information
         run: |
