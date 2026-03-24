@@ -175,9 +175,12 @@ if(NOT APPLE)
     endforeach()
   endif()
 
-  # libssh2 (submodule) installs its DLL without COMPONENT ${GITTYUP_NAME}; CPack
-  # only installs that component, so ship the DLL from Gittyup's pack rules.
-  if(GITTYUP_PACK_WIN64 AND NOT USE_SYSTEM_LIBSSH2 AND TARGET libssh2_shared)
+  # libssh2 (submodule) installs its DLL without COMPONENT ${GITTYUP_NAME};
+  # CPack only installs that component, so ship the DLL from Gittyup's pack
+  # rules.
+  if(GITTYUP_PACK_WIN64
+     AND NOT USE_SYSTEM_LIBSSH2
+     AND TARGET libssh2_shared)
     install(
       FILES $<TARGET_FILE:libssh2_shared>
       DESTINATION ${INSTALL_LIBDIR}
