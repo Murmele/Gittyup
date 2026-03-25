@@ -26,7 +26,7 @@ class Rebase {
 public:
   bool isValid() const { return !d.isNull(); }
 
-  int count() const;
+  size_t count() const;
   size_t currentIndex() const;
   const git_rebase_operation *operation(size_t index);
   Commit commitToRebase() const;

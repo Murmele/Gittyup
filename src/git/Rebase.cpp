@@ -25,8 +25,8 @@ Rebase::Rebase(git_repository *repo, git_rebase *rebase,
     : mRepo(repo), d(rebase, git_rebase_free), mOverrideUser(overrideUser),
       mOverrideEmail(overrideEmail) {}
 
-int Rebase::count() const {
-  return static_cast<int>(git_rebase_operation_entrycount(d.data()));
+size_t Rebase::count() const {
+  return git_rebase_operation_entrycount(d.data());
 }
 
 size_t Rebase::currentIndex() const {
