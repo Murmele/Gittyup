@@ -1458,9 +1458,8 @@ void RepoView::rebaseCommitInvalid(const git::Rebase rebase) {
 void RepoView::rebaseAboutToRebase(const git::Rebase rebase,
                                    const git::Commit before, int currIndex) {
   QString beforeText = before.link();
-  QString step =
-      tr("%1/%2").arg(currIndex).arg(
-          QString::number(static_cast<unsigned long long>(rebase.count())));
+  const qulonglong totalOps = static_cast<qulonglong>(rebase.count());
+  QString step = tr("%1/%2").arg(currIndex).arg(QString::number(totalOps));
   QString text = tr("%1 - %2").arg(step, beforeText);
   mRebase->addEntry(text, tr("Apply"));
 }
@@ -1480,9 +1479,8 @@ void RepoView::rebaseCommitSuccess(const git::Rebase rebase,
                                    const git::Commit before,
                                    const git::Commit after, int currIndex) {
   QString beforeText = before.link();
-  QString step =
-      tr("%1/%2").arg(currIndex).arg(
-          QString::number(static_cast<unsigned long long>(rebase.count())));
+  const qulonglong totalOps = static_cast<qulonglong>(rebase.count());
+  QString step = tr("%1/%2").arg(currIndex).arg(QString::number(totalOps));
   auto *lastEntry = mRebase->lastEntry();
   if (lastEntry) {
     lastEntry->setText(

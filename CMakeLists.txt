@@ -197,26 +197,6 @@ else()
 endif()
 
 add_subdirectory(dep)
-
-# Ensure both import-library names are available for Windows builds that use
-# bundled libssh2; different consumers may look for either ssh2.lib or
-# libssh2.lib.
-if(WIN32
-   AND NOT USE_SYSTEM_LIBSSH2
-   AND TARGET libssh2_shared)
-  add_custom_command(
-    TARGET libssh2_shared
-    POST_BUILD
-    COMMAND
-      ${CMAKE_COMMAND} -E copy_if_different
-      "$<TARGET_LINKER_FILE:libssh2_shared>"
-      "$<TARGET_LINKER_FILE_DIR:libssh2_shared>/ssh2.lib"
-    COMMAND
-      ${CMAKE_COMMAND} -E copy_if_different
-      "$<TARGET_LINKER_FILE:libssh2_shared>"
-      "$<TARGET_LINKER_FILE_DIR:libssh2_shared>/libssh2.lib"
-    COMMENT "Ensuring both ssh2.lib and libssh2.lib import libs exist")
-endif()
 add_subdirectory(src)
 add_subdirectory(l10n)
 add_subdirectory(pack)
