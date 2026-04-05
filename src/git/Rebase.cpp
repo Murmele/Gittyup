@@ -25,7 +25,9 @@ Rebase::Rebase(git_repository *repo, git_rebase *rebase,
     : mRepo(repo), d(rebase, git_rebase_free), mOverrideUser(overrideUser),
       mOverrideEmail(overrideEmail) {}
 
-int Rebase::count() const { return git_rebase_operation_entrycount(d.data()); }
+size_t Rebase::count() const {
+  return git_rebase_operation_entrycount(d.data());
+}
 
 size_t Rebase::currentIndex() const {
   return git_rebase_operation_current(d.data());
@@ -80,7 +82,7 @@ Commit Rebase::commit(const QString &message) {
       return Commit();
 
     // Look up the existing commit.
-    int index = git_rebase_operation_current(ptr);
+    size_t index = git_rebase_operation_current(ptr);
     git_rebase_operation *op = git_rebase_operation_byindex(ptr, index);
 
     git_commit *commit = nullptr;

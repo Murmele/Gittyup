@@ -3,12 +3,22 @@ set(RSRC_DIR ${CMAKE_SOURCE_DIR}/rsrc)
 
 set(MAC $<PLATFORM_ID:Darwin>)
 
+# Windows packaging is x64-only. (CMake's WIN32 is true for any Windows ABI,
+# including obsolete 32-bit toolchains.)
+set(GITTYUP_PACK_WIN64 OFF)
+if(WIN32)
+  if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(FATAL_ERROR "Gittyup packaging: Windows is 64-bit (x64) only.")
+  endif()
+  set(GITTYUP_PACK_WIN64 ON)
+endif()
+
 # Install Qt plugins.
 set(QT_PLUGINS QJpegPlugin)
 
 if(APPLE)
   set(QT_PLUGINS ${QT_PLUGINS} QCocoaIntegrationPlugin QMacStylePlugin)
-elseif(WIN32)
+elseif(GITTYUP_PACK_WIN64)
   set(QT_PLUGINS ${QT_PLUGINS} QWindowsIntegrationPlugin
                  QWindowsVistaStylePlugin)
 else()
@@ -16,7 +26,7 @@ else()
                  QComposePlatformInputContextPlugin)
 endif()
 
-if(WIN32)
+if(GITTYUP_PACK_WIN64)
   set(INSTALL_LIBDIR ${CMAKE_INSTALL_BINDIR})
 elseif(NOT APPLE)
   set(INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
@@ -53,7 +63,7 @@ elseif(NOT USE_SYSTEM_QT)
         WORLD_EXECUTE
       COMPONENT ${GITTYUP_NAME})
 
-    if(WIN32)
+    if(GITTYUP_PACK_WIN64)
       # Copy into build dir.
       execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PLUGIN}
                               ${CMAKE_BINARY_DIR}/${PLUGIN_PATH})
@@ -98,7 +108,7 @@ elseif(NOT USE_SYSTEM_QT)
         PATTERN "Headers" EXCLUDE
         PATTERN ".DS_Store" EXCLUDE)
     else()
-      if(WIN32)
+      if(GITTYUP_PACK_WIN64)
         get_filename_component(TARGET_NAME ${QT_LIBRARY} NAME)
 
         # Copy into build dir.
@@ -124,7 +134,7 @@ elseif(NOT USE_SYSTEM_QT)
         COMPONENT ${GITTYUP_NAME}
         RENAME ${TARGET_NAME})
 
-      if(NOT WIN32)
+      if(NOT GITTYUP_PACK_WIN64)
         # Delete runpath.
         install(CODE "execute_process(COMMAND chrpath --delete
             \${CMAKE_INSTALL_PREFIX}/${TARGET_NAME}
@@ -137,12 +147,8 @@ endif()
 # Install SSL libraries.
 if(NOT APPLE)
   if(NOT USE_SYSTEM_OPENSSL)
-    if(WIN32)
-      if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(SSL_LIB_SUFFIX "-3-x64.dll")
-      else()
-        set(SSL_LIB_SUFFIX "-3.dll")
-      endif()
+    if(GITTYUP_PACK_WIN64)
+      set(SSL_LIB_SUFFIX "-3-x64.dll")
     else()
       set(SSL_LIB_SUFFIX ".so.3")
     endif()
@@ -169,7 +175,27 @@ if(NOT APPLE)
     endforeach()
   endif()
 
-  if(WIN32 OR APPLE)
+  # libssh2 (submodule) installs its DLL without COMPONENT ${GITTYUP_NAME};
+  # CPack only installs that component, so ship the DLL from Gittyup's pack
+  # rules.
+  if(GITTYUP_PACK_WIN64
+     AND NOT USE_SYSTEM_LIBSSH2
+     AND TARGET libssh2_shared)
+    install(
+      FILES $<TARGET_FILE:libssh2_shared>
+      DESTINATION ${INSTALL_LIBDIR}
+      PERMISSIONS
+        OWNER_READ
+        OWNER_WRITE
+        OWNER_EXECUTE
+        GROUP_READ
+        GROUP_EXECUTE
+        WORLD_READ
+        WORLD_EXECUTE
+      COMPONENT ${GITTYUP_NAME})
+  endif()
+
+  if(GITTYUP_PACK_WIN64 OR APPLE)
     # Install config files.
     set(QT_CONF ${CONF_DIR}/qt.conf)
     install(
@@ -212,7 +238,7 @@ if(APPLE)
   set(CPACK_DMG_VOLUME_NAME ${GITTYUP_NAME})
   set(CPACK_DMG_DS_STORE ${RSRC_DIR}/DS_Store)
   set(CPACK_DMG_BACKGROUND_IMAGE ${RSRC_DIR}/dmg-background.png)
-elseif(WIN32)
+elseif(GITTYUP_PACK_WIN64)
   set(CPACK_GENERATOR NSIS)
   set(CPACK_NSIS_CREATE_ICONS_EXTRA
       "CreateShortCut \
@@ -222,23 +248,13 @@ elseif(WIN32)
   set(CPACK_NSIS_EXECUTABLES_DIRECTORY ${CMAKE_INSTALL_BINDIR})
   set(CPACK_NSIS_MUI_FINISHPAGE_RUN ${GITTYUP_EXECUTABLE_NAME}.exe)
 
-  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    install(
-      FILES ${RSRC_DIR}/vcredist_x64.exe
-      DESTINATION .
-      COMPONENT ${GITTYUP_NAME})
-    set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
-        "ExecWait '\\\"$INSTDIR\\\\vcredist_x64.exe\\\" /q /norestart'")
-    set(PLATFORM "-win64")
-  else()
-    install(
-      FILES ${RSRC_DIR}/vcredist_x86.exe
-      DESTINATION .
-      COMPONENT ${GITTYUP_NAME})
-    set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
-        "ExecWait '\\\"$INSTDIR\\\\vcredist_x86.exe\\\" /q /norestart'")
-    set(PLATFORM "-win32")
-  endif()
+  install(
+    FILES ${RSRC_DIR}/vcredist_x64.exe
+    DESTINATION .
+    COMPONENT ${GITTYUP_NAME})
+  set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
+      "ExecWait '\\\"$INSTDIR\\\\vcredist_x64.exe\\\" /q /norestart'")
+  set(PLATFORM "-win64")
 else()
   set(CPACK_GENERATOR TGZ)
 endif()
@@ -256,7 +272,7 @@ set(CPACK_INSTALL_CMAKE_PROJECTS ${CMAKE_BINARY_DIR} ${GITTYUP_NAME}
                                  ${GITTYUP_NAME} /)
 
 # Add Context Menu Shortcuts
-if(WIN32)
+if(GITTYUP_PACK_WIN64)
   set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS
       "${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}
     WriteRegStr HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup' '' 'Open with Gittyup'
@@ -270,7 +286,7 @@ if(WIN32)
       "${CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS}
     DeleteRegKey HKCR 'Directory\\\\Background\\\\shell\\\\Gittyup'
     DeleteRegKey HKCR 'Directory\\\\shell\\\\Gittyup'")
-endif(WIN32)
+endif()
 
 set(CPACK_PACKAGE_FILE_NAME ${PACKAGE_FILE_NAME})
 set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/pack)
@@ -280,7 +296,7 @@ set(CPACK_PACKAGE_VERSION_MAJOR ${GITTYUP_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${GITTYUP_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${GITTYUP_VERSION_PATCH})
 
-if(WIN32)
+if(GITTYUP_PACK_WIN64)
   set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/LICENSE.md)
 else()
   install(
@@ -292,7 +308,7 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 include(CPack)
 
-if(WIN32)
+if(GITTYUP_PACK_WIN64)
   set(PACKAGE_DIR ${CMAKE_BINARY_DIR}/${PACKAGE_FILE_NAME})
 
   # Add target to package and sign executable.

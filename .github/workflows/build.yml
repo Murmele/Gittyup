@@ -21,9 +21,9 @@ jobs:
     name: Formatting Check
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
     - name: Run clang-format style check for C/C++/Protobuf programs.
-      uses: jidicula/clang-format-action@v4.8.0
+      uses: jidicula/clang-format-action@v4.18.0
       with:
         clang-format-version: '13'
         exclude-regex: 'dep'
@@ -54,16 +54,16 @@ jobs:
 
     # https://stackoverflow.com/questions/60916931/github-action-does-the-if-have-an-else
     - name: Determine flatpak release branch
-      uses: haya14busa/action-cond@v1
       id: flatpak_release_branch
-      with:
-        cond: ${{ env.IS_RELEASE }}
-        if_true: 'stable'
-        if_false: 'development'
-
+      run: |
+        if [ "${{ env.IS_RELEASE }}" = "true" ]; then
+          echo "value=stable" >> "$GITHUB_OUTPUT"
+        else
+          echo "value=development" >> "$GITHUB_OUTPUT"
+        fi
 
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
 
     - name: Replace git tag by the commit id on which it runs
       if: github.ref_type != 'tag'
@@ -108,7 +108,7 @@ jobs:
         branch: ${{ steps.flatpak_release_branch.outputs.value }}
 
     - name: Publish build artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         path: Gittyup.flatpak
         name: GittyupFlatpak
@@ -143,19 +143,17 @@ jobs:
             cmake_env: {}
             pack: 1
 
-          #- name: win64
-          #  os: windows-latest
-          #  ninja_platform: win
-          #  qt_platform: windows
-          #  qt_arch: win64_msvc2019_64
-          #  openssl_arch: VC-WIN64A
-          #  msvc_arch: x64
-          #  cmake_flags: "-DUSE_SYSTEM_QT=OFF -DUSE_SYSTEM_LIBSSH2=OFF -DUSE_BUNDLED_ZLIB=1 -DUSE_SSH:STRING=localbuild -DUSE_SYSTEM_OPENSSL=OFF"
-          #  cmake_env:
-          #    CMAKE_RC_FLAGS: "/C 1252"
-          #    CC: clang
-          #    CXX: clang++
-          #  pack: 1
+          - name: win64
+            os: windows-latest
+            ninja_platform: win
+            qt_platform: windows
+            qt_arch: win64_msvc2019_64
+            openssl_arch: VC-WIN64A
+            msvc_arch: x64
+            cmake_flags: "-DUSE_SYSTEM_QT=OFF -DUSE_SYSTEM_LIBSSH2=OFF -DUSE_BUNDLED_ZLIB=1 -DUSE_SSH:STRING=localbuild -DUSE_SYSTEM_OPENSSL=OFF -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl"
+            cmake_env:
+              CMAKE_RC_FLAGS: "/C 1252"
+            pack: 1
 
     steps:
       # otherwise the testcases will fail, because signature is invalid
@@ -164,17 +162,17 @@ jobs:
           git config --global user.name "Your Name"
           git config --global user.email "youremail@yourdomain.com"
           git config --list
+      # Use GITHUB_ENV (allenevans/set-env no longer accepts CMAKE_FLAGS; triggers workflow annotations).
       - name: Configure development build
         if: github.ref_type != 'tag'
-        uses: allenevans/set-env@c4f231179ef63887be707202a295d9cb1c687eb9
-        with:
-          CMAKE_FLAGS: '-DDEV_BUILD="${{ github.ref_name }}"'
+        shell: bash
+        run: |
+          echo "CMAKE_FLAGS=-DDEV_BUILD=\"${{ github.ref_name }}\"" >> "$GITHUB_ENV"
 
       - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Initialize Submodules
-        uses: snickerbockers/submodules-init@v4
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
 
       - name: Install Perl
         if: matrix.env.ninja_platform == 'win'
@@ -190,7 +188,7 @@ jobs:
           sudo apt-get -y install libssh2-1-dev
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@v4.3.0
         timeout-minutes: 10
         with:
           version: ${{ matrix.qt.version }}
@@ -201,7 +199,7 @@ jobs:
           modules: qtwebengine
 
       - name: Install Ninja
-        uses: seanmiddleditch/gha-setup-ninja@v4
+        uses: seanmiddleditch/gha-setup-ninja@v6
         with:
           version: 1.11.1
           platform: ${{ matrix.env.ninja_platform }}
@@ -209,13 +207,25 @@ jobs:
 
       - name: Setup MSVC environment
         if: matrix.env.ninja_platform == 'win'
-        uses: seanmiddleditch/gha-setup-vsdevenv@v3
+        uses: seanmiddleditch/gha-setup-vsdevenv@v5
         with:
           arch: ${{ matrix.env.msvc_arch }}
 
       - name: Install NASM
         if: matrix.env.ninja_platform == 'win'
         uses: ilammy/setup-nasm@v1.2.0
+
+      # CPack uses NSIS on Windows (see pack/CMakeLists.txt); runners do not ship makensis.
+      - name: Install NSIS for CPack
+        if: matrix.env.ninja_platform == 'win'
+        shell: pwsh
+        run: |
+          choco install nsis -y
+          $nsis = @(
+            'C:\Program Files (x86)\NSIS',
+            'C:\Program Files\NSIS'
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if ($nsis) { Add-Content $env:GITHUB_PATH $nsis }
 
       - name: Build OpenSSL (Windows)
         if: matrix.env.ninja_platform == 'win'
@@ -230,6 +240,7 @@ jobs:
           mkdir -p build/release
           cd build/release
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DUPDATE_TRANSLATIONS=ON -DGITTYUP_CI_TESTS=ON ${{ env.CMAKE_FLAGS }} ${{ matrix.env.cmake_flags }} ../..
+
 
       - name: Build Information
         run: |
@@ -257,7 +268,7 @@ jobs:
 
       - name: Publish build artifacts
         if: matrix.env.pack
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           path: build/release/pack/Gittyup-*
           name: Gittyup ${{ matrix.env.name }}
@@ -265,7 +276,7 @@ jobs:
       # Publish only once!
       - name: Publish version file
         if: matrix.env.ninja_platform == 'linux'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           path: build/release/Version.txt
           name: Gittyup-VERSION
@@ -277,10 +288,11 @@ jobs:
 
       - name: Test
         if: matrix.env.ninja_platform != 'win' && matrix.env.ninja_platform != 'mac'
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          working-directory: build/release
-          run: ninja check --verbose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          cd build/release
+          xvfb-run -a ninja check --verbose
 
       - name: Test (Windows)
         if: matrix.env.ninja_platform == 'win'
@@ -328,15 +340,16 @@ jobs:
 
       - name: Publish Appimage
         if: matrix.env.ninja_platform == 'linux'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           path: build/release/Gittyup*.AppImage
           name: GittyupAppImage
 
   publish:
-    # https://github.com/marvinpinto/actions/issues/177
     needs: [flatpak, build]
     runs-on: ubuntu-latest # does not matter which
+    permissions:
+      contents: write
     # a prerelase is created when pushing to master
     # a release is created when a tag will be set
     # last condition is the same as IS_RELEASE,
@@ -345,57 +358,73 @@ jobs:
     if: ${{ github.ref == 'refs/heads/master' || (github.event_name == 'push' && github.ref_type == 'tag' && startswith(github.ref_name, 'gittyup_v'))  }}
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: artifacts
-    
+
       # version is exported from cmake to file
       - name: Retrieve version
-        run: |
-          echo "::set-output name=VERSION::$(cat artifacts/Gittyup-VERSION/Version.txt)"
         id: version
+        run: |
+          echo "VERSION=$(cat artifacts/Gittyup-VERSION/Version.txt)" >> "$GITHUB_OUTPUT"
 
-      - name: Update GitHub release (latest tag)
-        uses: marvinpinto/action-automatic-releases@latest
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: true
-          title: 'Latest Build (Development)'
-          automatic_release_tag: 'development'
-          files: |
-            **/artifacts/GittyupFlatpak/*.flatpak
-            **/artifacts/GittyupAppImage/Gittyup*.AppImage
-
-          # Currently disabled, because we have problems with the theme
-          # **/artifacts/Gittyup win64/Gittyup*.exe
-          # **/artifacts/Gittyup macos/Gittyup*.dmg
+      # gh CLI avoids deprecated Node-based release actions (e.g. marvinpinto/action-automatic-releases).
+      - name: Update GitHub release (development)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          flatpaks=(artifacts/GittyupFlatpak/*.flatpak)
+          appimages=(artifacts/GittyupAppImage/Gittyup*.AppImage)
+          files=("${flatpaks[@]}" "${appimages[@]}")
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No Flatpak or AppImage assets to upload."
+            exit 1
+          fi
+          if ! gh release view development >/dev/null 2>&1; then
+            gh release create development \
+              --prerelease \
+              --title "Latest Build (Development)" \
+              --target "${{ github.sha }}" \
+              "${files[@]}"
+          else
+            gh release upload development "${files[@]}" --clobber
+          fi
 
       - name: Update GitHub release (version tag)
-        uses: marvinpinto/action-automatic-releases@latest
-        if: ${{ env.IS_RELEASE == 'true'}}
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: false
-          title: Gittyup Release ${{ steps.version.outputs.VERSION }}
-          automatic_release_tag: ${{ github.ref_name }}
-          files: |
-            **/artifacts/GittyupFlatpak/*.flatpak
-            **/artifacts/GittyupAppImage/Gittyup*.AppImage
+        if: ${{ env.IS_RELEASE == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          TAG="${{ github.ref_name }}"
+          flatpaks=(artifacts/GittyupFlatpak/*.flatpak)
+          appimages=(artifacts/GittyupAppImage/Gittyup*.AppImage)
+          files=("${flatpaks[@]}" "${appimages[@]}")
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No Flatpak or AppImage assets to upload."
+            exit 1
+          fi
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" \
+              --title "Gittyup Release ${{ steps.version.outputs.VERSION }}" \
+              --target "${{ github.sha }}" \
+              "${files[@]}"
+          else
+            gh release upload "$TAG" "${files[@]}" --clobber
+          fi
 
-          # Currently disabled, because we have problems with the theme
-          # **/artifacts/Gittyup win64/Gittyup*.exe
-          # **/artifacts/Gittyup macos/Gittyup*.dmg
-
-      # needed otherwise the docs folder is not available     
+      # needed otherwise the docs folder is not available
       - name: Checkout repository
-        if: ${{ env.IS_RELEASE == 'true'}}
-        uses: actions/checkout@v3
+        if: ${{ env.IS_RELEASE == 'true' }}
+        uses: actions/checkout@v6
 
-      # update github pages only if it is a release 
+      # update github pages only if it is a release
       - name: Deploy Github pages
-        if: ${{ env.IS_RELEASE  == 'true'}}
-        uses: JamesIves/github-pages-deploy-action@v4.4.0
+        if: ${{ env.IS_RELEASE == 'true' }}
+        uses: JamesIves/github-pages-deploy-action@v4.7.3
         with:
           branch: gh-pages # The branch the action should deploy to.
           folder: docs # The folder the action should deploy.
-...

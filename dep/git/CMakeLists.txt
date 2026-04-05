@@ -24,7 +24,11 @@ if(NOT USE_SYSTEM_GIT)
   if(APPLE)
     add_helper(osxkeychain "-framework Security")
   elseif(WIN32)
-    add_helper(wincred)
+    # The bundled wincred helper uses GNU C attributes and does not compile
+    # cleanly with cl.exe. Skip it for MSVC-based CI builds.
+    if(NOT MSVC)
+      add_helper(wincred)
+    endif()
   else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(LIBSECRET IMPORTED_TARGET libsecret-1)

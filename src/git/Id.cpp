@@ -84,6 +84,8 @@ uint8_t Id::getSize(const git_oid_t type) {
   }
 }
 
-uint qHash(const Id &key) { return qHash(key.toByteArray()); }
+uint qHash(const Id &key) {
+  return static_cast<uint>(qHash(key.toByteArray()));
+}
 
 } // namespace git

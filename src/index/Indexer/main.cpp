@@ -29,9 +29,15 @@
 #ifndef Q_OS_WIN
 #include <sys/resource.h>
 #else
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #include <dbghelp.h>
 #include <strsafe.h>
+
+extern LPTOP_LEVEL_EXCEPTION_FILTER defaultFilter;
+LONG WINAPI exceptionFilter(PEXCEPTION_POINTERS info);
 #endif
 
 namespace {

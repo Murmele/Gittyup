@@ -458,7 +458,7 @@ int lexemeText(lua_State *L) {
 QByteArray kind(TextEditor *editor, int style) {
   uintptr_t ptr = editor->privateLexerCall(style, 0);
   QByteArray name(reinterpret_cast<char *>(ptr));
-  return name.endsWith("_whitespace") ? "whitespace" : name;
+  return name.endsWith("_whitespace") ? QByteArrayLiteral("whitespace") : name;
 }
 
 int lexemeKind(lua_State *L) {
