@@ -54,37 +54,47 @@ QMap<QString, QMap<QString, QMap<QString, QString>>> Store::readCredFile() {
   return store;
 }
 
-bool Store::extractUserPass(const QMap<QString, QString> &map,
-                            QString &username, QString &password) {
+CredentialHelper::Result
+Store::extractUserPass(const QMap<QString, QString> &map, QString &username,
+                       QString &password) {
   if (map.isEmpty())
-    return false;
+    return CredentialHelper::Result::ERROR(
+        QStringLiteral("Empty credential map"));
 
   if (username.isEmpty())
     username = map.keys().first();
 
   if (!map.contains(username))
-    return false;
+    return CredentialHelper::Result::ERROR(
+        QStringLiteral("Username not found"));
 
   password = map.value(username);
 
-  return !username.isEmpty() && !password.isEmpty();
+  if (username.isEmpty() || password.isEmpty())
+    return CredentialHelper::Result::ERROR(
+        QStringLiteral("Missing username or password"));
+
+  return CredentialHelper::Result::OK();
 }
 
-bool Store::get(const QString &url, QString &username, QString &password) {
+CredentialHelper::Result Store::get(const QString &url, QString &username,
+                                    QString &password) {
 
   auto store = readCredFile();
   const QMap<QString, QString> &map = store[protocol(url)][host(url)];
   return extractUserPass(map, username, password);
 }
 
-bool Store::store(const QString &url, const QString &username,
-                  const QString &password) {
+CredentialHelper::Result Store::store(const QString &url,
+                                      const QString &username,
+                                      const QString &password) {
   auto store = readCredFile();
   store[protocol(url)][host(url)][username] = password;
 
   QFile file(mPath);
   if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
-    return false;
+    return CredentialHelper::Result::ERROR(
+        QStringLiteral("Failed to open credential file for writing"));
 
   foreach (const auto &protocolKey, store.keys()) {
     auto protocol = store[protocolKey];
@@ -105,7 +115,7 @@ bool Store::store(const QString &url, const QString &username,
 
   file.close();
 
-  return true;
+  return CredentialHelper::Result::OK();
 }
 
 QString Store::command() const { return ""; }

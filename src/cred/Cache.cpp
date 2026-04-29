@@ -11,26 +11,28 @@
 
 Cache::Cache() {}
 
-bool Cache::get(const QString &url, QString &username, QString &password) {
+CredentialHelper::Result Cache::get(const QString &url, QString &username,
+                                    QString &password) {
   if (!mCache.contains(url))
-    return false;
+    return CredentialHelper::Result::ERROR(QStringLiteral(""));
 
   const QMap<QString, QString> &map = mCache[url];
   if (map.isEmpty())
-    return false;
+    return CredentialHelper::Result::ERROR(QStringLiteral(""));
 
   if (username.isEmpty())
     username = map.keys().first();
 
   if (!map.contains(username))
-    return false;
+    return CredentialHelper::Result::ERROR(QStringLiteral(""));
 
   password = map.value(username);
-  return true;
+  return CredentialHelper::Result::OK();
 }
 
-bool Cache::store(const QString &url, const QString &username,
-                  const QString &password) {
+CredentialHelper::Result Cache::store(const QString &url,
+                                      const QString &username,
+                                      const QString &password) {
   mCache[url][username] = password;
-  return true;
+  return CredentialHelper::Result::OK();
 }

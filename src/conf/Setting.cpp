@@ -44,6 +44,12 @@ void Setting::initialize(QMap<Id, QString> &keys) {
   keys[Id::ShowChangedFilesInSingleView] = "doubletreeview/single";
   keys[Id::ShowChangedFilesMultiColumn] = "doubletreeview/listviewmulticolumn";
   keys[Id::HideUntracked] = "untracked.hide";
+  keys[Id::AiServiceUrl] = "ai/service/url";
+  keys[Id::EnableAiCommitMessages] = "ai/commit/enable";
+  keys[Id::AiCommitModel] = "ai/commit/model";
+  keys[Id::AiCommitTemperature] = "ai/commit/temperature";
+  keys[Id::AiCommitSystemMessage] = "ai/commit/system_message";
+  keys[Id::AiCommitPromptMessage] = "ai/commit/prompt_message";
 }
 
 void Prompt::initialize(QMap<Kind, QString> &keys) {

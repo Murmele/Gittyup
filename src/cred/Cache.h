@@ -17,10 +17,11 @@ class Cache : public CredentialHelper {
 public:
   Cache();
 
-  bool get(const QString &url, QString &username, QString &password) override;
+  CredentialHelper::Result get(const QString &url, QString &username,
+                               QString &password) override;
 
-  bool store(const QString &url, const QString &username,
-             const QString &password) override;
+  CredentialHelper::Result store(const QString &url, const QString &username,
+                                 const QString &password) override;
 
 private:
   QMap<QString, QMap<QString, QString>> mCache;

@@ -6,6 +6,8 @@
 #include "ContextMenuButton.h"
 #include "MenuBar.h"
 #include "RepoView.h"
+#include "git/Patch.h"
+#include "cred/CredentialHelper.h"
 
 #include <QLabel>
 #include <QPushButton>
@@ -21,6 +23,14 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 #include <QActionGroup>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QUrlQuery>
+#include <QStandardPaths>
 
 namespace {
 const QString kDictKey = "commit.spellcheck.dict";
@@ -29,6 +39,187 @@ const QString kAltFmt = "<span style='color: %1'>%2</span>";
 QString brightText(const QString &text) {
   return kAltFmt.arg(QPalette().color(QPalette::BrightText).name(), text);
 }
+
+void debugWriteJsonObject(const QJsonObject &obj, const QString &filename) {
+  QFile debugFile(filename);
+  if (debugFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    QTextStream stream(&debugFile);
+    QJsonDocument doc(obj);
+    stream << doc.toJson(QJsonDocument::Indented);
+    debugFile.close();
+  }
+}
+
+void prepareAiCommitRequest(const git::Diff &diff, Settings *settings,
+                            QJsonObject &requestBody,
+                            const QString &currentMessage = QString()) {
+  // Use configurable prompt message from settings
+  QString promptMessage = settings
+                              ->value(Setting::Id::AiCommitPromptMessage,
+                                      AiCommitConstants::DefaultPromptMessage)
+                              .toString();
+
+  // Create prompt variable for building the message
+  QString prompt = promptMessage;
+
+  // If there's a current message, add it to the prompt as additional context
+  if (!currentMessage.isEmpty()) {
+    prompt += "\n\nCurrent commit message idea:\n" + currentMessage;
+  }
+
+  // Collect diff information
+  QStringList changedFilesList;
+  QStringList additionsList;
+  QStringList deletionsList;
+  QStringList fileChangesList;
+  int totalAdditions = 0;
+  int totalDeletions = 0;
+
+  int count = diff.count();
+  git::Index index = diff.index();
+
+  for (int i = 0; i < count; ++i) {
+    QString name = diff.name(i);
+
+    // Process both fully staged and partially staged files
+    // For partially staged files, only the staged portions will land in the
+    // commit
+    git::Index::StagedState status = index.isStaged(name);
+    if (status != git::Index::Staged && status != git::Index::PartiallyStaged) {
+      continue;
+    }
+
+    // Get diff stats for this file
+    git::Patch patch = diff.patch(i);
+    if (patch.isValid()) {
+      int add = patch.lineStats().additions;
+      int del = patch.lineStats().deletions;
+      totalAdditions += add;
+      totalDeletions += del;
+
+      if (add > 0)
+        additionsList.append(QString("%1: +%2").arg(name).arg(add));
+      if (del > 0)
+        deletionsList.append(QString("%1: -%2").arg(name).arg(del));
+
+      // Get actual file content changes with context - these represent what
+      // will actually land in the commit
+      QString fileChanges;
+      int hunkCount = patch.count();
+      for (int h = 0; h < hunkCount; ++h) {
+        int lineCount = patch.lineCount(h);
+
+        // Add hunk header for reference
+        QByteArray header = patch.header(h);
+        if (!header.isEmpty()) {
+          fileChanges += "@@ " + QString::fromUtf8(header) + " @@\n";
+        }
+
+        for (int j = 0; j < lineCount; ++j) {
+          char origin = patch.lineOrigin(h, j);
+          QByteArray content = patch.lineContent(h, j);
+          QString lineText = QString::fromUtf8(content);
+
+          switch (origin) {
+            case '+': // ADDITION
+              fileChanges += "+" + lineText + "\n";
+              break;
+            case '-': // DELETION
+              fileChanges += "-" + lineText + "\n";
+              break;
+            case ' ': // CONTEXT
+              // Include context lines to provide better understanding
+              fileChanges += " " + lineText + "\n";
+              break;
+            default:
+              // Skip headers and other special lines
+              break;
+          }
+        }
+        fileChanges += "\n"; // Separate hunks with blank line
+      }
+
+      if (!fileChanges.isEmpty()) {
+        fileChangesList.append(
+            QString("File: %1\n%2").arg(name).arg(fileChanges));
+      }
+    }
+
+    changedFilesList.append(name);
+  }
+
+  // Build changed files section
+  QString changedFilesText;
+  for (const QString &file : changedFilesList) {
+    changedFilesText += "- " + file + "\n";
+  }
+  prompt.replace("{{CHANGED_FILES}}", changedFilesText);
+
+  // Build additions section
+  QString additionsText;
+  for (const QString &add : additionsList) {
+    additionsText += "+ " + add + "\n";
+  }
+  prompt.replace("{{ADDITIONS}}", additionsText);
+
+  // Build deletions section
+  QString deletionsText;
+  for (const QString &del : deletionsList) {
+    deletionsText += "- " + del + "\n";
+  }
+  prompt.replace("{{DELETIONS}}", deletionsText);
+
+  // Build file changes section
+  QString fileChangesText;
+  for (const QString &change : fileChangesList) {
+    fileChangesText += change + "\n";
+  }
+  prompt.replace("{{FILE_CHANGES}}", fileChangesText);
+
+  // Replace total stats
+  prompt.replace("{{TOTAL_ADDITIONS}}", QString::number(totalAdditions));
+  prompt.replace("{{TOTAL_DELETIONS}}", QString::number(totalDeletions));
+
+  // Create the request body
+  // Use configurable settings
+  QString model =
+      settings
+          ->value(Setting::Id::AiCommitModel, AiCommitConstants::DefaultModel)
+          .toString();
+  double temperature = settings
+                           ->value(Setting::Id::AiCommitTemperature,
+                                   AiCommitConstants::DefaultTemperature)
+                           .toDouble();
+  QString systemMessageText =
+      settings
+          ->value(Setting::Id::AiCommitSystemMessage,
+                  AiCommitConstants::DefaultSystemMessage)
+          .toString();
+
+  requestBody["model"] = model;
+  requestBody["temperature"] = temperature;
+
+  QJsonArray messages;
+  QJsonObject systemMessage;
+  systemMessage["role"] = "system";
+  systemMessage["content"] = systemMessageText;
+
+  QJsonObject userMessage;
+  userMessage["role"] = "user";
+  userMessage["content"] = prompt;
+
+  messages.append(systemMessage);
+  messages.append(userMessage);
+  requestBody["messages"] = messages;
+
+  // Debug: Write JSON to file for inspection
+  if (false) {
+    debugWriteJsonObject(requestBody, QStandardPaths::writableLocation(
+                                          QStandardPaths::TempLocation) +
+                                          "/gittyup_ai_commit_request.json");
+  }
+}
+
 } // namespace
 
 class TextEdit : public QTextEdit {
@@ -297,8 +488,9 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
   mUserDict = Settings::userDir().path() + "/user.dic";
   QFile userDict(mUserDict);
   if (!userDict.exists()) {
-    userDict.open(QIODevice::WriteOnly);
-    userDict.close();
+    if (userDict.open(QIODevice::WriteOnly)) {
+      userDict.close();
+    }
   }
 
   // Find installed Dictionaries.
@@ -437,6 +629,7 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
   labelLayout->addWidget(button);
 
   mMessage = new TextEdit(this);
+  mMessage->setUndoRedoEnabled(true);
   mMessage->setAcceptRichText(false);
   mMessage->setObjectName("MessageEditor");
   mMessage->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
@@ -508,6 +701,18 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
     view->mergeAbort();
   });
 
+  mGenerateCommitMessage = new QPushButton(tr("Generate Commit Message"), this);
+  mGenerateCommitMessage->setObjectName("GenerateCommitMessage");
+  connect(mGenerateCommitMessage, &QPushButton::clicked, this,
+          &CommitEditor::generateCommitMessage);
+  mGenerateCommitMessage->setVisible(
+      Settings::instance()
+          ->value(Setting::Id::EnableAiCommitMessages,
+                  AiCommitConstants::enabled)
+          .toBool());
+
+  mNetworkManager = new QNetworkAccessManager(this);
+
   // Update buttons on index change.
   connect(repo.notifier(), &git::RepositoryNotifier::indexChanged,
           [this](const QStringList &paths, bool yieldFocus) {
@@ -520,6 +725,7 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
   buttonLayout->addWidget(mStage);
   buttonLayout->addWidget(mUnstage);
   buttonLayout->addWidget(mCommit);
+  buttonLayout->addWidget(mGenerateCommitMessage);
   buttonLayout->addWidget(mRebaseContinue);
   buttonLayout->addWidget(mRebaseAbort);
   buttonLayout->addWidget(mMergeAbort);
@@ -822,6 +1028,181 @@ void CommitEditor::updateButtons(bool yieldFocus) {
 
   // Update menu actions.
   MenuBar::instance(this)->updateRepository();
+}
+
+void CommitEditor::generateCommitMessage() {
+  // Check if AI commit messages are enabled
+  Settings *settings = Settings::instance();
+  bool aiEnabled = settings
+                       ->value(Setting::Id::EnableAiCommitMessages,
+                               AiCommitConstants::enabled)
+                       .toBool();
+
+  if (!aiEnabled) {
+    QString errorMsg = tr("AI commit message generation is disabled. Please "
+                          "enable it in settings.");
+    mGenerateCommitMessage->setToolTip(errorMsg);
+    mGenerateCommitMessage->setStyleSheet("QPushButton { color: red; }");
+    return;
+  }
+
+  // Check if we have a valid diff
+  if (!mDiff.isValid()) {
+    QString errorMsg = tr("No changes detected to generate a commit message.");
+    mGenerateCommitMessage->setToolTip(errorMsg);
+    mGenerateCommitMessage->setStyleSheet("QPushButton { color: red; }");
+    return;
+  }
+
+  // Prepare the AI request
+  QJsonObject requestBody;
+  prepareAiCommitRequest(mDiff, settings, requestBody, mMessage->toPlainText());
+  QJsonDocument doc(requestBody);
+
+  // Get API settings
+  QString apiUrl = settings->value(Setting::Id::AiServiceUrl).toString();
+
+  // Check if API URL is configured
+  if (apiUrl.isEmpty()) {
+    QString errorMsg =
+        tr("AI service URL is not configured. Please set it in settings.");
+    mGenerateCommitMessage->setToolTip(errorMsg);
+    mGenerateCommitMessage->setStyleSheet("QPushButton { color: red; }");
+    return;
+  }
+
+  // Retrieve API key securely from credential helper using the API URL as key
+  QString apiKey;
+  CredentialHelper *credHelper = CredentialHelper::instance();
+  if (credHelper) {
+    auto result = credHelper->get(apiUrl, apiKey, apiKey);
+    if (!result.success) {
+      apiKey.clear();
+    }
+  }
+
+  if (apiKey.isEmpty()) {
+    QString errorMsg =
+        tr("AI service API key is not configured. Please set it in settings.");
+    mGenerateCommitMessage->setToolTip(errorMsg);
+    mGenerateCommitMessage->setStyleSheet("QPushButton { color: red; }");
+    return;
+  }
+
+  // Show progress
+  mGenerateCommitMessage->setEnabled(false);
+  mGenerateCommitMessage->setText(tr("Generating..."));
+  QApplication::setOverrideCursor(Qt::WaitCursor);
+
+  // Prepare the API request
+  QNetworkRequest request(QUrl(apiUrl + "/chat/completions"));
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+  request.setRawHeader("Authorization", "Bearer " + apiKey.toUtf8());
+
+  // Send the request
+  QNetworkReply *reply = mNetworkManager->post(request, doc.toJson());
+
+  // Handle the response
+  connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+    QApplication::restoreOverrideCursor();
+    mGenerateCommitMessage->setEnabled(true);
+    mGenerateCommitMessage->setText(tr("Generate Commit Message"));
+
+    // Clear any previous error styling
+    mGenerateCommitMessage->setStyleSheet("");
+    mGenerateCommitMessage->setToolTip("");
+
+    if (reply->error() != QNetworkReply::NoError) {
+      QString errorMsg =
+          tr("Failed to generate commit message: %1").arg(reply->errorString());
+
+      // Set error tooltip and style
+      mGenerateCommitMessage->setToolTip(errorMsg);
+      mGenerateCommitMessage->setStyleSheet("QPushButton { color: red; }");
+
+      reply->deleteLater();
+      return;
+    }
+
+    // Parse the response
+    QByteArray responseData = reply->readAll();
+    QJsonDocument responseDoc = QJsonDocument::fromJson(responseData);
+
+    if (responseDoc.isNull() || !responseDoc.isObject()) {
+      QString errorMsg = tr("Invalid response from API");
+
+      // Set error tooltip and style
+      mGenerateCommitMessage->setToolTip(errorMsg);
+      mGenerateCommitMessage->setStyleSheet("QPushButton { color: red; }");
+
+      reply->deleteLater();
+      return;
+    }
+
+    QJsonObject responseObj = responseDoc.object();
+
+    if (responseObj.contains("error")) {
+      QJsonObject errorObj = responseObj["error"].toObject();
+      QString errorMsg = errorObj["message"].toString();
+      QString fullErrorMsg = tr("API Error: %1").arg(errorMsg);
+
+      // Set error tooltip and style
+      mGenerateCommitMessage->setToolTip(fullErrorMsg);
+      mGenerateCommitMessage->setStyleSheet("QPushButton { color: red; }");
+
+      reply->deleteLater();
+      return;
+    }
+
+    // Extract the commit message
+    if (responseObj.contains("choices") && responseObj["choices"].isArray()) {
+      QJsonArray choices = responseObj["choices"].toArray();
+      if (!choices.isEmpty() && choices[0].isObject()) {
+        QJsonObject firstChoice = choices[0].toObject();
+        if (firstChoice.contains("message") &&
+            firstChoice["message"].isObject()) {
+          QJsonObject messageObj = firstChoice["message"].toObject();
+          if (messageObj.contains("content")) {
+            QString commitMessage = messageObj["content"].toString();
+
+            // Clean up the message and set it in the editor
+            commitMessage = commitMessage.trimmed();
+
+            // Remove any markdown formatting if present
+            commitMessage.remove(QRegularExpression("^```[\\w]*\n"));
+            commitMessage.remove(QRegularExpression("\n```$"));
+            commitMessage.remove(QRegularExpression("^\\*\\*\\*\n"));
+            commitMessage.remove(QRegularExpression("\n\\*\\*\\*$"));
+
+            // Set the message in the editor without clearing undo stack
+            QTextCursor cursor = mMessage->textCursor();
+            cursor.beginEditBlock();
+            cursor.select(QTextCursor::Document);
+            cursor.removeSelectedText();
+            cursor.insertText(commitMessage);
+            cursor.endEditBlock();
+            mMessage->setTextCursor(cursor);
+
+            // Set success tooltip
+            mGenerateCommitMessage->setToolTip(
+                tr("Commit message generated successfully"));
+            mGenerateCommitMessage->setStyleSheet(
+                "QPushButton { color: green; }");
+
+            return;
+          }
+        }
+      }
+    }
+
+    QString errorMsg = tr("Could not extract commit message from API response");
+
+    // Set error tooltip and style
+    mGenerateCommitMessage->setToolTip(errorMsg);
+    mGenerateCommitMessage->setStyleSheet("QPushButton { color: red; }");
+
+    reply->deleteLater();
+  });
 }
 
 QTextEdit *CommitEditor::textEdit() const { return mMessage; }
