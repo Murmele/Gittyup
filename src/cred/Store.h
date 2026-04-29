@@ -23,16 +23,18 @@ class Store : public CredentialHelper {
 public:
   Store(const QString &path);
 
-  bool get(const QString &url, QString &username, QString &password) override;
+  CredentialHelper::Result get(const QString &url, QString &username,
+                               QString &password) override;
 
-  bool store(const QString &url, const QString &username,
-             const QString &password) override;
+  CredentialHelper::Result store(const QString &url, const QString &username,
+                                 const QString &password) override;
 
 private:
   QString command() const;
   QMap<QString, QMap<QString, QMap<QString, QString>>> readCredFile();
-  bool extractUserPass(const QMap<QString, QString> &map, QString &username,
-                       QString &password);
+  CredentialHelper::Result extractUserPass(const QMap<QString, QString> &map,
+                                           QString &username,
+                                           QString &password);
 
   QString mPath;
 };

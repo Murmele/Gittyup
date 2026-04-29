@@ -43,7 +43,7 @@ void TestStore::readUserPassTestCase() {
   QString password;
   auto result = store.get(url, username, password);
 
-  QVERIFY(result);
+  QVERIFY(result.success);
   QCOMPARE(username, "janeDoe");
   QCOMPARE(password, "securePassword");
 }
@@ -56,7 +56,7 @@ void TestStore::wrongProtocolTestCase() {
   QString password;
   auto result = store.get(url, username, password);
 
-  QVERIFY(!result);
+  QVERIFY(!result.success);
 }
 
 void TestStore::wrongUrlTestCase() {
@@ -67,7 +67,7 @@ void TestStore::wrongUrlTestCase() {
   QString password;
   auto result = store.get(url, username, password);
 
-  QVERIFY(!result);
+  QVERIFY(!result.success);
 }
 
 void TestStore::wrongUsernameTestCase() {
@@ -78,7 +78,7 @@ void TestStore::wrongUsernameTestCase() {
   QString password;
   auto result = store.get(url, username, password);
 
-  QVERIFY(!result);
+  QVERIFY(!result.success);
 }
 
 void TestStore::saveUserPassTestCase() {
@@ -89,13 +89,13 @@ void TestStore::saveUserPassTestCase() {
   QString password = "NewPassword";
   auto result = store.store(url, username, password);
 
-  QVERIFY(result);
+  QVERIFY(result.success);
 
   QString readBackUsername;
   QString readBackpassword;
   auto result2 = store.get(url, readBackUsername, readBackpassword);
 
-  QVERIFY(result2);
+  QVERIFY(result2.success);
   QCOMPARE(readBackUsername, "NewUser");
   QCOMPARE(readBackpassword, "NewPassword");
 }
@@ -108,7 +108,7 @@ void TestStore::wrongFilePathTestCase() {
   QString password = "";
   auto result = store.get(url, username, password);
 
-  QVERIFY(!result);
+  QVERIFY(!result.success);
 }
 
 void TestStore::cleanupTestCase() {

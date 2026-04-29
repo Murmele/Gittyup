@@ -49,7 +49,11 @@ QString Account::password() const {
 
   QString password;
   QString name = username();
-  CredentialHelper::instance()->get(url.toString(), name, password);
+  auto result =
+      CredentialHelper::instance()->get(url.toString(), name, password);
+  if (!result.success) {
+    return QString();
+  }
 
   return password;
 }

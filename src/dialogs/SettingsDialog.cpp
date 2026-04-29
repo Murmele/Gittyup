@@ -9,6 +9,7 @@
 
 #include "SettingsDialog.h"
 #include "AboutDialog.h"
+#include "Debug.h"
 #include "DiffPanel.h"
 #include "ExternalToolsDialog.h"
 #include "HotkeysPanel.h"
@@ -826,8 +827,8 @@ public:
     CredentialHelper *credHelper = CredentialHelper::instance();
     if (credHelper && !aiServiceUrl.isEmpty()) {
       QString aiApiKey;
-      credHelper->get(aiServiceUrl, aiApiKey, aiApiKey);
-      if (!aiApiKey.isEmpty()) {
+      auto result = credHelper->get(aiServiceUrl, aiApiKey, aiApiKey);
+      if (result.success && !aiApiKey.isEmpty()) {
         aiApiKeyBox->setText(tr("Api key found for specified api url"));
       }
     }
@@ -838,19 +839,21 @@ public:
           QString aiServiceUrl = aiServiceUrlBox->text();
           CredentialHelper *credHelper = CredentialHelper::instance();
           if (credHelper && !apiKey.isEmpty() && !aiServiceUrl.isEmpty()) {
-            bool success =
+            auto result =
                 credHelper->store(aiServiceUrl, "ai-commit-key", apiKey);
-            if (!success) {
+            if (!result.success) {
               QMessageBox::warning(
                   aiApiKeyBox, QObject::tr("Credential Storage Failed"),
                   QObject::tr("Failed to store API key in secure storage. The "
-                              "key will not be saved."));
+                              "key will not be saved: ") +
+                      result.error);
             }
           } else if (credHelper && apiKey.isEmpty() &&
                      !aiServiceUrl.isEmpty()) {
             // If key is empty, remove it from storage
-            bool success = credHelper->store(aiServiceUrl, "ai-commit-key", "");
-            if (!success) {
+            Debug("Remove key from storage");
+            auto result = credHelper->store(aiServiceUrl, "ai-commit-key", "");
+            if (!result.success) {
               QMessageBox::warning(
                   aiApiKeyBox, QObject::tr("Credential Removal Failed"),
                   QObject::tr("Failed to remove API key from secure storage."));

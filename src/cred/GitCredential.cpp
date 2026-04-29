@@ -38,12 +38,13 @@ QString protocol(const QString &url) {
 
 GitCredential::GitCredential(const QString &name) : mName(name) {}
 
-bool GitCredential::get(const QString &url, QString &username,
-                        QString &password) {
+CredentialHelper::Result
+GitCredential::get(const QString &url, QString &username, QString &password) {
   QProcess process;
   process.start(command(), {"get"});
   if (!process.waitForStarted())
-    return false;
+    return CredentialHelper::Result::ERROR(
+        QStringLiteral("Failed to start credential process"));
 
   QTextStream out(&process);
   out << "protocol=" << protocol(url) << Qt::endl;
@@ -70,15 +71,21 @@ bool GitCredential::get(const QString &url, QString &username,
     }
   }
 
-  return !username.isEmpty() && !password.isEmpty();
+  if (username.isEmpty() || password.isEmpty())
+    return CredentialHelper::Result::ERROR(
+        QStringLiteral("Missing username or password in response"));
+
+  return CredentialHelper::Result::OK();
 }
 
-bool GitCredential::store(const QString &url, const QString &username,
-                          const QString &password) {
+CredentialHelper::Result GitCredential::store(const QString &url,
+                                              const QString &username,
+                                              const QString &password) {
   QProcess process;
   process.start(command(), {"store"});
   if (!process.waitForStarted())
-    return false;
+    return CredentialHelper::Result::ERROR(
+        QStringLiteral("Failed to start credential process"));
 
   QTextStream out(&process);
   out << "protocol=" << protocol(url) << Qt::endl;
@@ -90,7 +97,11 @@ bool GitCredential::store(const QString &url, const QString &username,
   process.closeWriteChannel();
   process.waitForFinished();
 
-  return true;
+  if (process.exitStatus() != QProcess::ExitStatus::NormalExit) {
+    return CredentialHelper::Result::ERROR(process.readAllStandardError());
+  }
+
+  return CredentialHelper::Result::OK();
 }
 
 QString GitCredential::command() const {
@@ -136,4 +147,9 @@ QString GitCredential::command() const {
 #endif
 
   return name;
+}
+
+QString GitCredential::lastError() const {
+  // TODO: implement
+  return QString();
 }

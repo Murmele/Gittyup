@@ -18,14 +18,33 @@
 // securely storing passwords associated with host accounts.
 class CredentialHelper : public QObject {
 public:
+  struct Result {
+    bool success;
+    QString error;
+
+    static Result OK() {
+      return Result{
+          .success = true,
+          .error = QString(),
+      };
+    }
+
+    static Result ERROR(const QString &error) {
+      return Result{
+          .success = false,
+          .error = error,
+      };
+    }
+  };
+
   // Username can be supplied by the caller to lookup a specific
   // account or filled in by the helper to get the first account
   // for the given host. Password will be filled in on success.
-  virtual bool get(const QString &url, QString &username,
-                   QString &password) = 0;
+  virtual Result get(const QString &url, QString &username,
+                     QString &password) = 0;
 
-  virtual bool store(const QString &url, const QString &username,
-                     const QString &password) = 0;
+  virtual Result store(const QString &url, const QString &username,
+                       const QString &password) = 0;
 
   // Get the correct helper for the current platform.
   static CredentialHelper *instance();

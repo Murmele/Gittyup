@@ -1075,7 +1075,10 @@ void CommitEditor::generateCommitMessage() {
   QString apiKey;
   CredentialHelper *credHelper = CredentialHelper::instance();
   if (credHelper) {
-    credHelper->get(apiUrl, apiKey, apiKey);
+    auto result = credHelper->get(apiUrl, apiKey, apiKey);
+    if (!result.success) {
+      apiKey.clear();
+    }
   }
 
   if (apiKey.isEmpty()) {

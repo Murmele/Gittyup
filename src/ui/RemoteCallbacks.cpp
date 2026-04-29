@@ -281,7 +281,8 @@ bool RemoteCallbacks::connectToAgent() const {
 void RemoteCallbacks::credentialsImpl(const QString &url, QString &username,
                                       QString &password, QString &error) {
   CredentialHelper *helper = CredentialHelper::instance();
-  if (helper->get(url, username, password)) {
+  auto result = helper->get(url, username, password);
+  if (result.success) {
     QStringList key({url, username, password});
     if (!mQueriedCredentials.contains(key)) {
       mQueriedCredentials.insert(key);
