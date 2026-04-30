@@ -20,6 +20,7 @@
 #include <QScrollBar>
 #include <QPushButton>
 #include <QMimeData>
+#include <QScopedValueRollback>
 
 namespace {
 
@@ -198,11 +199,13 @@ void DiffView::setDiff(const git::Diff &diff) {
           fetchMore();
       }));
 
-  mConnections.append(
-      connect(scrollBar, &QScrollBar::rangeChanged, [this](int min, int max) {
+  mConnections.append(connect(
+      scrollBar, &QScrollBar::rangeChanged, this,
+      [this](int min, int max) {
         if (max - min < this->widget()->height() / 2 && canFetchMore())
           fetchMore();
-      }));
+      },
+      Qt::QueuedConnection));
 
   // Request comments for this diff.
   if (Repository *remoteRepo = view->remoteRepo()) {
@@ -380,6 +383,10 @@ bool DiffView::canFetchMore() {
  * use a while loop with canFetchMore() to get all
  */
 void DiffView::fetchMore(int fetchWidgets) {
+  if (mFetching)
+    return;
+  QScopedValueRollback rollback(mFetching, true);
+
   QVBoxLayout *layout = static_cast<QVBoxLayout *>(widget()->layout());
 
   // Add widgets.
@@ -400,9 +407,6 @@ void DiffView::fetchMore(int fetchWidgets) {
              height() / 2) ||
             fetchAll)) {
       addedWidgets += lastFile->fetchMore(fetchAll ? -1 : 1);
-
-      // Load hunk(s) and update scrollbar
-      QApplication::processEvents();
 
       // Running the eventloop may trigger a view refresh
       if (mFiles.isEmpty())
