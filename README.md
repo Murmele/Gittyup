@@ -200,8 +200,7 @@ adheres to the formatting conventions for this project. You can also use the
 run `clang-format` against all modified files.
 
 Prior to pushing a change, please ensure you run the unit tests to avoid any
-regressions. These are found in `<build-dir>/test` and can be run using
-`ctest`.
+regressions. These are run using `ctest` in `<build-dir>`.
 
 License
 -------

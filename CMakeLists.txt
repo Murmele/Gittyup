@@ -202,5 +202,6 @@ add_subdirectory(l10n)
 add_subdirectory(pack)
 
 if(ENABLE_TESTS)
+  enable_testing()
   add_subdirectory(test)
 endif()
