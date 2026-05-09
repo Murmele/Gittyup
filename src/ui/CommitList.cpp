@@ -1212,10 +1212,6 @@ CommitList::CommitList(Index *index, QWidget *parent)
   CommitModel *model = static_cast<CommitModel *>(mModel);
   connect(model, &CommitModel::statusFinished, [this, model](bool visible) {
     mRestoreSelection = true; // Reset to default
-    // Fake a selection notification if the diff is visible and selected.
-    // FIXME: Should we reference `model` or `this->mModel` here?
-    if (visible && selectionModel()->isSelected(mModel->index(0, 0)))
-      resetSelection();
 
     // Select the first commit if the selection was cleared.
     if (selectedIndexes().isEmpty())
@@ -1389,7 +1385,6 @@ bool CommitList::selectRange(const QString &range, const QString &file,
   // Try to select the "status" index.
   QModelIndex index = model()->index(0, 0);
   if (range == "status" && !index.data(CommitRole).isValid()) {
-    selectFirstCommit();
     return true;
   }
 
@@ -1771,7 +1766,8 @@ void CommitList::restoreSelection() {
   // Restore selection.
   DebugRefresh(mSelectedRange);
   if (!mRestoreSelection ||
-      (!mSelectedRange.isEmpty() && !selectRange(mSelectedRange))) {
+      (!mSelectedRange.isEmpty() && mSelectedRange != "status" &&
+       !selectRange(mSelectedRange))) {
     DebugRefresh("Failed to restore");
     emit diffSelected(git::Diff());
   }
