@@ -394,9 +394,10 @@ FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
   if (diff.isStatusDiff()) {
     // Collapse on check.
     if (disclosure)
-      connect(mHeader->check(), &QCheckBox::stateChanged, [this](int state) {
-        mHeader->disclosureButton()->setChecked(state != Qt::Checked);
-      });
+      connect(mHeader->check(), &QCheckBox::checkStateChanged,
+              [this](Qt::CheckState state) {
+                mHeader->disclosureButton()->setChecked(state != Qt::Checked);
+              });
   }
 
   // Try to load an image from the file.
