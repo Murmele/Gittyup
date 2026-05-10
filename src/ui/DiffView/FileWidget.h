@@ -2,6 +2,7 @@
 #define FILEWIDGET_H
 
 #include "../../editor/TextEditor.h"
+#include "HunkWidget.h"
 
 #include <QWidget>
 #include <QFrame>
@@ -21,7 +22,6 @@ class LineStats;
 class Badge;
 class FileLabel;
 class DiffView;
-class HunkWidget;
 
 namespace _FileWidget {
 class Header : public QFrame {
