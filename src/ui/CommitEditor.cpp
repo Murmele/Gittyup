@@ -297,8 +297,8 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
   mUserDict = Settings::userDir().path() + "/user.dic";
   QFile userDict(mUserDict);
   if (!userDict.exists()) {
-    userDict.open(QIODevice::WriteOnly);
-    userDict.close();
+    if (userDict.open(QIODevice::WriteOnly))
+      userDict.close();
   }
 
   // Find installed Dictionaries.
