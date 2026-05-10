@@ -60,31 +60,36 @@ Settings::Settings(QObject *parent) : QObject(parent) {
   map[kTranslationLanguage] = QVariant(Languages::system);
   mDefaults[kTranslation] = map;
   mDefaults[kTranslation].toMap()[kTranslationLanguage] = Languages::system;
-  mCurrentMap = mDefaults;
 }
 
 QString Settings::group() const { return mGroup.join("/"); }
 
-QVariant Settings::value(const QString &key) const {
+QVariant Settings::value(const QString &key) {
   return value(key, defaultValue(key));
 }
 
-QVariant Settings::value(const QString &key,
-                         const QVariant &defaultValue) const {
-  QSettings settings;
-  settings.beginGroup(group());
-  QVariant result(settings.value(key, defaultValue));
-  settings.endGroup();
-  return result;
+QVariant Settings::value(const QString &key, const QVariant &defaultValue) {
+  auto iter = mCache.find(key);
+  if (iter != mCache.end()) {
+    return *iter;
+  } else {
+    QSettings settings;
+    settings.beginGroup(group());
+    QVariant result(settings.value(key, defaultValue));
+    settings.endGroup();
+    mCache[key] = result;
+    return result;
+  }
 }
 
 QVariant Settings::defaultValue(const QString &key) const {
-  return lookup(mCurrentMap, key);
+  return lookup(mDefaults, key);
 }
 
 void Settings::setValue(const QString &key, const QVariant &value,
                         bool refresh) {
   QSettings settings;
+  mCache[key] = value;
   settings.beginGroup(group());
   if (value == defaultValue(key)) {
     if (settings.contains(key)) {
@@ -100,11 +105,9 @@ void Settings::setValue(const QString &key, const QVariant &value,
   settings.endGroup();
 }
 
-QVariant Settings::value(Setting::Id id) const {
-  return value(Setting::key(id));
-}
+QVariant Settings::value(Setting::Id id) { return value(Setting::key(id)); }
 
-QVariant Settings::value(Setting::Id id, const QVariant &defaultValue) const {
+QVariant Settings::value(Setting::Id id, const QVariant &defaultValue) {
   return value(Setting::key(id), defaultValue);
 }
 
@@ -154,7 +157,7 @@ QString Settings::kind(const QString &filename) {
   return lexers.value(key).toMap().value("name").toString();
 }
 
-bool Settings::prompt(Prompt::Kind kind) const {
+bool Settings::prompt(Prompt::Kind kind) {
   return value(promptKey(kind)).toBool();
 }
 
@@ -190,27 +193,23 @@ void Settings::setHotkey(const QString &action, const QString &hotkey) {
   setValue("hotkeys/" + action, hotkey);
 }
 
-QString Settings::hotkey(const QString &action) const {
+QString Settings::hotkey(const QString &action) {
   return value("hotkeys/" + action, "").toString();
 }
 
-bool Settings::isTextEditorWrapLines() const {
-  return value(kWrapLines).toBool();
-}
+bool Settings::isTextEditorWrapLines() { return value(kWrapLines).toBool(); }
 
 void Settings::setTextEditorWrapLines(bool wrap) {
   setValue(kWrapLines, wrap, true);
 }
 
-bool Settings::isWhitespaceIgnored() const {
-  return value(kIgnoreWsKey).toBool();
-}
+bool Settings::isWhitespaceIgnored() { return value(kIgnoreWsKey).toBool(); }
 
 void Settings::setWhitespaceIgnored(bool ignored) {
   setValue(kIgnoreWsKey, ignored, true);
 }
 
-QString Settings::lastPath() const { return value(kLastPathKey).toString(); }
+QString Settings::lastPath() { return value(kLastPathKey).toString(); }
 
 void Settings::setLastPath(const QString &lastPath) {
   setValue(kLastPathKey, lastPath);

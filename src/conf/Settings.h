@@ -20,8 +20,8 @@ class Settings : public QObject {
   Q_OBJECT
 
 public:
-  QVariant value(Setting::Id id) const;
-  QVariant value(Setting::Id id, const QVariant &defaultValue) const;
+  QVariant value(Setting::Id id);
+  QVariant value(Setting::Id id, const QVariant &defaultValue);
   void setValue(Setting::Id id, const QVariant &value);
 
   // Look up lexer name by file name.
@@ -29,23 +29,23 @@ public:
   QString kind(const QString &filename);
 
   // prompt dialogs
-  bool prompt(Prompt::Kind kind) const;
+  bool prompt(Prompt::Kind kind);
   void setPrompt(Prompt::Kind kind, bool prompt);
   QString promptDescription(Prompt::Kind kind) const;
 
   void setHotkey(const QString &action, const QString &hotkey);
-  QString hotkey(const QString &action) const;
+  QString hotkey(const QString &action);
 
   // wrap lines in TextEditor in DiffView
-  bool isTextEditorWrapLines() const;
+  bool isTextEditorWrapLines();
   void setTextEditorWrapLines(bool wrapLines);
 
   // ignore whitespace
-  bool isWhitespaceIgnored() const;
+  bool isWhitespaceIgnored();
   void setWhitespaceIgnored(bool ignored);
 
   // last repository path
-  QString lastPath() const;
+  QString lastPath();
   void setLastPath(const QString &lastPath);
 
   // settings directories
@@ -73,15 +73,15 @@ private:
 
   QString group() const;
 
-  QVariant value(const QString &key) const;
-  QVariant value(const QString &key, const QVariant &defaultValue) const;
+  QVariant value(const QString &key);
+  QVariant value(const QString &key, const QVariant &defaultValue);
   QVariant defaultValue(const QString &key) const;
   void setValue(const QString &key, const QVariant &value,
                 bool refresh = false);
 
   QStringList mGroup;
   QVariantMap mDefaults;
-  QVariantMap mCurrentMap;
+  QVariantMap mCache;
 };
 
 #endif
