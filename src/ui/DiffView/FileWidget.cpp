@@ -354,7 +354,8 @@ FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
   if (patch.isUntracked()) {
     QFile dev(path);
     if (dev.open(QFile::ReadOnly)) {
-      QByteArray content = dev.readAll();
+      // Limit the read to 64KiB to determine if the file is binary or not
+      QByteArray content = dev.read(64 * 1024);
       git::Buffer buffer(content.constData(), content.length());
       binary = buffer.isBinary();
     }

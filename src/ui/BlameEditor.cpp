@@ -32,6 +32,7 @@
 namespace {
 
 const QString kSplitterKey = QString("blamesplitter");
+const size_t kMaxReadBinary = 64 * 1024;
 
 class BlameCallbacks : public git::Blame::Callbacks {
 public:
@@ -142,10 +143,14 @@ bool BlameEditor::load(const QString &name, const git::Blob &blob,
     if (!file.open(QFile::ReadOnly))
       return false;
 
-    content = file.readAll();
+    // Limit the read to kMaxReadBinary to determine if the file is binary
+    content = file.read(kMaxReadBinary);
     git::Buffer buffer(content.constData(), content.length());
     if (buffer.isBinary())
       return false;
+    // Okay, not a binary file. Now we need to grab the rest if needed
+    else if (content.length() == kMaxReadBinary)
+      content = file.readAll();
   }
 
   // Set editor text.
