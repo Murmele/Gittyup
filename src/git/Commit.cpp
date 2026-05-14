@@ -82,22 +82,19 @@ QString Commit::description() const {
   if (it != candidates.constEnd())
     return it->name();
 
-  // Walk parents.
-  QList<Commit> commits = parents();
-  while (!commits.isEmpty()) {
-    QSet<Commit> parents;
-    foreach (const Commit &commit, commits) {
-      auto it = candidates.constFind(commit.id());
-      if (it != candidates.constEnd())
-        return QString("%1 +%2").arg(it->name()).arg(difference(commit));
+  // Walk through parent commits to find one of the candiates
+  RevWalk walk = walker(GIT_SORT_TOPOLOGICAL);
+  if (!walk.isValid())
+    return QString();
 
-      foreach (const Commit &parent, commit.parents())
-        parents.insert(parent);
-    }
-
-    commits = parents.values();
+  Commit commit = walk.next();
+  while (commit.isValid()) {
+    auto it = candidates.constFind(commit.id());
+    if (it != candidates.constEnd())
+      return QString("%1 +%2").arg(it->name()).arg(difference(commit));
+    else
+      commit = walk.next();
   }
-
   return QString();
 }
 
