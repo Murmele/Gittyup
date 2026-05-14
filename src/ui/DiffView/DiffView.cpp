@@ -383,7 +383,10 @@ bool DiffView::canFetchMore() {
  * use a while loop with canFetchMore() to get all
  */
 void DiffView::fetchMore(int fetchWidgets) {
-  if (mFetching)
+  // Back out early if we're reentrant or lazy loading isn't triggered
+  if (mFetching ||
+      (verticalScrollBar()->maximum() - verticalScrollBar()->value() >
+       height() / 2))
     return;
   QScopedValueRollback rollback(mFetching, true);
 
@@ -402,20 +405,12 @@ void DiffView::fetchMore(int fetchWidgets) {
   bool fetchFiles = true;
   if (!mFiles.isEmpty()) {
     FileWidget *lastFile = mFiles.last();
-    while (lastFile->canFetchMore() &&
-           ((verticalScrollBar()->maximum() - verticalScrollBar()->value() <
-             height() / 2) ||
-            fetchAll)) {
-      addedWidgets += lastFile->fetchMore(fetchAll ? -1 : 1);
-
-      // Running the eventloop may trigger a view refresh
-      if (mFiles.isEmpty())
-        return;
+    if (lastFile->canFetchMore()) {
+      addedWidgets += lastFile->fetchMore(fetchAll ? -1 : fetchWidgets);
     }
 
     // Stop loading files
-    if (verticalScrollBar()->maximum() - verticalScrollBar()->value() >
-        height() / 2)
+    if (fetchAll == false && addedWidgets >= fetchWidgets)
       fetchFiles = false;
   }
 
