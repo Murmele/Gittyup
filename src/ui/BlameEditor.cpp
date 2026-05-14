@@ -55,6 +55,7 @@ BlameEditor::BlameEditor(const git::Repository &repo, QWidget *parent)
           &BlameEditor::adjustLineMarginWidth);
   connect(mEditor, &TextEditor::settingsChanged, this,
           &BlameEditor::adjustLineMarginWidth);
+  connect(mEditor, &TextEditor::onVisible, this, &BlameEditor::startBlame);
 
   // Create blame margin.
   mMargin = new BlameMargin(mEditor, this);
@@ -117,7 +118,7 @@ QString BlameEditor::revision() const {
 }
 
 bool BlameEditor::load(const QString &name, const git::Blob &blob,
-                       const git::Commit &commit) {
+                       git::Commit commit) {
   // Clear content.
   clear();
 
@@ -157,11 +158,21 @@ bool BlameEditor::load(const QString &name, const git::Blob &blob,
   // Calculate blame.
   if (mRepo.isValid() && !content.isEmpty()) {
     mMargin->startBlame(name);
-    mBlame.setFuture(QtConcurrent::run(&git::Repository::blame, mRepo, name,
-                                       commit, mCallbacks.data()));
+    mPendingBlameCommit = commit;
+    if (mEditor->isVisible()) {
+      startBlame();
+    }
   }
 
   return true;
+}
+void BlameEditor::startBlame() {
+  if (mPendingBlameCommit.has_value()) {
+    mBlame.setFuture(QtConcurrent::run(&git::Repository::blame, mRepo, mName,
+                                       mPendingBlameCommit.value(),
+                                       mCallbacks.data()));
+    mPendingBlameCommit = std::nullopt;
+  }
 }
 
 void BlameEditor::cancelBlame() {
@@ -171,6 +182,7 @@ void BlameEditor::cancelBlame() {
     mBlame.waitForFinished();
   mBlame.setFuture(QFuture<git::Blame>());
   callbacks->setCanceled(false);
+  mPendingBlameCommit = std::nullopt;
 }
 
 void BlameEditor::save() {
