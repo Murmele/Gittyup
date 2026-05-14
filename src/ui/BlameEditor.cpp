@@ -12,6 +12,7 @@
 #include "FindWidget.h"
 #include "MenuBar.h"
 #include "RepoView.h"
+#include "conf/Constants.h"
 #include "editor/TextEditor.h"
 #include "git/Blame.h"
 #include "git/Blob.h"
@@ -32,7 +33,6 @@
 namespace {
 
 const QString kSplitterKey = QString("blamesplitter");
-const size_t kMaxReadBinary = 64 * 1024;
 
 class BlameCallbacks : public git::Blame::Callbacks {
 public:
