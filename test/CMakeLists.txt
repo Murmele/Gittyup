@@ -66,8 +66,6 @@ add_custom_target(
   COMMENT "Running tests..."
   USES_TERMINAL)
 
-enable_testing()
-
 # Add test library.
 set(CMAKE_DISABLE_TESTING ON)
 add_subdirectory(dep/zip)
