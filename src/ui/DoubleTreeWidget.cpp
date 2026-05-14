@@ -627,7 +627,7 @@ void DoubleTreeWidget::loadEditorContent(const QModelIndexList &indexes) {
                    : view->repo().lookupBlob(mDiff.id(idx, git::Diff::NewFile));
   }
 
-  mEditor->load(name, blob, commit);
+  mEditor->load(name, blob, std::move(commit));
 
   mDiffView->enable(true);
   mDiffView->updateFiles();

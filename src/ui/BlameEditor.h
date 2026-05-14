@@ -37,9 +37,9 @@ public:
   QList<TextEditor *> editors() override { return {mEditor}; }
   void ensureVisible(TextEditor *editor, int pos) override {}
 
-  bool load(const QString &name, const git::Blob &blob,
-            const git::Commit &commit);
+  bool load(const QString &name, const git::Blob &blob, git::Commit commit);
 
+  void startBlame();
   void cancelBlame();
 
   void save();
@@ -61,6 +61,7 @@ private:
   TextEditor *mEditor;
   FindWidget *mFind;
   BlameMargin *mMargin;
+  std::optional<git::Commit> mPendingBlameCommit;
 
   QString mName;
   QString mRevision;

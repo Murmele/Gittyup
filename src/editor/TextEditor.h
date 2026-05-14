@@ -119,7 +119,13 @@ public:
     return QRect(pr.left, pr.top, pr.Width(), pr.Height());
   }
 
+  void showEvent(QShowEvent *event) override {
+    Scintilla::ScintillaIFace::showEvent(event);
+    emit onVisible();
+  }
+
 signals:
+  void onVisible();
   void settingsChanged();
   void highlightActivated(bool active);
   void diagnosticAdded(int line, const Diagnostic &diag);
