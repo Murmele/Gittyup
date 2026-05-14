@@ -260,9 +260,13 @@ QList<git::Commit> Index::commits(const QList<Posting> &postings) const {
   // Look up commits.
   QSet<git::Commit> commits;
   foreach (const Posting &posting, postings) {
-    // FIXME: Remove deleted commits on write.
-    if (git::Commit commit = mRepo.lookupCommit(mIds.at(posting.id)))
-      commits.insert(commit);
+    // If we fail this check, then the index is mismatching the repo
+    // The FIXME below might be the cause of that
+    if (posting.id < mIds.size()) {
+      // FIXME: Remove deleted commits on write.
+      if (git::Commit commit = mRepo.lookupCommit(mIds.at(posting.id)))
+        commits.insert(commit);
+    }
   }
 
   return commits.values();
