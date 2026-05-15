@@ -12,6 +12,7 @@
 #include "FindWidget.h"
 #include "MenuBar.h"
 #include "RepoView.h"
+#include "conf/Constants.h"
 #include "editor/TextEditor.h"
 #include "git/Blame.h"
 #include "git/Blob.h"
@@ -142,10 +143,14 @@ bool BlameEditor::load(const QString &name, const git::Blob &blob,
     if (!file.open(QFile::ReadOnly))
       return false;
 
-    content = file.readAll();
+    // Limit the read to kMaxReadBinary to determine if the file is binary
+    content = file.read(kMaxReadBinary);
     git::Buffer buffer(content.constData(), content.length());
     if (buffer.isBinary())
       return false;
+    // Okay, not a binary file. Now we need to grab the rest if needed
+    else if (content.length() == kMaxReadBinary)
+      content = file.readAll();
   }
 
   // Set editor text.

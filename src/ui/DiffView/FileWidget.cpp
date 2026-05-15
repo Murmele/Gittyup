@@ -7,6 +7,7 @@
 #include "FileLabel.h"
 #include "HunkWidget.h"
 #include "Images.h"
+#include "conf/Constants.h"
 #include "conf/Settings.h"
 #include "git/Commit.h"
 #include "git/Patch.h"
@@ -354,7 +355,9 @@ FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
   if (patch.isUntracked()) {
     QFile dev(path);
     if (dev.open(QFile::ReadOnly)) {
-      QByteArray content = dev.readAll();
+      // Limit the read to kMaxReadBinary number of bytes to determine if the
+      // file is binary or not
+      QByteArray content = dev.read(kMaxReadBinary);
       git::Buffer buffer(content.constData(), content.length());
       binary = buffer.isBinary();
     }
