@@ -141,6 +141,9 @@ private:
   DiffTreeModel *mDiffTreeModel{nullptr};
   QWidget *mParent{nullptr};
   QVBoxLayout *mFileWidgetLayout{nullptr};
+
+  bool mFetchMoreInProgress{false};
+  bool mCancelFetchMore{false};
 };
 
 #endif
