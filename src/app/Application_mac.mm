@@ -9,20 +9,19 @@
 
 #include "Application.h"
 #include "ui/MainWindow.h"
-#include <QUrl>
 #import <AppKit/AppKit.h>
+#include <QUrl>
 
 @interface Launcher : NSObject
 - (void)openInGittyup:(NSPasteboard *)pboard
-  userData:(NSString *)userData
-  error:(NSString **)error;
+             userData:(NSString *)userData
+                error:(NSString **)error;
 @end
 
 @implementation Launcher
-- (void)openInGitAhead:(NSPasteboard *)pboard
-  userData:(NSString *)userData
-  error:(NSString **)error
-{
+- (void)openInGittyup:(NSPasteboard *)pboard
+             userData:(NSString *)userData
+                error:(NSString **)error {
   NSArray *classes = [NSArray arrayWithObject:[NSURL class]];
   NSDictionary *options = [NSDictionary dictionary];
   NSArray *urls = [pboard readObjectsForClasses:classes options:options];
@@ -32,8 +31,7 @@
 }
 @end
 
-void Application::registerService()
-{
+void Application::registerService() {
   Launcher *launcher = [[Launcher alloc] init];
   [[NSApplication sharedApplication] setServicesProvider:launcher];
 }
