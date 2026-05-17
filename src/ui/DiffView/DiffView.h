@@ -138,6 +138,7 @@ private:
   Account::CommitComments mComments;
 
   bool mEnabled{true};
+  bool mFetching{false};
   DiffTreeModel *mDiffTreeModel{nullptr};
   QWidget *mParent{nullptr};
   QVBoxLayout *mFileWidgetLayout{nullptr};
