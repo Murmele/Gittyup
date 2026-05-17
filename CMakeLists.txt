@@ -109,7 +109,7 @@ if(HAIKU)
   # qsort_r in libgit2 requires this
   set(CMAKE_EXE_LINKER_FLAGS -lgnu)
 elseif(UNIX AND NOT APPLE)
-  set(CMAKE_EXE_LINKER_FLAGS -ldl)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl")
 endif()
 
 # Find Qt modules.
