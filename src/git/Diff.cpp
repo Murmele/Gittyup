@@ -36,19 +36,12 @@ int Diff::Callbacks::progress(const git_diff *diff, const char *oldPath,
   return cbs->progress(oldPath, newPath) ? 0 : -1;
 }
 
-Diff::Data::Data(git_diff *diff) : diff(diff) { resetMap(); }
+Diff::Data::Data(git_diff *diff) : diff(diff) {}
 
 Diff::Data::~Data() { git_diff_free(diff); }
 
-void Diff::Data::resetMap() {
-  map.clear();
-  int count = git_diff_num_deltas(diff);
-  for (int i = 0; i < count; ++i)
-    map.append(i);
-}
-
 const git_diff_delta *Diff::Data::delta(int index) const {
-  return git_diff_get_delta(diff, map.at(index));
+  return git_diff_get_delta(diff, index);
 }
 
 Diff::Diff() {}
@@ -141,7 +134,7 @@ int Diff::count() const { return git_diff_num_deltas(d->diff); }
 
 Patch Diff::patch(int index) const {
   git_patch *patch = nullptr;
-  git_patch_from_diff(&patch, d->diff, d->map.at(index));
+  git_patch_from_diff(&patch, d->diff, index);
   return Patch(patch);
 }
 
@@ -168,10 +161,7 @@ int Diff::indexOf(const QString &name) const {
   return -1;
 }
 
-void Diff::merge(const Diff &diff) {
-  git_diff_merge(d->diff, diff);
-  d->resetMap();
-}
+void Diff::merge(const Diff &diff) { git_diff_merge(d->diff, diff); }
 
 void Diff::findSimilar(bool untracked) {
   git_diff_find_options opts = GIT_DIFF_FIND_OPTIONS_INIT;
@@ -182,30 +172,6 @@ void Diff::findSimilar(bool untracked) {
     return;
 
   git_diff_find_similar(d->diff, &opts);
-  d->resetMap();
-}
-
-void Diff::sort(SortRole role, Qt::SortOrder order) {
-  bool ascending = (order == Qt::AscendingOrder);
-  std::sort(
-      d->map.begin(), d->map.end(), [this, role, ascending](int lhs, int rhs) {
-        switch (role) {
-          case NameRole: {
-            QString lhsName = git_diff_get_delta(d->diff, lhs)->new_file.path;
-            QString rhsName = git_diff_get_delta(d->diff, rhs)->new_file.path;
-            return ascending ? (lhsName < rhsName) : (rhsName < lhsName);
-          }
-
-          case StatusRole: {
-            git_delta_t lhsStatus = git_diff_get_delta(d->diff, lhs)->status;
-            git_delta_t rhsStatus = git_diff_get_delta(d->diff, rhs)->status;
-            return ascending ? (lhsStatus < rhsStatus)
-                             : (rhsStatus < lhsStatus);
-          }
-        }
-        throw std::runtime_error("unreachable; value=" +
-                                 std::to_string(static_cast<int>(role)));
-      });
 }
 
 void Diff::setAllStaged(bool staged, bool yieldFocus) {
