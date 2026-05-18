@@ -143,6 +143,15 @@ jobs:
             cmake_env: {}
             pack: 1
 
+          - name: macos-arm64
+            os: macos-15
+            ninja_platform: mac
+            qt_platform: mac
+            openssl_arch: darwin64-arm64-cc
+            cmake_flags: "-DUSE_SYSTEM_LIBSSH2=OFF -DUSE_SSH:STRING=localbuild -DUSE_SYSTEM_QT=OFF -DCMAKE_OSX_ARCHITECTURES=arm64"
+            cmake_env: {}
+            pack: 1
+
           - name: win64
             os: windows-latest
             ninja_platform: win
@@ -377,9 +386,10 @@ jobs:
           shopt -s nullglob
           flatpaks=(artifacts/GittyupFlatpak/*.flatpak)
           appimages=(artifacts/GittyupAppImage/Gittyup*.AppImage)
-          files=("${flatpaks[@]}" "${appimages[@]}")
+          macos=(artifacts/Gittyup\ macos/Gittyup-* artifacts/Gittyup\ macos-arm64/Gittyup-*)
+          files=("${flatpaks[@]}" "${appimages[@]}" "${macos[@]}")
           if [ ${#files[@]} -eq 0 ]; then
-            echo "No Flatpak or AppImage assets to upload."
+            echo "No Flatpak, AppImage, or macOS assets to upload."
             exit 1
           fi
           if ! gh release view development >/dev/null 2>&1; then
@@ -402,9 +412,10 @@ jobs:
           TAG="${{ github.ref_name }}"
           flatpaks=(artifacts/GittyupFlatpak/*.flatpak)
           appimages=(artifacts/GittyupAppImage/Gittyup*.AppImage)
-          files=("${flatpaks[@]}" "${appimages[@]}")
+          macos=(artifacts/Gittyup\ macos/Gittyup-* artifacts/Gittyup\ macos-arm64/Gittyup-*)
+          files=("${flatpaks[@]}" "${appimages[@]}" "${macos[@]}")
           if [ ${#files[@]} -eq 0 ]; then
-            echo "No Flatpak or AppImage assets to upload."
+            echo "No Flatpak, AppImage, or macOS assets to upload."
             exit 1
           fi
           if ! gh release view "$TAG" >/dev/null 2>&1; then
