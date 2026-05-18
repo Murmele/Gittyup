@@ -18,8 +18,6 @@
 #include "ui/FileContextMenu.h"
 #include "git/Repository.h"
 
-#include "git/Buffer.h"
-
 #include <QCheckBox>
 #include <QContextMenuEvent>
 #include <QVBoxLayout>
@@ -358,8 +356,7 @@ FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
       // Limit the read to kMaxReadBinary number of bytes to determine if the
       // file is binary or not
       QByteArray content = dev.read(kMaxReadBinary);
-      git::Buffer buffer(content.constData(), content.length());
-      binary = buffer.isBinary();
+      binary = git::Blob::isBinary(content);
     }
   }
 
