@@ -53,7 +53,6 @@ NewBranchDialog::NewBranchDialog(const git::Repository &repo,
   form->addRow(tr("Advanced:"), expand);
 
   QWidget *advanced = new QWidget(this);
-  advanced->setVisible(false);
 
   QFormLayout *advancedForm = new QFormLayout(advanced);
   advancedForm->setContentsMargins(-1, 0, 0, 0);
