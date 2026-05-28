@@ -1,4 +1,4 @@
-pkg_check_modules(HUNSPELL hunspell)
+pkg_check_modules(HUNSPELL hunspell>=1.7)
 
 if(HUNSPELL_FOUND)
   add_library(hunspell INTERFACE)

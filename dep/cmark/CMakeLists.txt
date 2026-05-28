@@ -1,6 +1,6 @@
 if(USE_SYSTEM_CMARK)
   if(PKG_CONFIG_FOUND)
-    pkg_check_modules(CMARK libcmark)
+    pkg_check_modules(CMARK libcmark>=0.30.2)
     add_executable(cmark_exe IMPORTED GLOBAL)
     set_property(TARGET cmark_exe PROPERTY IMPORTED_LOCATION cmark)
   endif()
