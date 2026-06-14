@@ -96,7 +96,7 @@ else()
       CACHE BOOL "Use ssh")
   find_pkglibraries(LIBSSH2 libssh2)
   if(NOT LIBSSH2_FOUND)
-    find_package(libssh2 REQUIRED)
+    find_package(libssh2 1.11 REQUIRED)
   endif()
 endif()
 
@@ -143,7 +143,7 @@ else()
 endif()
 
 find_package(
-  Qt6
+  Qt6 6.6
   COMPONENTS ${QT_MODULES} LinguistTools
   REQUIRED)
 if(FLATPAK)

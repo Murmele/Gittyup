@@ -1,4 +1,4 @@
-find_package(Lua)
+find_package(Lua 5.3)
 if(LUA_FOUND)
   add_library(lua INTERFACE)
   target_include_directories(lua INTERFACE ${LUA_INCLUDE_DIR})
