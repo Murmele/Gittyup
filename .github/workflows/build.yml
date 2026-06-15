@@ -313,7 +313,10 @@ jobs:
           mkdir -p AppDir
           DESTDIR=AppDir ninja install
 
-          export QTDIR=$RUNNER_WORKSPACE/Qt/${{ matrix.qt.version }}/${{ matrix.env.qt_arch }}
+          # install-qt-action exports QT_ROOT_DIR to the actual install dir.
+          # aqt downloads the "linux_gcc_64" package but extracts it to "gcc_64",
+          # so the arch id and the on-disk dir name differ; prefer QT_ROOT_DIR.
+          export QTDIR=${QT_ROOT_DIR:-$RUNNER_WORKSPACE/Qt/${{ matrix.qt.version }}/${{ matrix.env.qt_arch }}}
           export QT_ROOT_DIR=$QTDIR
 
           rm -rf ./AppDir/usr/include/
