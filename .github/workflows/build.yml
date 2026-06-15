@@ -386,14 +386,15 @@ jobs:
             echo "No Flatpak or AppImage assets to upload."
             exit 1
           fi
-          if ! gh release view development >/dev/null 2>&1; then
+          if ! gh release view development --repo "${{ github.repository }}" >/dev/null 2>&1; then
             gh release create development \
+              --repo "${{ github.repository }}" \
               --prerelease \
               --title "Latest Build (Development)" \
               --target "${{ github.sha }}" \
               "${files[@]}"
           else
-            gh release upload development "${files[@]}" --clobber
+            gh release upload development "${files[@]}" --repo "${{ github.repository }}" --clobber
           fi
 
       - name: Update GitHub release (version tag)
@@ -411,13 +412,14 @@ jobs:
             echo "No Flatpak or AppImage assets to upload."
             exit 1
           fi
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
+          if ! gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
             gh release create "$TAG" \
+              --repo "${{ github.repository }}" \
               --title "Gittyup Release ${{ steps.version.outputs.VERSION }}" \
               --target "${{ github.sha }}" \
               "${files[@]}"
           else
-            gh release upload "$TAG" "${files[@]}" --clobber
+            gh release upload "$TAG" "${files[@]}" --repo "${{ github.repository }}" --clobber
           fi
 
       # needed otherwise the docs folder is not available
