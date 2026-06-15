@@ -127,7 +127,7 @@ jobs:
             os: ubuntu-latest
             ninja_platform: linux
             qt_platform: linux
-            qt_arch: gcc_64
+            qt_arch: linux_gcc_64
             openssl_arch: linux-x86_64
             ld_library_arch: linux-x86-64
             cmake_flags: "-DGENERATE_APPDATA=ON -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_UPDATE_OVER_GUI=OFF -DUSE_SSH=ON"
