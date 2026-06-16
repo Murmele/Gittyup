@@ -29,6 +29,7 @@
 #include <QNetworkProxyFactory>
 #include <QNetworkReply>
 #include <QOperatingSystemVersion>
+#include <QPalette>
 #include <QSettings>
 #include <QStyle>
 #include <QTimer>
@@ -161,6 +162,18 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
   mTheme.reset(Theme::create(parser.value("theme")));
   setStyle(mTheme->style());
   setStyleSheet(mTheme->styleSheet());
+
+#if defined(Q_OS_WIN)
+  // Qt normally re-polishes the application palette through the style on
+  // setStyle(), but the explicit base palette set above is treated as
+  // user-defined and is not re-polished, dropping the theme's color remaps
+  // (e.g. BrightText, which leaves white-on-white text on the start page).
+  // Polish the palette through the style ourselves so all themes render
+  // correctly.
+  QPalette palette = QApplication::palette();
+  style()->polish(palette);
+  QApplication::setPalette(palette);
+#endif
 
 #if defined(Q_OS_WIN)
   // Set default font style and hinting.
