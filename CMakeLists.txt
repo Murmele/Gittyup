@@ -118,7 +118,6 @@ set(QT_MODULES
     Core
     Gui
     Network
-    PrintSupport
     Widgets
     Test)
 
