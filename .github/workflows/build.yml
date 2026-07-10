@@ -120,14 +120,14 @@ jobs:
       fail-fast: false
       matrix:
         qt:
-          - version: 6.6.0
+          - version: 6.7.3
 
         env:
           - name: linux
             os: ubuntu-latest
             ninja_platform: linux
             qt_platform: linux
-            qt_arch: gcc_64
+            qt_arch: linux_gcc_64
             openssl_arch: linux-x86_64
             ld_library_arch: linux-x86-64
             cmake_flags: "-DGENERATE_APPDATA=ON -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_UPDATE_OVER_GUI=OFF -DUSE_SSH=ON"
@@ -312,7 +312,10 @@ jobs:
           mkdir -p AppDir
           DESTDIR=AppDir ninja install
 
-          export QTDIR=$RUNNER_WORKSPACE/Qt/${{ matrix.qt.version }}/${{ matrix.env.qt_arch }}
+          # install-qt-action exports QT_ROOT_DIR to the actual install dir.
+          # aqt downloads the "linux_gcc_64" package but extracts it to "gcc_64",
+          # so the arch id and the on-disk dir name differ; prefer QT_ROOT_DIR.
+          export QTDIR=${QT_ROOT_DIR:-$RUNNER_WORKSPACE/Qt/${{ matrix.qt.version }}/${{ matrix.env.qt_arch }}}
           export QT_ROOT_DIR=$QTDIR
 
           rm -rf ./AppDir/usr/include/
@@ -382,14 +385,15 @@ jobs:
             echo "No Flatpak or AppImage assets to upload."
             exit 1
           fi
-          if ! gh release view development >/dev/null 2>&1; then
+          if ! gh release view development --repo "${{ github.repository }}" >/dev/null 2>&1; then
             gh release create development \
+              --repo "${{ github.repository }}" \
               --prerelease \
               --title "Latest Build (Development)" \
               --target "${{ github.sha }}" \
               "${files[@]}"
           else
-            gh release upload development "${files[@]}" --clobber
+            gh release upload development "${files[@]}" --repo "${{ github.repository }}" --clobber
           fi
 
       - name: Update GitHub release (version tag)
@@ -407,13 +411,14 @@ jobs:
             echo "No Flatpak or AppImage assets to upload."
             exit 1
           fi
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
+          if ! gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
             gh release create "$TAG" \
+              --repo "${{ github.repository }}" \
               --title "Gittyup Release ${{ steps.version.outputs.VERSION }}" \
               --target "${{ github.sha }}" \
               "${files[@]}"
           else
-            gh release upload "$TAG" "${files[@]}" --clobber
+            gh release upload "$TAG" "${files[@]}" --repo "${{ github.repository }}" --clobber
           fi
 
       # needed otherwise the docs folder is not available
