@@ -382,7 +382,7 @@ jobs:
           appimages=(artifacts/GittyupAppImage/Gittyup*.AppImage)
           windows_files=("artifacts/Gittyup win64"/Gittyup*.exe)
           macos_files=("artifacts/Gittyup macos"/Gittyup*.dmg)
-          files=("${flatpaks[@]}" "${appimages[@]}" "${windows_files[@]}" "${macos_files[@]}")
+          files=("${flatpaks[@]}" "${appimages[@]}" "${windows_files[@]}")
           if [ ${#files[@]} -eq 0 ]; then
             echo "No assets to upload."
             exit 1
@@ -410,7 +410,7 @@ jobs:
           appimages=(artifacts/GittyupAppImage/Gittyup*.AppImage)
           windows_files=("artifacts/Gittyup win64"/Gittyup*.exe)
           macos_files=("artifacts/Gittyup macos"/Gittyup*.dmg)
-          files=("${flatpaks[@]}" "${appimages[@]}" "${windows_files[@]}" "${macos_files[@]}")
+          files=("${flatpaks[@]}" "${appimages[@]}" "${windows_files[@]}")
           if [ ${#files[@]} -eq 0 ]; then
             echo "No assets to upload."
             exit 1
