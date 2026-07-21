@@ -380,9 +380,11 @@ jobs:
           shopt -s nullglob
           flatpaks=(artifacts/GittyupFlatpak/*.flatpak)
           appimages=(artifacts/GittyupAppImage/Gittyup*.AppImage)
-          files=("${flatpaks[@]}" "${appimages[@]}")
+          windows_files=("artifacts/Gittyup win64"/Gittyup*.exe)
+          macos_files=("artifacts/Gittyup macos"/Gittyup*.dmg)
+          files=("${flatpaks[@]}" "${appimages[@]}" "${windows_files[@]}")
           if [ ${#files[@]} -eq 0 ]; then
-            echo "No Flatpak or AppImage assets to upload."
+            echo "No assets to upload."
             exit 1
           fi
           if ! gh release view development --repo "${{ github.repository }}" >/dev/null 2>&1; then
@@ -406,9 +408,11 @@ jobs:
           TAG="${{ github.ref_name }}"
           flatpaks=(artifacts/GittyupFlatpak/*.flatpak)
           appimages=(artifacts/GittyupAppImage/Gittyup*.AppImage)
-          files=("${flatpaks[@]}" "${appimages[@]}")
+          windows_files=("artifacts/Gittyup win64"/Gittyup*.exe)
+          macos_files=("artifacts/Gittyup macos"/Gittyup*.dmg)
+          files=("${flatpaks[@]}" "${appimages[@]}" "${windows_files[@]}")
           if [ ${#files[@]} -eq 0 ]; then
-            echo "No Flatpak or AppImage assets to upload."
+            echo "No assets to upload."
             exit 1
           fi
           if ! gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
