@@ -400,11 +400,13 @@ FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
       connect(mHeader->check(), &QCheckBox::checkStateChanged,
               [this](Qt::CheckState state) {
-#else
-      connect(mHeader->check(), &QCheckBox::stateChanged, [this](int state) {
-#endif
                 mHeader->disclosureButton()->setChecked(state != Qt::Checked);
               });
+#else
+      connect(mHeader->check(), &QCheckBox::stateChanged, [this](int state) {
+        mHeader->disclosureButton()->setChecked(state != Qt::Checked);
+      });
+#endif
   }
 
   // Try to load an image from the file.
