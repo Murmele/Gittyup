@@ -19,62 +19,62 @@
 theme['palette']   = {
   -- These names correspond to a dark on light theme.
   -- The values should be inverted in light on dark themes.
-  light            = '#11111b', -- inverse of dark
-  midlight         = '#181825', -- inverse of middark
-  middark          = '#1e1e2e', -- inverse of midlight
-  dark             = '#313244', -- inverse of light
+  light            = '#1E1F23', -- inverse of dark
+  midlight         = '#212226', -- inverse of middark
+  middark          = '#2D2E34', -- inverse of midlight
+  dark             = '#36373E', -- inverse of light
 
   -- This should always be a dark color.
-  shadow           = '#181825'
+  shadow           = '#212226'
 }
 
 -- the colors of text entry, list view, and other widgets
 -- { default, active, inactive, disabled }
 theme['widget']    = {
-  text             = { default = '#cdd6f4', disabled = '#a6adc8' },
-  bright_text      = '#bac2de',
-  background       = '#181825',
-  alternate        = '#1e1e2e', -- an alternate background color for list rows
+  text             = { default = '#E1E5F2', disabled = '#555B65' },
+  bright_text      = '#AAB2BE',
+  background       = '#212226',
+  alternate        = '#2D2E34', -- an alternate background color for list rows
   highlight        = { active = '#2A82DA', inactive = '#1B5B9B' },
-  highlighted_text = { active = '#cdd6f4', inactive = '#cdd6f4' },
+  highlighted_text = { active = '#E1E5F2', inactive = '#E1E5F2' },
 }
 
 -- window colors
 -- { default, active, inactive, disabled }
 theme['window']    = {
-  text             = '#cdd6f4',
-  background       = '#1e1e2e'
+  text             = '#E1E5F2',
+  background       = '#2D2E34'
 }
 
 -- button colors
 -- { default, active, inactive, disabled, checked, pressed }
 theme['button']    = {
-  text             = { default = '#cdd6f4', inactive = '#a6adc8', disabled = '#a6adc8' },
-  background       = { default = '#1e1e2e', checked = '#2A82DA', pressed = '#2A82DA' }
+  text             = { default = '#E1E5F2', inactive = '#555B65', disabled = '#555B65' },
+  background       = { default = '#2D2E34', checked = '#2A82DA', pressed = '#2A82DA' }
 }
 
 -- commit list colors
 -- { default, active, inactive, disabled }
 theme['commits']   = {
-  text             = '#bac2de',
-  bright_text      = '#cdd6f4',
-  background       = '#1e1e2e',
-  alternate        = '#1e1e2e', -- an alternate background color for list rows
+  text             = '#AAB2BE',
+  bright_text      = '#E1E5F2',
+  background       = '#2D2E34',
+  alternate        = '#2D2E34', -- an alternate background color for list rows
   highlight        = { active = '#2A82DA', inactive = '#1B5B9B' },
-  highlighted_text = { active = '#A6CBF0', inactive = '#cdd6f4' },
-  highlighted_bright_text = { active = '#cdd6f4', inactive = '#9090A5' }
+  highlighted_text = { active = '#A6CBF0', inactive = '#E1E5F2' },
+  highlighted_bright_text = { active = '#E1E5F2', inactive = '#9090A5' }
 }
 
 -- status badge colors
 -- { normal, selected, conflicted, head, notification }
 theme['badge']     = {
   foreground       = {
-    normal         = '#cdd6f4',
+    normal         = '#E1E5F2',
     selected       = '#2A82DA'
   },
   background       = {
     normal         = '#2A82DA', -- the default color
-    selected       = '#cdd6f4', -- the color when a list item is selected
+    selected       = '#E1E5F2', -- the color when a list item is selected
     conflicted     = '#DA2ADA', -- the color of conflicted items
     head           = '#52A500', -- a bolder color to indicate the HEAD
     notification   = '#8C2026',  -- the color of toolbar notifications badges
@@ -114,7 +114,7 @@ theme['graph']     = {
 -- checkbox colors
 -- { default, active, inactive, disabled }
 theme['checkbox']  = {
-  text             = '#cdd6f4',
+  text             = '#E1E5F2',
   fill             = '#535359',
   outline          = '#3C3C42'
 }
@@ -122,7 +122,7 @@ theme['checkbox']  = {
 -- commit editor colors
 theme['commiteditor'] = {
   spellerror       = '#BC0009', -- spell check error
-  spellignore      = '#cdd6f4', -- spell check ignored word(s)
+  spellignore      = '#E1E5F2', -- spell check ignored word(s)
   lengthwarning    = '#464614'  -- line length limit warning (background)
 }
 
@@ -136,7 +136,7 @@ theme['diff']      = {
   theirs           = '#600060', -- theirs conflict lines
   word_addition    = '#296812', -- added words
   word_deletion    = '#781B20', -- deleted words
-  note             = '#cdd6f4', -- note squiggle
+  note             = '#E1E5F2', -- note squiggle
   warning          = '#E8C080', -- warning background
   error            = '#7E494B'  -- error background
 }
@@ -150,8 +150,8 @@ theme['link']      = {
 
 -- menubar background color
 theme['menubar']   = {
-  text             = '#cdd6f4',
-  background       = '#181825'
+  text             = '#E1E5F2',
+  background       = '#212226'
 }
 
 -- tabbar background color (uncomment lines to customize)
@@ -164,9 +164,9 @@ theme['tabbar']   = {
 -- remote comment colors
 theme['comment']   = {
   background       = '#212228',
-  body             = '#bac2de',
+  body             = '#AAB2BE',
   author           = '#378BDD',
-  timestamp        = '#cdd6f4'
+  timestamp        = '#E1E5F2'
 }
 
 -- star fill color
@@ -182,7 +182,7 @@ theme['titlebar']  = {
 -- popup tooltip colors
 -- { default, active, inactive, disabled }
 theme['tooltip']   = {
-  text             = '#cdd6f4',
+  text             = '#E1E5F2',
   background       = '#2A82DA'
 }
 
@@ -208,12 +208,12 @@ theme.property['color.white']        = '#E6E6E6'
 -- styles
 theme.property['style.bracebad']     = 'fore:#CC8080'
 theme.property['style.bracelight']   = 'fore:#80CCFF'
-theme.property['style.calltip']      = 'fore:#bac2de,back:#333333'
+theme.property['style.calltip']      = 'fore:#AAB2BE,back:#333333'
 theme.property['style.class']        = 'fore:#F6E9D0'
 theme.property['style.comment']      = 'fore:#E2D9C9'
 theme.property['style.constant']     = 'fore:#E8C080'
 theme.property['style.controlchar']  = '$(style.nothing)'
-theme.property['style.default']      = 'fore:#bac2de,back:#212228'
+theme.property['style.default']      = 'fore:#AAB2BE,back:#212228'
 theme.property['style.definition']   = 'fore:#F6E9D0'
 theme.property['style.embedded']     = '$(style.tag),back:#333333'
 theme.property['style.error']        = 'fore:#994D4D'
