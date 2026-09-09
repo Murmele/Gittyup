@@ -9,6 +9,7 @@
 
 #include "TreeView.h"
 #include "ColumnView.h"
+#include "ProgressIndicator.h"
 #include "ViewDelegate.h"
 #include "TreeModel.h"
 #include "Debug.h"
@@ -48,6 +49,42 @@ TreeView::TreeView(QWidget *parent, const QString &name)
       mFileListDelegatePtr(std::make_unique<ViewDelegate>(this, true)),
       mFileTreeDelegatePtr(std::make_unique<ViewDelegate>(this)), mName(name) {
   setObjectName(name);
+
+  connect(&mTimer, &QTimer::timeout, this, [this] {
+    ++mProgress;
+    if (mLoadingFadein < 1.0f)
+      mLoadingFadein += 0.1;
+    viewport()->update();
+  });
+}
+
+void TreeView::setLoading(bool loading) {
+  if (loading == mLoading)
+    return;
+
+  mLoading = loading;
+  if (loading) {
+    mProgress = 0;
+    mLoadingFadein = 0;
+    mTimer.start(50);
+  } else {
+    mTimer.stop();
+  }
+
+  viewport()->update();
+}
+
+void TreeView::paintEvent(QPaintEvent *event) {
+  QTreeView::paintEvent(event);
+
+  if (mLoading) {
+    QPainter painter(viewport());
+    QRect indicator(QPoint(0, 0), ProgressIndicator::size());
+    indicator.moveCenter(viewport()->rect().center());
+    ProgressIndicator::paint(&painter, indicator,
+                             palette().color(QPalette::WindowText),
+                             mLoadingFadein, mProgress);
+  }
 }
 
 void TreeView::updateView() {

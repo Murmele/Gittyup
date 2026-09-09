@@ -16,7 +16,9 @@
 #include "ui/DiffTreeModel.h"
 #include "ui/DoubleTreeWidget.h"
 #include "ui/HotkeyManager.h"
+#include "ui/ProgressIndicator.h"
 #include "git/Tree.h"
+#include <QPainter>
 #include <QScrollBar>
 #include <QPushButton>
 #include <QMimeData>
@@ -100,9 +102,41 @@ DiffView::DiffView(const git::Repository &repo, QWidget *parent)
   shortcut = new QShortcut(this);
   moveHalfPageUpHotKey.use(shortcut);
   connect(shortcut, &QShortcut::activated, [this] { moveHalfPageUp(); });
+
+  connect(&mTimer, &QTimer::timeout, this, [this] {
+    ++mProgress;
+    if (mLoadingFadein < 1.0f)
+      mLoadingFadein += 0.1;
+    viewport()->update();
+  });
 }
 
 DiffView::~DiffView() {}
+
+void DiffView::setLoading(bool loading) {
+  if (loading) {
+    mProgress = 0;
+    mLoadingFadein = 0;
+    mTimer.start(50);
+  } else {
+    mTimer.stop();
+  }
+
+  viewport()->update();
+}
+
+void DiffView::paintEvent(QPaintEvent *event) {
+  QScrollArea::paintEvent(event);
+
+  if (!mDiff.isValid()) {
+    QPainter painter(viewport());
+    QRect indicator(QPoint(0, 0), ProgressIndicator::size());
+    indicator.moveCenter(viewport()->rect().center());
+    ProgressIndicator::paint(&painter, indicator,
+                             palette().color(QPalette::WindowText),
+                             mLoadingFadein, mProgress);
+  }
+}
 
 QWidget *DiffView::file(int index) {
   fetchAll(index);
@@ -429,8 +463,7 @@ void DiffView::fetchMore(int fetchWidgets) {
     }
     int count = indices.count();
 
-    for (int i = mFiles.count(); i < count && addedWidgets < fetchWidgets;
-         ++i) {
+  for (int i = mFiles.count(); i < count && addedWidgets < fetchWidgets; ++i) {
 
       int pidx = indices[i].data(DiffTreeModel::PatchIndexRole).toInt();
       git::Patch patch = mDiff.patch(pidx);

@@ -618,6 +618,23 @@ void DetailView::setDiff(const git::Diff &diff, const QString &file,
   MenuBar::instance(this)->updateRepository();
 }
 
+void DetailView::setLoading() {
+  // Commit metadata (author, date, message, parents, refs, ...) comes from
+  // the selected commit(s), not the diff, so this can easily be shown
+  // immediatly.
+  RepoView *view = RepoView::parentView(this);
+  QList<git::Commit> commits = view->commits();
+  if (!commits.isEmpty()) {
+    mDetail->setCurrentIndex(CommitIndex);
+    mDetail->setVisible(true);
+    static_cast<CommitDetail *>(mDetail->currentWidget())->setCommits(commits);
+  }
+
+  // Incidate data loading while we wait for data to arrive
+  ContentWidget *cw = static_cast<ContentWidget *>(mContent->currentWidget());
+  cw->setLoading();
+}
+
 void DetailView::cancelBackgroundTasks() {
   CommitDetail *cd = static_cast<CommitDetail *>(mDetail->widget(CommitIndex));
   cd->cancelBackgroundTasks();

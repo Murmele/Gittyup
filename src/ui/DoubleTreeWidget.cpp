@@ -403,6 +403,20 @@ QString DoubleTreeWidget::selectedFile() const {
   return "";
 }
 
+void DoubleTreeWidget::setLoading() {
+  // Clear the file list's rows, the diff view, and the blame editor, then
+  // let the file list and the diff view paint their own spinner over the
+  // now-empty content while we wait.
+  mDiffTreeModel->setDiff(git::Diff());
+
+  mEditor->clear();
+  mDiffView->setDiff(git::Diff());
+
+  stagedFiles->setLoading(true);
+  unstagedFiles->setLoading(true);
+  mDiffView->setLoading(true);
+}
+
 /*!
  * \brief DoubleTreeWidget::setDiff
  * \param diff
@@ -413,6 +427,11 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
                                const QString &pathspec) {
   Q_UNUSED(file)
   Q_UNUSED(pathspec)
+
+  // Diff is being set, so lets not indicate we're loading anything
+  stagedFiles->setLoading(false);
+  unstagedFiles->setLoading(false);
+  mDiffView->setLoading(false);
 
   mSetDiffCounter++;
 

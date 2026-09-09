@@ -43,6 +43,7 @@ private slots:
   void restoreStagedFileAfterCommit();
   void discardFiles();
   void fileMergeCrash();
+  void selectionSurvivesPush();
   void dirtySubmoduleAndStagedSubmodule();
   void conflictedAndStagedFile();
 
@@ -65,7 +66,7 @@ void TestTreeView::restoreStagedFileAfterCommit() {
     // Wait for refresh
     auto timeout = Timeout(10000, "Repository didn't refresh in time");
     while (unstagedModel->rowCount() < 1)
-      qWait(300);
+      qWait(10);
 
     QCOMPARE(unstagedModel->rowCount(), 2);
     auto folder = unstagedModel->index(0, 0);
@@ -157,7 +158,7 @@ void TestTreeView::discardFiles() {
     // Wait for refresh
     auto timeout = Timeout(10000, "Repository didn't refresh in time");
     while (unstagedModel->rowCount() < 1)
-      qWait(300);
+      qWait(10);
 
     QCOMPARE(unstagedModel->rowCount(), 4);
     auto folder1 = unstagedModel->index(3, 0);
@@ -231,8 +232,9 @@ void TestTreeView::fileMergeCrash() {
   QAbstractItemModel *stagedModel = stagedTree->model();
 
   // Wait for refresh
+  auto timeout = Timeout(10000, "Repository didn't refresh in time");
   while (stagedModel->rowCount() < 3)
-    qWait(300);
+    qWait(10);
 
   QAbstractItemModel *unstagedModel = unstagedTree->model();
   QCOMPARE(unstagedModel->rowCount(), 1);
@@ -278,6 +280,61 @@ void TestTreeView::fileMergeCrash() {
   // should not crash
 }
 
+void TestTreeView::selectionSurvivesPush() {
+  // Pushing must not leave the diff/file views permanently blank: they're
+  // allowed to clear while the push's resulting ref update is processed,
+  // but must come back populated afterward.
+  QTemporaryDir remoteDir;
+  QVERIFY(remoteDir.isValid());
+  git::Repository remoteRepo = git::Repository::init(remoteDir.path(), true);
+  QVERIFY(remoteRepo.isValid());
+
+  INIT_REPO("TreeViewCollapseCount.zip", true);
+
+  git::Remote remote = repo.addRemote("origin", remoteDir.path());
+  QVERIFY(remote.isValid());
+
+  // Set up tracking with an initial push, same as any already-established
+  // branch would have. This first push takes the setUpstream=true path,
+  // which (unlike a plain push) also goes through a HEAD-related ref
+  // update
+  repoView->push(remote, git::Reference(), QString(), true, false, false);
+  {
+    auto timeout = Timeout(10000, "Initial push didn't complete in time");
+    while (!remoteRepo.lookupRef("refs/heads/master").isValid())
+      qWait(10);
+  }
+
+  // Create a second commit so the real push below has something to send
+  {
+    QFile file(repo.workdir().filePath("newfile.txt"));
+    QVERIFY(file.open(QFile::WriteOnly));
+    file.write("content");
+    file.close();
+    repo.index().setStaged({"newfile.txt"}, true);
+    QVERIFY(repo.commit("second commit"));
+  }
+
+  // Wait for the resulting selection/diff to settle before the real push.
+  {
+    auto timeout = Timeout(10000, "Selection didn't settle in time");
+    while (!repoView->diff().isValid())
+      qWait(10);
+  }
+
+  // Pushing more commits on an already-tracked branch, i.e. setUpstream=false.
+  // That only updates the remote-tracking ref, not HEAD, so it must not leave
+  // the diff/file views permanently blank.
+  repoView->push(remote, git::Reference(), QString(), false, false, false);
+
+  // The diff view must come back populated, not stay cleared. Without the
+  // fix this hits the Timeout below and aborts.
+  auto timeout =
+      Timeout(10000, "Diff view didn't get repopulated after the push");
+  while (!repoView->diff().isValid())
+    qWait(10);
+}
+
 void TestTreeView::dirtySubmoduleAndStagedSubmodule() {
   INIT_REPO("DirtySubmoduleUnstagedTree.zip", false);
 
@@ -290,6 +347,14 @@ void TestTreeView::dirtySubmoduleAndStagedSubmodule() {
 
   {
     QAbstractItemModel *stagedModel = stagedTree->model();
+
+    {
+      // Wait for refresh
+      auto timeout = Timeout(10000, "Repository didn't refresh in time");
+      while (stagedModel->rowCount() < 1)
+        qWait(10);
+    }
+
     QCOMPARE(stagedModel->rowCount(), 1);
     QModelIndex index = stagedModel->index(0, 0); // submodules folder
     QVERIFY(index.isValid());
@@ -303,6 +368,13 @@ void TestTreeView::dirtySubmoduleAndStagedSubmodule() {
 
   {
     QAbstractItemModel *unstagedModel = unstagedTree->model();
+    {
+      // Wait for refresh
+      auto timeout = Timeout(10000, "Repository didn't refresh in time");
+      while (unstagedModel->rowCount() < 1)
+        qWait(300);
+    }
+
     QCOMPARE(unstagedModel->rowCount(), 1);
     QModelIndex index = unstagedModel->index(0, 0); // submodules folder
     QVERIFY(index.isValid());
@@ -327,6 +399,14 @@ void TestTreeView::conflictedAndStagedFile() {
 
   {
     QAbstractItemModel *stagedModel = stagedTree->model();
+
+    {
+      // Wait for refresh
+      auto timeout = Timeout(10000, "Repository didn't refresh in time");
+      while (stagedModel->rowCount() < 1)
+        qWait(10);
+    }
+
     QCOMPARE(stagedModel->rowCount(), 1);
     QModelIndex index = stagedModel->index(0, 0); // "folder" folder
     QVERIFY(index.isValid());
@@ -340,6 +420,13 @@ void TestTreeView::conflictedAndStagedFile() {
 
   {
     QAbstractItemModel *unstagedModel = unstagedTree->model();
+    {
+      // Wait for refresh
+      auto timeout = Timeout(10000, "Repository didn't refresh in time");
+      while (unstagedModel->rowCount() < 1)
+        qWait(300);
+    }
+
     QCOMPARE(unstagedModel->rowCount(), 1);
     QModelIndex index = unstagedModel->index(0, 0); // "folder" folder
     QVERIFY(index.isValid());

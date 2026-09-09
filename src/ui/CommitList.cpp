@@ -95,11 +95,30 @@ public:
     // Connect watcher to signal when the status diff finishes.
     connect(&mStatus, &QFutureWatcher<git::Diff>::finished, [this] {
       mTimer.stop();
-      resetWalker();
-      emit statusFinished(!mRows.isEmpty() && !mRows.first().commit.isValid());
+      dispatchResetWalker(true);
+    });
+
+    // Apply the result of an asynchronous walker reset on the GUI thread.
+    connect(&mReset, &QFutureWatcher<ResetResult>::finished, [this] {
+      ResetResult result = mReset.result();
+      bool emitStatusFinished = result.emitStatusFinished;
+      applyResetResult(std::move(result));
+      if (emitStatusFinished)
+        emit statusFinished(!mRows.isEmpty() &&
+                            !mRows.first().commit.isValid());
     });
 
     resetSettings();
+  }
+
+  ~CommitModel() {
+    // Ensure that mStatus is stopped since it captures `this` and potentially
+    // might crash after the destructor is finished
+    cancelStatus();
+
+    // ..and the same applies to mReset too
+    if (mReset.isRunning())
+      mReset.waitForFinished();
   }
 
   git::Reference reference() const { return mRef; }
@@ -124,6 +143,7 @@ public:
     mRepo.index().read();
 
     // Check for uncommitted changes asynchronously.
+    emit loadingChanged(true);
     mProgress = 0;
     mTimer.start(50);
     mStatus.setFuture(QtConcurrent::run([this] {
@@ -177,65 +197,11 @@ public:
     }
   }
 
-  void resetWalker() {
-    beginResetModel();
-
-    // Reset state.
-    mParents.clear();
-    mRows.clear();
-    DebugRefresh("");
-
-    // Update status row.
-    bool head = (!mRef.isValid() || mRef.isHead());
-    bool valid = (!mStatus.isFinished() || status().isValid());
-    if (mShowCleanStatus && head && valid && mPathspec.isEmpty()) {
-      QVector<Column> row;
-      if (mGraphVisible && mRef.isValid() && mStatus.isFinished()) {
-        row.append({Segment(Bottom, kTaintedColor), Segment(Dot, QColor())});
-        mParents.append(Parent(mRef.target(), nextColor(), true));
-      }
-      DebugRefresh("mRows append invalid commit");
-      mRows.append(Row(git::Commit(), row)); // Uncommitted changes
-    }
-
-    // Begin walking commits.
-    if (mRef.isValid()) {
-      int sort = GIT_SORT_NONE;
-      if (mGraphVisible) {
-        sort |= GIT_SORT_TOPOLOGICAL;
-        if (mSortDate)
-          sort |= GIT_SORT_TIME;
-      } else if (!mSortDate) {
-        sort |= GIT_SORT_TOPOLOGICAL;
-      }
-
-      mWalker = mRef.walker(
-          sort, mRefsFilter == CommitList::RefsFilter::SelectedRefIgnoreMerge);
-      if (mRef.isLocalBranch()) {
-        // Add the upstream branch.
-        if (git::Branch upstream = git::Branch(mRef).upstream())
-          mWalker.push(upstream);
-      }
-
-      if (mRef.isHead()) {
-        // Add merge head.
-        if (git::Reference mergeHead = mRepo.lookupRef("MERGE_HEAD"))
-          mWalker.push(mergeHead);
-      }
-
-      if (mRefsFilter == CommitList::RefsFilter::AllRefs) {
-        foreach (const git::Reference ref, mRepo.refs()) {
-          if (!ref.isStash())
-            mWalker.push(ref);
-        }
-      }
-    }
-
-    if (canFetchMore(QModelIndex()))
-      fetchMore(QModelIndex());
-
-    endResetModel();
-  }
+  // Rebuild the walker and the first page of rows. The expensive part
+  // (building the revwalk over all refs and computing the graph for the
+  // first page of commits) runs on a background thread; see
+  // dispatchResetWalker().
+  void resetWalker() { dispatchResetWalker(false); }
 
   void resetSettings(bool walk = false) {
     git::Config config = mRepo.appConfig();
@@ -254,71 +220,20 @@ public:
   }
 
   void fetchMore(const QModelIndex &parent) {
-    // Load commits.
-    int i = 0;
-    QList<Row> rows;
-    git::Commit commit = mWalker.next(mPathspec);
-    while (commit.isValid()) {
-      // Add root commits.
-      bool root = false;
-      if (indexOf(commit) < 0) {
-        root = true;
-        mParents.append(Parent(commit, nextColor()));
-      }
-
-      // Calculate graph columns.
-      // Remember current row.
-      QList<Parent> parents = mParents;
-
-      // Replace commit with its parents.
-      QList<git::Commit> replacements;
-      foreach (const git::Commit &parent, commit.parents()) {
-        // FIXME: Mark commits that point to existing parent?
-        if (indexOf(parent) < 0 && !contains(parent, rows))
-          replacements.append(parent);
-        if (mRefsFilter == CommitList::RefsFilter::SelectedRefIgnoreMerge) {
-          break;
-        }
-      }
-
-      // Set parents for next row.
-      int index = indexOf(commit);
-      if (index >= 0) {
-        Parent parent = mParents.takeAt(index);
-        if (!replacements.isEmpty()) {
-          git::Commit replacement = replacements.takeFirst();
-          mParents.insert(index, Parent(replacement, parent.color));
-          foreach (const git::Commit &replacement, replacements)
-            mParents.append(Parent(replacement, nextColor()));
-        }
-      }
-
-      // Add graph row.
-      QVector<Column> row;
-      if (mGraphVisible && mPathspec.isEmpty())
-        row = columns(commit, parents, root);
-
-      rows.append(Row(commit, row));
-      DebugRefresh("Append commit: " << commit.shortId());
-
-      // Bail out.
-      if (i++ >= 64)
-        break;
-
-      commit = mWalker.next(mPathspec);
-    }
+    FetchResult fetched = fetchRows(mWalker, mParents, mRows, mPathspec,
+                                    mGraphVisible, mRefsFilter);
 
     // Update the model.
-    if (!rows.isEmpty()) {
+    if (!fetched.rows.isEmpty()) {
       int first = mRows.size();
-      int last = first + rows.size() - 1;
+      int last = first + fetched.rows.size() - 1;
       beginInsertRows(QModelIndex(), first, last);
-      mRows.append(rows);
+      mRows.append(fetched.rows);
       endInsertRows();
     }
 
     // Invalidate walker.
-    if (!commit.isValid())
+    if (fetched.exhausted)
       mWalker = git::RevWalk();
   }
 
@@ -403,6 +318,7 @@ public:
 
 signals:
   void statusFinished(bool visible);
+  void loadingChanged(bool loading);
 
 private:
   struct Parent {
@@ -436,23 +352,57 @@ private:
     QVector<Column> columns;
   };
 
-  int indexOf(const git::Commit &commit) const {
-    int count = mParents.size();
+  // Everything the background thread needs to rebuild the walker and the
+  // first page of rows. Captured by value at dispatch time so the
+  // computation can run on another thread without touching model state.
+  struct ResetContext {
+    git::Reference ref;
+    QString pathspec;
+    bool graphVisible;
+    bool sortDate;
+    CommitList::RefsFilter refsFilter;
+    bool showCleanStatus;
+    git::Repository repo;
+    git::Diff statusDiff;
+    bool statusCheckFinished;
+
+    // Carried straight through to ResetResult; see its field for why.
+    bool emitStatusFinished;
+  };
+
+  struct ResetResult {
+    QList<Parent> parents;
+    QList<Row> rows;
+    git::RevWalk walker;
+
+    // Whether this particular reset was triggered by the status check
+    // finishing, and should therefore emit statusFinished() once applied.
+    bool emitStatusFinished = false;
+  };
+
+  struct FetchResult {
+    QList<Row> rows;
+    bool exhausted = false;
+  };
+
+  int indexOf(const QList<Parent> &parents, const git::Commit &commit) const {
+    int count = parents.size();
     for (int i = 0; i < count; ++i) {
-      if (mParents.at(i).commit == commit)
+      if (parents.at(i).commit == commit)
         return i;
     }
 
     return -1;
   }
 
-  bool contains(const git::Commit &commit, const QList<Row> &rows) const {
-    foreach (const Row &row, mRows) {
+  bool contains(const git::Commit &commit, const QList<Row> &existingRows,
+                const QList<Row> &newRows) const {
+    for (const Row &row : existingRows) {
       if (row.commit == commit)
         return true;
     }
 
-    foreach (const Row &row, rows) {
+    for (const Row &row : newRows) {
       if (row.commit == commit)
         return true;
     }
@@ -461,9 +411,10 @@ private:
   }
 
   // The commit and parents parameters represent the current row.
-  // The mParents member represents the next row after this one.
+  // The nextParents parameter represents the next row after this one.
   QVector<Column> columns(const git::Commit &commit,
-                          const QList<Parent> &parents, bool root) {
+                          const QList<Parent> &parents,
+                          const QList<Parent> &nextParents, bool root) const {
     int count = parents.size();
     QVector<Column> columns(count);
 
@@ -486,14 +437,14 @@ private:
       // Add a path to each successor.
       foreach (const git::Commit &successor, successors) {
         // Find index of parent in next row.
-        int index = indexOf(successor);
+        int index = indexOf(nextParents, successor);
         if (index < 0)
           continue;
 
         // Handle multiple commits that share the same parent.
         bool single = (successors.size() == 1);
         const QColor &color =
-            single ? parent.taintedColor(commit) : mParents.at(index).color;
+            single ? parent.taintedColor(commit) : nextParents.at(index).color;
 
         if (index < i) {
           // out to the left
@@ -528,10 +479,10 @@ private:
     return columns;
   }
 
-  QColor nextColor() {
+  QColor nextColor(const QList<Parent> &parents) const {
     // Get the first unused (or least used) color.
     QMap<QString, int> counts;
-    foreach (const Parent &parent, mParents)
+    for (const Parent &parent : parents)
       counts[parent.color.name()]++;
 
     int count = 0;
@@ -549,11 +500,177 @@ private:
     return QColor();
   }
 
+  // Walk at most one page of commits, updating parents in place and
+  // returning the new rows. Operates purely on its arguments (no access to
+  // 'this' state) so it can run on a background thread as well as
+  // synchronously from fetchMore().
+  FetchResult fetchRows(git::RevWalk &walker, QList<Parent> &parents,
+                        const QList<Row> &existingRows, const QString &pathspec,
+                        bool graphVisible,
+                        CommitList::RefsFilter refsFilter) const {
+    FetchResult result;
+    int i = 0;
+    git::Commit commit = walker.next(pathspec);
+    while (commit.isValid()) {
+      // Add root commits.
+      bool root = false;
+      if (indexOf(parents, commit) < 0) {
+        root = true;
+        parents.append(Parent(commit, nextColor(parents)));
+      }
+
+      // Calculate graph columns.
+      // Remember current row.
+      QList<Parent> rowParents = parents;
+
+      // Replace commit with its parents.
+      QList<git::Commit> replacements;
+      for (const git::Commit &parent : commit.parents()) {
+        // FIXME: Mark commits that point to existing parent?
+        if (indexOf(parents, parent) < 0 &&
+            !contains(parent, existingRows, result.rows))
+          replacements.append(parent);
+        if (refsFilter == CommitList::RefsFilter::SelectedRefIgnoreMerge) {
+          break;
+        }
+      }
+
+      // Set parents for next row.
+      int index = indexOf(parents, commit);
+      if (index >= 0) {
+        Parent parent = parents.takeAt(index);
+        if (!replacements.isEmpty()) {
+          git::Commit replacement = replacements.takeFirst();
+          parents.insert(index, Parent(replacement, parent.color));
+          for (const git::Commit &replacement : replacements)
+            parents.append(Parent(replacement, nextColor(parents)));
+        }
+      }
+
+      // Add graph row.
+      QVector<Column> row;
+      if (graphVisible && pathspec.isEmpty())
+        row = columns(commit, rowParents, parents, root);
+
+      result.rows.append(Row(commit, row));
+      DebugRefresh("Append commit: " << commit.shortId());
+
+      // Bail out.
+      if (i++ >= 64)
+        break;
+
+      commit = walker.next(pathspec);
+    }
+
+    result.exhausted = !commit.isValid();
+    return result;
+  }
+
+  // Build the walker and the first page of rows. Safe to run off the GUI
+  // thread: it only touches the context passed in and returns a fresh
+  // result rather than mutating model state directly.
+  ResetResult computeReset(const ResetContext &ctx) const {
+    ResetResult result;
+
+    // Update status row.
+    bool head = (!ctx.ref.isValid() || ctx.ref.isHead());
+    bool valid = (!ctx.statusCheckFinished || ctx.statusDiff.isValid());
+    if (ctx.showCleanStatus && head && valid && ctx.pathspec.isEmpty()) {
+      QVector<Column> row;
+      if (ctx.graphVisible && ctx.ref.isValid() && ctx.statusCheckFinished) {
+        row.append({Segment(Bottom, kTaintedColor), Segment(Dot, QColor())});
+        result.parents.append(
+            Parent(ctx.ref.target(), nextColor(result.parents), true));
+      }
+      result.rows.append(Row(git::Commit(), row)); // Uncommitted changes
+    }
+
+    // Begin walking commits.
+    if (ctx.ref.isValid()) {
+      int sort = GIT_SORT_NONE;
+      if (ctx.graphVisible) {
+        sort |= GIT_SORT_TOPOLOGICAL;
+        if (ctx.sortDate)
+          sort |= GIT_SORT_TIME;
+      } else if (!ctx.sortDate) {
+        sort |= GIT_SORT_TOPOLOGICAL;
+      }
+
+      result.walker = ctx.ref.walker(
+          sort,
+          ctx.refsFilter == CommitList::RefsFilter::SelectedRefIgnoreMerge);
+      if (ctx.ref.isLocalBranch()) {
+        // Add the upstream branch.
+        if (git::Branch upstream = git::Branch(ctx.ref).upstream())
+          result.walker.push(upstream);
+      }
+
+      if (ctx.ref.isHead()) {
+        // Add merge head.
+        if (git::Reference mergeHead = ctx.repo.lookupRef("MERGE_HEAD"))
+          result.walker.push(mergeHead);
+      }
+
+      if (ctx.refsFilter == CommitList::RefsFilter::AllRefs) {
+        for (const git::Reference &ref : ctx.repo.refs()) {
+          if (!ref.isStash())
+            result.walker.push(ref);
+        }
+      }
+    }
+
+    if (result.walker.isValid()) {
+      FetchResult fetched =
+          fetchRows(result.walker, result.parents, result.rows, ctx.pathspec,
+                    ctx.graphVisible, ctx.refsFilter);
+      result.rows.append(fetched.rows);
+      if (fetched.exhausted)
+        result.walker = git::RevWalk();
+    }
+
+    result.emitStatusFinished = ctx.emitStatusFinished;
+    return result;
+  }
+
+  // Kick off an asynchronous walker reset. The GUI thread keeps showing the
+  // previous rows (behind a loading indicator, see CommitList::setLoading)
+  // until the background computation finishes and applyResetResult() swaps
+  // the new data in.
+  void dispatchResetWalker(bool emitStatusFinishedAfter) {
+    ResetContext ctx{mRef,
+                     mPathspec,
+                     mGraphVisible,
+                     mSortDate,
+                     mRefsFilter,
+                     mShowCleanStatus,
+                     mRepo,
+                     status(),
+                     mStatus.isFinished(),
+                     emitStatusFinishedAfter};
+
+    emit loadingChanged(true);
+    mReset.setFuture(
+        QtConcurrent::run([this, ctx] { return computeReset(ctx); }));
+  }
+
+  // Apply a completed background reset on the GUI thread.
+  void applyResetResult(ResetResult &&result) {
+    beginResetModel();
+    mParents = std::move(result.parents);
+    mRows = std::move(result.rows);
+    mWalker = std::move(result.walker);
+    DebugRefresh("");
+    endResetModel();
+    emit loadingChanged(false);
+  }
+
   QTimer mTimer;
   int mProgress = 0;
 
   DiffCallbacks mStatusCallbacks;
   QFutureWatcher<git::Diff> mStatus;
+
+  QFutureWatcher<ResetResult> mReset;
 
   QString mPathspec;
   git::Reference mRef;
@@ -1192,6 +1309,13 @@ CommitList::CommitList(Index *index, QWidget *parent)
   mList = new ListModel(this);
   mModel = new CommitModel(repo, this);
 
+  connect(&mTimer, &QTimer::timeout, this, [this] {
+    ++mProgress;
+    if (mLoadingFadein < 1.0f)
+      mLoadingFadein += 0.1;
+    viewport()->update();
+  });
+
   setMouseTracking(true);
   setUniformItemSizes(true);
   setAttribute(Qt::WA_MacShowFocusRect, false);
@@ -1220,6 +1344,8 @@ CommitList::CommitList(Index *index, QWidget *parent)
     // Notify main window.
     emit statusChanged(visible);
   });
+
+  connect(model, &CommitModel::loadingChanged, this, &CommitList::setLoading);
 
   git::RepositoryNotifier *notifier = repo.notifier();
   connect(notifier, &git::RepositoryNotifier::referenceUpdated,
@@ -1365,6 +1491,10 @@ void CommitList::selectFirstCommit(bool spontaneous) {
   } else {
     emit diffSelected(git::Diff());
   }
+
+  // This is the automatic fallback selection, not a deliberate pick, so a
+  // later background refresh is free to move it instead of pinning it here.
+  mSelectionIsDefault = true;
 }
 
 void CommitList::selectCommitRelative(int offset) {
@@ -1465,6 +1595,9 @@ void CommitList::setModel(QAbstractItemModel *model) {
           if (int row = range.top())
             update(this->model()->index(row - 1, 0));
         }
+
+        // Assume this selection is deliberate
+        mSelectionIsDefault = false;
 
         notifySelectionChanged();
       });
@@ -1756,8 +1889,42 @@ void CommitList::leaveEvent(QEvent *event) {
   QListView::leaveEvent(event);
 }
 
+void CommitList::paintEvent(QPaintEvent *event) {
+  QListView::paintEvent(event);
+
+  if (mLoading) {
+    QPainter painter(viewport());
+    QRect indicator(QPoint(0, 0), ProgressIndicator::size());
+    indicator.moveCenter(viewport()->rect().center());
+    ProgressIndicator::paint(&painter, indicator,
+                             palette().color(QPalette::WindowText),
+                             mLoadingFadein, mProgress);
+  }
+}
+
+void CommitList::setLoading(bool loading) {
+  if (loading == mLoading)
+    return;
+
+  mLoading = loading;
+  if (loading) {
+    mLoadingFadein = 0;
+    mProgress = 0;
+    mTimer.start(50);
+  } else {
+    mTimer.stop();
+  }
+
+  viewport()->update();
+  emit loadingChanged(loading);
+}
+
 void CommitList::storeSelection() {
-  mSelectedRange = selectedRange();
+  // Don't pin the selection to a stale commit id across the reset: leave
+  // mSelectedRange empty so restoreSelection() defers to the fallback
+  // selection (selectFirstCommit(), triggered via statusFinished), which
+  // picks up whatever the new default is
+  mSelectedRange = mSelectionIsDefault ? QString() : selectedRange();
   DebugRefresh("Selected Range: " << mSelectedRange);
   Debug(mSelectedRange);
 }
@@ -1773,6 +1940,9 @@ void CommitList::restoreSelection() {
   }
 
   mSelectedRange = QString();
+
+  if (selectedIndexes().isEmpty())
+    selectFirstCommit();
 }
 
 void CommitList::updateModel() {
@@ -1854,8 +2024,66 @@ void CommitList::notifySelectionChanged() {
   // Redraw all selected indexes. Separators may have changed.
   foreach (const QModelIndex &index, indexes)
     update(index);
-  git::Diff diff = selectedDiff();
-  emit diffSelected(diff, mFile, mSpontaneous);
+
+  dispatchSelectedDiff(mFile, mSpontaneous);
+}
+
+void CommitList::dispatchSelectedDiff(const QString &file, bool spontaneous) {
+  // Any in-flight request is now stale.
+  int request = ++mDiffRequest;
+
+  QModelIndexList indexes = sortedIndexes();
+  if (indexes.isEmpty()) {
+    emit diffSelected(git::Diff(), file, spontaneous);
+    return;
+  }
+
+  // The uncommitted-changes row's diff is already computed asynchronously
+  // elsewhere (CommitModel::status()); no need to compute it again.
+  if (indexes.size() == 1) {
+    git::Commit commit = indexes.first().data(CommitRole).value<git::Commit>();
+    if (!commit.isValid()) {
+      QVariant data = indexes.first().data(DiffRole);
+      git::Diff diff = data.isValid() ? data.value<git::Diff>() : git::Diff();
+      emit diffSelected(diff, file, spontaneous);
+      return;
+    }
+  }
+
+  git::Commit first = indexes.first().data(CommitRole).value<git::Commit>();
+  if (!first.isValid()) {
+    emit diffSelected(git::Diff(), file, spontaneous);
+    return;
+  }
+
+  git::Commit last = indexes.last().data(CommitRole).value<git::Commit>();
+  bool range = (indexes.size() > 1);
+  bool ignoreWhitespace = Settings::instance()->isWhitespaceIgnored();
+
+  // Let the diff/blame/file-list views clear themselves and show a loading
+  // indicator while the (potentially slow) diff is computed.
+  emit diffLoading();
+
+  // Compute the diff and run rename detection off the GUI thread; this can
+  // be slow for large commits/ranges. Discard the result if a newer
+  // selection has superseded this request by the time it finishes.
+  auto *watcher = new QFutureWatcher<git::Diff>(this);
+  connect(watcher, &QFutureWatcher<git::Diff>::finished, watcher,
+          [this, watcher, request, file, spontaneous] {
+            git::Diff diff = watcher->result();
+            watcher->deleteLater();
+            // TODO: It would be great to have some cancel pathway instead of
+            // doing this hack
+            if (request == mDiffRequest)
+              emit diffSelected(diff, file, spontaneous);
+          });
+
+  watcher->setFuture(QtConcurrent::run([first, last, range, ignoreWhitespace] {
+    git::Diff diff = range ? first.diff(last, -1, ignoreWhitespace)
+                           : first.diff(git::Commit(), -1, ignoreWhitespace);
+    diff.findSimilar();
+    return diff;
+  }));
 }
 
 bool CommitList::isDecoration(const QModelIndex &index, const QPoint &pos) {

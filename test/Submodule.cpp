@@ -61,14 +61,17 @@ void TestSubmodule::updateSubmoduleClone() {
   CloneDialog *d = new CloneDialog(CloneDialog::Kind::Clone);
 
   RepoView *view = nullptr;
+  MainWindow *window = nullptr;
 
   bool cloneFinished = false;
-  QObject::connect(d, &CloneDialog::accepted, [d, &view, &cloneFinished] {
-    cloneFinished = true;
-    if (MainWindow *window = MainWindow::open(d->path())) {
-      view = window->currentView();
-    }
-  });
+  QObject::connect(d, &CloneDialog::accepted,
+                   [d, &window, &view, &cloneFinished] {
+                     cloneFinished = true;
+                     window = MainWindow::open(d->path());
+                     if (window) {
+                       view = window->currentView();
+                     }
+                   });
 
   QTemporaryDir tempdir;
   QVERIFY(tempdir.isValid());
@@ -90,6 +93,14 @@ void TestSubmodule::updateSubmoduleClone() {
     QVERIFY(s.isValid());
     QVERIFY(s.isInitialized());
   }
+
+  // Close the window (and its tabs) now, before tempdir's destructor below
+  // deletes the cloned repo out from under it -- otherwise it lingers as a
+  // dangling tab that later tests' sidebar refreshes can trip over. Window
+  // actually gone before this function (and tempdir) returns.
+  // deleted.
+  window->close();
+  qWait(0);
 }
 
 void TestSubmodule::noUpdateSubmoduleClone() {
@@ -102,14 +113,17 @@ void TestSubmodule::noUpdateSubmoduleClone() {
   CloneDialog *d = new CloneDialog(CloneDialog::Kind::Clone);
 
   RepoView *view = nullptr;
+  MainWindow *window = nullptr;
 
   bool cloneFinished = false;
-  QObject::connect(d, &CloneDialog::accepted, [d, &view, &cloneFinished] {
-    cloneFinished = true;
-    if (MainWindow *window = MainWindow::open(d->path())) {
-      view = window->currentView();
-    }
-  });
+  QObject::connect(d, &CloneDialog::accepted,
+                   [d, &window, &view, &cloneFinished] {
+                     cloneFinished = true;
+                     window = MainWindow::open(d->path());
+                     if (window) {
+                       view = window->currentView();
+                     }
+                   });
 
   QTemporaryDir tempdir;
   QVERIFY(tempdir.isValid());
@@ -131,6 +145,11 @@ void TestSubmodule::noUpdateSubmoduleClone() {
     QVERIFY(s.isValid());
     QCOMPARE(s.isInitialized(), false);
   }
+
+  // Close the window (and its tabs) now, before tempdir's destructor below
+  // updateSubmoduleClone().
+  window->close();
+  qWait(0); // let the WA_DeleteOnClose deferred deletion run now
 }
 
 void TestSubmodule::discardFile() {
