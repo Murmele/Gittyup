@@ -78,6 +78,10 @@ public:
   virtual QColor remoteComment(Comment color);
   virtual QColor star();
 
+  // Editor (Scintilla/Scintillua) style definitions: theme.property['style.*']
+  // and theme.property['color.*'] entries from the theme's .lua file.
+  virtual QVariantMap editorStyleProperties() const;
+
   static Theme *create(const QString &name = QString());
 
 private:

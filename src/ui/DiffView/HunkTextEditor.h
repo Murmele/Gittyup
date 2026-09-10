@@ -1,11 +1,11 @@
-#ifndef DIFFVIEW_EDITOR_H
-#define DIFFVIEW_EDITOR_H
+#ifndef DIFFVIEW_HUNKTEXTEDITOR_H
+#define DIFFVIEW_HUNKTEXTEDITOR_H
 
 #include "editor/TextEditor.h"
 
-class Editor : public TextEditor {
+class HunkTextEditor : public TextEditor {
 public:
-  Editor(QWidget *parent = nullptr) : TextEditor(parent) {}
+  HunkTextEditor(QWidget *parent = nullptr) : TextEditor(parent) {}
 
 protected:
   void focusOutEvent(QFocusEvent *event) override {
@@ -16,4 +16,4 @@ protected:
   }
 };
 
-#endif // DIFFVIEW_EDITOR_H
+#endif // DIFFVIEW_HUNKTEXTEDITOR_H

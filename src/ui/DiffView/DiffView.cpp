@@ -328,7 +328,7 @@ void DiffView::ensureVisible(TextEditor *editor, int pos) {
   file->header()->disclosureButton()->setChecked(true);
 
   int fileY = hunk->parentWidget()->y();
-  int y = fileY + hunk->y() + editor->y() + editor->pointFromPosition(pos).y();
+  int y = fileY + hunk->y() + editor->y() + editor->pointYFromPosition(pos);
 
   QScrollBar *scrollBar = verticalScrollBar();
   int val = scrollBar->value();

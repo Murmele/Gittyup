@@ -12,3 +12,4 @@ build
 .venv
 compile_commands.json
 .flatpak-builder
+dep/scintilla/scintilla/

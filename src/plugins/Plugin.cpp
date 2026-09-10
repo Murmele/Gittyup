@@ -294,7 +294,7 @@ int lineText(lua_State *L) {
   TextEditor *editor = member<TextEditor *>(L, "_editor");
   int line = member<int>(L, "_line");
 
-  lua_pushstring(L, editor->line(line).toUtf8());
+  lua_pushstring(L, editor->getLine(line));
   return 1;
 }
 
@@ -306,7 +306,7 @@ int lineOrigin(lua_State *L) {
   int line = member<int>(L, "_line");
 
   QByteArray marker = " ";
-  int markers = editor->markers(line);
+  int markers = editor->markerGet(line);
   if (markers & (1 << TextEditor::Addition)) {
     marker = "+";
   } else if (markers & (1 << TextEditor::Deletion)) {
@@ -349,7 +349,7 @@ int lineLexemes(lua_State *L) {
   // Ensure styled to end of line.
   int endStyled = editor->endStyled();
   if (max > endStyled)
-    editor->colorize(endStyled, max);
+    editor->colourise(endStyled, max);
 
   int count = 0;
   int current = 0;
@@ -456,8 +456,7 @@ int lexemeText(lua_State *L) {
 }
 
 QByteArray kind(TextEditor *editor, int style) {
-  uintptr_t ptr = editor->privateLexerCall(style, 0);
-  QByteArray name(reinterpret_cast<char *>(ptr));
+  QByteArray name = editor->nameOfStyle(style);
   return name.endsWith("_whitespace") ? QByteArrayLiteral("whitespace") : name;
 }
 

@@ -1,6 +1,5 @@
-add_library(editor LexLPeg.cpp PlatQt.cpp ScintillaIFace.cpp ScintillaQt.cpp
-                   TextEditor.cpp)
+add_library(editor TextEditor.cpp)
 
-target_link_libraries(editor lpeg lua scintilla ui)
+target_link_libraries(editor lexilla scintilla scintillua ui)
 
 set_target_properties(editor PROPERTIES AUTOMOC ON)

@@ -187,7 +187,7 @@ void BlameMargin::paintEvent(QPaintEvent *event) {
   // Draw items.
   painter.setRenderHints(QPainter::Antialiasing);
 
-  int size = mEditor->styleFont(STYLE_DEFAULT).pointSize() - 1;
+  int size = mEditor->styleSize(STYLE_DEFAULT) - 1;
   QFont regular = font();
   regular.setPointSize(size);
   QFontMetricsF regularMetrics(regular);

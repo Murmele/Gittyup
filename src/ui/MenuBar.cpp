@@ -472,7 +472,7 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
   connect(mFindSelection, &QAction::triggered, [this] {
     QWidget *widget = QApplication::focusWidget();
     if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
-      FindWidget::setText(editor->selText());
+      FindWidget::setText(editor->getSelText());
     } else if (QTextEdit *editor = qobject_cast<QTextEdit *>(widget)) {
       FindWidget::setText(editor->textCursor().selectedText());
     } else if (QLineEdit *editor = qobject_cast<QLineEdit *>(widget)) {
@@ -939,7 +939,7 @@ void MenuBar::updateFile() { mClose->setEnabled(QApplication::activeWindow()); }
 
 void MenuBar::updateSave() {
   EditorWindow *win = qobject_cast<EditorWindow *>(window());
-  mSave->setEnabled(win && win->widget()->editor()->isModified());
+  mSave->setEnabled(win && win->widget()->editor()->modify());
 }
 
 void MenuBar::updateUndoRedo() {
