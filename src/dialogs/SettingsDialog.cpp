@@ -273,7 +273,7 @@ public:
     }
     mStoreCredentials->setChecked(checked);
 
-    QString info = tr("") + "<table>";
+    QString info = "<table>";
     for (const auto &helper :
          CredentialHelper::getAvailableHelperInformation()) {
       info += QStringLiteral("<tr><td><b>%1</b></td><td>%2</td><td>")

@@ -423,17 +423,17 @@
     <name>AuthorCommitterDate</name>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="178"/>
-        <source>Author/Committer: </source>
+        <source>Author/Committer: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="182"/>
-        <source>Author: </source>
+        <source>Author: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="184"/>
-        <source>Committer: </source>
+        <source>Committer: %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

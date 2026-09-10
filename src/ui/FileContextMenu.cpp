@@ -422,8 +422,8 @@ void FileContextMenu::handleCommits(const QList<git::Commit> &commits,
               view->addLogEntry(tr("Saving files"),
                                 tr("Saving files of selected version to disk"));
           for (const auto &file : files) {
-            const auto saveFile =
-                view->addLogEntry(tr("Save file ") + file, "Save file", save);
+            const auto saveFile = view->addLogEntry(
+                tr("Save file %1").arg(file), "Save file", save);
             // assumption. file is a file not a folder!
             if (!exportFile(view, folder, file))
               view->error(saveFile, "save file", file, tr("Invalid Blob"));
@@ -439,7 +439,7 @@ void FileContextMenu::handleCommits(const QList<git::Commit> &commits,
     auto filename = file.split("/").last();
 
     auto logentry =
-        view->addLogEntry(tr("Opening file"), tr("Open ") + filename);
+        view->addLogEntry(tr("Opening file"), tr("Open %1").arg(filename));
 
     if (exportFile(view, folder, file))
       QDesktopServices::openUrl(QUrl::fromLocalFile(

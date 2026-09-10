@@ -363,18 +363,18 @@
     <name>AuthorCommitterDate</name>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="178"/>
-        <source>Author/Committer: </source>
-        <translation>作者/提交者：</translation>
+        <source>Author/Committer: %1</source>
+        <translation>作者/提交者： %1</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="182"/>
-        <source>Author: </source>
-        <translation>作者：</translation>
+        <source>Author: %1</source>
+        <translation>作者： %1</translation>
     </message>
     <message>
         <location filename="../src/ui/DetailView.cpp" line="184"/>
-        <source>Committer: </source>
-        <translation>提交者：</translation>
+        <source>Committer: %1</source>
+        <translation>提交者： %1</translation>
     </message>
 </context>
 <context>

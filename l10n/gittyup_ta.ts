@@ -288,16 +288,16 @@
 <context>
     <name>AuthorCommitterDate</name>
     <message>
-        <source>Author/Committer: </source>
-        <translation>ஆசிரியர்/கமிட்டி:</translation>
+        <source>Author/Committer: %1</source>
+        <translation>ஆசிரியர்/கமிட்டி: %1</translation>
     </message>
     <message>
-        <source>Author: </source>
-        <translation>ஆசிரியர்:</translation>
+        <source>Author: %1</source>
+        <translation>ஆசிரியர்: %1</translation>
     </message>
     <message>
-        <source>Committer: </source>
-        <translation>ஆணையர்:</translation>
+        <source>Committer: %1</source>
+        <translation>ஆணையர்: %1</translation>
     </message>
 </context>
 <context>
