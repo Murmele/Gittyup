@@ -1053,6 +1053,34 @@
     </message>
 </context>
 <context>
+    <name>CredentialHelper</name>
+    <message>
+        <location filename="../src/cred/CredentialHelper.cpp" line="70"/>
+        <source>Caching the credentials in the RAM. Required to enter credentials on every startup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/cred/CredentialHelper.cpp" line="73"/>
+        <source>Storing the credentials unencrypted on disk, protected only by filesystem permissions &lt;a href=&quot;https://git-scm.com/docs/git-credential-store&quot;&gt;git-credential-store&lt;/a&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/cred/CredentialHelper.cpp" line="79"/>
+        <source>MacOS credential manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/cred/CredentialHelper.cpp" line="82"/>
+        <source>Windows credential manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/cred/CredentialHelper.cpp" line="87"/>
+        <source>Store credentials via Secret Service D-Bus (GNOME Keyring, KDE Wallet, or similar)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DateSelectionGroupWidget</name>
     <message>
         <location filename="../src/dialogs/AmendDialog.cpp" line="21"/>
