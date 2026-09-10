@@ -41,6 +41,7 @@ bool Application::mIsInTest = false;
 
 #if defined(Q_OS_LINUX)
 #include <QtDBus/QtDBus>
+#include <unistd.h>
 
 #elif defined(Q_OS_MAC)
 #include <unistd.h>
@@ -293,7 +294,7 @@ void Application::autoUpdate() {
 }
 
 bool Application::restoreWindows() {
-#ifdef Q_OS_MAC
+#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
   // Check for connection to a terminal.
   if (!isatty(fileno(stdin)))
     QDir::setCurrent(Settings::appDir().path());
