@@ -33,6 +33,7 @@
 #include <QTimeLine>
 #include <QToolButton>
 #include "util/Debug.h"
+#include "util/Path.h"
 
 namespace {
 
@@ -530,7 +531,9 @@ void MainWindow::updateWindowTitle(int ahead, int behind) {
   git::Repository repo = view->repo();
   QDir dir = repo.dir(false);
   git::Reference head = repo.head();
-  QString path = mFullPath ? dir.path() : dir.dirName();
+  // Resolve potentially sandboxed path
+  QString path =
+      mFullPath ? util::sandboxPathToHost(dir.path()) : dir.dirName();
   QString name = head.isValid() ? head.name() : repo.unbornHeadName();
   QString title = tr("%1 - %2").arg(path, name);
 

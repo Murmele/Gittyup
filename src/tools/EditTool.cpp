@@ -10,6 +10,7 @@
 #include "EditTool.h"
 #include "git/Config.h"
 #include "git/Repository.h"
+#include "util/Path.h"
 #include <QDesktopServices>
 #include <QProcess>
 #include <QUrl>
@@ -26,6 +27,9 @@ ExternalTool::Kind EditTool::kind() const { return Edit; }
 QString EditTool::name() const { return tr("Edit in External Editor"); }
 
 bool EditTool::start() {
+  // Resolve potentially sandboxed path
+  const QString file = util::sandboxPathToHost(mFile);
+
   git::Config config = git::Config::global();
   QString editor = config.value<QString>("gui.editor");
 
@@ -42,7 +46,7 @@ bool EditTool::start() {
     editor = qgetenv("EDITOR");
 
   if (editor.isEmpty())
-    return QDesktopServices::openUrl(QUrl::fromLocalFile(mFile));
+    return QDesktopServices::openUrl(QUrl::fromLocalFile(file));
 
   // Find arguments.
   QStringList args = editor.split("\" \"");
@@ -68,7 +72,7 @@ bool EditTool::start() {
 
   // Remove command, add filename, trim command.
   args.removeFirst();
-  args.append(mFile);
+  args.append(file);
   editor.remove("\"");
 
   // Destroy this after process finishes.
