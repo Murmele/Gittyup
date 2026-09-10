@@ -55,8 +55,6 @@ RemoteDialog::RemoteDialog(Kind kind, RepoView *parent) : QDialog(parent) {
     mAction->addItem(tr("Merge (Fast-forward Only)"), ffonly);
   }
 
-  QWidget *advanced = nullptr;
-  ExpandButton *expand = nullptr;
   QCheckBox *prune = nullptr;
 
   if (kind == Push) {
@@ -64,25 +62,7 @@ RemoteDialog::RemoteDialog(Kind kind, RepoView *parent) : QDialog(parent) {
     mRefs = new ReferenceList(repo, kinds, this);
     mSetUpstream = new QCheckBox(tr("Set upstream"), this);
     mForce = new QCheckBox(tr("Force"), this);
-
-    // advanced options
-    expand = new ExpandButton(this);
-
-    advanced = new QWidget(this);
-    advanced->setVisible(false);
-
-    mRemoteRef = new QLineEdit(advanced);
-
-    QFormLayout *advancedForm = new QFormLayout(advanced);
-    advancedForm->setContentsMargins(-1, 0, 0, 0);
-    advancedForm->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-    advancedForm->addRow(tr("Remote Reference:"), mRemoteRef);
-
-    connect(expand, &ExpandButton::toggled, [this, advanced](bool checked) {
-      advanced->setVisible(checked);
-      QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-      resize(sizeHint());
-    });
+    mRemoteRef = new QLineEdit(this);
 
     connect(mRefs, &ReferenceList::referenceSelected,
             [this](const git::Reference &ref) {
@@ -136,8 +116,8 @@ RemoteDialog::RemoteDialog(Kind kind, RepoView *parent) : QDialog(parent) {
     form->addRow(QString(), mSetUpstream);
   if (mForce)
     form->addRow(QString(), mForce);
-  if (expand)
-    form->addRow(tr("Advanced:"), expand);
+  if (mRemoteRef)
+    form->addRow(tr("Remote Reference:"), mRemoteRef);
 
   QDialogButtonBox *buttons =
       new QDialogButtonBox(QDialogButtonBox::Cancel, this);
@@ -147,8 +127,6 @@ RemoteDialog::RemoteDialog(Kind kind, RepoView *parent) : QDialog(parent) {
 
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->addLayout(form);
-  if (advanced)
-    layout->addWidget(advanced);
   layout->addWidget(buttons);
 
   connect(this, &RemoteDialog::accepted, [this, kind, prune] {

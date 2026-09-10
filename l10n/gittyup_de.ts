@@ -73,57 +73,52 @@
         <translation>Remote-Account hinzufügen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="64"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="70"/>
         <source>Host:</source>
         <translation>Host:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="65"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="71"/>
         <source>Username:</source>
         <translation>Benutzername:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="66"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="72"/>
         <source>Password:</source>
         <translation>Passwort:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="68"/>
-        <source>Advanced:</source>
-        <translation>Erweitert:</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="83"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="74"/>
         <source>URL:</source>
         <translation>URL:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="114"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="98"/>
         <source>Replace?</source>
         <translation>Ersetzen?</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="115"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="99"/>
         <source>An account of this type already exists.</source>
         <translation>Ein Account dieses Typs existiert bereits.</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="117"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="101"/>
         <source>Would you like to replace the previous account?</source>
         <translation>Willst Du den alten Account ersetzen?</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="118"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="102"/>
         <source>Replace</source>
         <translation>Ersetzen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="119"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="103"/>
         <source>Cancel</source>
         <translation>Abbrechen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="135"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="119"/>
         <source>Connection Failed</source>
         <translation>Verbinden fehlgeschlagen</translation>
     </message>
@@ -479,32 +474,32 @@
 <context>
     <name>CloneDialog</name>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="323"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="307"/>
         <source>Initialize Repository</source>
         <translation>Repository initialisieren</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="323"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="307"/>
         <source>Clone Repository</source>
         <translation>Repository klonen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="359"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="343"/>
         <source>Initialized empty repository into &apos;%1&apos;</source>
         <translation>Leeres Repository in &apos;%1&apos; initialisiert</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="360"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="344"/>
         <source>Cloned repository from &apos;%1&apos; into &apos;%2&apos;</source>
         <translation>Repository von &apos;%1&apos; nach &apos;%2&apos; geklont</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="365"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="349"/>
         <source>Initialize</source>
         <translation>Initialisieren</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="365"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="349"/>
         <source>Clone</source>
         <translation>Klonen</translation>
     </message>
@@ -512,33 +507,33 @@
 <context>
     <name>ClonePage</name>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="240"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="224"/>
         <source>Clone Progress</source>
         <translation>Fortschritt des Klon-Vorgangs</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="241"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="225"/>
         <source>The new repository will open after the clone finishes.</source>
         <translation>Das neue Repository wird geöffnet, sobald das Klonen fertig ist.</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="260"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="244"/>
         <source>Clone</source>
         <translation>Klone</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="269"/>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="271"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="253"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="255"/>
         <source>clone</source>
         <translation>Klonen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="269"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="253"/>
         <source>Clone canceled.</source>
         <translation>Klonen abgebrochen.</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="305"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="289"/>
         <source>Failed to %1 into &apos;%2&apos; - %3</source>
         <translation>%1 nach %2 fehlgeschlagen - %3</translation>
     </message>
@@ -2498,27 +2493,22 @@ Beispiele
         <translation>Ordner wählen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="172"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="168"/>
         <source>Name:</source>
         <translation>Name:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="173"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="169"/>
         <source>Directory:</source>
         <translation>Ordner:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="174"/>
-        <source>Advanced:</source>
-        <translation>Erweitert:</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="176"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="171"/>
         <source>Create a bare repository</source>
         <translation>Ein Bare-Repository erstellen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="218"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="202"/>
         <source>The new repository will be created at:&lt;p style=&apos;text-indent: 12px&apos;&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;</source>
         <translation>Das neue Repository wird in &lt;b&gt;%1&lt;/b&gt; erstellt</translation>
     </message>
@@ -3173,27 +3163,22 @@ Beispiele
         <translation>Branch auschecken</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="48"/>
+        <location filename="../src/dialogs/NewBranchDialog.cpp" line="47"/>
         <source>Name:</source>
         <translation>Name:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="50"/>
+        <location filename="../src/dialogs/NewBranchDialog.cpp" line="49"/>
         <source>Start Point:</source>
         <translation>Startpunkt:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/NewBranchDialog.cpp" line="53"/>
-        <source>Advanced:</source>
-        <translation>Erweitert:</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="61"/>
         <source>Upstream:</source>
         <translation>Upstream:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="72"/>
+        <location filename="../src/dialogs/NewBranchDialog.cpp" line="58"/>
         <source>Create Branch</source>
         <translation>Branch erstellen</translation>
     </message>
@@ -3427,7 +3412,12 @@ Konflikt zu beheben</translation>
 <context>
     <name>ReferenceList</name>
     <message>
-        <location filename="../src/ui/ReferenceList.cpp" line="163"/>
+        <location filename="../src/ui/ReferenceList.cpp" line="153"/>
+        <source>(Not set)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui/ReferenceList.cpp" line="167"/>
         <source>Commit</source>
         <translation>Commit</translation>
     </message>
@@ -3625,59 +3615,54 @@ Konflikt zu beheben</translation>
         <translation>Mergen (nur Fast-Forwards)</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="65"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="63"/>
         <source>Set upstream</source>
         <translation>Upstream setzen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="66"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="64"/>
         <source>Force</source>
         <translation>Erzwingen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="79"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="120"/>
         <source>Remote Reference:</source>
         <translation>Remote-Referenz:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="106"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="86"/>
         <source>Prune references</source>
         <translation>Referenzen aufräumen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="113"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="93"/>
         <source>Fetch</source>
         <translation>Fetchen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="117"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="97"/>
         <source>Pull</source>
         <translation>Pullen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="121"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="101"/>
         <source>Push</source>
         <translation>Pushen</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="127"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="107"/>
         <source>Remote:</source>
         <translation>Remote:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="129"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="109"/>
         <source>Reference:</source>
         <translation>Referenz:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="131"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="111"/>
         <source>Action:</source>
         <translation>Aktion:</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="140"/>
-        <source>Advanced:</source>
-        <translation>Erweitert:</translation>
     </message>
 </context>
 <context>

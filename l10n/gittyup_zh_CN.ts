@@ -73,57 +73,52 @@
         <translation>添加远程帐户</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="64"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="70"/>
         <source>Host:</source>
         <translation>主机：</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="65"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="71"/>
         <source>Username:</source>
         <translation>用户名：</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="66"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="72"/>
         <source>Password:</source>
         <translation>密码：</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="68"/>
-        <source>Advanced:</source>
-        <translation>高级：</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="83"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="74"/>
         <source>URL:</source>
         <translation>地址URL：</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="114"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="98"/>
         <source>Replace?</source>
         <translation>确定替换吗？</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="115"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="99"/>
         <source>An account of this type already exists.</source>
         <translation>此类型的帐户已存在。</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="117"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="101"/>
         <source>Would you like to replace the previous account?</source>
         <translation>您要替换以前的帐户吗？</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="118"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="102"/>
         <source>Replace</source>
         <translation>替换</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="119"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="103"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="135"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="119"/>
         <source>Connection Failed</source>
         <translation>连接失败</translation>
     </message>
@@ -479,32 +474,32 @@
 <context>
     <name>CloneDialog</name>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="323"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="307"/>
         <source>Initialize Repository</source>
         <translation>初始化仓库</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="323"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="307"/>
         <source>Clone Repository</source>
         <translation>克隆仓库</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="359"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="343"/>
         <source>Initialized empty repository into &apos;%1&apos;</source>
         <translation>将空仓库初始化为&apos;%1&apos;</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="360"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="344"/>
         <source>Cloned repository from &apos;%1&apos; into &apos;%2&apos;</source>
         <translation>将仓库从&apos;%1&apos;克隆到&apos;%2&apos;</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="365"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="349"/>
         <source>Initialize</source>
         <translation>初始化</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="365"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="349"/>
         <source>Clone</source>
         <translation>克隆</translation>
     </message>
@@ -512,33 +507,33 @@
 <context>
     <name>ClonePage</name>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="240"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="224"/>
         <source>Clone Progress</source>
         <translation>克隆进度</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="241"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="225"/>
         <source>The new repository will open after the clone finishes.</source>
         <translation>克隆完成后，将打开新的仓库。</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="260"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="244"/>
         <source>Clone</source>
         <translation>克隆</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="269"/>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="271"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="253"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="255"/>
         <source>clone</source>
         <translation>克隆</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="269"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="253"/>
         <source>Clone canceled.</source>
         <translation>克隆已取消。</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="305"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="289"/>
         <source>Failed to %1 into &apos;%2&apos; - %3</source>
         <translation>%1克隆到&apos;%2&apos;失败 - %3</translation>
     </message>
@@ -2450,27 +2445,22 @@ Examples
         <translation>选择目录</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="172"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="168"/>
         <source>Name:</source>
         <translation>名称：</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="173"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="169"/>
         <source>Directory:</source>
         <translation>目录：</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="174"/>
-        <source>Advanced:</source>
-        <translation>高级：</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="176"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="171"/>
         <source>Create a bare repository</source>
         <translation>创建一个纯仓库</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="218"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="202"/>
         <source>The new repository will be created at:&lt;p style=&apos;text-indent: 12px&apos;&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;</source>
         <translation>新的仓库将在以下位置创建：&lt;p style=&apos;text-indent：12px&apos;&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;</translation>
     </message>
@@ -3217,27 +3207,22 @@ Examples
         <translation>检出分支</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="48"/>
+        <location filename="../src/dialogs/NewBranchDialog.cpp" line="47"/>
         <source>Name:</source>
         <translation>名称：</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="50"/>
+        <location filename="../src/dialogs/NewBranchDialog.cpp" line="49"/>
         <source>Start Point:</source>
         <translation>起点：</translation>
     </message>
     <message>
         <location filename="../src/dialogs/NewBranchDialog.cpp" line="53"/>
-        <source>Advanced:</source>
-        <translation>高级：</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="61"/>
         <source>Upstream:</source>
         <translation>上游：</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="72"/>
+        <location filename="../src/dialogs/NewBranchDialog.cpp" line="58"/>
         <source>Create Branch</source>
         <translation>新建分支</translation>
     </message>
@@ -3458,7 +3443,12 @@ Would you like to fix the merge conflict and continue?</source>
 <context>
     <name>ReferenceList</name>
     <message>
-        <location filename="../src/ui/ReferenceList.cpp" line="163"/>
+        <location filename="../src/ui/ReferenceList.cpp" line="153"/>
+        <source>(Not set)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui/ReferenceList.cpp" line="167"/>
         <source>Commit</source>
         <translation>提交</translation>
     </message>
@@ -3648,59 +3638,54 @@ Would you like to fix the merge conflict and continue?</source>
         <translation>合并（仅快进）</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="65"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="63"/>
         <source>Set upstream</source>
         <translation>设置上游</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="66"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="64"/>
         <source>Force</source>
         <translation>强制</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="79"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="120"/>
         <source>Remote Reference:</source>
         <translation>远程引用：</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="106"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="86"/>
         <source>Prune references</source>
         <translation>清除引用</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="113"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="93"/>
         <source>Fetch</source>
         <translation>获取</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="117"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="97"/>
         <source>Pull</source>
         <translation>拉取</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="121"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="101"/>
         <source>Push</source>
         <translation>推送</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="127"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="107"/>
         <source>Remote:</source>
         <translation>远程：</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="129"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="109"/>
         <source>Reference:</source>
         <translation>引用：</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="131"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="111"/>
         <source>Action:</source>
         <translation>动作：</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="140"/>
-        <source>Advanced:</source>
-        <translation>高级：</translation>
     </message>
 </context>
 <context>

@@ -66,10 +66,6 @@
         <translation>கடவுச்சொல்:</translation>
     </message>
     <message>
-        <source>Advanced:</source>
-        <translation>மேம்பட்ட:</translation>
-    </message>
-    <message>
         <source>URL:</source>
         <translation>URL:</translation>
     </message>
@@ -1857,10 +1853,6 @@ Examples
         <translation>அடைவு:</translation>
     </message>
     <message>
-        <source>Advanced:</source>
-        <translation>மேம்பட்ட:</translation>
-    </message>
-    <message>
         <source>Create a bare repository</source>
         <translation>ஒரு வெற்று களஞ்சியத்தை உருவாக்கவும்</translation>
     </message>
@@ -2386,10 +2378,6 @@ Examples
         <translation>தொடக்க புள்ளி:</translation>
     </message>
     <message>
-        <source>Advanced:</source>
-        <translation>மேம்பட்ட:</translation>
-    </message>
-    <message>
         <source>Upstream:</source>
         <translation>அப்ச்ட்ரீம்:</translation>
     </message>
@@ -2577,6 +2565,10 @@ Would you like to fix the merge conflict and continue?</source>
 </context>
 <context>
     <name>ReferenceList</name>
+    <message>
+        <source>(Not set)</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Commit</source>
         <translation>உறுதி</translation>
@@ -2770,10 +2762,6 @@ Would you like to fix the merge conflict and continue?</source>
     <message>
         <source>Action:</source>
         <translation>செயல்:</translation>
-    </message>
-    <message>
-        <source>Advanced:</source>
-        <translation>மேம்பட்ட:</translation>
     </message>
 </context>
 <context>

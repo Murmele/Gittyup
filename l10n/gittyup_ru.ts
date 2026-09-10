@@ -73,57 +73,52 @@
         <translation>Добавить удаленный аккаунт</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="64"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="70"/>
         <source>Host:</source>
         <translation>Сервер:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="65"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="71"/>
         <source>Username:</source>
         <translation>Имя пользователя:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="66"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="72"/>
         <source>Password:</source>
         <translation>Пароль:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="68"/>
-        <source>Advanced:</source>
-        <translation>Дополнительно:</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="83"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="74"/>
         <source>URL:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="114"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="98"/>
         <source>Replace?</source>
         <translation>Заменить?</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="115"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="99"/>
         <source>An account of this type already exists.</source>
         <translation>Аккаунт этого типа уже существует.</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="117"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="101"/>
         <source>Would you like to replace the previous account?</source>
         <translation>Желаете заменить предыдущий аккаунт?</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="118"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="102"/>
         <source>Replace</source>
         <translation>Заменить</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="119"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="103"/>
         <source>Cancel</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/AccountDialog.cpp" line="135"/>
+        <location filename="../src/dialogs/AccountDialog.cpp" line="119"/>
         <source>Connection Failed</source>
         <translation>Соединение не удалось</translation>
     </message>
@@ -479,32 +474,32 @@
 <context>
     <name>CloneDialog</name>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="323"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="307"/>
         <source>Initialize Repository</source>
         <translation>Инициализировать репозиторий</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="323"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="307"/>
         <source>Clone Repository</source>
         <translation>Клонировать репозиторий</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="359"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="343"/>
         <source>Initialized empty repository into &apos;%1&apos;</source>
         <translation>Инициализировал пустой репозиторий &apos;%1&apos;</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="360"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="344"/>
         <source>Cloned repository from &apos;%1&apos; into &apos;%2&apos;</source>
         <translation>Клонировал репозиторий из &apos;%1&apos; в &apos;%2&apos;</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="365"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="349"/>
         <source>Initialize</source>
         <translation>Инициализировать</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="365"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="349"/>
         <source>Clone</source>
         <translation>Клонировать</translation>
     </message>
@@ -512,33 +507,33 @@
 <context>
     <name>ClonePage</name>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="240"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="224"/>
         <source>Clone Progress</source>
         <translation>Прогрессклонирования</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="241"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="225"/>
         <source>The new repository will open after the clone finishes.</source>
         <translation>Новый репозиторий откроется когда клонирование завершится.</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="260"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="244"/>
         <source>Clone</source>
         <translation>Клонировать</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="269"/>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="271"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="253"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="255"/>
         <source>clone</source>
         <translation>клонировать</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="269"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="253"/>
         <source>Clone canceled.</source>
         <translation>Клонирование отменено.</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="305"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="289"/>
         <source>Failed to %1 into &apos;%2&apos; - %3</source>
         <translation>Ну не смогла я %1 в &apos;%2&apos; - %3</translation>
     </message>
@@ -2448,27 +2443,22 @@ Examples
         <translation>Выберите директорию</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="172"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="168"/>
         <source>Name:</source>
         <translation>Имя:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="173"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="169"/>
         <source>Directory:</source>
         <translation>Директория:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="174"/>
-        <source>Advanced:</source>
-        <translation>Дополнительно:</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="176"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="171"/>
         <source>Create a bare repository</source>
         <translation>Создать &quot;голый&quot; репозиторий</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/CloneDialog.cpp" line="218"/>
+        <location filename="../src/dialogs/CloneDialog.cpp" line="202"/>
         <source>The new repository will be created at:&lt;p style=&apos;text-indent: 12px&apos;&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;</source>
         <translation>Новый репозиторий будет создан в:&lt;p style=&apos;text-indent: 12px&apos;&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;</translation>
     </message>
@@ -3115,27 +3105,22 @@ Examples
         <translation>Перейти на ветку</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="48"/>
+        <location filename="../src/dialogs/NewBranchDialog.cpp" line="47"/>
         <source>Name:</source>
         <translation>Имя:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="50"/>
+        <location filename="../src/dialogs/NewBranchDialog.cpp" line="49"/>
         <source>Start Point:</source>
         <translation>Начальная точка:</translation>
     </message>
     <message>
         <location filename="../src/dialogs/NewBranchDialog.cpp" line="53"/>
-        <source>Advanced:</source>
-        <translation>Дополнительно:</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="61"/>
         <source>Upstream:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/dialogs/NewBranchDialog.cpp" line="72"/>
+        <location filename="../src/dialogs/NewBranchDialog.cpp" line="58"/>
         <source>Create Branch</source>
         <translation>Создать ветку</translation>
     </message>
@@ -3356,7 +3341,12 @@ Would you like to fix the merge conflict and continue?</source>
 <context>
     <name>ReferenceList</name>
     <message>
-        <location filename="../src/ui/ReferenceList.cpp" line="163"/>
+        <location filename="../src/ui/ReferenceList.cpp" line="153"/>
+        <source>(Not set)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ui/ReferenceList.cpp" line="167"/>
         <source>Commit</source>
         <translation>Коммит</translation>
     </message>
@@ -3546,59 +3536,54 @@ Would you like to fix the merge conflict and continue?</source>
         <translation>Слить (только fast-forward)</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="65"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="63"/>
         <source>Set upstream</source>
         <translation>Выставить upstream</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="66"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="64"/>
         <source>Force</source>
         <translation>Принудительно</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="79"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="120"/>
         <source>Remote Reference:</source>
         <translation>Удаленная ссылка:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="106"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="86"/>
         <source>Prune references</source>
         <translation>Подчистить ссылки</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="113"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="93"/>
         <source>Fetch</source>
         <translation>Забрать</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="117"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="97"/>
         <source>Pull</source>
         <translation>Утянуть</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="121"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="101"/>
         <source>Push</source>
         <translation>Запушить</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="127"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="107"/>
         <source>Remote:</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="129"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="109"/>
         <source>Reference:</source>
         <translation>Сссылка:</translation>
     </message>
     <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="131"/>
+        <location filename="../src/dialogs/RemoteDialog.cpp" line="111"/>
         <source>Action:</source>
         <translation>Действие:</translation>
-    </message>
-    <message>
-        <location filename="../src/dialogs/RemoteDialog.cpp" line="140"/>
-        <source>Advanced:</source>
-        <translation>Дополнительно:</translation>
     </message>
 </context>
 <context>
