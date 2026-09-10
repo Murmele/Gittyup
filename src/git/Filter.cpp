@@ -38,7 +38,13 @@ struct FilterInfo {
   QByteArray attributes;
 };
 
-QString quote(const QString &path) { return QString("\"%1\"").arg(path); }
+QString quote(const QString &path) {
+  QString escapedPath = path;
+  // Ensure that the path is properly escaped to avoid shell injection
+  // This is inspired by git's sq_quote_buf
+  escapedPath.replace("'", "'\\''");
+  return QString("'%1'").arg(escapedPath);
+}
 
 struct Stream {
   int init(git_filter *self, const git_filter_source *src, git_writestream *);
