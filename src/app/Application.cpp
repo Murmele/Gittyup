@@ -41,6 +41,7 @@ bool Application::mIsInTest = false;
 
 #if defined(Q_OS_LINUX)
 #include <QtDBus/QtDBus>
+#include <unistd.h>
 
 #elif defined(Q_OS_MAC)
 #include <unistd.h>
@@ -104,6 +105,16 @@ Application::Application(int &argc, char **argv, bool haltOnParseError)
   setApplicationVersion(GITTYUP_VERSION);
   setOrganizationDomain(GITTYUP_ORGANIZATION_DOMAIN);
   setDesktopFileName(GITTYUP_IDENTIFIER);
+
+  // When in test mode, redirect QSettings to a private, per-process location.
+  // This prevents test cases from accidentially cluttering up the user
+  // environment and allows for test cases to run in parallel
+  if (isInTest()) {
+    mTempSettingsDir.reset(new QTemporaryDir);
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope,
+                       mTempSettingsDir->path());
+  }
 
   // Register types that are queued at runtime.
   qRegisterMetaType<git::Id>();
@@ -283,7 +294,7 @@ void Application::autoUpdate() {
 }
 
 bool Application::restoreWindows() {
-#ifdef Q_OS_MAC
+#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
   // Check for connection to a terminal.
   if (!isatty(fileno(stdin)))
     QDir::setCurrent(Settings::appDir().path());

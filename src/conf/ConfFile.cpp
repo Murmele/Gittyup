@@ -66,12 +66,22 @@ QVariantMap table(lua_State *L) {
 
 ConfFile::ConfFile(const QString &filename) : mFilename(filename) {}
 
+ConfFile::ConfFile(const QByteArray &source, const QDir &baseDir)
+    : mSource(source), mBaseDir(baseDir) {}
+
 ConfFile::~ConfFile() {}
 
 QVariantMap ConfFile::parse(const QString &name) {
-  // Verify the existence of the file.
-  QFileInfo info(mFilename);
-  QString canPath = info.canonicalPath();
+  // Determine the directory used to extend package.path so require()
+  // keeps working relative to the script's logical location, whether
+  // the script itself comes from disk or from an in-memory buffer.
+  QString canPath;
+  if (mFilename.isEmpty()) {
+    canPath = mBaseDir.canonicalPath();
+  } else {
+    canPath = QFileInfo(mFilename).canonicalPath();
+  }
+
   if (canPath.isEmpty())
     return QVariantMap();
 
@@ -104,8 +114,19 @@ QVariantMap ConfFile::parse(const QString &name) {
     lua_setglobal(L, tableName);
   }
 
-  // Execute the configuration script.
-  if (luaL_dofile(L, localName))
+  // Execute the configuration script, either from disk or from the
+  // in-memory buffer supplied via the QByteArray/QDir constructor.
+  bool failed;
+  if (mFilename.isEmpty()) {
+    QByteArray chunkName = "@" + localPath + "/(generated)";
+    failed = luaL_loadbuffer(L, mSource.constData(), mSource.size(),
+                             chunkName.constData()) ||
+             lua_pcall(L, 0, LUA_MULTRET, 0);
+  } else {
+    failed = luaL_dofile(L, localName);
+  }
+
+  if (failed)
     lua_error(L);
 
   // Push global table.
