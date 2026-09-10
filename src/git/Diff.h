@@ -39,8 +39,6 @@ class Diff {
 public:
   enum File { NewFile, OldFile };
 
-  enum SortRole { NameRole, StatusRole };
-
   class Callbacks {
   public:
     virtual bool progress(const QString &oldPath, const QString &newPath) {
@@ -81,8 +79,6 @@ public:
   // Detect renames, copies, etc. This is expensive.
   void findSimilar(bool untracked = false);
 
-  void sort(SortRole role, Qt::SortOrder order = Qt::AscendingOrder);
-
   void setAllStaged(bool staged, bool yieldFocus = true);
 
   QByteArray toBuffer(git_diff_format_t format = GIT_DIFF_FORMAT_PATCH) const;
@@ -96,11 +92,9 @@ private:
     Data(git_diff *diff);
     ~Data();
 
-    void resetMap();
     const git_diff_delta *delta(int index) const;
 
     git_diff *diff;
-    QList<int> map;
     Index index;
   };
 

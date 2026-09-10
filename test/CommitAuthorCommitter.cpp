@@ -8,8 +8,8 @@
 #include "git/Reference.h"
 #include "git/Signature.h"
 
-#define INIT_REPO(repoPath, /* bool */ useTempDir)                             \
-  QString path = Test::extractRepository(repoPath, useTempDir);                \
+#define INIT_REPO(repoPath)                                                    \
+  QString path = Test::extractRepository(repoPath);                            \
   QVERIFY(!path.isEmpty());                                                    \
   git::Repository repo = git::Repository::open(path);                          \
   QVERIFY(repo.isValid());                                                     \
@@ -46,7 +46,7 @@ void TestCommitAuthorCommitter::cleanupTestCase() {
  * Check that author and email address are preserved during cherry pick
  */
 void TestCommitAuthorCommitter::testCherryPickAuthorEmailPreservance() {
-  INIT_REPO("CherryPickAuthorEmail.zip", true);
+  INIT_REPO("CherryPickAuthorEmail.zip");
 
   git::Commit commit =
       repo.lookupCommit("710846db7a1fbd583975da0a6c10f9c2964ebd08");
@@ -78,7 +78,7 @@ void TestCommitAuthorCommitter::testCherryPickAuthorEmailPreservance() {
  * is the current user
  */
 void TestCommitAuthorCommitter::testRevertAuthorEmailPreservance() {
-  INIT_REPO("CherryPickAuthorEmail.zip", true);
+  INIT_REPO("CherryPickAuthorEmail.zip");
 
   git::Commit commit =
       repo.lookupCommit("710846db7a1fbd583975da0a6c10f9c2964ebd08");

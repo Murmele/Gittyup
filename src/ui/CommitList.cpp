@@ -107,6 +107,12 @@ public:
     resetSettings();
   }
 
+  ~CommitModel() {
+    // Ensure that mStatus is stopped since it captures `this` and potentially
+    // might crash after the destructor is finished
+    cancelStatus();
+  }
+
   git::Reference reference() const { return mRef; }
 
   git::Diff status() const {
