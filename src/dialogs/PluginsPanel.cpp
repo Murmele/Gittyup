@@ -19,6 +19,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QCoreApplication>
 
 PluginsPanel::PluginsPanel(const git::Repository &repo, QWidget *parent)
     : QTreeWidget(parent), mRepo(repo) {
@@ -43,7 +44,9 @@ void PluginsPanel::refresh() {
   bold.setBold(true);
 
   foreach (PluginRef plugin, Plugin::plugins(mRepo)) {
-    QTreeWidgetItem *root = new QTreeWidgetItem(this, {plugin->name()});
+    QTreeWidgetItem *root = new QTreeWidgetItem(
+        this, {QCoreApplication::translate(
+                  "Plugins", plugin->name().toUtf8().constData())});
     root->setData(Name, Qt::UserRole, QVariant::fromValue(plugin));
     root->setFont(Name, bold);
 
@@ -68,7 +71,8 @@ void PluginsPanel::refresh() {
     button->setEnabled(!keys.isEmpty());
     connect(button, &QPushButton::clicked, [this, plugin, keys] {
       QDialog dialog;
-      dialog.setWindowTitle(tr("%1 Options").arg(plugin->name()));
+      dialog.setWindowTitle(tr("%1 Options").arg(QCoreApplication::translate(
+          "Plugins", plugin->name().toUtf8().constData())));
 
       QFormLayout *layout = new QFormLayout(&dialog);
       foreach (const QString &key, keys) {

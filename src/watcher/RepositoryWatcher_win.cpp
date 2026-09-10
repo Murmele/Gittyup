@@ -20,6 +20,9 @@ const uint kFlags =
      FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_LAST_ACCESS |
      FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_SECURITY);
 
+// Never block the GUI thread indefinitely while shutting the watcher down.
+const unsigned long kShutdownTimeoutMs = 2000;
+
 } // namespace
 
 class RepositoryWatcherPrivate : public QThread {
@@ -46,8 +49,10 @@ public:
   }
 
   ~RepositoryWatcherPrivate() {
-    CloseHandle(mHandle);
-    CloseHandle(mStop);
+    if (mHandle != INVALID_HANDLE_VALUE)
+      CloseHandle(mHandle);
+    if (mStop)
+      CloseHandle(mStop);
   }
 
   git::Repository repo() const { return mRepo; }
@@ -74,14 +79,25 @@ public:
   }
 
   void watch() {
+    if (mHandle == INVALID_HANDLE_VALUE || mStopping.loadAcquire())
+      return;
+
     ReadDirectoryChangesW(mHandle, mBuffer.data(), mBuffer.size(), true, kFlags,
                           nullptr, &mOverlapped, &notify);
   }
 
   void stop() {
+    // Don't queue any further reads and drop the pending one, so no completion
+    // routine can run while the thread is on its way out.
+    mStopping.storeRelease(1);
+    if (mHandle != INVALID_HANDLE_VALUE)
+      CancelIoEx(mHandle, &mOverlapped);
+
     // Signal the thread to quit.
     SetEvent(mStop);
   }
+
+  bool isStopping() const { return mStopping.loadAcquire(); }
 
   static void CALLBACK notify(DWORD errorCode, DWORD numBytes,
                               LPOVERLAPPED overlapped) {
@@ -91,6 +107,9 @@ public:
     // Copy buffer and restart.
     RepositoryWatcherPrivate *watcher =
         static_cast<RepositoryWatcherPrivate *>(overlapped->hEvent);
+    if (watcher->isStopping())
+      return;
+
     QVector<BYTE> buffer = watcher->buffer();
     watcher->watch();
 
@@ -125,6 +144,7 @@ private:
   HANDLE mHandle;
   QVector<BYTE> mBuffer;
   OVERLAPPED mOverlapped;
+  QAtomicInt mStopping{0};
 };
 
 RepositoryWatcher::RepositoryWatcher(const git::Repository &repo,
@@ -139,7 +159,13 @@ RepositoryWatcher::RepositoryWatcher(const git::Repository &repo,
 
 RepositoryWatcher::~RepositoryWatcher() {
   d->stop();
-  d->wait();
+
+  // Bounded wait: a completion routine that never returns must not be able to
+  // hang the whole application while the user is closing a window.
+  if (!d->wait(kShutdownTimeoutMs)) {
+    d->terminate();
+    d->wait(kShutdownTimeoutMs);
+  }
 }
 
 #include "RepositoryWatcher_win.moc"

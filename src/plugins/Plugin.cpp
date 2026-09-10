@@ -600,7 +600,8 @@ void Plugin::setOptionValue(const QString &key, const QVariant &value) {
 QStringList Plugin::optionKeys() const { return mOptions.keys(); }
 
 QString Plugin::optionText(const QString &key) const {
-  return mOptions.value(key).text;
+  return QCoreApplication::translate(
+      "Plugins", mOptions.value(key).text.toUtf8().constData());
 }
 
 QVariant Plugin::optionValue(const QString &key) const {
@@ -625,7 +626,10 @@ Plugin::OptionKind Plugin::optionKind(const QString &key) const {
 }
 
 QStringList Plugin::optionOpts(const QString &key) const {
-  return mOptions.value(key).opts;
+  QStringList opts = mOptions.value(key).opts;
+  for (QString &opt : opts)
+    opt = QCoreApplication::translate("Plugins", opt.toUtf8().constData());
+  return opts;
 }
 
 void Plugin::defineDiagnostic(const QString &key, DiagnosticKind kind,
@@ -647,15 +651,23 @@ Plugin::DiagnosticKind Plugin::diagnosticKind(const QString &key) const {
 }
 
 QString Plugin::diagnosticName(const QString &key) const {
-  return mDiagnostics.value(key).name;
+  return QCoreApplication::translate(
+      "Plugins", mDiagnostics.value(key).name.toUtf8().constData());
 }
 
 QString Plugin::diagnosticMessage(const QString &key) const {
-  return mDiagnostics.value(key).message;
+  return QCoreApplication::translate(
+      "Plugins", mDiagnostics.value(key).message.toUtf8().constData());
 }
 
 QString Plugin::diagnosticDescription(const QString &key) const {
-  return mDiagnostics.value(key).description;
+  QString translated = QCoreApplication::translate(
+      "Plugins", mDiagnostics.value(key).description.toUtf8().constData());
+  // Replace %1 with the option value when the diagnostic key names an option
+  // (e.g. the soft/hard line-length limits, defined with a %1 placeholder).
+  if (translated.contains("%1") && mOptions.contains(key))
+    translated = translated.arg(optionValue(key).toInt());
+  return translated;
 }
 
 bool Plugin::hunk(TextEditor *editor) const {

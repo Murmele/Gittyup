@@ -70,7 +70,7 @@ private:
   void loadEditorContent(const QModelIndexList &indexes);
   void toggleCollapseStagedFiles();
   void toggleCollapseUnstagedFiles();
-  QAction *setupAppearanceAction(const char *name, Setting::Id id,
+  QAction *setupAppearanceAction(const QString &text, Setting::Id id,
                                  bool defaultValue = false);
 
   DiffTreeModel *mDiffTreeModel{nullptr};

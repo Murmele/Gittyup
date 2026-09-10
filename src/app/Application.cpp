@@ -39,6 +39,15 @@
 
 bool Application::mIsInTest = false;
 
+// Used to detect whether the process was started from an interactive
+// terminal. See isLaunchedFromTerminal() below.
+#include <cstdio>
+#if defined(Q_OS_WIN)
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
 #if defined(Q_OS_LINUX)
 #include <QtDBus/QtDBus>
 
@@ -292,39 +301,57 @@ void Application::autoUpdate() {
   }
 }
 
-bool Application::restoreWindows() {
-#ifdef Q_OS_MAC
-  // Check for connection to a terminal.
-  if (!isatty(fileno(stdin)))
-    QDir::setCurrent(Settings::appDir().path());
+namespace {
+
+// Returns true if the process is attached to an interactive terminal.
+//
+// Only in that case may the current working directory be interpreted as the
+// repository to open. GUI launches (desktop or start menu shortcut, file
+// association, shell context menu, "Open with Gittyup", ...) inherit an
+// essentially arbitrary working directory, which must not be mistaken for a
+// command line invocation.
+bool isLaunchedFromTerminal() {
+#if defined(Q_OS_WIN)
+  return _isatty(_fileno(stdin));
+#else
+  return isatty(fileno(stdin));
 #endif
+}
+
+} // namespace
+
+bool Application::restoreWindows() {
+  // Distinguish two different app modes. Normal mode restores the session
+  // from the last normal mode invocation and saves it again on exit. Command
+  // line mode loads a single repository given on the command line (or, when
+  // started from a terminal, taken from the working directory). Windows
+  // opened in command line mode aren't saved to settings.
+  // FIXME: Save subsequently opened windows?
 
   QDir dir = QDir::current();
-  if (!mPositionalArguments.isEmpty()) {
+  bool explicitRepo = !mPositionalArguments.isEmpty();
+  if (explicitRepo) {
     // Check for command line repo.
     QString arg = mPositionalArguments.first();
-    if (QFileInfo(arg).isAbsolute()) {
+    if (QFileInfo(arg).isAbsolute() || !dir.cd(arg))
       dir.setPath(arg);
-    } else {
-      dir.cd(arg);
-    }
   }
 
-  // Distinguish two different app modes. The normal mode is entered when the
-  // current directory is the same as the app directory (e.g. because the user
-  // launched the app by double-clicking in the GUI). It restores the session
-  // from the last normal mode invocation. Command line mode tries to load a
-  // repository from the current directory. Windows opened in this mode aren't
-  // saved to settings. FIXME: Save subsequently opened windows?
+  // Never derive the repository from the working directory unless Gittyup was
+  // actually started from a terminal. Otherwise launching from a shortcut or
+  // from the shell context menu would silently skip session restore (and
+  // session saving), making the previously opened repositories disappear.
+  bool useWorkingDir =
+      !explicitRepo && isLaunchedFromTerminal() && dir != Settings::appDir();
 
-  // Load command line arg.
-  if (dir != Settings::appDir()) {
+  // Load command line arg. Fall through to normal mode when it doesn't point
+  // at a valid repository, e.g. after "Open with Gittyup" on a plain folder.
+  if ((explicitRepo || useWorkingDir) &&
+      git::Repository::open(dir.path(), true).isValid()) {
     if (MainWindow *win = MainWindow::open(dir.path(), false)) {
       win->currentView()->setPathspec(mPathspec);
       return true;
     }
-
-    return false;
   }
 
   // Save on exit.

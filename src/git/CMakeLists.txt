@@ -36,4 +36,15 @@ else()
                         Qt6::Network)
 endif()
 
+# Remote.cpp includes <libssh2.h> directly, so this target needs libssh2's
+# include directory (it is not always propagated transitively through libgit2).
+# Prefer the imported target when available; fall back to the variables set by
+# the bundled/FindPkgLibraries paths.
+if(TARGET libssh2::libssh2)
+  target_link_libraries(git libssh2::libssh2)
+else()
+  target_include_directories(git PRIVATE ${LIBSSH2_INCLUDE_DIRS})
+  target_link_libraries(git ${LIBSSH2_LIBRARIES})
+endif()
+
 set_target_properties(git PROPERTIES AUTOMOC ON)

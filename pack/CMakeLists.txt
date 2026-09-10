@@ -14,13 +14,20 @@ if(WIN32)
 endif()
 
 # Install Qt plugins.
-set(QT_PLUGINS QJpegPlugin)
+# QJpegPlugin is needed for image thumbnails; the SVG/ICO/GIF imageformat
+# plugins and the SVG icon engine are required for the UI to render correctly.
+set(QT_PLUGINS QJpegPlugin QSvgPlugin QICOPlugin QGifPlugin QSvgIconPlugin)
+
+# Qt 6 moved the SSL/TLS implementation out of QtNetwork into a plugin. Without
+# it every https request fails with "TLS initialization failed", which breaks
+# the update check and the remote hosting accounts.
+set(QT_PLUGINS ${QT_PLUGINS} QTlsBackendOpenSSLPlugin QTlsBackendCertOnlyPlugin)
 
 if(APPLE)
   set(QT_PLUGINS ${QT_PLUGINS} QCocoaIntegrationPlugin QMacStylePlugin)
 elseif(GITTYUP_PACK_WIN64)
   set(QT_PLUGINS ${QT_PLUGINS} QWindowsIntegrationPlugin
-                 QModernWindowsStylePlugin)
+                 QModernWindowsStylePlugin QSchannelBackendPlugin)
 else()
   set(QT_PLUGINS ${QT_PLUGINS} QXcbIntegrationPlugin
                  QComposePlatformInputContextPlugin)
@@ -36,7 +43,7 @@ endif()
 
 if(FLATPAK)
   qt_import_plugins(gittyup INCLUDE ${QT_PLUGINS})
-elseif(NOT USE_SYSTEM_QT)
+elseif(GITTYUP_PACK_WIN64 OR NOT USE_SYSTEM_QT)
   foreach(QT_PLUGIN ${QT_PLUGINS})
     if(NOT TARGET Qt6::${QT_PLUGIN})
       continue()
@@ -144,7 +151,53 @@ endif()
 
 # Install SSL libraries.
 if(NOT APPLE)
-  if(NOT USE_SYSTEM_OPENSSL)
+  # On Windows the installer must be self-contained. Qt's OpenSSL TLS backend
+  # loads "libssl-3-x64.dll" / "libcrypto-3-x64.dll" at runtime; the system
+  # OpenSSL install is frequently a *different* major version (e.g. 4.x) which Qt
+  # will not load, so we bundle the 3.x DLLs that ship with the openssl submodule.
+  if(GITTYUP_PACK_WIN64)
+    set(_openssl_src "${CMAKE_SOURCE_DIR}/dep/openssl/openssl")
+    foreach(_ssl_name libssl-3-x64 libcrypto-3-x64)
+      set(_ssl_dll "${_openssl_src}/${_ssl_name}.dll")
+      if(EXISTS "${_ssl_dll}")
+        # Copy into build dir.
+        execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_ssl_dll}"
+                                ${CMAKE_BINARY_DIR})
+        install(
+          FILES "${_ssl_dll}"
+          DESTINATION ${INSTALL_LIBDIR}
+          PERMISSIONS
+            OWNER_READ
+            OWNER_WRITE
+            OWNER_EXECUTE
+            GROUP_READ
+            GROUP_EXECUTE
+            WORLD_READ
+            WORLD_EXECUTE
+          COMPONENT ${GITTYUP_NAME})
+      endif()
+    endforeach()
+
+    # Qt support libraries required by the GUI (D3D/ANGLE software fallback).
+    get_filename_component(_qt_bin_dir "${Qt6_DIR}/../../../bin" ABSOLUTE)
+    foreach(_qt_support d3dcompiler_47 opengl32sw dxcompiler dxil)
+      set(_support_dll "${_qt_bin_dir}/${_qt_support}.dll")
+      if(EXISTS "${_support_dll}")
+        install(
+          FILES "${_support_dll}"
+          DESTINATION ${INSTALL_LIBDIR}
+          PERMISSIONS
+            OWNER_READ
+            OWNER_WRITE
+            OWNER_EXECUTE
+            GROUP_READ
+            GROUP_EXECUTE
+            WORLD_READ
+            WORLD_EXECUTE
+          COMPONENT ${GITTYUP_NAME})
+      endif()
+    endforeach()
+  elseif(NOT USE_SYSTEM_OPENSSL)
     if(GITTYUP_PACK_WIN64)
       set(SSL_LIB_SUFFIX "-3-x64.dll")
     else()
@@ -175,22 +228,23 @@ if(NOT APPLE)
 
   # libssh2 (submodule) installs its DLL without COMPONENT ${GITTYUP_NAME};
   # CPack only installs that component, so ship the DLL from Gittyup's pack
-  # rules.
-  if(GITTYUP_PACK_WIN64
-     AND NOT USE_SYSTEM_LIBSSH2
-     AND TARGET libssh2_shared)
-    install(
-      FILES $<TARGET_FILE:libssh2_shared>
-      DESTINATION ${INSTALL_LIBDIR}
-      PERMISSIONS
-        OWNER_READ
-        OWNER_WRITE
-        OWNER_EXECUTE
-        GROUP_READ
-        GROUP_EXECUTE
-        WORLD_READ
-        WORLD_EXECUTE
-      COMPONENT ${GITTYUP_NAME})
+  # rules. The imported target exists for both the system and the bundled build.
+  if(GITTYUP_PACK_WIN64 AND TARGET libssh2::libssh2)
+    get_target_property(_libssh2_dll libssh2::libssh2 LOCATION)
+    if(_libssh2_dll AND EXISTS "${_libssh2_dll}")
+      install(
+        FILES "${_libssh2_dll}"
+        DESTINATION ${INSTALL_LIBDIR}
+        PERMISSIONS
+          OWNER_READ
+          OWNER_WRITE
+          OWNER_EXECUTE
+          GROUP_READ
+          GROUP_EXECUTE
+          WORLD_READ
+          WORLD_EXECUTE
+        COMPONENT ${GITTYUP_NAME})
+    endif()
   endif()
 
   if(GITTYUP_PACK_WIN64 OR APPLE)
@@ -241,8 +295,14 @@ elseif(GITTYUP_PACK_WIN64)
   set(CPACK_NSIS_CREATE_ICONS_EXTRA
       "CreateShortCut \
     \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\${GITTYUP_NAME}.lnk\\\" \
+    \\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\"
+    CreateShortCut \
+    \\\"$DESKTOP\\\\${GITTYUP_NAME}.lnk\\\" \
     \\\"$INSTDIR\\\\${CMAKE_INSTALL_BINDIR}\\\\${GITTYUP_EXECUTABLE_NAME}.exe\\\""
   )
+  # Remove the desktop shortcut on uninstall so it does not linger.
+  set(CPACK_NSIS_DELETE_ICONS_EXTRA
+      "Delete \\\"$DESKTOP\\\\${GITTYUP_NAME}.lnk\\\"")
   set(CPACK_NSIS_EXECUTABLES_DIRECTORY ${CMAKE_INSTALL_BINDIR})
   set(CPACK_NSIS_MUI_FINISHPAGE_RUN ${GITTYUP_EXECUTABLE_NAME}.exe)
 

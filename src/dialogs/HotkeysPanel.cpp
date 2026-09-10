@@ -10,6 +10,7 @@
 #include "HotkeysPanel.h"
 #include "ui/HotkeyManager.h"
 #include <QAbstractItemModel>
+#include <QCoreApplication>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QHeaderView>
@@ -263,10 +264,10 @@ public:
 
     switch ((ColumnIndex)section) {
       case ColumnIndex::Label:
-        return QVariant(tr("Action"));
+        return QVariant(QCoreApplication::translate("HotkeyModel", "Action"));
 
       case ColumnIndex::Keys:
-        return QVariant(tr("Keys"));
+        return QVariant(QCoreApplication::translate("HotkeyModel", "Keys"));
     }
 
     return QVariant();
@@ -399,8 +400,10 @@ HotkeysPanel::HotkeysPanel(QWidget *parent) : QTreeView(parent) {
 
       int subPos = path.lastIndexOf('/');
 
-      group =
-          new HotkeyGroupData(group, tr(path.mid(subPos + 1).toUtf8()), group);
+      group = new HotkeyGroupData(
+          group, QCoreApplication::translate(
+                     "HotkeyModel", path.mid(subPos + 1).toUtf8().constData()),
+          group);
       group->group()->addChildData(group);
 
       Q_ASSERT(!groups.contains(path));
@@ -409,7 +412,10 @@ HotkeysPanel::HotkeysPanel(QWidget *parent) : QTreeView(parent) {
 
     // Add hotkey to group
     group->addChildData(new HotkeyKeyData(
-        group, tr(label.mid(lastSep + 1).toUtf8()), hotkey, manager));
+        group,
+        QCoreApplication::translate("HotkeyModel",
+                                    label.mid(lastSep + 1).toUtf8().constData()),
+        hotkey, manager));
   }
 
   setModel(new HotkeyModel(this, root));

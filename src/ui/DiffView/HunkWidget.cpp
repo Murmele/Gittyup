@@ -31,8 +31,6 @@ namespace {
 
 bool disclosure = false;
 
-const QString noNewLineAtEndOfFile =
-    HunkWidget::tr("No newline at end of file");
 } // namespace
 
 _HunkWidget::HunkLabel::HunkLabel(const QString &name, bool submodule,
@@ -1092,7 +1090,7 @@ void HunkWidget::createMarkersAndLineNumbers(const Line &line, int lidx,
   // Build annotations.
   QList<Annotation> annotations;
   if (!line.newline()) {
-    QString text = noNewLineAtEndOfFile;
+    QString text = HunkWidget::tr("No newline at end of file");
     QByteArray styles =
         QByteArray(text.toUtf8().size(), TextEditor::EofNewline);
     annotations.append({text, styles});
@@ -1189,7 +1187,7 @@ QByteArray HunkWidget::hunk() const {
     }
 
     if (appended && mEditor->annotationLines(i) > 0 &&
-        mEditor->annotationText(i) == noNewLineAtEndOfFile) {
+        mEditor->annotationText(i) == HunkWidget::tr("No newline at end of file")) {
       ar.remove(ar.length() - 1, 1); // remove new line
     }
   }
@@ -1221,7 +1219,7 @@ QByteArray HunkWidget::apply() {
     }
 
     if (appended && mEditor->annotationLines(i) > 0 &&
-        mEditor->annotationText(i) == noNewLineAtEndOfFile) {
+        mEditor->annotationText(i) == HunkWidget::tr("No newline at end of file")) {
       ar.remove(ar.length() - 1, 1); // remove new line
     }
   }

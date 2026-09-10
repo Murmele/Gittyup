@@ -17,6 +17,7 @@
 // It is used for both authenticating git remote connections and
 // securely storing passwords associated with host accounts.
 class CredentialHelper : public QObject {
+  Q_OBJECT
 public:
   // Username can be supplied by the caller to lookup a specific
   // account or filled in by the helper to get the first account

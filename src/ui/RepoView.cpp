@@ -56,7 +56,9 @@
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QDesktopServices>
+#include <QEventLoop>
 #include <QMessageBox>
+#include <QTimer>
 #include <QtNetwork>
 #include <QPushButton>
 #include <QSettings>
@@ -76,6 +78,14 @@ namespace {
 
 const QString kSplitterKey = "reposplitter";
 const QString kMsgFmt = "%1 - <span style='color: gray'>%2</span>";
+
+// Upper bounds for waiting on background work while shutting down. The GUI
+// must never be allowed to block forever: worker threads talk back to the GUI
+// thread over blocking queued connections (credential prompts and friends),
+// so an unconditional wait deadlocks the whole process.
+const int kRemoteCancelTimeoutMs = 5000;
+const int kIndexerTerminateTimeoutMs = 1000;
+const int kIndexerKillTimeoutMs = 3000;
 
 QString msg(const git::Commit &commit) {
   QString summary = commit.summary(git::Commit::SubstituteEmoji);
@@ -546,9 +556,28 @@ void RepoView::cancelRemoteTransfer() {
     return;
 
   mCallbacks->setCanceled(true);
-  QCoreApplication::processEvents();
-  if (mWatcher && mWatcher->isRunning())
-    mWatcher->waitForFinished();
+
+  if (!mWatcher || !mWatcher->isRunning())
+    return;
+
+  // Wait for the transfer to notice the cancellation, but keep the event loop
+  // spinning instead of calling waitForFinished(). The worker thread reaches
+  // back into the GUI thread through blocking queued connections (credential
+  // and interactive auth prompts), so blocking here would deadlock both
+  // threads and the application could only be killed from the task manager.
+  //
+  // Give up after a timeout as well: a transfer stuck in a socket read only
+  // observes the cancel flag when libgit2 next invokes a progress callback.
+  QEventLoop loop;
+  QTimer timeout;
+  timeout.setSingleShot(true);
+  connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+  connect(mWatcher, &QFutureWatcher<git::Result>::finished, &loop,
+          &QEventLoop::quit);
+  connect(mWatcher, &QObject::destroyed, &loop, &QEventLoop::quit);
+
+  timeout.start(kRemoteCancelTimeoutMs);
+  loop.exec(QEventLoop::ExcludeUserInputEvents);
 }
 
 void RepoView::cancelBackgroundTasks() {
@@ -856,14 +885,22 @@ void RepoView::cancelIndexing() {
   if (mIndexer.state() == QProcess::NotRunning)
     return;
 
+#if defined(Q_OS_WIN)
+  // QProcess::terminate() posts WM_CLOSE to the target's windows. The indexer
+  // is a console process without a message loop, so asking politely only
+  // stalls the shutdown for the full timeout. Kill it right away.
+  mIndexer.kill();
+  mIndexer.waitForFinished(kIndexerKillTimeoutMs);
+#else
   mIndexer.terminate();
-  mIndexer.waitForFinished(5000);
+  mIndexer.waitForFinished(kIndexerTerminateTimeoutMs);
 
   if (mIndexer.state() == QProcess::NotRunning)
     return;
 
   mIndexer.kill();
-  mIndexer.waitForFinished(5000);
+  mIndexer.waitForFinished(kIndexerKillTimeoutMs);
+#endif
 }
 
 bool RepoView::isLogVisible() const { return mIsLogVisible; }

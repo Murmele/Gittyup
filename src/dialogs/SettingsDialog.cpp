@@ -126,6 +126,8 @@ public:
             [] { AboutDialog::openSharedInstance(AboutDialog::Privacy); });
 
     mCredentialStoresDescription = new QLabel();
+    // Allow the hyperlinks in the credential store descriptions to be clicked.
+    mCredentialStoresDescription->setOpenExternalLinks(true);
 
     QFormLayout *form = new QFormLayout;
     form->addRow(tr("User name:"), mName);
@@ -209,7 +211,9 @@ public:
       git::Config config = git::Config::global();
       mAvailableStores->setEnabled(checked);
       if (checked) {
-        auto store = mAvailableStores->currentText();
+        QVariant data = mAvailableStores->currentData();
+        auto store =
+            data.isValid() ? data.toString() : mAvailableStores->currentText();
         config.setValue("credential.helper", store);
       } else {
         config.remove("credential.helper");
@@ -219,9 +223,11 @@ public:
     });
 
     connect(mAvailableStores, &QComboBox::currentTextChanged,
-            [](const QString &text) {
+            [this](const QString &text) {
               git::Config config = git::Config::global();
-              config.setValue("credential.helper", text);
+              QVariant data = mAvailableStores->currentData();
+              config.setValue("credential.helper",
+                              data.isValid() ? data.toString() : text);
 
               delete CredentialHelper::instance();
             });
@@ -276,16 +282,24 @@ public:
     QString info = tr("") + "<table>";
     for (const auto &helper :
          CredentialHelper::getAvailableHelperInformation()) {
+      QString displayName = QCoreApplication::translate(
+          "CredentialHelper", helper.name.toUtf8().constData());
       info += QStringLiteral("<tr><td><b>%1</b></td><td>%2</td><td>")
-                  .arg(helper.name, helper.description);
-      mAvailableStores->addItem(helper.name);
+                  .arg(displayName, helper.description);
+      // Store the real git helper identifier in userData so that the
+      // config value stays untranslated while the UI shows a translation.
+      mAvailableStores->addItem(displayName, helper.name);
     }
     info += "</table>";
     mCredentialStoresDescription->setText(info);
     mAvailableStores->setToolTip(tr("Available Credential stores"));
     mAvailableStores->setWhatsThis(info);
     mAvailableStores->setEditable(true);
-    mAvailableStores->setCurrentText(currentHelper);
+    int idx = mAvailableStores->findData(currentHelper);
+    if (idx >= 0)
+      mAvailableStores->setCurrentIndex(idx);
+    else
+      mAvailableStores->setCurrentText(currentHelper);
 
     mSingleInstance->setChecked(
         settings->value(Setting::Id::AllowSingleInstanceOnly).toBool());
@@ -884,8 +898,6 @@ SettingsDialog::SettingsDialog(Index index, QWidget *parent)
 
   // Create central stack widget.
   StackedWidget *stack = new StackedWidget(this);
-  connect(stack, &StackedWidget::currentChanged, this,
-          &SettingsDialog::adjustSize);
 
   QString text =
       tr("Global git settings can be overridden for each repository in "
@@ -1028,6 +1040,16 @@ SettingsDialog::SettingsDialog(Index index, QWidget *parent)
 
   // Select the requested index.
   actions->actions().at(index)->trigger();
+
+  // Keep the window from resizing when switching panels: reserve space for
+  // the largest panel so every tab fits without changing the window size.
+  QSize max;
+  for (int i = 0; i < stack->count(); ++i) {
+    QSize sh = stack->widget(i)->sizeHint();
+    max.setWidth(qMax(max.width(), sh.width()));
+    max.setHeight(qMax(max.height(), sh.height()));
+  }
+  stack->setMinimumSize(max);
 
   setMinimumWidth(toolbar->sizeHint().width());
 }
