@@ -80,7 +80,7 @@ void TestFilter::rejectsShellInjectionInFilename() {
   // new, attacker-controlled statements.
   QString maliciousName = "evil';>injected_marker;echo'safe";
 
-  QString path = Test::extractRepository("FilterCommandInjection.zip", true);
+  QString path = Test::extractRepository("FilterCommandInjection.zip");
   QVERIFY(!path.isEmpty());
   git::Repository repo = git::Repository::open(path);
   QVERIFY(repo.isValid());
