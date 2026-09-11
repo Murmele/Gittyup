@@ -93,6 +93,7 @@ private:
 UpdateSubmodulesDialog::UpdateSubmodulesDialog(const git::Repository &repo,
                                                QWidget *parent)
     : QDialog(parent) {
+  setAttribute(Qt::WA_DeleteOnClose);
   mTable = new QTableView(this);
   mTable->setShowGrid(false);
   mTable->setSelectionMode(QAbstractItemView::NoSelection);

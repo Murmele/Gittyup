@@ -183,7 +183,9 @@ Id Repository::workdirId(const QString &path) const {
 QString Repository::message() const {
   git_buf buf = GIT_BUF_INIT;
   git_repository_message(&buf, d->repo);
-  return QString::fromUtf8(buf.ptr, buf.size);
+  QString msg = QString::fromUtf8(buf.ptr, buf.size);
+  git_buf_dispose(&buf);
+  return msg;
 }
 
 // Config file used for git specific configs

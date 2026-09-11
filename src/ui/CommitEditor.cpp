@@ -50,9 +50,8 @@ public:
   bool setupSpellCheck(const QString &dictPath, const QString &userDict,
                        const QTextCharFormat &spellFormat,
                        const QTextCharFormat &ignoredFormat) {
-    mSpellChecker = new SpellChecker(dictPath, userDict);
+    mSpellChecker = std::make_unique<SpellChecker>(dictPath, userDict);
     if (!mSpellChecker->isValid()) {
-      delete mSpellChecker;
       mSpellChecker = nullptr;
       mSpellList.clear();
       setSelections();
@@ -248,7 +247,7 @@ private:
 
   QTimer mTimer;
 
-  SpellChecker *mSpellChecker = nullptr;
+  std::unique_ptr<SpellChecker> mSpellChecker = nullptr;
   QTextCharFormat mSpellFormat;
   QTextCharFormat mIgnoredFormat;
   QList<QTextEdit::ExtraSelection> mSpellList;
