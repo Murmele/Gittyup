@@ -81,7 +81,11 @@ public:
 
   void setAllStaged(bool staged, bool yieldFocus = true);
 
+  QByteArray toBuffer(git_diff_format_t format = GIT_DIFF_FORMAT_PATCH) const;
+
   static char statusChar(git_delta_t status);
+
+  static Diff fromBuffer(const QByteArray &text);
 
 private:
   struct Data {

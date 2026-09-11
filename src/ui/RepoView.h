@@ -217,6 +217,9 @@ public:
   // cherry-pick
   void cherryPick(const git::Commit &commit);
 
+  // diff
+  void promptToApplyDiff();
+
   // push
   void promptToForcePush(const git::Remote &remote = git::Remote(),
                          const git::Reference &src = git::Reference());
@@ -400,6 +403,8 @@ private:
   bool checkForConflicts(LogEntry *parent, const QString &action);
 
   git::Signature getSignature(const ContributorInfo &info);
+
+  void applyDiff(const QString &path);
 
   git::Repository mRepo;
 
