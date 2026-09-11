@@ -86,7 +86,7 @@ void ReferenceModel::update() {
   // Add local branches.
   if (mKinds & ReferenceView::LocalBranches) {
     QList<git::Reference> branches;
-    foreach (const git::Branch &branch, mRepo.branches(GIT_BRANCH_LOCAL)) {
+    for (const git::Branch &branch : mRepo.branches(GIT_BRANCH_LOCAL)) {
       Debug("ReferenceView: Local branches: " << branch.name());
       const bool branchOnCommit =
           !mCommit.isValid() || branch.annotatedCommit().commit() == mCommit;
@@ -120,7 +120,7 @@ void ReferenceModel::update() {
   // Add remote branches.
   if (mKinds & ReferenceView::RemoteBranches) {
     QList<git::Reference> remotes;
-    foreach (const git::Branch &branch, mRepo.branches(GIT_BRANCH_REMOTE)) {
+    for (const git::Branch &branch : mRepo.branches(GIT_BRANCH_REMOTE)) {
       // Filter remote HEAD branches.
       Debug("ReferenceView: Remote branches: " << branch.name());
       const bool remoteOnCommit =
@@ -139,7 +139,7 @@ void ReferenceModel::update() {
   // Add tags.
   if (mKinds & ReferenceView::Tags) {
     QList<git::Reference> tags;
-    foreach (const git::TagRef &tag, mRepo.tags()) {
+    for (const git::TagRef &tag : mRepo.tags()) {
       Debug("ReferenceView: Tags: " << tag.name());
       const bool tagOnCommit =
           !mCommit.isValid() || tag.annotatedCommit().commit() == mCommit;

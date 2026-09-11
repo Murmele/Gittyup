@@ -235,7 +235,7 @@ bool RemoteCallbacks::negotiation(
 
   // Write updates.
   QTextStream out(&process);
-  foreach (const git::Remote::PushUpdate &update, updates)
+  for (const git::Remote::PushUpdate &update : updates)
     out << update.dstName << " " << update.dstId.toString() << " "
         << update.srcName << " " << update.srcId.toString() << Qt::endl;
   process.closeWriteChannel();

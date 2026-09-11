@@ -424,7 +424,7 @@ StartDialog::StartDialog(QWidget *parent) : QDialog(parent) {
               });
 
     // Remove selected indexes from settings.
-    foreach (const QModelIndex &index, indexes)
+    for (const QModelIndex &index : indexes)
       RecentRepositories::instance()->remove(index.row());
   });
 
@@ -608,11 +608,11 @@ void StartDialog::accept() {
   QModelIndexList hostIndexes = mHostTree->selectionModel()->selectedIndexes();
 
   QStringList paths;
-  foreach (const QModelIndex &index, repoIndexes)
+  for (const QModelIndex &index : repoIndexes)
     paths.append(index.data(Qt::UserRole).toString());
 
   QModelIndexList uncloned;
-  foreach (const QModelIndex &index, hostIndexes) {
+  for (const QModelIndex &index : hostIndexes) {
     QModelIndex parent = index.parent();
     if (parent.isValid()) {
       Account *account = parent.data(AccountRole).value<Account *>();
@@ -646,7 +646,7 @@ void StartDialog::accept() {
     return;
 
   // Add the remainder as tabs.
-  foreach (const QString &path, paths)
+  for (const QString &path : paths)
     window->addTab(path);
 }
 
@@ -692,7 +692,7 @@ void StartDialog::updateButtons() {
   bool clone = false;
   QPushButton *open = mButtonBox->button(QDialogButtonBox::Open);
   open->setEnabled(!repoIndexes.isEmpty() || !hostIndexes.isEmpty());
-  foreach (const QModelIndex &index, hostIndexes) {
+  for (const QModelIndex &index : hostIndexes) {
     QModelIndex parent = index.parent();
     if (!parent.isValid()) {
       open->setEnabled(false);

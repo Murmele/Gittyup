@@ -79,7 +79,7 @@ Gitea::Gitea(const QString &username) : Account(username) {
 
         QMap<QString, QString> map;
         QRegularExpression re("<(.*)>; rel=\"(\\w+)\"");
-        foreach (const QString &record, link.split(", ")) {
+        for (const QString &record : link.split(", ")) {
           QRegularExpressionMatch match = re.match(record);
           if (match.isValid() && match.hasMatch())
             map.insert(match.captured(2), match.captured(1));
@@ -181,7 +181,7 @@ void Gitea::createPullRequest(Repository *repo, const QString &ownerRepo,
 
   QUrl url(QString("https://try.gitea.io/repos/%1/pulls").arg(ownerRepo));
   rest(url, doc, [this, title](const QJsonObject &obj) {
-    foreach (const QJsonValue &error, obj.value("errors").toArray())
+    for (const QJsonValue &error : obj.value("errors").toArray())
       emit pullRequestError(title,
                             error.toObject().value("message").toString());
   });
@@ -223,7 +223,7 @@ void Gitea::requestComments(Repository *repo, const QString &oid) {
       return;
 
     CommitComments comments;
-    foreach (const QJsonValue &value, nodes) {
+    for (const QJsonValue &value : nodes) {
       QJsonObject obj = value.toObject();
       QString path = obj.value("path").toString();
       int position = obj.value("position").toInt() - 1;

@@ -18,7 +18,6 @@ void ViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
     int width = size.width();
     int height = size.height();
 
-    auto startIter = status.cbegin(), endIter = status.cend();
     int leftAdjust = 0, rightAdjust = -3, leftWidth = 0, rightWidth = -width;
     if (mMultiColumn) {
       leftAdjust = 3;

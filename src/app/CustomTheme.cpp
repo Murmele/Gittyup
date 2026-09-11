@@ -27,7 +27,7 @@ void setPaletteColors(QPalette &palette, QPalette::ColorRole role,
   }
 
   QVariantMap map = variant.toMap();
-  foreach (const QString &key, map.keys()) {
+  for (const QString &key : map.keys()) {
     QColor color(map.value(key).toString());
     if (!color.isValid()) {
       Q_ASSERT(false);

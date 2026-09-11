@@ -292,7 +292,7 @@ MainWindow *MainWindow::activeWindow() {
 
 QList<MainWindow *> MainWindow::windows() {
   QList<MainWindow *> mainWins;
-  foreach (QWidget *win, QApplication::topLevelWidgets()) {
+  for (QWidget *win : QApplication::topLevelWidgets()) {
     if (MainWindow *mainWin = qobject_cast<MainWindow *>(win))
       mainWins.append(mainWin);
   }
@@ -306,7 +306,7 @@ bool MainWindow::restoreWindows() {
   // Open windows.
   QSettings settings;
   settings.beginGroup(kWindowsGroup);
-  foreach (const QString &group, settings.childGroups()) {
+  for (const QString &group : settings.childGroups()) {
     settings.beginGroup(group);
     int index = settings.value(kIndexKey).toInt();
     bool active = settings.value(kActiveKey).toBool();
@@ -328,7 +328,7 @@ bool MainWindow::restoreWindows() {
       continue;
 
     // Add the remainder as tabs.
-    foreach (const QString &path, paths)
+    for (const QString &path : paths)
       window->addTab(path);
 
     // Select saved index.
@@ -446,7 +446,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
   if (!event->mimeData()->hasFormat("text/uri-list"))
     return;
 
-  foreach (const QUrl &url, event->mimeData()->urls()) {
+  for (const QUrl &url : event->mimeData()->urls()) {
     if (!url.isLocalFile())
       return;
 
@@ -462,7 +462,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void MainWindow::dropEvent(QDropEvent *event) {
-  foreach (const QUrl &url, event->mimeData()->urls())
+  for (const QUrl &url : event->mimeData()->urls())
     addTab(url.toLocalFile());
 }
 

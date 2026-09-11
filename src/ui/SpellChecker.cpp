@@ -32,7 +32,7 @@ SpellChecker::SpellChecker(const QString &dictionaryPath,
       QString line = stream.readLine();
       while (!line.isEmpty()) {
         auto match = enc_detector.match(line);
-        if (match.hasMatch() >= 0) {
+        if (match.hasMatch()) {
           encoding = match.captured(1);
           break;
         }
@@ -80,7 +80,7 @@ QStringList SpellChecker::suggest(const QString &word) {
 
   // Decode from the encoding used by current dictionary to Unicode.
   auto decoder = QStringDecoder{mEncoding};
-  foreach (const std::string &str, suggestion)
+  for (const std::string &str : suggestion)
     suggestions.append(decoder.decode(str.data()));
 
   return suggestions;

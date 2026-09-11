@@ -69,7 +69,7 @@ QString Commit::message(MessageOptions options) const {
 QString Commit::description() const {
   // Build list of candidates.
   QHash<Id, TagRef> candidates;
-  foreach (const TagRef &tag, repo().tags()) {
+  for (const TagRef &tag : repo().tags()) {
     if (Commit commit = tag.target())
       candidates.insert(commit.id(), tag);
   }
@@ -99,7 +99,7 @@ QString Commit::description() const {
 }
 
 QString Commit::detachedHeadName() const {
-  foreach (const TagRef &tag, repo().tags()) {
+  for (const TagRef &tag : repo().tags()) {
     if (tag.target().id() == id())
       return tag.name();
   }
@@ -280,7 +280,7 @@ bool Commit::reset(git_reset_t type, const QStringList &paths,
     // Paths are assumed to be exact matches.
     opts.checkout_strategy |= GIT_CHECKOUT_DISABLE_PATHSPEC_MATCH;
 
-    foreach (const QString &path, paths) {
+    for (const QString &path : paths) {
       storage.append(path.toUtf8());
       rawPaths.append(storage.last().data());
     }
@@ -348,7 +348,7 @@ QString Commit::substituteEmoji(const QString &text) const {
 
   // Substitute in reverse order.
   QString result = text;
-  foreach (const QRegularExpressionMatch &match, matches) {
+  for (const QRegularExpressionMatch &match : matches) {
     auto it = sEmojiCache.constFind(match.captured(1));
     if (it != sEmojiCache.constEnd())
       result.replace(match.capturedStart(), match.capturedLength(), it.value());

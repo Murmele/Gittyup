@@ -86,11 +86,11 @@ bool Store::store(const QString &url, const QString &username,
   if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
     return false;
 
-  foreach (const auto &protocolKey, store.keys()) {
+  for (const auto &protocolKey : store.keys()) {
     auto protocol = store[protocolKey];
-    foreach (const auto &hostKey, protocol.keys()) {
+    for (const auto &hostKey : protocol.keys()) {
       auto host = protocol[hostKey];
-      foreach (const auto &usernameKey, host.keys()) {
+      for (const auto &usernameKey : host.keys()) {
         QUrl temp;
         temp.setScheme(protocolKey);
         temp.setHost(hostKey);

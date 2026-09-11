@@ -549,7 +549,7 @@ void ScintillaQt::inputMethodEvent(QInputMethodEvent *event) {
     unsigned int attrSegment = 0;
 #endif
 
-    foreach (QInputMethodEvent::Attribute attr, event->attributes()) {
+    for (const QInputMethodEvent::Attribute &attr : event->attributes()) {
       if (attr.type == QInputMethodEvent::TextFormat) {
         QTextFormat format = attr.value.value<QTextFormat>();
         QTextCharFormat charFormat = format.toCharFormat();

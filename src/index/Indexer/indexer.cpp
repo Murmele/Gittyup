@@ -72,7 +72,7 @@ namespace {
 int fds[2];
 void term(int) {
   char ch = 1;
-  write(fds[0], &ch, sizeof(ch));
+  [[maybe_unused]] ssize_t n = write(fds[0], &ch, sizeof(ch));
 }
 #endif
 } // namespace
@@ -156,8 +156,8 @@ Indexer::Indexer(Index &index, bool notify, QObject *parent)
     : QObject(parent), mIndex(index), mIds(index),
       // mIntermediateQueue will be filled by the workers spawned in the start()
       // method below.
-      mReduce(mIds, mIntermediateQueue, mResults,
-              mIndex), // Receives intermediate and converts them to results
+      mReduce(mIds, mIntermediateQueue,
+              mResults), // Receives intermediate and converts them to results
       mResultWriter(index, mResults,
                     notify) { // Receives results and writes them down to file
   mWalker = mIndex.repo().walker();
@@ -170,7 +170,7 @@ Indexer::Indexer(Index &index, bool notify, QObject *parent)
     connect(notifier, &QSocketNotifier::activated, [this, notifier] {
       notifier->setEnabled(false);
       char ch;
-      read(fds[1], &ch, sizeof(ch));
+      [[maybe_unused]] ssize_t n = read(fds[1], &ch, sizeof(ch));
       cancel();
       notifier->setEnabled(true);
     });
