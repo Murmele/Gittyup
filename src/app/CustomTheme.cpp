@@ -502,6 +502,19 @@ QColor CustomTheme::remoteComment(Comment color) {
                            std::to_string(static_cast<int>(color)));
 }
 
+QColor CustomTheme::notice(Notice role) {
+  QVariantMap notice = mMap.value("notice").toMap();
+
+  switch (role) {
+    case Notice::Background:
+      return QColor(notice.value("background").toString());
+    case Notice::Foreground:
+      return QColor(notice.value("foreground").toString());
+  }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(role)));
+}
+
 QColor CustomTheme::star() {
   return mMap.value("star").toMap().value("fill").value<QColor>();
 }
