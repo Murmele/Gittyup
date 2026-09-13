@@ -61,16 +61,26 @@ Id Blame::id(int index) const {
 QString Blame::message(int index) const {
   git_commit *commit = nullptr;
   const git_blame_hunk *hunk = git_blame_get_hunk_byindex(d.data(), index);
+  if (!hunk) {
+    return QString();
+  }
   git_commit_lookup(&commit, repo, &hunk->final_commit_id);
   return commit ? Commit(commit).message(Commit::SubstituteEmoji) : QString();
 }
 
 Signature Blame::signature(int index) const {
-  return git_blame_get_hunk_byindex(d.data(), index)->final_signature;
+  const git_blame_hunk *hunk = git_blame_get_hunk_byindex(d.data(), index);
+  if (!hunk) {
+    return Signature();
+  }
+  return hunk->final_signature;
 }
 
 bool Blame::isCommitted(int index) const {
   const git_blame_hunk *hunk = git_blame_get_hunk_byindex(d.data(), index);
+  if (!hunk) {
+    return false;
+  }
   return !git_oid_is_zero(&hunk->final_commit_id);
 }
 
