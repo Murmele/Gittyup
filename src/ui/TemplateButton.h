@@ -14,6 +14,8 @@ public:
   };
   static const QString cursorPositionString;
   static const QString filesPosition;
+  static const QString authorPattern;
+  static const QString branchPattern;
 
   TemplateButton(QWidget *parent = nullptr);
   QMenu *menu() const;

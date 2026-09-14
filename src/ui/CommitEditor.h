@@ -35,17 +35,24 @@ public:
   void unstage();
   bool isUnstageEnabled() const;
   static QString createFileList(const QStringList &list, int maxFiles);
-  void setMessage(const QStringList &files);
+  void setMessage(const QString author, const QString branchName,
+                  const QStringList &files);
   void setMessage(const QString &message);
   QString message() const;
   void setDiff(const git::Diff &diff);
 
 public slots:
-  void applyTemplate(const QString &t, const QStringList &files);
-  void applyTemplate(const QString &t);
+  void applyTemplate(const QString &t, const QString &author,
+                     const QString &branchName, const QStringList &files);
+  void applyTemplate(const QString &t, const QString &author,
+                     const QString &branchName);
 
 private:
   void updateButtons(bool yieldFocus = true);
+  QString applyAuthorTemplate(const QString &t, const QString author);
+  QString applyBranchTemplate(const QString &t, const QString branchName);
+  QString applyFileTemplate(const QString &templateText,
+                            const QStringList &files);
   QTextEdit *textEdit() const;
 
   git::Repository mRepo;
