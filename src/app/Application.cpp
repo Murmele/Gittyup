@@ -301,7 +301,6 @@ bool Application::restoreWindows() {
     QDir::setCurrent(Settings::appDir().path());
 #elif defined(Q_OS_WIN)
   // Same as MacOS and Linux above, but with Windows APIs.
-  // session is restored instead of dropping into command-line mode (which
   if (!_isatty(_fileno(stdin)))
     QDir::setCurrent(Settings::appDir().path());
 #endif
