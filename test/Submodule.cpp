@@ -24,8 +24,8 @@
 #include <QWizard>
 #include <QLineEdit>
 
-#define INIT_REPO(repoPath, /* bool */ useTempDir)                             \
-  QString path = Test::extractRepository(repoPath, useTempDir);                \
+#define INIT_REPO(repoPath)                                                    \
+  QString path = Test::extractRepository(repoPath);                            \
   QVERIFY(!path.isEmpty());                                                    \
   auto repo = git::Repository::open(path);                                     \
   QVERIFY(repo.isValid());                                                     \
@@ -53,7 +53,7 @@ private:
 
 void TestSubmodule::updateSubmoduleClone() {
   // Update submodules after cloning
-  QString remote = Test::extractRepository("SubmoduleTest.zip", true);
+  QString remote = Test::extractRepository("SubmoduleTest.zip");
   QCOMPARE(remote.isEmpty(), false);
 
   Settings *settings = Settings::instance();
@@ -94,18 +94,18 @@ void TestSubmodule::updateSubmoduleClone() {
     QVERIFY(s.isInitialized());
   }
 
-  // Close the window (and its tabs) now, before tempdir's destructor below
-  // deletes the cloned repo out from under it -- otherwise it lingers as a
-  // dangling tab that later tests' sidebar refreshes can trip over. Window
-  // actually gone before this function (and tempdir) returns.
+  // Close the window so it doesn't outlive this test: MainWindow::open()
+  // heap-allocates it, and while alive it stays connected to the global
+  // RecentRepositories signal, reacting to later tests' clones by
+  // re-reading this repo's directory after tempdir (above) has been
   // deleted.
   window->close();
-  qWait(0);
+  qWait(0); // let the WA_DeleteOnClose deferred deletion run now
 }
 
 void TestSubmodule::noUpdateSubmoduleClone() {
   // Don't update submodules after cloning
-  QString remote = Test::extractRepository("SubmoduleTest.zip", true);
+  QString remote = Test::extractRepository("SubmoduleTest.zip");
   QCOMPARE(remote.isEmpty(), false);
 
   Settings *settings = Settings::instance();
@@ -146,7 +146,7 @@ void TestSubmodule::noUpdateSubmoduleClone() {
     QCOMPARE(s.isInitialized(), false);
   }
 
-  // Close the window (and its tabs) now, before tempdir's destructor below
+  // Close the window so it doesn't outlive this test; see comment in
   // updateSubmoduleClone().
   window->close();
   qWait(0); // let the WA_DeleteOnClose deferred deletion run now
@@ -154,7 +154,7 @@ void TestSubmodule::noUpdateSubmoduleClone() {
 
 void TestSubmodule::discardFile() {
   // Discarding a file should not reset the submodule
-  INIT_REPO("SubmoduleTest.zip", true);
+  INIT_REPO("SubmoduleTest.zip");
   repoView->updateSubmodules(repo.submodules(), true, true);
 
   qWait(1000); // Not needed if the test is long enough and the fetch operation

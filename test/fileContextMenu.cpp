@@ -9,8 +9,8 @@
 #include <QMessageBox>
 #include <QPushButton>
 
-#define INIT_REPO(repoPath, /* bool */ useTempDir)                             \
-  QString path = Test::extractRepository(repoPath, useTempDir);                \
+#define INIT_REPO(repoPath)                                                    \
+  QString path = Test::extractRepository(repoPath);                            \
   QVERIFY(!path.isEmpty());                                                    \
   git::Repository repo = git::Repository::open(path);                          \
   QVERIFY(repo.isValid());                                                     \
@@ -36,7 +36,7 @@ private slots:
 using namespace git;
 
 void TestFileContextMenu::testDiscardFile() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -109,7 +109,7 @@ void TestFileContextMenu::testDiscardFile() {
 }
 
 void TestFileContextMenu::testDiscardSubmodule() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -187,7 +187,7 @@ void TestFileContextMenu::testDiscardSubmodule() {
 }
 
 void TestFileContextMenu::testDiscardFolder() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -262,7 +262,7 @@ void TestFileContextMenu::testDiscardFolder() {
 }
 
 void TestFileContextMenu::testDiscardNothing() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -328,7 +328,7 @@ void TestFileContextMenu::testDiscardNothing() {
 }
 
 void TestFileContextMenu::testIgnoreFile() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -373,7 +373,7 @@ void TestFileContextMenu::testIgnoreFile() {
 }
 
 void TestFileContextMenu::testIgnoreFileUntracked() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -441,7 +441,7 @@ void TestFileContextMenu::testIgnoreFileUntracked() {
 }
 
 void TestFileContextMenu::testIgnoreFolder() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -502,7 +502,7 @@ void TestFileContextMenu::testIgnoreFolder() {
 }
 
 void TestFileContextMenu::testRemoveUntrackedFolder() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");

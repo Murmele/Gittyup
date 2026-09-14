@@ -463,7 +463,8 @@ void DiffView::fetchMore(int fetchWidgets) {
     }
     int count = indices.count();
 
-  for (int i = mFiles.count(); i < count && addedWidgets < fetchWidgets; ++i) {
+    for (int i = mFiles.count(); i < count && addedWidgets < fetchWidgets;
+         ++i) {
 
       int pidx = indices[i].data(DiffTreeModel::PatchIndexRole).toInt();
       git::Patch patch = mDiff.patch(pidx);
