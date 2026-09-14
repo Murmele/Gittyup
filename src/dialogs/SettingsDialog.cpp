@@ -345,7 +345,10 @@ public:
     layout->addRow(tr("Backup files:"), backup);
 
     QLineEdit *mTerminalCommand = new QLineEdit(this);
-    layout->addRow(tr("Terminal emulator command:"), mTerminalCommand);
+    QHBoxLayout *terminalLayout = new QHBoxLayout();
+    terminalLayout->addWidget(mTerminalCommand);
+    terminalLayout->addWidget(new QLabel("\"%1\" = Repo Path", this));
+    layout->addRow(tr("Terminal emulator command:"), terminalLayout);
     mTerminalCommand->setText(
         Settings::instance()->value(Setting::Id::TerminalCommand).toString());
 
