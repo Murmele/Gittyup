@@ -1,31 +1,9 @@
 #include "Test.h"
 
 #include "git/Blame.h"
-#include "git/Command.h"
 #include "git/Commit.h"
 #include "git/Repository.h"
 #include "git/Signature.h"
-
-#include <QProcess>
-
-#ifndef GIT_EXECUTABLE
-#error                                                                         \
-    "To execute those tests it is neccessary to have git installed on your computer. Turn off tests or exclude this test to build the project"
-#endif
-
-#define EXECUTE_GIT_COMMAND(workdir, arguments)                                \
-  {                                                                            \
-    QProcess p(this);                                                          \
-    p.setWorkingDirectory(workdir);                                            \
-    QString bash = git::Command::bashPath();                                   \
-    QVERIFY(!bash.isEmpty());                                                  \
-    QString command = QString(GIT_EXECUTABLE) + " " + arguments;               \
-    QStringList a = {"-c", command};                                           \
-    p.start(bash, a);                                                          \
-    p.waitForStarted();                                                        \
-    QCOMPARE(p.waitForFinished(), true);                                       \
-    QCOMPARE(p.exitCode(), 0);                                                 \
-  }
 
 using namespace QTest;
 
@@ -40,37 +18,17 @@ private slots:
  * \brief TestBlame::accessorsSurviveHunkWithoutAuthorEmail
  * libgit2 hands back a null hunk for commits whose author has no email address
  * (libgit2#7180), so every git::Blame accessor has to cope with one instead of
- * dereferencing it. The commit is made through git itself because libgit2
- * refuses to build a signature with an empty email.
+ * dereferencing it. BlameAuthorWithoutEmail.zip holds three commits: an empty
+ * seed, one by "Bot <>" adding the first line of hello.txt, and one with a
+ * normal author adding the second line.
  */
 void TestBlame::accessorsSurviveHunkWithoutAuthorEmail() {
-  Test::ScratchRepository repo;
-  const QString workdir = repo->workdir().path();
-  const QString name = "hello.txt";
+  QString path = Test::extractRepository("BlameAuthorWithoutEmail.zip");
+  QVERIFY(!path.isEmpty());
+  git::Repository repo = git::Repository::open(path);
+  QVERIFY(repo.isValid());
 
-  EXECUTE_GIT_COMMAND(workdir, "init -q -b main .");
-  EXECUTE_GIT_COMMAND(workdir, QString("-c core.fsmonitor=false commit -q "
-                                       "--allow-empty -m seed"));
-
-  QFile file(repo->workdir().filePath(name));
-  QVERIFY(file.open(QFile::WriteOnly));
-  QTextStream(&file) << "first line" << Qt::endl;
-  file.close();
-
-  // An empty author email is what makes libgit2 produce a null hunk.
-  EXECUTE_GIT_COMMAND(workdir, QString("add %1").arg(name));
-  EXECUTE_GIT_COMMAND(
-      workdir, QString("-c user.name=Bot -c user.email= commit -q -m \"no "
-                       "email\" --author=\"Bot <>\""));
-
-  QVERIFY(file.open(QFile::WriteOnly | QFile::Append));
-  QTextStream(&file) << "second line" << Qt::endl;
-  file.close();
-
-  EXECUTE_GIT_COMMAND(workdir, QString("add %1").arg(name));
-  EXECUTE_GIT_COMMAND(workdir, "commit -q -m \"with email\"");
-
-  git::Blame blame = repo->blame(name, git::Commit());
+  git::Blame blame = repo.blame("hello.txt", git::Commit());
   QVERIFY(blame.isValid());
   QVERIFY(blame.count() > 0);
 
