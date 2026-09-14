@@ -51,6 +51,7 @@ bool Application::mIsInTest = false;
 #include <dbghelp.h>
 #include <strsafe.h>
 #include <QWindow>
+#include <io.h>
 
 static LPTOP_LEVEL_EXCEPTION_FILTER defaultFilter = nullptr;
 
@@ -297,6 +298,14 @@ bool Application::restoreWindows() {
 #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
   // Check for connection to a terminal.
   if (!isatty(fileno(stdin)))
+    QDir::setCurrent(Settings::appDir().path());
+#elif defined(Q_OS_WIN)
+  // A GUI launch on Windows has no console attached, so stdin is not a tty.
+  // Force the working directory to the application directory so the last
+  // session is restored instead of dropping into command-line mode (which
+  // would otherwise lose the saved repository records when the app is opened
+  // from a directory other than the bin directory).
+  if (!_isatty(_fileno(stdin)))
     QDir::setCurrent(Settings::appDir().path());
 #endif
 
