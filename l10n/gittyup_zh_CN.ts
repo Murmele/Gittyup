@@ -1054,27 +1054,27 @@
     <message>
         <location filename="../src/cred/CredentialHelper.cpp" line="70"/>
         <source>Caching the credentials in the RAM. Required to enter credentials on every startup</source>
-        <translation>在RAM中缓存凭据。需要在每次启动时输入凭据</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/cred/CredentialHelper.cpp" line="73"/>
         <source>Storing the credentials unencrypted on disk, protected only by filesystem permissions &lt;a href=&quot;https://git-scm.com/docs/git-credential-store&quot;&gt;git-credential-store&lt;/a&gt;</source>
-        <translation>将未加密的凭据存储在磁盘上，仅受文件系统权限的保护 &lt;a href=&quot;https://git-scm.com/docs/git-credential-store&quot;&gt;git-credential-store&lt;/a&gt;</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/cred/CredentialHelper.cpp" line="79"/>
         <source>MacOS credential manager</source>
-        <translation>MacOS 凭据管理器</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/cred/CredentialHelper.cpp" line="82"/>
         <source>Windows credential manager</source>
-        <translation>Windows 凭据管理器</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/cred/CredentialHelper.cpp" line="87"/>
         <source>Store credentials via Secret Service D-Bus (GNOME Keyring, KDE Wallet, or similar)</source>
-        <translation>通过 Secret Service D-Bus（GNOME 密钥环、KDE 钱包或类似服务）存储凭据</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3473,7 +3473,7 @@ Would you like to fix the merge conflict and continue?</source>
     <message>
         <location filename="../src/ui/ReferenceList.cpp" line="153"/>
         <source>(Not set)</source>
-        <translation>(未设置)</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/ui/ReferenceList.cpp" line="167"/>
