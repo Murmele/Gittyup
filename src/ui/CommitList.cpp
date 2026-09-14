@@ -1489,6 +1489,9 @@ void CommitList::selectFirstCommit(bool spontaneous) {
   if (index.isValid()) {
     selectIndexes(QItemSelection(index, index), QString(), spontaneous);
   } else {
+    // Invalidate any in-flight async diff so a stale result for a
+    // previously selected commit can't be delivered after this reset.
+    ++mDiffRequest;
     emit diffSelected(git::Diff());
   }
 
@@ -1936,6 +1939,9 @@ void CommitList::restoreSelection() {
       (!mSelectedRange.isEmpty() && mSelectedRange != "status" &&
        !selectRange(mSelectedRange))) {
     DebugRefresh("Failed to restore");
+    // Invalidate any in-flight async diff so a stale result for a
+    // previously selected commit can't be delivered after this reset.
+    ++mDiffRequest;
     emit diffSelected(git::Diff());
   }
 
