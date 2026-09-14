@@ -51,6 +51,7 @@ bool Application::mIsInTest = false;
 #include <dbghelp.h>
 #include <strsafe.h>
 #include <QWindow>
+#include <io.h>
 
 static LPTOP_LEVEL_EXCEPTION_FILTER defaultFilter = nullptr;
 
@@ -297,6 +298,10 @@ bool Application::restoreWindows() {
 #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
   // Check for connection to a terminal.
   if (!isatty(fileno(stdin)))
+    QDir::setCurrent(Settings::appDir().path());
+#elif defined(Q_OS_WIN)
+  // Same as MacOS and Linux above, but with Windows APIs.
+  if (!_isatty(_fileno(stdin)))
     QDir::setCurrent(Settings::appDir().path());
 #endif
 
