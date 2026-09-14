@@ -98,6 +98,7 @@ private:
   QAction *mUnstageAll;
   QAction *mCommit;
   QAction *mAmendCommit;
+  QAction *mApplyDiff;
   QAction *mLfsUnlock;
   QAction *mLfsInitialize;
 
