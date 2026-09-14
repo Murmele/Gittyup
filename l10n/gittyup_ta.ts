@@ -66,10 +66,6 @@
         <translation>கடவுச்சொல்:</translation>
     </message>
     <message>
-        <source>Advanced:</source>
-        <translation>மேம்பட்ட:</translation>
-    </message>
-    <message>
         <source>URL:</source>
         <translation>URL:</translation>
     </message>
@@ -288,16 +284,16 @@
 <context>
     <name>AuthorCommitterDate</name>
     <message>
-        <source>Author/Committer: </source>
-        <translation>ஆசிரியர்/கமிட்டி:</translation>
+        <source>Author/Committer: %1</source>
+        <translation>ஆசிரியர்/கமிட்டி: %1</translation>
     </message>
     <message>
-        <source>Author: </source>
-        <translation>ஆசிரியர்:</translation>
+        <source>Author: %1</source>
+        <translation>ஆசிரியர்: %1</translation>
     </message>
     <message>
-        <source>Committer: </source>
-        <translation>ஆணையர்:</translation>
+        <source>Committer: %1</source>
+        <translation>ஆணையர்: %1</translation>
     </message>
 </context>
 <context>
@@ -812,6 +808,29 @@
     <message>
         <source>Edit Config File...</source>
         <translation>கட்டமைப்பு கோப்பைத் திருத்து...</translation>
+    </message>
+</context>
+<context>
+    <name>CredentialHelper</name>
+    <message>
+        <source>Caching the credentials in the RAM. Required to enter credentials on every startup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Storing the credentials unencrypted on disk, protected only by filesystem permissions &lt;a href=&quot;https://git-scm.com/docs/git-credential-store&quot;&gt;git-credential-store&lt;/a&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MacOS credential manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows credential manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Store credentials via Secret Service D-Bus (GNOME Keyring, KDE Wallet, or similar)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1857,10 +1876,6 @@ Examples
         <translation>அடைவு:</translation>
     </message>
     <message>
-        <source>Advanced:</source>
-        <translation>மேம்பட்ட:</translation>
-    </message>
-    <message>
         <source>Create a bare repository</source>
         <translation>ஒரு வெற்று களஞ்சியத்தை உருவாக்கவும்</translation>
     </message>
@@ -2386,10 +2401,6 @@ Examples
         <translation>தொடக்க புள்ளி:</translation>
     </message>
     <message>
-        <source>Advanced:</source>
-        <translation>மேம்பட்ட:</translation>
-    </message>
-    <message>
         <source>Upstream:</source>
         <translation>அப்ச்ட்ரீம்:</translation>
     </message>
@@ -2577,6 +2588,10 @@ Would you like to fix the merge conflict and continue?</source>
 </context>
 <context>
     <name>ReferenceList</name>
+    <message>
+        <source>(Not set)</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Commit</source>
         <translation>உறுதி</translation>
@@ -2770,10 +2785,6 @@ Would you like to fix the merge conflict and continue?</source>
     <message>
         <source>Action:</source>
         <translation>செயல்:</translation>
-    </message>
-    <message>
-        <source>Advanced:</source>
-        <translation>மேம்பட்ட:</translation>
     </message>
 </context>
 <context>

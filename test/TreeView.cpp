@@ -12,8 +12,8 @@
 using namespace Test;
 using namespace QTest;
 
-#define INIT_REPO(repoPath, /* bool */ useTempDir)                             \
-  QString path = Test::extractRepository(repoPath, useTempDir);                \
+#define INIT_REPO(repoPath)                                                    \
+  QString path = Test::extractRepository(repoPath);                            \
   QVERIFY(!path.isEmpty());                                                    \
   auto repo = git::Repository::open(path);                                     \
   QVERIFY(repo.isValid());                                                     \
@@ -50,7 +50,7 @@ private:
 };
 
 void TestTreeView::restoreStagedFileAfterCommit() {
-  INIT_REPO("TreeViewCollapseCount.zip", true);
+  INIT_REPO("TreeViewCollapseCount.zip");
 
   // Check for a single file called "test".
   RepoView *view = window.currentView();
@@ -113,7 +113,7 @@ void TestTreeView::discardFiles() {
   // not selected files Discarding a folder in staged treeview should only
   // delete the staged files, but not the unstaged files in that folder!
 
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -203,7 +203,7 @@ void TestTreeView::discardFiles() {
 }
 
 void TestTreeView::fileMergeCrash() {
-  INIT_REPO("CrashMerge.zip", false);
+  INIT_REPO("CrashMerge.zip");
 
   git::Reference otherBranch = repo.lookupRef("refs/heads/otherBranch");
   QVERIFY(otherBranch);
@@ -279,7 +279,7 @@ void TestTreeView::fileMergeCrash() {
 }
 
 void TestTreeView::dirtySubmoduleAndStagedSubmodule() {
-  INIT_REPO("DirtySubmoduleUnstagedTree.zip", false);
+  INIT_REPO("DirtySubmoduleUnstagedTree.zip");
 
   auto doubleTree = repoView->findChild<DoubleTreeWidget *>();
   QVERIFY(doubleTree);
@@ -290,6 +290,14 @@ void TestTreeView::dirtySubmoduleAndStagedSubmodule() {
 
   {
     QAbstractItemModel *stagedModel = stagedTree->model();
+
+    {
+      // Wait for refresh
+      auto timeout = Timeout(10000, "Repository didn't refresh in time");
+      while (stagedModel->rowCount() < 1)
+        qWait(300);
+    }
+
     QCOMPARE(stagedModel->rowCount(), 1);
     QModelIndex index = stagedModel->index(0, 0); // submodules folder
     QVERIFY(index.isValid());
@@ -316,7 +324,7 @@ void TestTreeView::dirtySubmoduleAndStagedSubmodule() {
 }
 
 void TestTreeView::conflictedAndStagedFile() {
-  INIT_REPO("ConflictedAndStagedFile.zip", false);
+  INIT_REPO("ConflictedAndStagedFile.zip");
 
   auto doubleTree = repoView->findChild<DoubleTreeWidget *>();
   QVERIFY(doubleTree);
@@ -327,6 +335,14 @@ void TestTreeView::conflictedAndStagedFile() {
 
   {
     QAbstractItemModel *stagedModel = stagedTree->model();
+
+    {
+      // Wait for refresh
+      auto timeout = Timeout(10000, "Repository didn't refresh in time");
+      while (stagedModel->rowCount() < 1)
+        qWait(300);
+    }
+
     QCOMPARE(stagedModel->rowCount(), 1);
     QModelIndex index = stagedModel->index(0, 0); // "folder" folder
     QVERIFY(index.isValid());

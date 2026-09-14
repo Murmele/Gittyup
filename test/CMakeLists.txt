@@ -116,6 +116,11 @@ test(NAME Setting)
 test(NAME commitMessageTemplate)
 test(NAME commitEditor)
 
+# Test case not compatible with Windows
+if(NOT WIN32)
+  test(NAME Filter)
+endif()
+
 option(GITTYUP_CI_TESTS "Run tests that change global settings" OFF)
 if(GITTYUP_CI_TESTS)
   test(NAME config)

@@ -255,21 +255,11 @@ void TemplateDialog::importTemplates(QString filename) {
       const int index = line.indexOf(QStringLiteral(":"));
       if (index == -1)
         continue;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+
       const QString name = line.sliced(0, index);
       if (index + 1 >= line.length())
         continue;
       QString value = line.sliced(index + 1);
-#else
-      const auto list = line.split(QStringLiteral(":"));
-      if (list.length() < 2)
-        continue;
-      const QString name = list.at(0);
-      QString value;
-      for (int i = 1; i < list.length() - 1; i++)
-        value += QStringLiteral("%1:").arg(list.at(i));
-      value += list.last();
-#endif
       value = value.replace(QStringLiteral("\\n"), QStringLiteral("\n"));
       value = value.replace(QStringLiteral("\\t"), QStringLiteral("\t"));
       TemplateButton::Template t;

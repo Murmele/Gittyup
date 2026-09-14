@@ -178,13 +178,13 @@ public:
   void setAuthorCommitter(const QString &author, const QString &committer) {
     mSameAuthorCommitter = author == committer;
     if (mSameAuthorCommitter) {
-      mAuthor->setText(tr("Author/Committer: ") + author);
+      mAuthor->setText(tr("Author/Committer: %1").arg(author));
       mAuthor->adjustSize();
       mCommitter->setVisible(false);
     } else {
-      mAuthor->setText(tr("Author: ") + author);
+      mAuthor->setText(tr("Author: %1").arg(author));
       mAuthor->adjustSize();
-      mCommitter->setText(tr("Committer: ") + committer);
+      mCommitter->setText(tr("Committer: %1").arg(committer));
       mCommitter->adjustSize();
       mCommitter->setVisible(true);
     }
