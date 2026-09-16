@@ -141,6 +141,12 @@ theme['diff']      = {
   error            = '#7E494B'  -- error background
 }
 
+-- inline notice/banner colors (e.g. the "diff not loaded" placeholder)
+theme['notice']    = {
+  background       = '#4A3B12',
+  foreground       = '#FFE9A8'
+}
+
 -- link colors
 -- { default, active, inactive, disabled }
 theme['link']      = {
