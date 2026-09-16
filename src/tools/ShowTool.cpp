@@ -10,6 +10,7 @@
 #include "ShowTool.h"
 #include "conf/Settings.h"
 #include "git/Repository.h"
+#include "util/Path.h"
 #include <QDesktopServices>
 #include <QDir>
 #include <QFileInfo>
@@ -41,7 +42,8 @@ bool ShowTool::openFileManager(QString path) {
   }
 
   QStringList cmdParts = QProcess::splitCommand(fileManagerCmd);
-  path = QDir::toNativeSeparators(path);
+  // Resolve potentially sandboxed path
+  path = QDir::toNativeSeparators(util::sandboxPathToHost(path));
 
   for (QString &part : cmdParts)
     part = part.arg(path);
