@@ -82,7 +82,6 @@ public:
       return;
     }
 
-    QWindow *win = window()->windowHandle();
     QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
     mIcon->setPixmap(
         icon.pixmap(QSize(ICON_SIZE, ICON_SIZE), window()->devicePixelRatio()));

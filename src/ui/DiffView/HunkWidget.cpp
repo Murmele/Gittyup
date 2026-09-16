@@ -345,7 +345,7 @@ HunkWidget::HunkWidget(DiffView *view, const git::Diff &diff,
             for (int i = 0; i < diags.size(); ++i) {
               const TextEditor::Diagnostic &diag = diags.at(i);
 
-              QStyle::StandardPixmap pixmap;
+              QStyle::StandardPixmap pixmap = QStyle::NStandardPixmap;
               switch (diag.kind) {
                 case TextEditor::Note:
                   pixmap = QStyle::SP_MessageBoxInformation;
@@ -566,7 +566,6 @@ void HunkWidget::setStageState(git::Index::StagedState state) {
     // update the line markers
     bool staged = state == git::Index::StagedState::Staged ? true : false;
     int lineCount = mEditor->lineCount();
-    int count = 0;
     for (int i = 0; i < lineCount; i++) {
       int mask = mEditor->markers(i);
       // if a line was not added or deleted, it cannot be staged so ignore all
@@ -574,7 +573,6 @@ void HunkWidget::setStageState(git::Index::StagedState state) {
       if (mask & (1 << TextEditor::Marker::Addition |
                   1 << TextEditor::Marker::Deletion)) {
         setStaged(i, staged, false);
-        count++;
       }
     }
   }
@@ -668,7 +666,7 @@ QList<HunkWidget::Token> HunkWidget::tokens(int line) const {
 
 QByteArray HunkWidget::tokenBuffer(const QList<HunkWidget::Token> &tokens) {
   QByteArrayList list;
-  foreach (const Token &token, tokens)
+  for (const Token &token : tokens)
     list.append(token.text);
   return list.join('\n');
 }
@@ -762,7 +760,7 @@ void HunkWidget::load(git::Patch &staged, bool force) {
   // Calculate margin width.
   int width = 0;
   int conflictWidth = 0;
-  foreach (const Line &line, lines) {
+  for (const Line &line : lines) {
     int oldWidth = line.oldLine().length();
     int newWidth = line.newLine().length();
     width = qMax(width, oldWidth + newWidth + 1);
@@ -800,7 +798,7 @@ void HunkWidget::load(git::Patch &staged, bool force) {
   }
 
   // Execute hunk plugins.
-  foreach (PluginRef plugin, mView->plugins()) {
+  for (const PluginRef &plugin : mView->plugins()) {
     if (plugin->isValid() && plugin->isEnabled())
       plugin->hunk(mEditor);
   }
@@ -853,8 +851,6 @@ void HunkWidget::setEditorLineInfos(QList<Line> &lines,
   const int count = lines.size();
   int marker = -1;
   int additions = 0, deletions = 0;
-  int additions_tot = 0, deletions_tot = 0;
-  int stagedAdditions = 0, stagedDeletions = 0;
   bool staged = false;
   int current_staged_index = -1;
   int current_staged_line_idx = 0;
@@ -968,18 +964,15 @@ void HunkWidget::setEditorLineInfos(QList<Line> &lines,
               mStaged.lineContent(current_staged_index,
                                   current_staged_line_idx) ==
                   mPatch.lineContent(mIndex, lidx)) {
-            stagedAdditions++;
             current_staged_line_idx++;
             staged = true;
           }
         }
-        additions_tot++;
         break;
       }
       case GIT_DIFF_LINE_DELETION: {
         marker = TextEditor::Deletion;
         deletions++;
-        deletions_tot++;
 
         // Check if staged
         if (!mPatch.isConflicted() && mStaged.count() > 0 &&
@@ -999,7 +992,6 @@ void HunkWidget::setEditorLineInfos(QList<Line> &lines,
             assert(mStaged.lineContent(current_staged_index,
                                        current_staged_line_idx) ==
                    mPatch.lineContent(mIndex, lidx));
-            stagedDeletions++;
             staged = true;
           }
         }
@@ -1106,10 +1098,10 @@ void HunkWidget::createMarkersAndLineNumbers(const Line &line, int lidx,
         QFontMetrics(font).horizontalAdvance(' ') * DiffViewStyle::kIndent * 2;
     int width = mEditor->textRectangle().width() - margin - 50;
 
-    foreach (const QDateTime &key, it->keys()) {
+    for (const QDateTime &key : it->keys()) {
       QStringList paragraphs;
       Account::Comment comment = it->value(key);
-      foreach (const QString &paragraph, comment.body.split('\n')) {
+      for (const QString &paragraph : comment.body.split('\n')) {
         if (paragraph.isEmpty()) {
           paragraphs.append(QString());
           continue;
@@ -1147,7 +1139,7 @@ void HunkWidget::createMarkersAndLineNumbers(const Line &line, int lidx,
 
   QString atnText;
   QByteArray atnStyles;
-  foreach (const Annotation &annotation, annotations) {
+  for (const Annotation &annotation : annotations) {
     if (!atnText.isEmpty()) {
       atnText.append("\n\n");
       atnStyles.append(QByteArray(2, TextEditor::CommentBody));

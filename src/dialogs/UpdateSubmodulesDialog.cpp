@@ -24,13 +24,13 @@ class Model : public QAbstractTableModel {
 public:
   Model(const git::Repository &repo, QObject *parent = nullptr)
       : QAbstractTableModel(parent) {
-    foreach (const git::Submodule &submodule, repo.submodules())
+    for (const git::Submodule &submodule : repo.submodules())
       mSubmodules.append({true, submodule});
   }
 
   QList<git::Submodule> enabledSubmodules() const {
     QList<git::Submodule> submodules;
-    foreach (const Entry &entry, mSubmodules) {
+    for (const Entry &entry : mSubmodules) {
       if (entry.enabled)
         submodules.append(entry.submodule);
     }

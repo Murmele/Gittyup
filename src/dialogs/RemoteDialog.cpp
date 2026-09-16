@@ -30,7 +30,7 @@ RemoteDialog::RemoteDialog(Kind kind, RepoView *parent) : QDialog(parent) {
   mRemotes = new QComboBox(this);
   mRemotes->setEditable(true);
   mRemotes->setMinimumContentsLength(16);
-  foreach (const git::Remote &remote, repo.remotes())
+  for (const git::Remote &remote : repo.remotes())
     mRemotes->addItem(remote.name(), QVariant::fromValue(remote));
 
   git::Remote defaultRemote = repo.defaultRemote();

@@ -77,7 +77,7 @@ private:
     }
 
     QMenu *menu = createStandardContextMenu();
-    foreach (const QTextEdit::ExtraSelection &es, mSpellList) {
+    for (const QTextEdit::ExtraSelection &es : mSpellList) {
       if (es.cursor == cursor && es.format == mSpellFormat) {
 
         // Replace standard context menu.
@@ -87,7 +87,7 @@ private:
         if (!suggestions.isEmpty()) {
           QMenu *spellReplace = menu->addMenu(tr("Replace..."));
           QMenu *spellReplaceAll = menu->addMenu(tr("Replace All..."));
-          foreach (const QString &str, suggestions) {
+          for (const QString &str : suggestions) {
             QAction *replace = spellReplace->addAction(str);
             connect(replace, &QAction::triggered, [this, event, str] {
               QTextCursor cursor = cursorForPosition(event->pos());
@@ -217,7 +217,7 @@ private:
   }
 
   bool ignoredAt(const QTextCursor &cursor) {
-    foreach (const QTextEdit::ExtraSelection &es, extraSelections()) {
+    for (const QTextEdit::ExtraSelection &es : extraSelections()) {
       if (es.cursor == cursor && es.format == mIgnoredFormat)
         return true;
     }
@@ -310,7 +310,7 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
   // Spell check language menu actions.
   bool selected = false;
   QList<QAction *> actionList;
-  foreach (const QString &dict, dictNameList) {
+  for (const QString &dict : dictNameList) {
     QLocale locale(dict);
 
     // Convert language_COUNTRY format from dictionary filename to string
@@ -342,19 +342,17 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
 
   // Sort menu entries alphabetical.
   std::sort(actionList.begin(), actionList.end(),
-            [actionList](QAction *la, QAction *ra) {
-              return la->text() < ra->text();
-            });
+            [](QAction *la, QAction *ra) { return la->text() < ra->text(); });
 
   QActionGroup *dictActionGroup = new QActionGroup(this);
   dictActionGroup->setExclusive(true);
-  foreach (QAction *action, actionList)
+  for (QAction *action : actionList)
     dictActionGroup->addAction(action);
 
   // No dictionary set: select dictionary for system language and country
   if ((!selected) && (mDictName != "none")) {
     QString name = QLocale::system().name();
-    foreach (QAction *action, dictActionGroup->actions()) {
+    for (QAction *action : dictActionGroup->actions()) {
       if (action->data().toString().startsWith(name)) {
         action->setChecked(true);
         mDictName = action->data().toString();
@@ -365,7 +363,7 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
 
     // Fallback: ignore country (e.g.: use de_DE instead of de_AT)
     if (!selected) {
-      foreach (QAction *action, dictActionGroup->actions()) {
+      for (QAction *action : dictActionGroup->actions()) {
         if (action->data().toString().startsWith(name.left(2))) {
           action->setChecked(true);
           mDictName = action->data().toString();
@@ -456,7 +454,7 @@ CommitEditor::CommitEditor(const git::Repository &repo, QWidget *parent)
     QString path = mDictPath + "/" + mDictName;
     if (!mMessage->setupSpellCheck(path, mUserDict, mSpellError,
                                    mSpellIgnore)) {
-      foreach (QAction *action, dictActionGroup->actions()) {
+      for (QAction *action : dictActionGroup->actions()) {
         action->setChecked(false);
         if (mDictName == action->data().toString()) {
           action->setEnabled(false);

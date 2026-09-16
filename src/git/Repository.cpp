@@ -68,9 +68,11 @@ const QString kConfigDir = "gittyup";
 const QString kConfigFile = "config";
 const QString kStarFile = "starred";
 
+#ifndef USE_SYSTEM_LIBGIT2
 int blame_progress(const git_oid *suspect, void *payload) {
   return reinterpret_cast<Blame::Callbacks *>(payload)->progress() ? 0 : -1;
 }
+#endif
 
 int checkout_notify(git_checkout_notify_t why, const char *path,
                     const git_diff_file *baseline, const git_diff_file *target,
@@ -120,7 +122,7 @@ Repository::Data::Data(git_repository *repo)
   if (ids.isEmpty())
     return;
 
-  foreach (const QByteArray &id, ids.split('\n'))
+  for (const QByteArray &id : ids.split('\n'))
     starredCommits.insert(git::Id(QByteArray::fromHex(id), hash_type));
 }
 
@@ -556,7 +558,7 @@ RevWalk Repository::walker(int sort) const {
 
   RevWalk walker(revwalk);
   git_revwalk_sorting(revwalk, sort);
-  foreach (const Reference &ref, refs())
+  for (const Reference &ref : refs())
     git_revwalk_push_ref(revwalk, ref.qualifiedName().toUtf8());
 
   return walker;
@@ -661,7 +663,7 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
 
 QList<Commit> Repository::starredCommits() const {
   QList<Commit> commits;
-  foreach (const Id &id, d->starredCommits) {
+  for (const Id &id : d->starredCommits) {
     if (Commit commit = lookupCommit(id))
       commits.append(commit);
   }
@@ -686,7 +688,7 @@ void Repository::setCommitStarred(const Id &commit, bool starred) {
     return;
 
   QByteArrayList ids;
-  foreach (const Id &id, d->starredCommits)
+  for (const Id &id : d->starredCommits)
     ids.append(id.toByteArray().toHex());
 
   file.write(ids.join('\n'));
@@ -703,7 +705,7 @@ QList<Submodule> Repository::submodules() const {
   ensureSubmodulesCached();
 
   QList<Submodule> submodules;
-  foreach (const QString &name, d->submodules) {
+  for (const QString &name : d->submodules) {
     if (Submodule submodule = lookupSubmodule(name))
       submodules.append(submodule);
   }
@@ -807,7 +809,7 @@ QList<Commit> Repository::stashes() const {
   git_stash_foreach(d->repo, insert_stash_id, &ids);
 
   QList<Commit> commits;
-  foreach (const Id &id, ids) {
+  for (const Id &id : ids) {
     git_commit *commit = nullptr;
     if (!git_commit_lookup(&commit, d->repo, id))
       commits.append(Commit(commit));
@@ -1034,7 +1036,7 @@ bool Repository::checkout(const Commit &commit, CheckoutCallbacks *callbacks,
         GIT_CHECKOUT_UPDATE_SUBMODULES; // GIT_CHECKOUT_UPDATE_SUBMODULES is not
                                         // yet implemented from libgit2
 
-    foreach (const QString &path, paths) {
+    for (const QString &path : paths) {
       storage.append(path.toUtf8());
       rawPaths.append(storage.last().data());
     }
@@ -1107,7 +1109,7 @@ Repository::LfsTracking Repository::lfsTracked() {
 
   QStringList tracked, excluded;
   bool excluding = false;
-  foreach (const QString &line, lines) {
+  for (const QString &line : lines) {
     if (line[0] != ' ') {
       excluding = true;
     } else if (excluding) {
@@ -1220,7 +1222,7 @@ void Repository::init() {
   QStringList paths = {"/etc/ssl/certs/ca-certificates.crt",
                        "/etc/pki/tls/certs/ca-bundle.crt"};
 
-  foreach (const QString &path, paths) {
+  for (const QString &path : paths) {
     if (QFile::exists(path)) {
       git_libgit2_opts(GIT_OPT_SET_SSL_CERT_LOCATIONS,
                        path.toUtf8().constData(), NULL);

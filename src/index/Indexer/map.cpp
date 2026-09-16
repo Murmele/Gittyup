@@ -51,7 +51,7 @@ void Map::run() {
     result.fields[Index::Email][email].append(0);
 
     quint32 namePos = 0;
-    foreach (const QString &name, author.name().split(kWsRe)) {
+    for (const QString &name : author.name().split(kWsRe)) {
       QByteArray key = name.toUtf8().toLower();
       result.fields[Index::Author][key].append(namePos++);
     }

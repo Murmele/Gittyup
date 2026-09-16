@@ -781,7 +781,7 @@ bool RepoView::lfsSetLocked(const QStringList &paths, bool lock) {
   QStringList errors;
   QString verb = lock ? tr("Lock") : tr("Unlock");
 
-  foreach (const QString &path, paths) {
+  for (const QString &path : paths) {
     if (!repo().lfsSetLocked(path, lock))
       errors.append(
           tr("Unable to %1 '%2' - %3")
@@ -792,7 +792,7 @@ bool RepoView::lfsSetLocked(const QStringList &paths, bool lock) {
     return true;
 
   LogEntry *entry = addLogEntry(tr("Git LFS"), verb);
-  foreach (const QString &error, errors)
+  for (const QString &error : errors)
     entry->addEntry(LogEntry::Error, error);
 
   return false;
@@ -914,7 +914,7 @@ LogEntry *RepoView::error(LogEntry *parent, const QString &action,
     items.removeLast();
 
   LogEntry *root = parent->addEntry(LogEntry::Error, items.takeFirst());
-  foreach (const QString &item, items)
+  for (const QString &item : items)
     root->addEntry(LogEntry::File, item);
 
   return root;
@@ -953,7 +953,7 @@ void RepoView::fetchAll() {
   // Queue up all remotes to fetch them serially.
   QString text = tr("%1 remotes").arg(remotes.size());
   LogEntry *entry = addLogEntry(text, tr("Fetch All"));
-  foreach (const git::Remote &remote, remotes)
+  for (const git::Remote &remote : remotes)
     fetch(remote, false, true, entry);
 }
 
@@ -1050,7 +1050,7 @@ QFuture<git::Result> RepoView::fetch(const git::Remote &rmt, bool tags,
 
         if (result && submodules) {
           // Scan for unmodified submodules on the fetch thread.
-          foreach (const git::Submodule &submodule, mRepo.submodules()) {
+          for (const git::Submodule &submodule : mRepo.submodules()) {
             if (GIT_SUBMODULE_STATUS_IS_UNMODIFIED(
                     mRepo.submoduleStatus(submodule.name())))
               submodules->append(submodule.name());
@@ -1109,7 +1109,7 @@ void RepoView::pull(MergeFlags flags, const git::Remote &rmt, bool tags,
             if (!names.isEmpty()) {
               callback = [this, entry, names] {
                 QList<git::Submodule> modules;
-                foreach (const QString &name, names)
+                for (const QString &name : names)
                   modules.append(mRepo.lookupSubmodule(name));
                 updateSubmodules(modules, true, false, false, entry);
               };
@@ -1244,7 +1244,7 @@ void RepoView::fastForward(const git::Reference &ref,
   CheckoutCallbacks callbacks(parent, GIT_CHECKOUT_NOTIFY_UPDATED);
   if (!mRepo.checkout(commit, &callbacks)) {
     LogEntry *err = error(parent, tr("fast-forward"), head.name());
-    foreach (const QString &path, callbacks.conflicts())
+    for (const QString &path : callbacks.conflicts())
       err->addEntry(LogEntry::File, path)->setStatus('!');
 
     QUrlQuery query;
@@ -1373,7 +1373,7 @@ void RepoView::mergeAbort(LogEntry *parent) {
     LogEntry *parent = addLogEntry(tr("merge"), tr("Abort"));
     QString err = tr("Some merged files have unstaged changes");
     LogEntry *entry = error(parent, tr("abort merge"), QString(), err);
-    foreach (const QString &conflict, conflicts)
+    for (const QString &conflict : conflicts)
       entry->addEntry(LogEntry::File, conflict)->setStatus('M');
     return;
   }
@@ -2002,7 +2002,7 @@ void RepoView::checkout(const git::Commit &commit, const git::Reference &ref,
       (detach && !mRepo.setHeadDetached(commit)) ||
       (!detach && !mRepo.setHead(ref))) {
     LogEntry *err = error(entry, tr("checkout"), name);
-    foreach (const QString &path, callbacks.conflicts())
+    for (const QString &path : callbacks.conflicts())
       err->addEntry(LogEntry::File, path)->setStatus('!');
 
     if (ref.isValid()) {
@@ -2402,7 +2402,7 @@ RepoView::submoduleResetInfoList(const git::Repository &repo,
                                  LogEntry *parent) {
   // Only reset modified submodules
   QList<git::Submodule> modules;
-  foreach (const git::Submodule &submodule, submodules) {
+  for (const git::Submodule &submodule : submodules) {
     int status = repo.submoduleStatus(submodule.name());
 
     if (status & (GIT_SUBMODULE_STATUS_WD_MODIFIED |
@@ -2419,7 +2419,7 @@ RepoView::submoduleResetInfoList(const git::Repository &repo,
     entry->addEntry(tr("Untouched"));
 
   QList<SubmoduleInfo> list;
-  foreach (const git::Submodule &module, modules)
+  for (const git::Submodule &module : modules)
     list.append({module, repo, entry});
   return list;
 }
@@ -2463,7 +2463,7 @@ QList<RepoView::SubmoduleInfo> RepoView::submoduleUpdateInfoList(
     bool init, bool checkout_force, LogEntry *parent) {
   // Gather list of submodules.
   QList<git::Submodule> modules;
-  foreach (const git::Submodule &submodule, submodules) {
+  for (const git::Submodule &submodule : submodules) {
     // FIXME: Add hint to init the submodule?
     if (!init && !submodule.isInitialized())
       continue;
@@ -2483,7 +2483,7 @@ QList<RepoView::SubmoduleInfo> RepoView::submoduleUpdateInfoList(
     entry->addEntry(tr("Already up-to-date."));
 
   QList<SubmoduleInfo> list;
-  foreach (const git::Submodule &module, modules)
+  for (const git::Submodule &module : modules)
     list.append({module, repo, entry});
   return list;
 }
@@ -2884,8 +2884,10 @@ void RepoView::showEvent(QShowEvent *event) {
 }
 
 void RepoView::closeEvent(QCloseEvent *event) {
-  // Try to close tracked windows.
-  foreach (QWidget *window, mTrackedWindows) {
+  // Try to close tracked windows. Iterate over a copy since closing a
+  // window may synchronously remove it from mTrackedWindows.
+  const QList<QWidget *> trackedWindows = mTrackedWindows;
+  for (QWidget *window : trackedWindows) {
     if (!window->close()) {
       event->ignore();
       return;
