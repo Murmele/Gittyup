@@ -1,3 +1,9 @@
+/*
+Colour Palette used: Catpuccin Mocha
+Which is under the MIT License
+Copyright (c) 2021 Catppuccin
+*/
+
 --
 -- Many colors support 'active', 'inactive', and 'disabled' states.
 -- They can all be set to the same color with the syntax:
