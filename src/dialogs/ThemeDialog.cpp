@@ -20,7 +20,7 @@ class ThemeButton : public QPushButton {
   Q_OBJECT
 
 public:
-  enum class Theme { Default, Dark, System };
+  enum class Theme { Default, Dark, System, Mocha };
 
   ThemeButton(const QString &title, const QIcon &icon,
               const QString &description, const Theme &theme,
@@ -65,6 +65,9 @@ public:
         case Theme::Default:
           Settings::instance()->setValue(Setting::Id::ColorTheme, "Default");
           break;
+        case Theme::Mocha:
+          Settings::instance()->setValue(Setting::Id::ColorTheme, "Mocha");
+          break;
       }
 
       window()->close();
@@ -101,14 +104,21 @@ ThemeDialog::ThemeDialog(QWidget *parent) : QDialog(parent) {
       tr("System Theme"), QIcon(":/system.png"),
       tr("A flexible look matching system colors"), ThemeButton::Theme::System);
 
-  QHBoxLayout *themeButtons = new QHBoxLayout;
-  themeButtons->addWidget(native);
-  themeButtons->addWidget(dark);
-  themeButtons->addSpacing(20);
-  themeButtons->addWidget(system);
+  ThemeButton *mocha = new ThemeButton(
+      tr("Catppuccin Mocha Theme"), QIcon(":/mocha.png"),
+      tr("A more modern dark theme"), ThemeButton::Theme::Mocha);
+
+  QHBoxLayout *themeButtons1 = new QHBoxLayout; // 1th row
+  themeButtons1->addWidget(native);
+  themeButtons1->addWidget(dark);
+  
+  QHBoxLayout *themeButtons2 = new QHBoxLayout; // 2nd row
+  themeButtons2->addWidget(system);
+  themeButtons2->addWidget(mocha);
 
   QVBoxLayout *layout = new QVBoxLayout(this);
-  layout->addLayout(themeButtons);
+  layout->addLayout(themeButtons1);
+  layout->addLayout(themeButtons2);
 }
 
 #include "ThemeDialog.moc"
