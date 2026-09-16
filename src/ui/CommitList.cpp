@@ -290,9 +290,9 @@ public:
 
       case CommitList::Role::GraphRole: {
         QVariantList columns;
-        foreach (const Column &column, row.columns) {
+        for (const Column &column : row.columns) {
           QVariantList segments;
-          foreach (const Segment &segment, column)
+          for (const Segment &segment : column)
             segments.append(segment.segment);
           columns.append(QVariant(segments));
         }
@@ -302,9 +302,9 @@ public:
 
       case CommitList::Role::GraphColorRole: {
         QVariantList columns;
-        foreach (const Column &column, row.columns) {
+        for (const Column &column : row.columns) {
           QVariantList segments;
-          foreach (const Segment &segment, column)
+          for (const Segment &segment : column)
             segments.append(segment.color);
           columns.append(QVariant(segments));
         }
@@ -436,7 +436,7 @@ private:
       }
 
       // Add a path to each successor.
-      foreach (const git::Commit &successor, successors) {
+      for (const git::Commit &successor : successors) {
         // Find index of parent in next row.
         int index = indexOf(nextParents, successor);
         if (index < 0)
@@ -489,7 +489,7 @@ private:
     int count = 0;
     QList<QColor> colors = Application::theme()->branchTopologyEdges();
     forever {
-      foreach (const QColor &color, colors) {
+      for (const QColor &color : colors) {
         if (counts.value(color.name()) == count)
           return color;
       }
@@ -1246,7 +1246,7 @@ private:
           {Badge::Label::Type::Ref, head.name(), true});
     }
 
-    foreach (const git::Reference &ref, mRepo.refs()) {
+    for (const git::Reference &ref : mRepo.refs()) {
       if (git::Commit target = ref.target())
         mRefs[target.id()].append(
             {Badge::Label::Type::Ref, ref.name(), ref.isHead(), ref.isTag()});
@@ -1334,7 +1334,7 @@ CommitList::CommitList(Index *index, QWidget *parent)
           &CommitList::restoreSelection);
 
   CommitModel *model = static_cast<CommitModel *>(mModel);
-  connect(model, &CommitModel::statusFinished, [this, model](bool visible) {
+  connect(model, &CommitModel::statusFinished, [this](bool visible) {
     mRestoreSelection = true; // Reset to default
 
     // Select the first commit if the selection was cleared.
@@ -1422,7 +1422,7 @@ git::Diff CommitList::selectedDiff() const {
 
 QList<git::Commit> CommitList::selectedCommits() const {
   QList<git::Commit> selectedCommits;
-  foreach (const QModelIndex &index, sortedIndexes()) {
+  for (const QModelIndex &index : sortedIndexes()) {
     git::Commit commit = index.data(CommitRole).value<git::Commit>();
     if (commit.isValid())
       selectedCommits.append(commit);
@@ -1594,7 +1594,7 @@ void CommitList::setModel(QAbstractItemModel *model) {
       selectionModel, &QItemSelectionModel::selectionChanged,
       [this](const QItemSelection &selected, const QItemSelection &deselected) {
         // Update the index before each selected/deselected range.
-        foreach (const QItemSelectionRange &range, selected + deselected) {
+        for (const QItemSelectionRange &range : selected + deselected) {
           if (int row = range.top())
             update(this->model()->index(row - 1, 0));
         }
@@ -1674,7 +1674,7 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
   } else {
     // multiple selection
     bool anyStarred = false;
-    foreach (const QModelIndex &index, selectionModel()->selectedIndexes()) {
+    for (const QModelIndex &index : selectionModel()->selectedIndexes()) {
       if (index.data(CommitRole).isValid() &&
           index.data(CommitRole).value<git::Commit>().isStarred()) {
         anyStarred = true;
@@ -1683,7 +1683,7 @@ void CommitList::contextMenuEvent(QContextMenuEvent *event) {
     }
 
     menu.addAction(anyStarred ? tr("Unstar") : tr("Star"), [this, anyStarred] {
-      foreach (const QModelIndex &index, selectionModel()->selectedIndexes())
+      for (const QModelIndex &index : selectionModel()->selectedIndexes())
         if (index.data(CommitRole).isValid())
           index.data(CommitRole).value<git::Commit>().setStarred(!anyStarred);
     });
@@ -2028,7 +2028,7 @@ void CommitList::notifySelectionChanged() {
     return;
 
   // Redraw all selected indexes. Separators may have changed.
-  foreach (const QModelIndex &index, indexes)
+  for (const QModelIndex &index : indexes)
     update(index);
 
   dispatchSelectedDiff(mFile, mSpontaneous);
