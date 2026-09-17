@@ -74,7 +74,7 @@ submodules are optional or may also be satisfied by system libraries.
 
 **External Dependencies**
 
-* Qt (required >= 6.6)
+* Qt (required >= 6.4)
 
 **Included Dependencies**
 

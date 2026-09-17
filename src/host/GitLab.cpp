@@ -60,7 +60,7 @@ GitLab::GitLab(const QString &username) : Account(username) {
 
         QMap<QString, QString> map;
         QRegularExpression re("<(.*)>; rel=\"(\\w+)\"");
-        foreach (const QString &record, link.split(", ")) {
+        for (const QString &record : link.split(", ")) {
           QRegularExpressionMatch match = re.match(record);
           if (match.isValid() && match.hasMatch())
             map.insert(match.captured(2), match.captured(1));

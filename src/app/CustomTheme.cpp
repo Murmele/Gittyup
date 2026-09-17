@@ -27,7 +27,7 @@ void setPaletteColors(QPalette &palette, QPalette::ColorRole role,
   }
 
   QVariantMap map = variant.toMap();
-  foreach (const QString &key, map.keys()) {
+  for (const QString &key : map.keys()) {
     QColor color(map.value(key).toString());
     if (!color.isValid()) {
       Q_ASSERT(false);
@@ -500,6 +500,19 @@ QColor CustomTheme::remoteComment(Comment color) {
   }
   throw std::runtime_error("unreachable; value=" +
                            std::to_string(static_cast<int>(color)));
+}
+
+QColor CustomTheme::notice(Notice role) {
+  QVariantMap notice = mMap.value("notice").toMap();
+
+  switch (role) {
+    case Notice::Background:
+      return QColor(notice.value("background").toString());
+    case Notice::Foreground:
+      return QColor(notice.value("foreground").toString());
+  }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(role)));
 }
 
 QColor CustomTheme::star() {

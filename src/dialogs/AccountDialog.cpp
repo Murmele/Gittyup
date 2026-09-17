@@ -55,19 +55,7 @@ AccountDialog::AccountDialog(Account *account, QWidget *parent)
     mLabel->setVisible(!mLabel->text().isEmpty());
   });
 
-  ExpandButton *expand = new ExpandButton(this);
-  QWidget *advanced = new QWidget(this);
-  advanced->setVisible(false);
-
-  QFormLayout *form = new QFormLayout;
-  form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-  form->addRow(tr("Host:"), mHost);
-  form->addRow(tr("Username:"), mUsername);
-  form->addRow(tr("Password:"), mPassword);
-  form->addRow(mLabel);
-  form->addRow(tr("Advanced:"), expand);
-
-  mUrl = new QLineEdit(advanced);
+  mUrl = new QLineEdit(this);
   mUrl->setText(account ? account->url() : Account::defaultUrl(kind));
   connect(mHost, signal, [this] {
     Account::Kind kind =
@@ -77,16 +65,13 @@ AccountDialog::AccountDialog(Account *account, QWidget *parent)
     resize(sizeHint());
   });
 
-  QFormLayout *advancedForm = new QFormLayout(advanced);
-  advancedForm->setContentsMargins(-1, 0, 0, 0);
-  advancedForm->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-  advancedForm->addRow(tr("URL:"), mUrl);
-
-  connect(expand, &ExpandButton::toggled, [this, advanced](bool checked) {
-    advanced->setVisible(checked);
-    QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-    resize(sizeHint());
-  });
+  QFormLayout *form = new QFormLayout;
+  form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+  form->addRow(tr("Host:"), mHost);
+  form->addRow(tr("Username:"), mUsername);
+  form->addRow(tr("Password:"), mPassword);
+  form->addRow(mLabel);
+  form->addRow(tr("URL:"), mUrl);
 
   QDialogButtonBox::StandardButtons buttons =
       QDialogButtonBox::Ok | QDialogButtonBox::Cancel;
@@ -97,7 +82,6 @@ AccountDialog::AccountDialog(Account *account, QWidget *parent)
 
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->addLayout(form);
-  layout->addWidget(advanced);
   layout->addWidget(mButtons);
 
   updateButtons();

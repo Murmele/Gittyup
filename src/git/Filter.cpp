@@ -38,7 +38,13 @@ struct FilterInfo {
   QByteArray attributes;
 };
 
-QString quote(const QString &path) { return QString("\"%1\"").arg(path); }
+QString quote(const QString &path) {
+  QString escapedPath = path;
+  // Ensure that the path is properly escaped to avoid shell injection
+  // This is inspired by git's sq_quote_buf
+  escapedPath.replace("'", "'\\''");
+  return QString("'%1'").arg(escapedPath);
+}
 
 struct Stream {
   int init(git_filter *self, const git_filter_source *src, git_writestream *);
@@ -97,7 +103,7 @@ static int stream_close(git_writestream *s) {
 
 static int stream_write(git_writestream *s, const char *buffer, size_t len) {
   struct Stream *stream = reinterpret_cast<struct Stream *>(s);
-  const auto res = stream->process.write(buffer, len);
+  const size_t res = stream->process.write(buffer, len);
   if (res != len)
     return -1;
   return 0;
@@ -173,7 +179,7 @@ void Filter::init() {
   }
 
   // Register filters.
-  foreach (const QString &key, filters.keys()) {
+  for (const QString &key : filters.keys()) {
     FilterInfo &info = filters[key];
     if (info.clean.isEmpty() || info.smudge.isEmpty())
       continue;

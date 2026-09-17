@@ -20,8 +20,6 @@ finish-args:
   - --talk-name=org.freedesktop.Notifications
   - --talk-name=org.freedesktop.Flatpak
 rename-icon: gittyup # Image will renamed to match the app-id konvention
-rename-desktop-file: gittyup.desktop
-rename-appdata-file: gittyup.appdata.xml
 
 build-options:
   append-path: /usr/lib/sdk/golang/bin

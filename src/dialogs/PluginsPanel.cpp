@@ -42,7 +42,7 @@ void PluginsPanel::refresh() {
   QFont bold = font();
   bold.setBold(true);
 
-  foreach (PluginRef plugin, Plugin::plugins(mRepo)) {
+  for (const PluginRef &plugin : Plugin::plugins(mRepo)) {
     QTreeWidgetItem *root = new QTreeWidgetItem(this, {plugin->name()});
     root->setData(Name, Qt::UserRole, QVariant::fromValue(plugin));
     root->setFont(Name, bold);
@@ -71,7 +71,7 @@ void PluginsPanel::refresh() {
       dialog.setWindowTitle(tr("%1 Options").arg(plugin->name()));
 
       QFormLayout *layout = new QFormLayout(&dialog);
-      foreach (const QString &key, keys) {
+      for (const QString &key : keys) {
         QWidget *widget = nullptr;
         QVariant value = plugin->optionValue(key);
         switch (plugin->optionKind(key)) {
@@ -112,7 +112,7 @@ void PluginsPanel::refresh() {
 
           case Plugin::List: {
             QComboBox *comboBox = new QComboBox(&dialog);
-            foreach (const QString &opt, plugin->optionOpts(key))
+            for (const QString &opt : plugin->optionOpts(key))
               comboBox->addItem(opt);
             comboBox->setCurrentIndex(value.toInt() - 1);
 
@@ -139,7 +139,7 @@ void PluginsPanel::refresh() {
         refresh();
     });
 
-    foreach (const QString &key, plugin->diagnosticKeys()) {
+    for (const QString &key : plugin->diagnosticKeys()) {
       QString desc = plugin->diagnosticDescription(key);
       QStringList strings = {plugin->diagnosticName(key), QString(), desc};
       QTreeWidgetItem *item = new QTreeWidgetItem(root, strings);

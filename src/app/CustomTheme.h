@@ -33,6 +33,7 @@ public:
   QColor diff(Diff color) override;
   QColor heatMap(HeatMap color) override;
   QColor remoteComment(Comment color) override;
+  QColor notice(Notice role) override;
   QColor star() override;
   QVariantMap editorStyleProperties() const override;
 
