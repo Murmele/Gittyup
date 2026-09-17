@@ -178,13 +178,13 @@ public:
   void setAuthorCommitter(const QString &author, const QString &committer) {
     mSameAuthorCommitter = author == committer;
     if (mSameAuthorCommitter) {
-      mAuthor->setText(tr("Author/Committer: ") + author);
+      mAuthor->setText(tr("Author/Committer: %1").arg(author));
       mAuthor->adjustSize();
       mCommitter->setVisible(false);
     } else {
-      mAuthor->setText(tr("Author: ") + author);
+      mAuthor->setText(tr("Author: %1").arg(author));
       mAuthor->adjustSize();
-      mCommitter->setText(tr("Committer: ") + committer);
+      mCommitter->setText(tr("Committer: %1").arg(committer));
       mCommitter->adjustSize();
       mCommitter->setVisible(true);
     }
@@ -299,8 +299,8 @@ public:
 
   void setReferences(const QList<git::Commit> &commits) {
     QList<Badge::Label> refs;
-    foreach (const git::Commit &commit, commits) {
-      foreach (const git::Reference &ref, commit.refs())
+    for (const git::Commit &commit : commits) {
+      for (const git::Reference &ref : commit.refs())
         refs.append(
             {Badge::Label::Type::Ref, ref.name(), ref.isHead(), ref.isTag()});
     }
@@ -339,7 +339,7 @@ public:
 
       // Add names.
       QSet<QString> authors, committers;
-      foreach (const git::Commit &commit, commits) {
+      for (const git::Commit &commit : commits) {
         authors.insert(kBoldFmt.arg(commit.author().name()));
         committers.insert(kBoldFmt.arg(commit.committer().name()));
       }
@@ -401,7 +401,7 @@ public:
         kAuthorFmt.arg(committer.name(), committer.email()));
 
     QStringList parents;
-    foreach (const git::Commit &parent, commit.parents()) {
+    for (const git::Commit &parent : commit.parents()) {
       QUrl url;
       url.setScheme("id");
       url.setPath(parent.id().toString());
@@ -616,6 +616,23 @@ void DetailView::setDiff(const git::Diff &diff, const QString &file,
 
   // Update menu actions.
   MenuBar::instance(this)->updateRepository();
+}
+
+void DetailView::setLoading() {
+  // Commit metadata (author, date, message, parents, refs, ...) comes from
+  // the selected commit(s), not the diff, so this can easily be shown
+  // immediatly.
+  RepoView *view = RepoView::parentView(this);
+  QList<git::Commit> commits = view->commits();
+  if (!commits.isEmpty()) {
+    mDetail->setCurrentIndex(CommitIndex);
+    mDetail->setVisible(true);
+    static_cast<CommitDetail *>(mDetail->currentWidget())->setCommits(commits);
+  }
+
+  // Incidate data loading while we wait for data to arrive
+  ContentWidget *cw = static_cast<ContentWidget *>(mContent->currentWidget());
+  cw->setLoading();
 }
 
 void DetailView::cancelBackgroundTasks() {

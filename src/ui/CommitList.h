@@ -12,6 +12,7 @@
 
 #include "git/Reference.h"
 #include <QListView>
+#include <QTimer>
 
 class Index;
 
@@ -63,10 +64,22 @@ public:
 
   void setModel(QAbstractItemModel *model) override;
 
+  // Whether a status check and/or walker/row rebuild is currently in
+  // flight. See the loadingChanged() signal for a way to wait on this
+  // instead of polling it.
+  bool isLoading() const { return mLoading; }
+
 signals:
   void statusChanged(bool dirty);
   void diffSelected(const git::Diff diff, const QString &file = QString(),
                     bool spontaneous = false);
+
+  // Emitted just before a (potentially slow) diff is being computation. This
+  // can be used to clear GUI and enable loading indicators whilst waiting
+  void diffLoading();
+
+  // Emitted whenever isLoading() changes.
+  void loadingChanged(bool loading);
 
 protected:
   void contextMenuEvent(QContextMenuEvent *event) override;
@@ -74,11 +87,13 @@ protected:
   void mousePressEvent(QMouseEvent *event) override;
   void mouseReleaseEvent(QMouseEvent *event) override;
   void leaveEvent(QEvent *) override;
+  void paintEvent(QPaintEvent *event) override;
 
 private:
   void storeSelection();
   void restoreSelection();
   void updateModel();
+  void setLoading(bool loading);
 
   QModelIndexList sortedIndexes() const;
 
@@ -87,6 +102,7 @@ private:
                      const QString &file = QString(), bool spontaneous = false);
 
   void notifySelectionChanged();
+  void dispatchSelectedDiff(const QString &file, bool spontaneous);
 
   bool isDecoration(const QModelIndex &index, const QPoint &pos);
   bool isStar(const QModelIndex &index, const QPoint &pos);
@@ -105,6 +121,21 @@ private:
   bool mRestoreSelection{true};
 
   QString mSelectedRange;
+
+  // Whether the current selection is just the automatic fallback rather
+  // than a deliberate user pick
+  bool mSelectionIsDefault{false};
+
+  // Whether the loading indicator should be shown
+  bool mLoading{false};
+  float mLoadingFadein = 0;
+  int mProgress{0};
+  QTimer mTimer;
+
+  // Incremented on every selection-driven diff request. This is a hack used to
+  // discard diffs that arrive before the last one
+  // (Yes, we should have a proper cancel pathway here)
+  int mDiffRequest = 0;
 };
 
 #endif

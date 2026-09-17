@@ -15,8 +15,8 @@
 #include <QDateTimeEdit>
 #include <QLineEdit>
 
-#define INIT_REPO(repoPath, /* bool */ useTempDir)                             \
-  QString path = Test::extractRepository(repoPath, useTempDir);                \
+#define INIT_REPO(repoPath)                                                    \
+  QString path = Test::extractRepository(repoPath);                            \
   QVERIFY(!path.isEmpty());                                                    \
   git::Repository repo = git::Repository::open(path);                          \
   QVERIFY(repo.isValid());                                                     \
@@ -36,7 +36,7 @@ private slots:
 using namespace git;
 
 void TestAmend::testAmend() {
-  INIT_REPO("CherryPickAuthorEmail.zip", true);
+  INIT_REPO("CherryPickAuthorEmail.zip");
 
   git::Reference master = repo.lookupRef(QString("refs/heads/master"));
   QVERIFY(master.isValid());

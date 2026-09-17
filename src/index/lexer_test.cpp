@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
   lexers.insert("null", &generic);
 
   QTextStream out(stdout);
-  foreach (const QString &arg, args) {
+  for (const QString &arg : args) {
     // Open file.
     QFile file(arg);
     if (!file.open(QIODevice::ReadOnly))

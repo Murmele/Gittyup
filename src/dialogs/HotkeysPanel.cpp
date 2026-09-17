@@ -373,7 +373,7 @@ HotkeysPanel::HotkeysPanel(QWidget *parent) : QTreeView(parent) {
     QString label = hotkey.label().replace(slashRegex, "/");
     int lastSep = label.lastIndexOf('/');
 
-    HotkeyGroupData *group;
+    HotkeyGroupData *group = nullptr;
 
     // Look for existing group along hierarchy
     int pos = lastSep;

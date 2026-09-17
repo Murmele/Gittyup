@@ -18,6 +18,7 @@ void Setting::initialize(QMap<Id, QString> &keys) {
   keys[Id::HideLogAutomatically] = "window/log/hide";
   keys[Id::OpenSubmodulesInTabs] = "window/tabs/submodule";
   keys[Id::OpenAllReposInTabs] = "window/tabs/repository";
+  keys[Id::AutoHideRepoSiderbar] = "window/view/autoHideRepoSidebar";
   keys[Id::HideMenuBar] = "window/view/menuBarHidden";
   keys[Id::ShowAvatars] = "window/view/avatarsVisible";
   keys[Id::ShowMaximized] = "window/view/showMaximized";

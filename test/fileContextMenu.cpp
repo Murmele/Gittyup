@@ -9,8 +9,8 @@
 #include <QMessageBox>
 #include <QPushButton>
 
-#define INIT_REPO(repoPath, /* bool */ useTempDir)                             \
-  QString path = Test::extractRepository(repoPath, useTempDir);                \
+#define INIT_REPO(repoPath)                                                    \
+  QString path = Test::extractRepository(repoPath);                            \
   QVERIFY(!path.isEmpty());                                                    \
   git::Repository repo = git::Repository::open(path);                          \
   QVERIFY(repo.isValid());                                                     \
@@ -36,7 +36,7 @@ private slots:
 using namespace git;
 
 void TestFileContextMenu::testDiscardFile() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -62,12 +62,9 @@ void TestFileContextMenu::testDiscardFile() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"file.txt"};
   FileContextMenu m(repoView, files, repo.index());
@@ -112,7 +109,7 @@ void TestFileContextMenu::testDiscardFile() {
 }
 
 void TestFileContextMenu::testDiscardSubmodule() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -138,12 +135,9 @@ void TestFileContextMenu::testDiscardSubmodule() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"GittyupTestRepo"};
   FileContextMenu m(repoView, files, repo.index());
@@ -193,7 +187,7 @@ void TestFileContextMenu::testDiscardSubmodule() {
 }
 
 void TestFileContextMenu::testDiscardFolder() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -219,12 +213,9 @@ void TestFileContextMenu::testDiscardFolder() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"folder1"};
   FileContextMenu m(repoView, files, repo.index());
@@ -271,7 +262,7 @@ void TestFileContextMenu::testDiscardFolder() {
 }
 
 void TestFileContextMenu::testDiscardNothing() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -297,12 +288,9 @@ void TestFileContextMenu::testDiscardNothing() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files; // no files passed
   FileContextMenu m(repoView, files, repo.index());
@@ -340,7 +328,7 @@ void TestFileContextMenu::testDiscardNothing() {
 }
 
 void TestFileContextMenu::testIgnoreFile() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -366,12 +354,9 @@ void TestFileContextMenu::testIgnoreFile() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"file.txt"};
   FileContextMenu m(repoView, files, repo.index(), repoView);
@@ -388,7 +373,7 @@ void TestFileContextMenu::testIgnoreFile() {
 }
 
 void TestFileContextMenu::testIgnoreFileUntracked() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -421,12 +406,9 @@ void TestFileContextMenu::testIgnoreFileUntracked() {
     QVERIFY(file.write("Content of new file") > 0);
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"newFile.txt"};
   FileContextMenu m(repoView, files, repo.index(), repoView);
@@ -459,7 +441,7 @@ void TestFileContextMenu::testIgnoreFileUntracked() {
 }
 
 void TestFileContextMenu::testIgnoreFolder() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -485,12 +467,9 @@ void TestFileContextMenu::testIgnoreFolder() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"folder1"};
   FileContextMenu m(repoView, files, repo.index(), repoView);
@@ -523,7 +502,7 @@ void TestFileContextMenu::testIgnoreFolder() {
 }
 
 void TestFileContextMenu::testRemoveUntrackedFolder() {
-  INIT_REPO("TestRepository.zip", false);
+  INIT_REPO("TestRepository.zip");
 
   git::Commit commit =
       repo.lookupCommit("5c61b24e236310ad4a8a64f7cd1ccc968f1eec20");
@@ -556,12 +535,9 @@ void TestFileContextMenu::testRemoveUntrackedFolder() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"folder_new"};
   FileContextMenu m(repoView, files, repo.index(), repoView);

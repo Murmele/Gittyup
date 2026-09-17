@@ -26,6 +26,10 @@ Blob::operator git_blob *() const {
 
 bool Blob::isBinary() const { return git_blob_is_binary(*this); }
 
+bool Blob::isBinary(const QByteArray &data) {
+  return git_blob_data_is_binary(data.constData(), data.length());
+}
+
 QByteArray Blob::content() const {
   const char *content = static_cast<const char *>(git_blob_rawcontent(*this));
   return QByteArray(content, git_blob_rawsize(*this));
