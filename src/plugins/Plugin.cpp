@@ -556,7 +556,7 @@ QString Plugin::scriptDir() const { return mDir; }
 QString Plugin::errorString() const { return mError; }
 
 bool Plugin::isEnabled() const {
-  foreach (const QString &key, mDiagnostics.keys()) {
+  for (const QString &key : mDiagnostics.keys()) {
     if (isEnabled(key))
       return true;
   }
@@ -683,12 +683,12 @@ bool Plugin::hunk(TextEditor *editor) const {
 QList<PluginRef> Plugin::plugins(const git::Repository &repo) {
   QList<PluginRef> plugins;
   QDir dir = Settings::pluginsDir();
-  foreach (const QString &name, dir.entryList({"*.lua"}, QDir::Files))
+  for (const QString &name : dir.entryList({"*.lua"}, QDir::Files))
     plugins.append(PluginRef(new Plugin(dir.filePath(name), repo)));
 
   QDir user = Settings::userDir();
   if (user.cd("plugins")) {
-    foreach (const QString &name, user.entryList({"*.lua"}, QDir::Files))
+    for (const QString &name : user.entryList({"*.lua"}, QDir::Files))
       plugins.append(PluginRef(new Plugin(user.filePath(name), repo)));
   }
 

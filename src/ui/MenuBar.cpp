@@ -753,7 +753,7 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
       return;
 
     RepoView *view = win->currentView();
-    foreach (const git::Submodule &submodule, view->repo().submodules()) {
+    for (const git::Submodule &submodule : view->repo().submodules()) {
       QAction *action = mOpenSubmodule->addAction(submodule.name());
       connect(action, &QAction::triggered,
               [view, submodule] { view->openSubmodule(submodule); });

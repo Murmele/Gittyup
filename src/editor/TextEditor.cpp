@@ -394,8 +394,8 @@ QList<TextEditor::Diagnostic> TextEditor::diagnostics(int line) {
 }
 
 void TextEditor::addDiagnostic(int line, const Diagnostic &diag) {
-  int marker;
-  int indicator;
+  int marker = 0;
+  int indicator = 0;
   switch (diag.kind) {
     case Note:
       marker = NoteMarker;

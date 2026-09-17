@@ -85,7 +85,7 @@ RecentRepositories *RecentRepositories::instance() {
 
 void RecentRepositories::store() {
   QStringList paths;
-  foreach (RecentRepository *repo, mRepos)
+  for (RecentRepository *repo : mRepos)
     paths.append(repo->gitpath());
 
   QSettings().setValue(kRecentKey, paths);
@@ -136,7 +136,7 @@ void RecentRepositories::load() {
    * In this case the complete paths are shown and not only 'repositoryname',
    * otherwise they are not distinguishable in the recent repository list:
    */
-  foreach (const QString &path, paths) {
+  for (const QString &path : paths) {
     RecentRepository *repo = new RecentRepository(path, this);
     auto functor = [repo](RecentRepository *rhs) {
       return (repo->name() == rhs->name());

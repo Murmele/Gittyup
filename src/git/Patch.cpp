@@ -327,8 +327,8 @@ QByteArray Patch::generateResult(QList<QList<QByteArray>> &image,
                                  const FilterList &filters) const {
   // Generate result.
   QByteArray result;
-  foreach (const QList<QByteArray> &lines, image) {
-    foreach (const QByteArray &line, lines)
+  for (const QList<QByteArray> &lines : image) {
+    for (const QByteArray &line : lines)
       result.append(line);
   }
 

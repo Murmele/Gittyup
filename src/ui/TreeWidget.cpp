@@ -143,7 +143,7 @@ void TreeWidget::findPrevious() { mEditor->findPrevious(); }
 void TreeWidget::contextMenuEvent(QContextMenuEvent *event) {
   QStringList files;
   QModelIndexList indexes = mView->selectionModel()->selectedIndexes();
-  foreach (const QModelIndex &index, indexes)
+  for (const QModelIndex &index : indexes)
     files.append(index.data(Qt::EditRole).toString());
 
   if (files.isEmpty())

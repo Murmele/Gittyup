@@ -47,7 +47,7 @@ QString Command::substitute(const QProcessEnvironment &env,
 
   // Substitute in reverse order.
   QString result = command;
-  foreach (const QRegularExpressionMatch &match, matches) {
+  for (const QRegularExpressionMatch &match : matches) {
     QString value = env.value(match.captured(1));
     result.replace(match.capturedStart(), match.capturedLength(), value);
   }
