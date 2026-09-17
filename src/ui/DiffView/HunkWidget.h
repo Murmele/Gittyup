@@ -156,7 +156,7 @@ private slots:
    * \param staged Staged if true, else unstaged
    */
   void setStaged(int lidx, bool staged, bool emitSignal = true);
-  void marginClicked(int pos, int modifier, int margin);
+  void marginClicked(int pos, Scintilla::KeyMod modifier, int margin);
 
 private:
   void createMarkersAndLineNumbers(const Line &line, int lidx,

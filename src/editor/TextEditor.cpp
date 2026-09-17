@@ -8,6 +8,8 @@
 //
 
 #include "TextEditor.h"
+#include <LexerModule.h>
+#include <Scintillua.h>
 #include "app/Application.h"
 #include "conf/Settings.h"
 #include <QFocusEvent>
@@ -20,6 +22,8 @@
 
 #include "PlatQt.h"
 #include "ui/HotkeyManager.h"
+#include <QRegularExpression>
+#include <QVariantMap>
 
 using namespace Scintilla;
 
@@ -44,9 +48,63 @@ QPixmap stagedUnstagedIcon(const bool &checked, const QColor &background,
       QRect(QPoint(0, 0), QSize(fontHeight - 2, fontHeight - 2)));
 }
 
-#if defined(FLATPAK)
-const float textHeightFactorCheckBoxSize = 2.0;
-#endif
+Scintilla::Colour ToScintillaColour(const QColor &color) {
+  return color.red() | (color.green() << 8) | (color.blue() << 16) |
+         (color.alpha() << 24);
+}
+
+// Expand '$(key)' references against the theme's flat property map. Entries
+// may reference other entries (e.g. style.constant = '$(style.keyword)'), so
+// repeat until nothing changes, bounded to avoid a cycle looping forever.
+// NOTE: This is AI generated code
+QString expandThemeMacro(QString value, const QVariantMap &props) {
+  static const QRegularExpression macro(R"(\$\(([^)]+)\))");
+  for (int i = 0; i < 16; ++i) {
+    QRegularExpressionMatch match = macro.match(value);
+    if (!match.hasMatch())
+      break;
+    value.replace(match.capturedStart(), match.capturedLength(),
+                  props.value(match.captured(1)).toString());
+  }
+  return value;
+}
+
+// Apply a SciTE/Scintillua-style spec string, e.g. "fore:#0000FF,bold", to a
+// numbered style.
+// NOTE: This is AI generated code
+void applyThemeStyleSpec(ScintillaEdit *editor, int style,
+                         const QString &spec) {
+  foreach (QString token, spec.split(',', Qt::SkipEmptyParts)) {
+    token = token.trimmed();
+    int colon = token.indexOf(':');
+    if (colon < 0) {
+      QString keyword = token.toLower();
+      if (keyword == "bold") {
+        editor->styleSetBold(style, true);
+      } else if (keyword == "italics" || keyword == "italic") {
+        editor->styleSetItalic(style, true);
+      } else if (keyword == "underline" || keyword == "underlined") {
+        editor->styleSetUnderline(style, true);
+      } else if (keyword == "notvisible") {
+        editor->styleSetVisible(style, false);
+      } else if (keyword == "eolfilled") {
+        editor->styleSetEOLFilled(style, true);
+      }
+      continue;
+    }
+
+    QString key = token.left(colon).trimmed().toLower();
+    QColor color(token.mid(colon + 1).trimmed());
+    if (!color.isValid())
+      continue;
+
+    if (key == "fore") {
+      editor->styleSetFore(style, ToScintillaColour(color));
+    } else if (key == "back") {
+      editor->styleSetBack(style, ToScintillaColour(color));
+    }
+  }
+}
 
 static Hotkey stage = HotkeyManager::registerHotkey(
     "s", "stage selected changes", "DiffView/Stage Selected Lines");
@@ -59,9 +117,9 @@ static Hotkey discard = HotkeyManager::registerHotkey(
 
 } // namespace
 
-extern LexerModule lmLPeg;
+static bool LuaAdded = false;
 
-TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
+TextEditor::TextEditor(QWidget *parent) : ScintillaEdit(parent) {
   // Load colors.
   Theme *theme = Application::theme();
   mOursColor = theme->diff(Theme::Diff::Ours);
@@ -75,11 +133,22 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
   mWarningIcon = style->standardIcon(QStyle::SP_MessageBoxWarning);
   mErrorIcon = style->standardIcon(QStyle::SP_MessageBoxCritical);
 
-  // Register the LPeg lexer.
-  static bool initialized = false;
-  if (!initialized) {
-    Catalogue::AddLexerModule(&lmLPeg);
-    initialized = true;
+  // Register the scintillua lexer library. This only needs to happen once
+  // per process.
+  if (!LuaAdded) {
+    SetLibraryProperty("scintillua.lexers",
+                       Settings::lexerDir().path().toStdString().c_str());
+    LuaAdded = true;
+  }
+
+  // Every editor needs its own lexer instance: unlike a classic Scintilla
+  // lexer, Scintillua's ILexer5 is stateful (it tracks the currently
+  // detected language), so it can't be shared between editors.
+  ILexer5 *lua = CreateLexer("lua");
+  if (lua) {
+    setILexer((sptr_t)lua);
+  } else {
+    qWarning() << "Error creating Lua lexer";
   }
 
   setScrollWidth(256);
@@ -108,12 +177,12 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
   setMarginSensitiveN(ErrorMargin, true);
 
   setSelEOLFilled(true);
-  setSelBack(true, palette().color(QPalette::Highlight));
+  setSelBack(true, ToScintillaColour(palette().color(QPalette::Highlight)));
   setVirtualSpaceOptions(SCVS_RECTANGULARSELECTION);
 
   // Unset default zoom in/out shortcuts.
-  clearCmdKey(SCK_ADD + (SCI_CTRL << 16));
-  clearCmdKey(SCK_SUBTRACT + (SCI_CTRL << 16));
+  clearCmdKey(SCK_ADD + (static_cast<int>(Scintilla::KeyMod::Ctrl) << 16));
+  clearCmdKey(SCK_SUBTRACT + (static_cast<int>(Scintilla::KeyMod::Ctrl) << 16));
 
   // Set find indicators.
   indicSetStyle(FindAll, INDIC_STRAIGHTBOX);
@@ -127,42 +196,34 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
   indicSetUnder(FindCurrent, true);
 
   // Set word diff indicators.
-  indicSetStyle(WordAddition, INDIC_STRAIGHTBOX);
-  indicSetFore(WordAddition, theme->diff(Theme::Diff::WordAddition));
+  indicSetFore(WordAddition,
+               ToScintillaColour(theme->diff(Theme::Diff::WordAddition)));
   indicSetAlpha(WordAddition, 255);
   indicSetUnder(WordAddition, true);
 
-  indicSetStyle(WordDeletion, INDIC_STRAIGHTBOX);
-  indicSetFore(WordDeletion, theme->diff(Theme::Diff::WordDeletion));
+  indicSetFore(WordDeletion,
+               ToScintillaColour(theme->diff(Theme::Diff::WordDeletion)));
   indicSetAlpha(WordDeletion, 255);
   indicSetUnder(WordDeletion, true);
 
-  indicSetStyle(NoteIndicator, INDIC_SQUIGGLE);
-  indicSetFore(NoteIndicator, theme->diff(Theme::Diff::Note));
+  indicSetFore(NoteIndicator,
+               ToScintillaColour(theme->diff(Theme::Diff::Note)));
   indicSetAlpha(NoteIndicator, 255);
   indicSetUnder(NoteIndicator, true);
 
-  indicSetStyle(WarningIndicator, INDIC_STRAIGHTBOX);
-  indicSetFore(WarningIndicator, theme->diff(Theme::Diff::Warning));
+  indicSetFore(WarningIndicator,
+               ToScintillaColour(theme->diff(Theme::Diff::Warning)));
   indicSetAlpha(WarningIndicator, 255);
   indicSetUnder(WarningIndicator, true);
 
-  indicSetStyle(ErrorIndicator, INDIC_STRAIGHTBOX);
-  indicSetFore(ErrorIndicator, theme->diff(Theme::Diff::Error));
+  indicSetFore(ErrorIndicator,
+               ToScintillaColour(theme->diff(Theme::Diff::Error)));
   indicSetAlpha(ErrorIndicator, 255);
   indicSetUnder(ErrorIndicator, true);
 
   // Initialize LPeg lexer.
-  QColor base = palette().color(QPalette::Base);
   QColor text = palette().color(QPalette::Text);
-  bool dark = (text.lightnessF() > base.lightnessF());
-
-  setLexerLanguage("lpeg");
-  setProperty("lexer.lpeg.home", Settings::lexerDir().path());
-  setProperty("lexer.lpeg.themes", theme->dir().path());
-  setProperty("lexer.lpeg.theme", theme->name());
-  setProperty("lexer.lpeg.theme.mode", dark ? "dark" : "light");
-  setCaretFore(text);
+  setCaretFore(ToScintillaColour(text));
 
   // Apply default settings.
   applySettings();
@@ -174,20 +235,12 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaIFace(parent) {
           &TextEditor::updateGeometry);
 }
 
-void TextEditor::contextMenuEvent(QContextMenuEvent *event) {
-  Point pos = PointFromQPoint(event->globalPos());
-  Point pt = PointFromQPoint(event->pos());
-  if (!PointInSelection(pt))
-    SetEmptySelection(PositionFromLocation(pt));
-  ContextMenu(pos);
-}
-
 void TextEditor::applySettings() {
   // Set default font and size.
   Settings *settings = Settings::instance();
   QString family = settings->value(Setting::Id::FontFamily).toString();
   int pointSize = settings->value(Setting::Id::FontSize).toInt();
-  styleSetFont(STYLE_DEFAULT, QFont(family, pointSize));
+  StyleSetQFont(STYLE_DEFAULT, QFont(family, pointSize));
 
   setUseTabs(settings->value(Setting::Id::UseTabsForIndent).toBool());
   setIndent(settings->value(Setting::Id::IndentWidth).toInt());
@@ -202,14 +255,7 @@ void TextEditor::applySettings() {
 
   // Initialize markers.
   QColor background = palette().color(QPalette::Base);
-  int fontHeight;
-  // On windows it looks ugly when using pointSize, but on
-  // linux with flatpak textHeight looks strange
-#if defined(FLATPAK)
-  fontHeight = pointSize * textHeightFactorCheckBoxSize;
-#else
-  fontHeight = textHeight(0);
-#endif
+  int fontHeight = textHeight(0);
   setStatusDiff(mStatusDiff); // to apply margin width
   mStagedIcon = stagedUnstagedIcon(true, background, fontHeight);
   mUnStagedIcon = stagedUnstagedIcon(false, background, fontHeight);
@@ -226,10 +272,10 @@ void TextEditor::applySettings() {
   markerDefine(UnstagedMarker, SC_MARK_RGBAIMAGE);
   markerDefine(DiscardMarker, SC_MARK_EMPTY);
 
-  markerSetBack(Ours, mOursColor);
-  markerSetBack(Theirs, mTheirsColor);
-  markerSetBack(Addition, mAdditionColor);
-  markerSetBack(Deletion, mDeletionColor);
+  markerSetBack(Ours, ToScintillaColour(mOursColor));
+  markerSetBack(Theirs, ToScintillaColour(mTheirsColor));
+  markerSetBack(Addition, ToScintillaColour(mAdditionColor));
+  markerSetBack(Deletion, ToScintillaColour(mDeletionColor));
 
   // Initialize error markers.
   loadMarkerIcon(NoteMarker, mNoteIcon);
@@ -242,9 +288,11 @@ void TextEditor::applySettings() {
   // Set LPeg lexer language.
   QByteArray lexer = this->lexer().toUtf8();
   uintptr_t ptr = reinterpret_cast<uintptr_t>(lexer.constData());
-  privateLexerCall(SCI_GETDIRECTFUNCTION, directFunction());
-  privateLexerCall(SCI_SETDOCPOINTER, directPointer());
-  privateLexerCall(SCI_SETLEXERLANGUAGE, ptr);
+  privateLexerCall(SCLUA_DETECT, ptr);
+
+  // Re-apply theme colors: the set of named styles is lexer-dependent and
+  // may have just changed.
+  applyLexerStyles();
 
   // Set annotation styles.
   QFont regular = font();
@@ -253,30 +301,86 @@ void TextEditor::applySettings() {
   QFont italic = regular;
   italic.setItalic(true);
 
-  // Missing newline style.
-  styleSetFont(EofNewline, italic);
+  // Missing newline style. Fore/back were never set, so it fell back to
+  // Scintilla's raw internal default (white background regardless of theme).
+  // Match STYLE_DEFAULT, which applyLexerStyles() already kept in sync with
+  // the current theme, so it blends into the editor background.
+  StyleSetQFont(EofNewline, italic);
+  styleSetFore(EofNewline, styleFore(STYLE_DEFAULT));
+  styleSetBack(EofNewline, styleBack(STYLE_DEFAULT));
 
   // Remote comment styles
   Theme *theme = Application::theme();
-  styleSetFont(CommentBody, regular);
-  styleSetFore(CommentBody, theme->remoteComment(Theme::Comment::Body));
-  styleSetBack(CommentBody, theme->remoteComment(Theme::Comment::Background));
+  StyleSetQFont(CommentBody, regular);
+  styleSetFore(CommentBody,
+               ToScintillaColour(theme->remoteComment(Theme::Comment::Body)));
+  styleSetBack(CommentBody, ToScintillaColour(theme->remoteComment(
+                                Theme::Comment::Background)));
 
-  styleSetFont(CommentAuthor, bold);
-  styleSetFore(CommentAuthor, theme->remoteComment(Theme::Comment::Author));
-  styleSetBack(CommentAuthor, theme->remoteComment(Theme::Comment::Background));
+  StyleSetQFont(CommentAuthor, bold);
+  styleSetFore(CommentAuthor,
+               ToScintillaColour(theme->remoteComment(Theme::Comment::Author)));
+  styleSetBack(CommentAuthor, ToScintillaColour(theme->remoteComment(
+                                  Theme::Comment::Background)));
 
-  styleSetFont(CommentTimestamp, regular);
-  styleSetFore(CommentTimestamp,
-               theme->remoteComment(Theme::Comment::Timestamp));
-  styleSetBack(CommentTimestamp,
-               theme->remoteComment(Theme::Comment::Background));
+  StyleSetQFont(CommentTimestamp, regular);
+  styleSetFore(CommentTimestamp, ToScintillaColour(theme->remoteComment(
+                                     Theme::Comment::Timestamp)));
+  styleSetBack(CommentTimestamp, ToScintillaColour(theme->remoteComment(
+                                     Theme::Comment::Background)));
 
   // Emit own signal.
   emit settingsChanged();
 
   // Size hint may have changed.
   updateGeometry();
+}
+
+// NOTE: This is AI generated code
+void TextEditor::applyLexerStyles() {
+  // Scintillua no longer has static style numbers or a built-in theme
+  // loader: the lexer assigns style numbers dynamically (including the
+  // predefined ones like STYLE_DEFAULT/STYLE_LINENUMBER), and it's up to the
+  // application to map each one's name to a color via NamedStyles()/
+  // NameOfStyle() and apply it itself.
+  QVariantMap props = Application::theme()->editorStyleProperties();
+  QString defaultSpec =
+      expandThemeMacro(props.value("style.default").toString(), props);
+
+  // STYLE_DEFAULT's font was already configured above from app settings.
+  // Nothing sets it on the other named styles otherwise, so without this
+  // they'd keep Scintilla's raw internal default font/size, producing a
+  // visible font mismatch against the rest of the editor.
+  QFont baseFont = styleGetQFont(STYLE_DEFAULT);
+
+  int count = namedStyles();
+  for (int style = 0; style < count; ++style) {
+    // Establish font/fore/back as a baseline so styles the theme doesn't
+    // mention explicitly (e.g. newer tag names) still look consistent
+    // instead of falling back to Scintilla's raw internal default.
+    StyleSetQFont(style, baseFont);
+    if (!defaultSpec.isEmpty())
+      applyThemeStyleSpec(this, style, defaultSpec);
+
+    // Look up the most specific theme entry for this style's tag name,
+    // falling back to progressively broader categories, e.g.
+    // "constant.builtin" -> style.constantbuiltin, then style.constant.
+    QString tag = QString::fromUtf8(nameOfStyle(style));
+    while (!tag.isEmpty()) {
+      QString key = "style." + QString(tag).remove('.');
+      if (props.contains(key)) {
+        QString spec = expandThemeMacro(props.value(key).toString(), props);
+        if (!spec.isEmpty())
+          applyThemeStyleSpec(this, style, spec);
+        break;
+      }
+
+      int lastDot = tag.lastIndexOf('.');
+      if (lastDot < 0)
+        break;
+      tag = tag.left(lastDot);
+    }
+  }
 }
 
 QString TextEditor::lexer() const { return Settings::instance()->lexer(mPath); }
@@ -291,7 +395,7 @@ void TextEditor::setLexer(const QString &path) {
 void TextEditor::load(const QString &path, const QString &text) {
   setScrollWidth(256);
   setLexer(path);
-  setText(text);
+  setText(text.toStdString().c_str());
 
   // Clear undo.
   setSavePoint();
@@ -304,12 +408,7 @@ void TextEditor::load(const QString &path, const QString &text) {
 void TextEditor::setStatusDiff(bool statusDiff) {
   mStatusDiff = statusDiff;
   if (mStatusDiff) {
-#if defined(FLATPAK)
-    setMarginWidthN(Staged, fontPointSize(0) * textHeightFactorCheckBoxSize);
-#else
     setMarginWidthN(Staged, textHeight(0));
-#endif
-
     setMarginSensitiveN(Staged,
                         true); // to change by mouseclick staged/unstaged
   } else {
@@ -338,12 +437,14 @@ int TextEditor::highlightAll(const QString &text) {
     return 0;
 
   // Darken styles.
-  markerSetBack(Addition, mAdditionColor.darker(120));
-  markerSetBack(Deletion, mDeletionColor.darker(120));
-  markerSetBack(Ours, mOursColor.darker(120));
-  markerSetBack(Theirs, mTheirsColor.darker(120));
-  for (int i = 0; i <= STYLE_DEFAULT; i++)
-    styleSetBack(i, styleBack(i).darker(120));
+  markerSetBack(Addition, ToScintillaColour(mAdditionColor.darker(120)));
+  markerSetBack(Deletion, ToScintillaColour(mDeletionColor.darker(120)));
+  markerSetBack(Ours, ToScintillaColour(mOursColor.darker(120)));
+  markerSetBack(Theirs, ToScintillaColour(mTheirsColor.darker(120)));
+  for (int i = 0; i <= STYLE_DEFAULT; i++) {
+    Scintilla::Colour c = styleBack(i);
+    styleSetBack(i, ToScintillaColour(QColor(c).darker(120)));
+  }
 
   emit highlightActivated(true);
 
@@ -433,19 +534,21 @@ void TextEditor::addDiagnostic(int line, const Diagnostic &diag) {
   emit diagnosticAdded(line, diag);
 }
 
-/*!
- * reimplemented from ScintillaBase to support more actions
- * \brief TextEditor::ContextMenu
- * \param pt
- */
-void TextEditor::ContextMenu(Scintilla::Point pt) {
+/// @brief Custom context menu bypassing Scintilla
+/// @param event
+void TextEditor::contextMenuEvent(QContextMenuEvent *event) {
+  // The following logic was present before porting to Scintilla 5.x. However
+  // it's yet to be determined how this is triggered or used
+  //  Point pt = PointFromQPoint(event->pos());
+  //  if (!PointInSelection(pt))
+  //    SetEmptySelection(PositionFromLocation(pt));
 
   int startLine = lineFromPosition(selectionStart());
   int end = lineFromPosition(selectionEnd()) + 1;
   int staged = 0;
   int diffLines = 0;
   for (int i = startLine; i < end; i++) {
-    int mask = markers(i);
+    int mask = markerGet(i);
     if (mask & (1 << TextEditor::Marker::Addition |
                 1 << TextEditor::Marker::Deletion)) {
       diffLines++;
@@ -453,103 +556,112 @@ void TextEditor::ContextMenu(Scintilla::Point pt) {
         staged++;
     }
   }
-
-  if (displayPopupMenu) {
-    const bool writable = !WndProc(SCI_GETREADONLY, 0, 0);
-    popup.CreatePopUp();
-    AddToPopUp("Undo", idcmdUndo, writable && pdoc->CanUndo());
-    AddToPopUp("Redo", idcmdRedo, writable && pdoc->CanRedo());
+  const bool writable = !readOnly();
+  ScintillaDocument *pdoc = get_doc();
+  mPopup.clear();
+  AddToPopUp("Undo", Undo, writable && pdoc->can_undo());
+  AddToPopUp("Redo", Redo, writable && pdoc->can_redo());
+  AddToPopUp("");
+  AddToPopUp("Cut", Cut, writable && !selectionEmpty());
+  AddToPopUp("Copy", Copy, !selectionEmpty());
+  AddToPopUp("Paste", Paste, writable && canPaste());
+  AddToPopUp("Delete", Delete, writable && !selectionEmpty());
+  if (mStatusDiff) {
     AddToPopUp("");
-    AddToPopUp("Cut", idcmdCut, writable && !sel.Empty());
-    AddToPopUp("Copy", idcmdCopy, !sel.Empty());
-    AddToPopUp("Paste", idcmdPaste, writable && WndProc(SCI_CANPASTE, 0, 0));
-    AddToPopUp("Delete", idcmdDelete, writable && !sel.Empty());
-    if (mStatusDiff) {
-      AddToPopUp("");
-      AddToPopUp((QString("Stage selected\t") + stage.currentKeys().toString())
-                     .toStdString()
-                     .data(),
-                 stageSelected, diffLines - staged > 0);
-      AddToPopUp(
-          (QString("Unstage selected\t") + unstage.currentKeys().toString())
-              .toStdString()
-              .data(),
-          unstageSelected, staged > 0);
-      AddToPopUp(
-          (QString("Discard selected\t") + discard.currentKeys().toString())
-              .toStdString()
-              .data(),
-          discardSelected, diffLines > 0);
-    }
-    AddToPopUp("");
-    AddToPopUp("Select All", idcmdSelectAll);
-    popup.Show(pt, wMain);
+    AddToPopUp((QString("Stage selected\t") + stage.currentKeys().toString())
+                   .toStdString()
+                   .data(),
+               StageSelected, diffLines - staged > 0);
+    AddToPopUp(
+        (QString("Unstage selected\t") + unstage.currentKeys().toString())
+            .toStdString()
+            .data(),
+        UnstageSelected, staged > 0);
+    AddToPopUp(
+        (QString("Discard selected\t") + discard.currentKeys().toString())
+            .toStdString()
+            .data(),
+        DiscardSelected, diffLines > 0);
   }
+  AddToPopUp("");
+  AddToPopUp("Select All", SelectAll);
+  mPopup.exec(event->globalPos());
 }
 
-sptr_t TextEditor::WndProc(unsigned int message, uptr_t wParam, sptr_t lParam) {
-  switch (message) {
-
-    case stageSelected:
-      // determine selected lines
-
-    case unstageSelected:
-      break;
-
-    default:
-      return ScintillaQt::WndProc(message, wParam, lParam);
-  }
-
-  return 0;
+void TextEditor::StyleSetQFont(int style, const QFont &font) {
+  styleSetFont(style, font.family().toStdString().c_str());
+  styleSetSize(style, font.pointSize());
+  styleSetBold(style, font.bold());
+  styleSetItalic(style, font.italic());
 }
 
-void TextEditor::AddToPopUp(const char *label, int cmd, bool enabled) {
-  QMenu *menu = static_cast<QMenu *>(popup.GetID());
-
-  if (!qstrlen(label)) {
-    menu->addSeparator();
+void TextEditor::AddToPopUp(const QString &label, MenuAction cmd,
+                            bool enabled) {
+  if (label.length() == 0) {
+    mPopup.addSeparator();
   } else {
-    QAction *action = menu->addAction(label);
+    QAction *action = mPopup.addAction(label);
     action->setData(cmd);
     action->setEnabled(enabled);
   }
 
   // Make sure the menu's signal is connected only once.
-  menu->disconnect();
-  connect(menu, &QMenu::triggered, this,
-          [this](QAction *action) { Command(action->data().toInt()); });
+  mPopup.disconnect();
+  connect(&mPopup, &QMenu::triggered, this, [this](QAction *action) {
+    Command(action->data().value<MenuAction>());
+  });
 }
 
-void TextEditor::Command(int cmdId) {
+void TextEditor::Command(MenuAction action) {
 
-  switch (cmdId) {
-    case stageSelected: {
+  switch (action) {
+    case StageSelected: {
       int startLine = lineFromPosition(selectionStart());
       int end = lineFromPosition(selectionEnd()) + 1;
       emit stageSelectedSignal(startLine, end);
       break;
     }
-    case unstageSelected: {
+    case UnstageSelected: {
       int startLine = lineFromPosition(selectionStart());
       int end = lineFromPosition(selectionEnd()) + 1;
       emit unstageSelectedSignal(startLine, end);
       break;
     }
-    case discardSelected: {
+    case DiscardSelected: {
       int startLine = lineFromPosition(selectionStart());
       int end = lineFromPosition(selectionEnd()) + 1;
       emit discardSelectedSignal(startLine, end);
       break;
     }
+    case Undo:
+      undo();
+      break;
+    case Redo:
+      redo();
+      break;
+    case Cut:
+      cut();
+      break;
+    case Copy:
+      copy();
+      break;
+    case Paste:
+      paste();
+      break;
+    case Delete:
+      clear();
+      break;
+    case SelectAll:
+      selectAll();
+      break;
     default:
-      ScintillaBase::Command(cmdId);
       break;
   }
 }
 
 QSize TextEditor::viewportSizeHint() const {
   // Return placeholder size if the content isn't loaded.
-  QSize size = ScintillaIFace::viewportSizeHint();
+  QSize size = ScintillaEdit::viewportSizeHint();
   if (length() == 0 && mLineCount >= 0) {
     int height = const_cast<TextEditor *>(this)->textHeight(0);
     return QSize(size.width(), mLineCount * height);
@@ -564,14 +676,14 @@ QSize TextEditor::viewportSizeHint() const {
   int y = const_cast<TextEditor *>(this)->pointFromPosition(length()).y();
 
   int scrollBarHeight = 0;
-  if (Editor::scrollWidth > width())
+  if (scrollWidth() > width())
     scrollBarHeight = horizontalScrollBar()->height();
 
   return QSize(size.width(), y + (lines * height) + scrollBarHeight);
 }
 
 int TextEditor::diagnosticMarker(int line) {
-  int marks = markers(line);
+  int marks = markerGet(line);
   if (marks & (1 << NoteMarker))
     return NoteMarker;
 
@@ -628,7 +740,7 @@ void TextEditor::keyPressEvent(QKeyEvent *ke) {
     int staged = 0;
     int diffLines = 0;
     for (int i = startLine; i < end; i++) {
-      int mask = markers(i);
+      int mask = markerGet(i);
       if (mask & (1 << TextEditor::Marker::Addition |
                   1 << TextEditor::Marker::Deletion)) {
         diffLines++;
@@ -638,16 +750,43 @@ void TextEditor::keyPressEvent(QKeyEvent *ke) {
     }
 
     if (ke->key() == Qt::Key_S && diffLines - staged > 0) {
-      Command(stageSelected);
+      int startLine = lineFromPosition(selectionStart());
+      int end = lineFromPosition(selectionEnd()) + 1;
+      emit stageSelectedSignal(startLine, end);
       return;
     } else if (ke->key() == Qt::Key_U && staged > 0) {
-      Command(unstageSelected);
+      int startLine = lineFromPosition(selectionStart());
+      int end = lineFromPosition(selectionEnd()) + 1;
+      emit unstageSelectedSignal(startLine, end);
       return;
     } else if (ke->key() == Qt::Key_R && diffLines > 0) {
-      Command(discardSelected);
+      int startLine = lineFromPosition(selectionStart());
+      int end = lineFromPosition(selectionEnd()) + 1;
+      emit discardSelectedSignal(startLine, end);
       return;
     }
   }
 
-  ScintillaIFace::keyPressEvent(ke);
+  ScintillaEdit::keyPressEvent(ke);
+}
+
+QFont TextEditor::styleGetQFont(int style) {
+  QByteArray fontName = styleFont(style);
+  QFont font(QString::fromUtf8(fontName.constData(), fontName.length()));
+  font.setPointSize(send(SCI_STYLEGETSIZE, style));
+  font.setBold(send(SCI_STYLEGETBOLD, style));
+  font.setItalic(send(SCI_STYLEGETITALIC, style));
+  return font;
+}
+
+QPoint TextEditor::pointFromPosition(int pos) {
+  return QPoint(pointXFromPosition(pos), pointYFromPosition(pos));
+}
+
+void TextEditor::markerDefineImage(int markerNumber, const QImage &image) {
+  QImage argb = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+  rGBAImageSetWidth(argb.width());
+  rGBAImageSetHeight(argb.height());
+  rGBAImageSetScale(argb.devicePixelRatio() * 100);
+  markerDefineRGBAImage(markerNumber, (const char *)argb.bits());
 }

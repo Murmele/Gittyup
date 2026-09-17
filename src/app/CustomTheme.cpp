@@ -519,6 +519,10 @@ QColor CustomTheme::star() {
   return mMap.value("star").toMap().value("fill").value<QColor>();
 }
 
+QVariantMap CustomTheme::editorStyleProperties() const {
+  return mMap.value("property").toMap();
+}
+
 #ifndef Q_OS_MAC
 void CustomTheme::polishWindow(QWindow *window) const {
   Q_UNUSED(window)
