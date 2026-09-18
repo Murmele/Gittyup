@@ -39,7 +39,7 @@ theme['widget']    = {
   bright_text      = '#cdd6f4',
   background       = '#181825',
   alternate        = '#1e1e2e', -- an alternate background color for list rows
-  highlight        = { active = '#2A82DA', inactive = '#1B5B9B' },
+  highlight        = { active = '#313244', inactive = '#313244' },
   highlighted_text = { active = '#cdd6f4', inactive = '#cdd6f4' },
 }
 
@@ -64,7 +64,7 @@ theme['commits']   = {
   bright_text      = '#cdd6f4',
   background       = '#1e1e2e',
   alternate        = '#1e1e2e', -- an alternate background color for list rows
-  highlight        = { active = '#2A82DA', inactive = '#1B5B9B' },
+  highlight        = { active = '#313244', inactive = '#313244' },
   highlighted_text = { active = '#A6CBF0', inactive = '#cdd6f4' },
   highlighted_bright_text = { active = '#cdd6f4', inactive = '#9090A5' }
 }
@@ -134,8 +134,8 @@ theme['commiteditor'] = {
 theme['diff']      = {
   addition         = '#343e41', -- added lines
   deletion         = '#403042', -- deleted lines
-  plus             = '#207A00', -- plus icon
-  minus            = '#BC0009', -- minus icon
+  plus             = '#a6e3a1', -- plus icon
+  minus            = '#f38ba8', -- minus icon
   ours             = '#000060', -- ours conflict lines
   theirs           = '#600060', -- theirs conflict lines
   word_addition    = '#4c6055', -- added words
