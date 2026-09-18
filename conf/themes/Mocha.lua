@@ -1,8 +1,6 @@
-/*
-Colour Palette used: Catpuccin Mocha
-Which is under the MIT License
-Copyright (c) 2021 Catppuccin
-*/
+-- Colour Palette used: Catpuccin Mocha
+-- Which is under the MIT License
+-- Copyright (c) 2021 Catppuccin
 
 --
 -- Many colors support 'active', 'inactive', and 'disabled' states.
@@ -38,7 +36,7 @@ theme['palette']   = {
 -- { default, active, inactive, disabled }
 theme['widget']    = {
   text             = { default = '#cdd6f4', disabled = '#a6adc8' },
-  bright_text      = '#bac2de',
+  bright_text      = '#cdd6f4',
   background       = '#181825',
   alternate        = '#1e1e2e', -- an alternate background color for list rows
   highlight        = { active = '#2A82DA', inactive = '#1B5B9B' },
@@ -62,7 +60,7 @@ theme['button']    = {
 -- commit list colors
 -- { default, active, inactive, disabled }
 theme['commits']   = {
-  text             = '#bac2de',
+  text             = '#cdd6f4',
   bright_text      = '#cdd6f4',
   background       = '#1e1e2e',
   alternate        = '#1e1e2e', -- an alternate background color for list rows
@@ -85,8 +83,8 @@ theme['badge']     = {
     head           = '#52A500', -- a bolder color to indicate the HEAD
     notification   = '#8C2026',  -- the color of toolbar notifications badges
     modified       = '#91973A', -- (yellow) the color of the badge when the file is modified
-    added          = '#394734', -- (green) the color of the badge when the file was newly added
-    deleted        = '#5E3638', -- (red) the color of the badge when the file was deleted
+    added          = '#4c6054', -- (green) the color of the badge when the file was newly added
+    deleted        = '#403042', -- (red) the color of the badge when the file was deleted
 	untracked	   = '#2A4944', -- (green blue) the color of the badge when the file is untracked
 	renamed		   = '#23455E'  -- (blue) the color of the badge when the file is renamed
   }
@@ -169,8 +167,8 @@ theme['tabbar']   = {
 
 -- remote comment colors
 theme['comment']   = {
-  background       = '#212228',
-  body             = '#bac2de',
+  background       = '#1e1e2e',
+  body             = '#cdd6f4',
   author           = '#378BDD',
   timestamp        = '#cdd6f4'
 }
@@ -214,12 +212,12 @@ theme.property['color.white']        = '#E6E6E6'
 -- styles
 theme.property['style.bracebad']     = 'fore:#CC8080'
 theme.property['style.bracelight']   = 'fore:#80CCFF'
-theme.property['style.calltip']      = 'fore:#bac2de,back:#333333'
+theme.property['style.calltip']      = 'fore:#cdd6f4,back:#333333'
 theme.property['style.class']        = 'fore:#F6E9D0'
-theme.property['style.comment']      = 'fore:#E2D9C9'
+theme.property['style.comment']      = 'fore:#9399b2'
 theme.property['style.constant']     = 'fore:#E8C080'
 theme.property['style.controlchar']  = '$(style.nothing)'
-theme.property['style.default']      = 'fore:#bac2de,back:#212228'
+theme.property['style.default']      = 'fore:#cdd6f4,back:#1e1e2e'
 theme.property['style.definition']   = 'fore:#F6E9D0'
 theme.property['style.embedded']     = '$(style.tag),back:#333333'
 theme.property['style.error']        = 'fore:#994D4D'
@@ -231,11 +229,11 @@ theme.property['style.label']        = 'fore:#E8C080'
 theme.property['style.linenumber']   = 'fore:#5F6672,back:#2A2B30,bold'
 theme.property['style.nothing']      = ''
 theme.property['style.number']       = 'fore:#4D99E6'
-theme.property['style.operator']     = 'fore:#CCCCCC,bold'
+theme.property['style.operator']     = 'fore:#d67c98,bold'
 theme.property['style.preprocessor'] = 'fore:#CC77DA,bold'
 theme.property['style.regex']        = 'fore:#80CC80'
 theme.property['style.string']       = 'fore:#93C37E'
-theme.property['style.tag']          = 'fore:#CCCCCC'
+theme.property['style.tag']          = 'fore:#d67c98'
 theme.property['style.type']         = 'fore:#CC77DA'
 theme.property['style.variable']     = 'fore:#80CCFF'
 theme.property['style.whitespace']   = '$(style.nothing)'
