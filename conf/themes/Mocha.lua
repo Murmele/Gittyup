@@ -132,14 +132,14 @@ theme['commiteditor'] = {
 
 -- diff view colors
 theme['diff']      = {
-  addition         = '#394734', -- added lines
-  deletion         = '#5E3638', -- deleted lines
+  addition         = '#343e41', -- added lines
+  deletion         = '#403042', -- deleted lines
   plus             = '#207A00', -- plus icon
   minus            = '#BC0009', -- minus icon
   ours             = '#000060', -- ours conflict lines
   theirs           = '#600060', -- theirs conflict lines
-  word_addition    = '#296812', -- added words
-  word_deletion    = '#781B20', -- deleted words
+  word_addition    = '#4c6055', -- added words
+  word_deletion    = '#664356', -- deleted words
   note             = '#cdd6f4', -- note squiggle
   warning          = '#E8C080', -- warning background
   error            = '#7E494B'  -- error background
