@@ -16,10 +16,11 @@
 
 namespace {
 
-const uint kFlags = (IN_ATTRIB | IN_CLOSE_WRITE | IN_CREATE | IN_DELETE |
-                     IN_DELETE_SELF | IN_MODIFY | IN_MOVE_SELF);
+const uint kFlags =
+    (IN_ATTRIB | IN_CLOSE_WRITE | IN_CREATE | IN_DELETE | IN_DELETE_SELF |
+     IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO | IN_MOVE_SELF);
 
-// FIXME: Include hidden and filter .git explicitly?
+// `.git` is excluded by isIgnored().
 const QDir::Filters kFilters =
     (QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot);
 
