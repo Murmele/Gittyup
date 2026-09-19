@@ -37,6 +37,7 @@
 #include "dialogs/SettingsDialog.h"
 #include "dialogs/TagDialog.h"
 #include "editor/TextEditor.h"
+#include "git/CommitSigner.h"
 #include "git/Config.h"
 #include "git/Index.h"
 #include "git/Rebase.h"
@@ -141,6 +142,29 @@ public:
 private:
   LogView *mView;
 };
+
+// Explain why the last commit failed if it couldn't be signed. Returns false
+// if the failure wasn't caused by signing.
+bool showSigningError(QWidget *parent) {
+  QString detail = git::CommitSigner::takeLastError();
+  if (detail.isEmpty())
+    return false;
+
+  QString title = RepoView::tr("Commit Signing Failed");
+  QString text =
+      RepoView::tr("The commit could not be signed, so it was not created.");
+  QMessageBox *dialog = new QMessageBox(QMessageBox::Warning, title, text,
+                                        QMessageBox::Ok, parent);
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  dialog->setInformativeText(RepoView::tr(
+      "<p>Check the commit.gpgsign, gpg.format and user.signingkey "
+      "settings. For GPG keys with a passphrase, gpg-agent must be "
+      "configured with a graphical pinentry program such as "
+      "pinentry-mac.</p>"));
+  dialog->setDetailedText(detail);
+  dialog->open();
+  return true;
+}
 
 } // namespace
 
@@ -1471,8 +1495,12 @@ void RepoView::rebaseAboutToRebase(const git::Rebase rebase,
 
 void RepoView::rebaseConflict(const git::Rebase rebase) {
   if (mRebase) {
-    mRebase->addEntry(tr("Please resolve conflicts before continue"),
-                      tr("Conflict"));
+    if (showSigningError(this)) {
+      error(mRebase, tr("commit"));
+    } else {
+      mRebase->addEntry(tr("Please resolve conflicts before continue"),
+                        tr("Conflict"));
+    }
     mDetails->setCommitMessage(rebase.commitToRebase()
                                    .message(git::Commit::SubstituteEmoji)
                                    .trimmed());
@@ -1868,6 +1896,7 @@ bool RepoView::commit(const git::Signature &author,
 
   if (!commit.isValid()) {
     error(entry, tr("commit"));
+    showSigningError(this);
     return false;
   }
 
@@ -2216,6 +2245,7 @@ void RepoView::amend(const git::Commit &commit, const git::Signature &author,
   if (!mRepo.amend(commit, author, committer, commitMessage)) {
     error(addLogEntry(tr("Amending commit %1").arg(commit.link()), title),
           tr("amend"), head.name());
+    showSigningError(this);
   } else {
     head = mRepo.head();
     Q_ASSERT(head.isValid());
