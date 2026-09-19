@@ -9,6 +9,7 @@
 
 #include "Test.h"
 
+#include "dialogs/ConfigDialog.h"
 #include "git/CommitSigner.h"
 #include "git/Config.h"
 #include "git/Index.h"
@@ -23,6 +24,9 @@
 #include "ui/MainWindow.h"
 #include "ui/RepoView.h"
 
+#include <QCheckBox>
+#include <QComboBox>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QProcess>
 #include <QStandardPaths>
@@ -128,6 +132,7 @@ private slots:
   void failingSignerKeepsHead();
   void unsupportedFormat();
   void signingErrorDialog();
+  void settingsDialog();
 
 private:
   void enableSsh(git::Repository &repo);
@@ -413,6 +418,42 @@ void TestCommitSigning::signingErrorDialog() {
   QVERIFY(dialog);
   QVERIFY(dialog->text().contains("could not be signed"));
   QVERIFY(dialog->detailedText().contains("x509"));
+  dialog->close();
+}
+
+void TestCommitSigning::settingsDialog() {
+  INIT_REPO();
+
+  MainWindow window(repo);
+  window.show();
+  QVERIFY(QTest::qWaitForWindowExposed(&window));
+  ConfigDialog *dialog =
+      window.currentView()->configureSettings(ConfigDialog::General);
+  QVERIFY(QTest::qWaitForWindowExposed(dialog));
+
+  auto sign = dialog->findChild<QCheckBox *>("SignCommits");
+  auto format = dialog->findChild<QComboBox *>("SigningFormat");
+  auto key = dialog->findChild<QLineEdit *>("SigningKey");
+  QVERIFY(sign && format && key);
+  QVERIFY(!sign->isChecked());
+  QVERIFY(!key->isEnabled());
+
+  sign->setChecked(true);
+  QVERIFY(key->isEnabled());
+  format->setCurrentIndex(format->findData("ssh"));
+  key->setText("~/.ssh/id_ed25519.pub");
+
+  git::Config config = repo.gitConfig();
+  QCOMPARE(config.value<bool>("commit.gpgsign"), true);
+  QCOMPARE(config.value<QString>("gpg.format"), QString("ssh"));
+  QCOMPARE(config.value<QString>("user.signingkey"),
+           QString("~/.ssh/id_ed25519.pub"));
+
+  key->clear();
+  sign->setChecked(false);
+  QCOMPARE(config.value<bool>("commit.gpgsign", true), false);
+  QVERIFY(config.value<QString>("user.signingkey").isEmpty());
+
   dialog->close();
 }
 
