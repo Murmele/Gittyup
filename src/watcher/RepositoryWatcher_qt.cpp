@@ -9,50 +9,39 @@
 
 #include "RepositoryWatcher.h"
 #include <QFileSystemWatcher>
-#include <QMap>
-#include <QThread>
-#include <poll.h>
-#include <unistd.h>
 
 namespace {
 
-// FIXME: Include hidden and filter .git explicitly?
+// `.git` is excluded by isIgnored().
 const QDir::Filters kFilters =
     (QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot);
 
 } // namespace
 
-class RepositoryWatcherPrivate : public QObject {
-  Q_OBJECT
-
+// Only directories are watched, so edits to existing files go unnoticed.
+class QtRepositoryWatcher : public RepositoryWatcher {
 public:
-  RepositoryWatcherPrivate(const git::Repository &repo,
-                           QObject *parent = nullptr)
-      : QObject(parent), mRepo(repo), mFSWatcher(parent) {
+  QtRepositoryWatcher(const git::Repository &repo, QObject *parent)
+      : RepositoryWatcher(repo, parent), mRepo(repo) {
     connect(&mFSWatcher, &QFileSystemWatcher::directoryChanged, this,
-            &RepositoryWatcherPrivate::directoryChanged);
-    connect(&mFSWatcher, &QFileSystemWatcher::fileChanged, this,
-            &RepositoryWatcherPrivate::fileChanged);
+            &QtRepositoryWatcher::directoryChanged);
     watch(mRepo.workdir());
   }
 
-  ~RepositoryWatcherPrivate() {}
-
-  bool isValid() const { return true; }
-
+private:
   void directoryChanged(const QString &path) {
-    if (!mRepo.isIgnored(path)) {
-      // Start watching new directories.
-      if (QDir(path).exists())
-        watch(path);
-      emit notificationReceived();
-    }
+    if (mRepo.isIgnored(path))
+      return;
+
+    // Start watching new directories.
+    if (QDir(path).exists())
+      watch(path);
+
+    scheduleNotification();
   }
 
-  void fileChanged(const QString &path) { emit notificationReceived(); }
-
   void watch(const QDir &dir) {
-    mFSWatcher.addPath(dir.path().toUtf8());
+    mFSWatcher.addPath(dir.path());
 
     // Watch subdirs.
     for (const QString &name : dir.entryList(kFilters)) {
@@ -62,22 +51,11 @@ public:
     }
   }
 
-signals:
-  void notificationReceived();
-
-private:
   git::Repository mRepo;
   QFileSystemWatcher mFSWatcher;
 };
 
-RepositoryWatcher::RepositoryWatcher(const git::Repository &repo,
-                                     QObject *parent)
-    : QObject(parent), d(new RepositoryWatcherPrivate(repo, this)) {
-  init(repo);
-  connect(d, &RepositoryWatcherPrivate::notificationReceived, &mTimer,
-          static_cast<void (QTimer::*)()>(&QTimer::start));
+RepositoryWatcher *RepositoryWatcher::create(const git::Repository &repo,
+                                             QObject *parent) {
+  return new QtRepositoryWatcher(repo, parent);
 }
-
-RepositoryWatcher::~RepositoryWatcher() {}
-
-#include "RepositoryWatcher_qt.moc"

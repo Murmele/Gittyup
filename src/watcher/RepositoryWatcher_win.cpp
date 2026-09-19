@@ -22,13 +22,12 @@ const uint kFlags =
 
 } // namespace
 
-class RepositoryWatcherPrivate : public QThread {
+class DirectoryChangesThread : public QThread {
   Q_OBJECT
 
 public:
-  RepositoryWatcherPrivate(const git::Repository &repo,
-                           QObject *parent = nullptr)
-      : QThread(parent), mRepo(repo), mBuffer(16 * 1024) {
+  explicit DirectoryChangesThread(const git::Repository &repo)
+      : mRepo(repo), mBuffer(16 * 1024) {
     // Pass this to callback.
     ZeroMemory(&mOverlapped, sizeof(OVERLAPPED));
     mOverlapped.hEvent = this;
@@ -45,7 +44,7 @@ public:
                     FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, nullptr);
   }
 
-  ~RepositoryWatcherPrivate() {
+  ~DirectoryChangesThread() {
     CloseHandle(mHandle);
     CloseHandle(mStop);
   }
@@ -89,8 +88,8 @@ public:
       return; // FIXME: Report error?
 
     // Copy buffer and restart.
-    RepositoryWatcherPrivate *watcher =
-        static_cast<RepositoryWatcherPrivate *>(overlapped->hEvent);
+    DirectoryChangesThread *watcher =
+        static_cast<DirectoryChangesThread *>(overlapped->hEvent);
     QVector<BYTE> buffer = watcher->buffer();
     watcher->watch();
 
@@ -127,19 +126,27 @@ private:
   OVERLAPPED mOverlapped;
 };
 
-RepositoryWatcher::RepositoryWatcher(const git::Repository &repo,
-                                     QObject *parent)
-    : QObject(parent), d(new RepositoryWatcherPrivate(repo, this)) {
-  init(repo);
-  connect(d, &RepositoryWatcherPrivate::notificationReceived, &mTimer,
-          static_cast<void (QTimer::*)()>(&QTimer::start));
+class WindowsRepositoryWatcher : public RepositoryWatcher {
+public:
+  WindowsRepositoryWatcher(const git::Repository &repo, QObject *parent)
+      : RepositoryWatcher(repo, parent), mThread(repo) {
+    connect(&mThread, &DirectoryChangesThread::notificationReceived, this,
+            &WindowsRepositoryWatcher::scheduleNotification);
+    mThread.start();
+  }
 
-  d->start();
-}
+  ~WindowsRepositoryWatcher() override {
+    mThread.stop();
+    mThread.wait();
+  }
 
-RepositoryWatcher::~RepositoryWatcher() {
-  d->stop();
-  d->wait();
+private:
+  DirectoryChangesThread mThread;
+};
+
+RepositoryWatcher *RepositoryWatcher::create(const git::Repository &repo,
+                                             QObject *parent) {
+  return new WindowsRepositoryWatcher(repo, parent);
 }
 
 #include "RepositoryWatcher_win.moc"

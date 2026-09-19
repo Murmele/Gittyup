@@ -10,13 +10,10 @@
 #include "RepositoryWatcher.h"
 #include <CoreServices/CoreServices.h>
 
-class RepositoryWatcherPrivate : public QObject {
-  Q_OBJECT
-
+class MacRepositoryWatcher : public RepositoryWatcher {
 public:
-  RepositoryWatcherPrivate(const git::Repository &repo,
-                           QObject *parent = nullptr)
-      : QObject(parent), mRepo(repo) {
+  MacRepositoryWatcher(const git::Repository &repo, QObject *parent)
+      : RepositoryWatcher(repo, parent), mRepo(repo) {
     // Create dispatch queue.
     mQueue = dispatch_queue_create("com.gittyup.RepositoryWatcher", nullptr);
 
@@ -45,7 +42,7 @@ public:
     FSEventStreamStart(mStream);
   }
 
-  ~RepositoryWatcherPrivate() {
+  ~MacRepositoryWatcher() override {
     // Stop stream.
     FSEventStreamStop(mStream);
 
@@ -57,43 +54,33 @@ public:
     dispatch_release(mQueue);
   }
 
-  git::Repository repo() const { return mRepo; }
-
+private:
   static void notify(ConstFSEventStreamRef streamRef, void *clientCallBackInfo,
                      size_t numEvents, void *eventPaths,
                      const FSEventStreamEventFlags eventFlags[],
                      const FSEventStreamEventId eventIds[]) {
-    RepositoryWatcherPrivate *watcher =
-        static_cast<RepositoryWatcherPrivate *>(clientCallBackInfo);
+    MacRepositoryWatcher *watcher =
+        static_cast<MacRepositoryWatcher *>(clientCallBackInfo);
 
     // Filter out ignored directories.
-    git::Repository repo = watcher->repo();
     const char **paths = static_cast<const char **>(eventPaths);
-    for (int i = 0; i < numEvents; ++i) {
-      if (!repo.isIgnored(paths[i])) {
-        emit watcher->notificationReceived();
+    for (size_t i = 0; i < numEvents; ++i) {
+      if (!watcher->mRepo.isIgnored(paths[i])) {
+        // This runs on the dispatch queue; the timer lives on the main thread.
+        QMetaObject::invokeMethod(
+            watcher, [watcher] { watcher->scheduleNotification(); },
+            Qt::QueuedConnection);
         return;
       }
     }
   }
 
-signals:
-  void notificationReceived();
-
-private:
   git::Repository mRepo;
   dispatch_queue_t mQueue;
   FSEventStreamRef mStream;
 };
 
-RepositoryWatcher::RepositoryWatcher(const git::Repository &repo,
-                                     QObject *parent)
-    : QObject(parent), d(new RepositoryWatcherPrivate(repo, this)) {
-  init(repo);
-  connect(d, &RepositoryWatcherPrivate::notificationReceived, &mTimer,
-          QOverload<>::of(&QTimer::start));
+RepositoryWatcher *RepositoryWatcher::create(const git::Repository &repo,
+                                             QObject *parent) {
+  return new MacRepositoryWatcher(repo, parent);
 }
-
-RepositoryWatcher::~RepositoryWatcher() {}
-
-#include "RepositoryWatcher_mac.moc"

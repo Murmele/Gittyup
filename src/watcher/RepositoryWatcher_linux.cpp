@@ -25,13 +25,11 @@ const QDir::Filters kFilters =
 
 } // namespace
 
-class RepositoryWatcherPrivate : public QThread {
+class InotifyThread : public QThread {
   Q_OBJECT
 
 public:
-  RepositoryWatcherPrivate(const git::Repository &repo,
-                           QObject *parent = nullptr)
-      : QThread(parent), mRepo(repo) {
+  explicit InotifyThread(const git::Repository &repo) : mRepo(repo) {
     mFd = inotify_init1(IN_NONBLOCK);
     if (mFd < 0)
       return; // FIXME: Report error?
@@ -43,7 +41,7 @@ public:
     }
   }
 
-  ~RepositoryWatcherPrivate() {
+  ~InotifyThread() {
     close(mPipe[1]);
     close(mPipe[0]);
     close(mFd);
@@ -135,22 +133,31 @@ private:
   QMap<int, QDir> mWds;
 };
 
-RepositoryWatcher::RepositoryWatcher(const git::Repository &repo,
-                                     QObject *parent)
-    : QObject(parent), d(new RepositoryWatcherPrivate(repo, this)) {
-  init(repo);
-  connect(d, &RepositoryWatcherPrivate::notificationReceived, &mTimer,
-          static_cast<void (QTimer::*)()>(&QTimer::start));
+class LinuxRepositoryWatcher : public RepositoryWatcher {
 
-  if (d->isValid())
-    d->start();
-}
-
-RepositoryWatcher::~RepositoryWatcher() {
-  if (d->isValid()) {
-    d->stop();
-    d->wait();
+public:
+  LinuxRepositoryWatcher(const git::Repository &repo, QObject *parent)
+      : RepositoryWatcher(repo, parent), mThread(repo) {
+    connect(&mThread, &InotifyThread::notificationReceived, this,
+            &LinuxRepositoryWatcher::scheduleNotification);
+    if (mThread.isValid())
+      mThread.start();
   }
+
+  ~LinuxRepositoryWatcher() override {
+    if (mThread.isValid()) {
+      mThread.stop();
+      mThread.wait();
+    }
+  }
+
+private:
+  InotifyThread mThread;
+};
+
+RepositoryWatcher *RepositoryWatcher::create(const git::Repository &repo,
+                                             QObject *parent) {
+  return new LinuxRepositoryWatcher(repo, parent);
 }
 
 #include "RepositoryWatcher_linux.moc"

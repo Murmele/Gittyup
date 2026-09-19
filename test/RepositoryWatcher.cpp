@@ -12,19 +12,36 @@
 #include "watcher/RepositoryWatcher.h"
 
 #include <QSignalSpy>
+#include <memory>
 
 using namespace Test;
 
 namespace {
 
+const int kDebounceMs = 100;
+
+// Late notifications from the previous change must land before the spy is
+// cleared, so this has to comfortably exceed the debounce.
+const int kSettleMs = 250;
+
 // Timeouts are generous so a starved CI runner can't cause false failures.
-const int kAttemptMs = 4000;
-const int kAttempts = 6;
+const int kAttemptMs = 1000;
+const int kAttempts = 15;
 const int kSignalMs = 15000;
 
-// Longer than the watcher's 2s debounce, so late notifications land before the
-// spy is cleared.
-const int kSettleMs = 3000;
+struct Row {
+  const char *name;
+  const char *dir;
+};
+
+// Directories that exist before the watcher starts.
+const Row kRows[] = {
+    {"root", ""},
+    {"visible", "src"},
+    {"hidden", ".github"},
+    {"under hidden", ".github/workflows"},
+    {"hidden under visible", "src/.cache"},
+};
 
 bool writeFile(const QString &path) {
   static int counter = 0;
@@ -45,7 +62,7 @@ void settle(QSignalSpy &spy) {
 // until one is reported; by then every existing directory is watched too.
 bool waitUntilWatching(QSignalSpy &spy, const QDir &workdir) {
   // Give the thread a head start; the retries below cover a slow one.
-  QTest::qWait(500);
+  QTest::qWait(kDebounceMs);
 
   for (int i = 0; i < kAttempts; ++i) {
     if (!writeFile(workdir.filePath("canary")))
@@ -66,55 +83,59 @@ class TestRepositoryWatcher : public QObject {
   Q_OBJECT
 
 private slots:
+  void initTestCase();
   void existingDirectory_data();
   void existingDirectory();
   void newHiddenDirectory();
+
+private:
+  // Order matters: the watcher must be destroyed before the repository.
+  std::unique_ptr<ScratchRepository> mRepo;
+  std::unique_ptr<RepositoryWatcher> mWatcher;
+  std::unique_ptr<QSignalSpy> mSpy;
+  QDir mWorkdir;
 };
+
+void TestRepositoryWatcher::initTestCase() {
+  mRepo = std::make_unique<ScratchRepository>();
+  mWorkdir = (*mRepo)->workdir();
+  for (const Row &row : kRows) {
+    if (*row.dir)
+      QVERIFY(mWorkdir.mkpath(row.dir));
+  }
+
+  mWatcher.reset(RepositoryWatcher::create(*mRepo));
+  mWatcher->setDebounceInterval(kDebounceMs);
+  mSpy = std::make_unique<QSignalSpy>((*mRepo)->notifier(),
+                                      &git::RepositoryNotifier::workdirChanged);
+  QVERIFY2(waitUntilWatching(*mSpy, mWorkdir),
+           "watcher never reported a root-level change");
+}
 
 void TestRepositoryWatcher::existingDirectory_data() {
   QTest::addColumn<QString>("dir");
 
-  QTest::newRow("root") << "";
-  QTest::newRow("visible") << "src";
-  QTest::newRow("hidden") << ".github";
-  QTest::newRow("under hidden") << ".github/workflows";
-  QTest::newRow("hidden under visible") << "src/.cache";
+  for (const Row &row : kRows)
+    QTest::newRow(row.name) << QString(row.dir);
 }
 
 void TestRepositoryWatcher::existingDirectory() {
   QFETCH(QString, dir);
 
-  ScratchRepository repo;
-  QDir workdir = repo->workdir();
-  if (!dir.isEmpty())
-    QVERIFY(workdir.mkpath(dir));
-
-  RepositoryWatcher watcher(repo);
-  QSignalSpy spy(repo->notifier(), &git::RepositoryNotifier::workdirChanged);
-  QVERIFY2(waitUntilWatching(spy, workdir),
-           "watcher never reported a root-level change");
-
-  QVERIFY(writeFile(QDir(workdir.filePath(dir)).filePath("file")));
+  QVERIFY(writeFile(QDir(mWorkdir.filePath(dir)).filePath("file")));
   QVERIFY2(
-      spy.wait(kSignalMs),
+      mSpy->wait(kSignalMs),
       qPrintable(QString("no notification for a change in '%1'").arg(dir)));
+  settle(*mSpy);
 }
 
 void TestRepositoryWatcher::newHiddenDirectory() {
-  ScratchRepository repo;
-  QDir workdir = repo->workdir();
+  QVERIFY(mWorkdir.mkdir(".late"));
+  QVERIFY2(mSpy->wait(kSignalMs), "no notification for the new directory");
+  settle(*mSpy);
 
-  RepositoryWatcher watcher(repo);
-  QSignalSpy spy(repo->notifier(), &git::RepositoryNotifier::workdirChanged);
-  QVERIFY2(waitUntilWatching(spy, workdir),
-           "watcher never reported a root-level change");
-
-  QVERIFY(workdir.mkdir(".late"));
-  QVERIFY2(spy.wait(kSignalMs), "no notification for the new directory");
-  settle(spy);
-
-  QVERIFY(writeFile(workdir.filePath(".late/file")));
-  QVERIFY2(spy.wait(kSignalMs), "no notification for a change in '.late'");
+  QVERIFY(writeFile(mWorkdir.filePath(".late/file")));
+  QVERIFY2(mSpy->wait(kSignalMs), "no notification for a change in '.late'");
 }
 
 TEST_MAIN(TestRepositoryWatcher)
