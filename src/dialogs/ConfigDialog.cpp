@@ -32,6 +32,7 @@
 #include <QAction>
 #include <QActionGroup>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -74,6 +75,22 @@ public:
     mName = new QLineEdit(this);
     mEmail = new QLineEdit(this);
 
+    mSign = new QCheckBox(tr("Sign commits with"), this);
+    mSign->setObjectName("SignCommits");
+    mSignFormat = new QComboBox(this);
+    mSignFormat->setObjectName("SigningFormat");
+    mSignFormat->addItem(tr("GPG"), "openpgp");
+    mSignFormat->addItem(tr("SSH"), "ssh");
+    mSigningKey = new QLineEdit(this);
+    mSigningKey->setObjectName("SigningKey");
+    connect(mSign, &QCheckBox::toggled, mSignFormat, &QComboBox::setEnabled);
+    connect(mSign, &QCheckBox::toggled, mSigningKey, &QLineEdit::setEnabled);
+
+    QHBoxLayout *signLayout = new QHBoxLayout;
+    signLayout->addWidget(mSign);
+    signLayout->addWidget(mSignFormat);
+    signLayout->addStretch();
+
     mFetch = new QCheckBox(tr("Fetch every"), this);
     mFetchMinutes = new QSpinBox(this);
     connect(mFetch, &QCheckBox::toggled, mFetchMinutes, &QSpinBox::setEnabled);
@@ -92,6 +109,8 @@ public:
     QFormLayout *form = new QFormLayout(this);
     form->addRow(tr("User name:"), mName);
     form->addRow(tr("User email:"), mEmail);
+    form->addRow(tr("Commit signing:"), signLayout);
+    form->addRow(tr("Signing key:"), mSigningKey);
     form->addRow(tr("Automatic actions:"), fetchLayout);
     form->addRow(QString(), mPushCommit);
     form->addRow(QString(), mPullUpdate);
@@ -109,6 +128,30 @@ public:
       git::Config config = mRepo.gitConfig();
       config.setValue("user.email", text);
     });
+
+    connect(mSign, &QCheckBox::toggled, this, [this](bool checked) {
+      git::Config config = mRepo.gitConfig();
+      config.setValue("commit.gpgsign", checked);
+    });
+
+    using IndexSignal = void (QComboBox::*)(int);
+    auto indexSignal =
+        static_cast<IndexSignal>(&QComboBox::currentIndexChanged);
+    connect(mSignFormat, indexSignal, this, [this] {
+      git::Config config = mRepo.gitConfig();
+      config.setValue("gpg.format", mSignFormat->currentData().toString());
+      updateSigningKeyPlaceholder();
+    });
+
+    connect(mSigningKey, &QLineEdit::textChanged, this,
+            [this](const QString &text) {
+              git::Config config = mRepo.gitConfig();
+              if (text.isEmpty()) {
+                config.remove("user.signingkey");
+              } else {
+                config.setValue("user.signingkey", text);
+              }
+            });
 
     connect(mFetch, &QCheckBox::toggled, view, [this, view](bool checked) {
       git::Config config = mRepo.appConfig();
@@ -144,6 +187,17 @@ public:
     mName->setText(config.value<QString>("user.name"));
     mEmail->setText(config.value<QString>("user.email"));
 
+    // Keep formats that can't be selected, like x509, visible.
+    QString format = config.value<QString>("gpg.format", "openpgp");
+    if (mSignFormat->findData(format) < 0)
+      mSignFormat->addItem(format, format);
+    mSignFormat->setCurrentIndex(mSignFormat->findData(format));
+    mSigningKey->setText(config.value<QString>("user.signingkey"));
+    mSign->setChecked(config.value<bool>("commit.gpgsign"));
+    mSignFormat->setEnabled(mSign->isChecked());
+    mSigningKey->setEnabled(mSign->isChecked());
+    updateSigningKeyPlaceholder();
+
     // Read defaults from global settings.
     Settings *settings = Settings::instance();
     bool fetch = settings->value(Setting::Id::FetchAutomatically).toBool();
@@ -166,9 +220,19 @@ public:
   }
 
 private:
+  void updateSigningKeyPlaceholder() {
+    bool ssh = (mSignFormat->currentData().toString() == "ssh");
+    mSigningKey->setPlaceholderText(
+        ssh ? tr("Path to the key file, or a public key held by ssh-agent")
+            : tr("Key ID (default: the committer's name and email)"));
+  }
+
   git::Repository mRepo;
   QLineEdit *mName;
   QLineEdit *mEmail;
+  QCheckBox *mSign;
+  QComboBox *mSignFormat;
+  QLineEdit *mSigningKey;
 
   QCheckBox *mFetch;
   QSpinBox *mFetchMinutes;
