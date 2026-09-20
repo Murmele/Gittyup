@@ -25,6 +25,9 @@ const int kDebounceMs = 100;
 // cleared, so this has to comfortably exceed the debounce.
 const int kSettleMs = 250;
 
+// Long enough for a spurious notification to show up.
+const int kQuietMs = 3 * kDebounceMs;
+
 // Timeouts are generous so a starved CI runner can't cause false failures.
 const int kAttemptMs = 1000;
 const int kAttempts = 15;
@@ -97,6 +100,8 @@ private slots:
   void newHiddenDirectory();
   void atomicReplace_data();
   void atomicReplace();
+  void trackedFileMatchingIgnoreRule();
+  void untrackedFileMatchingIgnoreRule();
 
 private:
   // Order matters: the watcher must be destroyed before the repository.
@@ -115,9 +120,14 @@ void TestRepositoryWatcher::initTestCase() {
       QVERIFY(mWorkdir.mkpath(row.dir));
   }
 
-  // The rename target for atomicReplace(), and a rule that ignores temp files.
-  QVERIFY(writeFile(mWorkdir.filePath(".gitignore"), "*.tmp\n"));
+  // A rename target, ignore rules, and a tracked file that matches one.
+  QVERIFY(writeFile(mWorkdir.filePath(".gitignore"), "*.tmp\n*.ign\n"));
   QVERIFY(writeFile(mWorkdir.filePath("atomic")));
+  const QByteArray tracked = "tracked\n";
+  QVERIFY(writeFile(mWorkdir.filePath("tracked.ign"), tracked));
+  QVERIFY(forceAdd(mWorkdir.path(), "tracked.ign", tracked));
+  (*mRepo)->index().read();
+  QVERIFY((*mRepo)->index().isTracked("tracked.ign"));
 
   mWatcher.reset(RepositoryWatcher::create(*mRepo));
   mWatcher->setDebounceInterval(kDebounceMs);
@@ -171,6 +181,19 @@ void TestRepositoryWatcher::atomicReplace() {
   QVERIFY2(mSpy->wait(kSignalMs),
            "no notification for a rename onto an existing file");
   settle(*mSpy);
+}
+
+void TestRepositoryWatcher::trackedFileMatchingIgnoreRule() {
+  QVERIFY(writeFile(mWorkdir.filePath("tracked.ign")));
+  QVERIFY2(mSpy->wait(kSignalMs),
+           "no notification for a tracked file that matches an ignore rule");
+  settle(*mSpy);
+}
+
+void TestRepositoryWatcher::untrackedFileMatchingIgnoreRule() {
+  QVERIFY(writeFile(mWorkdir.filePath("untracked.ign")));
+  QVERIFY2(!mSpy->wait(kQuietMs),
+           "notification for an ignored file that isn't tracked");
 }
 
 TEST_MAIN(TestRepositoryWatcher)

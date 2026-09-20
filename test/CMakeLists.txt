@@ -117,6 +117,7 @@ test(NAME commitMessageTemplate)
 test(NAME commitEditor)
 test(NAME RepositoryWatcher)
 test(NAME RepoViewAutoRefresh)
+test(NAME PathFilter)
 
 # Test case not compatible with Windows
 if(NOT WIN32)
