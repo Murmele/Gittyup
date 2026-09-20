@@ -347,6 +347,10 @@ FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
   auto stageState = static_cast<git::Index::StagedState>(
       mModelIndex.data(Qt::CheckStateRole).toInt());
   setObjectName("FileWidget");
+
+  // Don't grow into spare viewport space, or it ends up as gaps between files.
+  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->setSpacing(0);
