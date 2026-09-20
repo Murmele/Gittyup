@@ -381,8 +381,6 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
   RepositoryWatcher *watcher = RepositoryWatcher::create(repo, this);
   connect(notifier, &git::RepositoryNotifier::referenceUpdated, watcher,
           &RepositoryWatcher::cancelPendingNotification);
-  connect(mCommits, &CommitList::statusChanged, watcher,
-          &RepositoryWatcher::cancelPendingNotification);
 
   mDetailSplitter = new QSplitter(Qt::Horizontal, this);
   mDetailSplitter->setChildrenCollapsible(false);
