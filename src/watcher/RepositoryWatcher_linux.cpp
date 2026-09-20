@@ -20,7 +20,8 @@ const uint kFlags = (IN_ATTRIB | IN_CLOSE_WRITE | IN_CREATE | IN_DELETE |
                      IN_DELETE_SELF | IN_MODIFY | IN_MOVE_SELF);
 
 // FIXME: Include hidden and filter .git explicitly?
-const QDir::Filters kFilters = (QDir::Dirs | QDir::NoDotAndDotDot);
+const QDir::Filters kFilters =
+    (QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot);
 
 } // namespace
 
