@@ -111,7 +111,7 @@ ThemeDialog::ThemeDialog(QWidget *parent) : QDialog(parent) {
   QHBoxLayout *themeButtons1 = new QHBoxLayout; // 1th row
   themeButtons1->addWidget(native);
   themeButtons1->addWidget(dark);
-  
+
   QHBoxLayout *themeButtons2 = new QHBoxLayout; // 2nd row
   themeButtons2->addWidget(system);
   themeButtons2->addWidget(mocha);
