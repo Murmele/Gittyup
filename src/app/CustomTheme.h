@@ -35,6 +35,7 @@ public:
   QColor remoteComment(Comment color) override;
   QColor notice(Notice role) override;
   QColor star() override;
+  QVariantMap editorStyleProperties() const override;
 
   QVariantMap checkbox() const;
   void polishWindow(QWindow *window) const;

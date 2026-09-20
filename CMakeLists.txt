@@ -113,7 +113,14 @@ elseif(UNIX AND NOT APPLE)
 endif()
 
 # Find Qt modules.
-set(QT_MODULES Concurrent Core Gui Network Widgets Test)
+set(QT_MODULES
+    Concurrent
+    Core
+    Core5Compat
+    Gui
+    Network
+    Widgets
+    Test)
 
 if(UNIX)
   set(QT_MODULES ${QT_MODULES} DBus)
