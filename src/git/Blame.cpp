@@ -42,47 +42,27 @@ int Blame::index(int line) const {
   return min;
 }
 
-int Blame::line(int index) const {
-  const auto hunk = git_blame_get_hunk_byindex(d.data(), index);
-  if (!hunk) {
-    return -1;
-  }
-  return hunk->final_start_line_number;
+Hunk Blame::hunk(int index) const {
+  return Hunk(git_blame_get_hunk_byindex(d.data(), index));
 }
 
-Id Blame::id(int index) const {
-  const auto *hunk = git_blame_get_hunk_byindex(d.data(), index);
-  if (!hunk) {
-    return Id();
-  }
-  return hunk->final_commit_id;
-}
+int Blame::line(int index) const { return hunk(index).line(); }
+
+Id Blame::id(int index) const { return hunk(index).id(); }
 
 QString Blame::message(int index) const {
-  git_commit *commit = nullptr;
-  const git_blame_hunk *hunk = git_blame_get_hunk_byindex(d.data(), index);
-  if (!hunk) {
+  Id id = hunk(index).id();
+  if (!id.isValid())
     return QString();
-  }
-  git_commit_lookup(&commit, repo, &hunk->final_commit_id);
+
+  git_commit *commit = nullptr;
+  git_commit_lookup(&commit, repo, id);
   return commit ? Commit(commit).message(Commit::SubstituteEmoji) : QString();
 }
 
-Signature Blame::signature(int index) const {
-  const git_blame_hunk *hunk = git_blame_get_hunk_byindex(d.data(), index);
-  if (!hunk) {
-    return Signature();
-  }
-  return hunk->final_signature;
-}
+Signature Blame::signature(int index) const { return hunk(index).signature(); }
 
-bool Blame::isCommitted(int index) const {
-  const git_blame_hunk *hunk = git_blame_get_hunk_byindex(d.data(), index);
-  if (!hunk) {
-    return false;
-  }
-  return !git_oid_is_zero(&hunk->final_commit_id);
-}
+bool Blame::isCommitted(int index) const { return hunk(index).isCommitted(); }
 
 Blame Blame::updated(const QByteArray &buffer) const {
   git_blame *blame = nullptr;
