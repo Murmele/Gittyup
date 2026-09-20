@@ -84,7 +84,7 @@ void EditorWindow::showEvent(QShowEvent *event) {
 void EditorWindow::closeEvent(QCloseEvent *event) {
   // Prompt to save.
   BlameEditor *editor = widget();
-  if (editor->editor()->isModified()) {
+  if (editor->editor()->modify()) {
     QString text =
         tr("'%1' has been modified. Do you want to save your changes?");
     QMessageBox::StandardButton button = QMessageBox::warning(

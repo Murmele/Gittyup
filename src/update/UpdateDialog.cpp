@@ -127,7 +127,7 @@ UpdateDialog::UpdateDialog(const QString &platform, const QString &version,
   });
 
   connect(buttons, &QDialogButtonBox::rejected, this, &UpdateDialog::reject);
-  connect(this, &UpdateDialog::accepted, [platform, link] {
+  connect(this, &UpdateDialog::accepted, [link] {
     // Start download.
     if (Updater::DownloadRef download = Updater::instance()->download(link)) {
       DownloadDialog *dialog = new DownloadDialog(download);

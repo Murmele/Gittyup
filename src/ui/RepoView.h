@@ -107,6 +107,10 @@ public:
   // workdir
   bool isWorkingDirectoryDirty() const;
 
+  // Whether a status check and/or walker/row rebuild is currently in
+  // flight for the commit list.
+  bool isLoading() const;
+
   // current reference
   git::Reference reference() const;
   void selectReference(const git::Reference &ref);
@@ -360,6 +364,7 @@ private slots:
 
 signals:
   void statusChanged(bool dirty);
+  void loadingChanged(bool loading);
 
 protected:
   void showEvent(QShowEvent *event) override;

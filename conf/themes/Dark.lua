@@ -141,6 +141,12 @@ theme['diff']      = {
   error            = '#7E494B'  -- error background
 }
 
+-- inline notice/banner colors (e.g. the "diff not loaded" placeholder)
+theme['notice']    = {
+  background       = '#4A3B12',
+  foreground       = '#FFE9A8'
+}
+
 -- link colors
 -- { default, active, inactive, disabled }
 theme['link']      = {
@@ -222,7 +228,7 @@ theme.property['style.identifier']   = '$(style.nothing)'
 theme.property['style.indentguide']  = 'fore:#333333,back:#333333'
 theme.property['style.keyword']      = 'fore:#53AFEC,bold'
 theme.property['style.label']        = 'fore:#E8C080'
-theme.property['style.linenumber']   = 'fore:#5F6672,back:#2A2B30,bold'
+theme.property['style.linenumber']   = 'fore:#5F6672,back:#2A2B30'
 theme.property['style.nothing']      = ''
 theme.property['style.number']       = 'fore:#4D99E6'
 theme.property['style.operator']     = 'fore:#CCCCCC,bold'

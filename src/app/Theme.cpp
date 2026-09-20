@@ -230,6 +230,17 @@ QColor Theme::diff(Diff color) {
                            std::to_string(static_cast<int>(color)));
 }
 
+QColor Theme::notice(Notice role) {
+  switch (role) {
+    case Notice::Background:
+      return mDark ? "#4A3B12" : "#FFF3CD";
+    case Notice::Foreground:
+      return mDark ? "#FFE9A8" : "#664D03";
+  }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(role)));
+}
+
 QColor Theme::heatMap(HeatMap color) {
   switch (color) {
     case HeatMap::Hot:
@@ -258,6 +269,10 @@ QColor Theme::remoteComment(Comment color) {
 }
 
 QColor Theme::star() { return QPalette().color(QPalette::Highlight); }
+
+QVariantMap Theme::editorStyleProperties() const {
+  return mMap.value("property").toMap();
+}
 
 Theme *Theme::create(const QString &defaultName) {
   // Upgrade theme key to capital case.

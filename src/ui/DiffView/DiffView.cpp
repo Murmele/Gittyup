@@ -16,7 +16,9 @@
 #include "ui/DiffTreeModel.h"
 #include "ui/DoubleTreeWidget.h"
 #include "ui/HotkeyManager.h"
+#include "ui/ProgressIndicator.h"
 #include "git/Tree.h"
+#include <QPainter>
 #include <QScrollBar>
 #include <QPushButton>
 #include <QMimeData>
@@ -38,8 +40,8 @@ bool copy(const QString &source, const QDir &targetDir) {
   if (!targetDir.mkdir(name))
     return false;
 
-  foreach (const QFileInfo &entry,
-           QDir(source).entryInfoList(DiffViewStyle::kFilters)) {
+  for (const QFileInfo &entry :
+       QDir(source).entryInfoList(DiffViewStyle::kFilters)) {
     if (!copy(entry.filePath(), target))
       return false;
   }
@@ -81,9 +83,9 @@ DiffView::DiffView(const git::Repository &repo, QWidget *parent)
               mComments = comments;
 
               // Invalidate editors.
-              foreach (QWidget *widget, mFiles) {
-                foreach (HunkWidget *hunk,
-                         static_cast<FileWidget *>(widget)->hunks())
+              for (QWidget *widget : mFiles) {
+                for (HunkWidget *hunk :
+                     static_cast<FileWidget *>(widget)->hunks())
                   hunk->invalidate();
               }
 
@@ -100,9 +102,41 @@ DiffView::DiffView(const git::Repository &repo, QWidget *parent)
   shortcut = new QShortcut(this);
   moveHalfPageUpHotKey.use(shortcut);
   connect(shortcut, &QShortcut::activated, [this] { moveHalfPageUp(); });
+
+  connect(&mTimer, &QTimer::timeout, this, [this] {
+    ++mProgress;
+    if (mLoadingFadein < 1.0f)
+      mLoadingFadein += 0.1;
+    viewport()->update();
+  });
 }
 
 DiffView::~DiffView() {}
+
+void DiffView::setLoading(bool loading) {
+  if (loading) {
+    mProgress = 0;
+    mLoadingFadein = 0;
+    mTimer.start(50);
+  } else {
+    mTimer.stop();
+  }
+
+  viewport()->update();
+}
+
+void DiffView::paintEvent(QPaintEvent *event) {
+  QScrollArea::paintEvent(event);
+
+  if (!mDiff.isValid()) {
+    QPainter painter(viewport());
+    QRect indicator(QPoint(0, 0), ProgressIndicator::size());
+    indicator.moveCenter(viewport()->rect().center());
+    ProgressIndicator::paint(&painter, indicator,
+                             palette().color(QPalette::WindowText),
+                             mLoadingFadein, mProgress);
+  }
+}
 
 QWidget *DiffView::file(int index) {
   fetchAll(index);
@@ -114,7 +148,7 @@ void DiffView::setDiff(const git::Diff &diff) {
   git::Repository repo = view->repo();
 
   // Disconnect signals.
-  foreach (QMetaObject::Connection connection, mConnections)
+  for (const QMetaObject::Connection &connection : mConnections)
     disconnect(connection);
   mConnections.clear();
 
@@ -312,8 +346,8 @@ void DiffView::updateFiles() {
 QList<TextEditor *> DiffView::editors() {
   fetchAll();
   QList<TextEditor *> editors;
-  foreach (QWidget *widget, mFiles) {
-    foreach (HunkWidget *hunk, static_cast<FileWidget *>(widget)->hunks())
+  for (QWidget *widget : mFiles) {
+    for (HunkWidget *hunk : static_cast<FileWidget *>(widget)->hunks())
       editors.append(hunk->editor());
   }
 
@@ -328,7 +362,7 @@ void DiffView::ensureVisible(TextEditor *editor, int pos) {
   file->header()->disclosureButton()->setChecked(true);
 
   int fileY = hunk->parentWidget()->y();
-  int y = fileY + hunk->y() + editor->y() + editor->pointFromPosition(pos).y();
+  int y = fileY + hunk->y() + editor->y() + editor->pointYFromPosition(pos);
 
   QScrollBar *scrollBar = verticalScrollBar();
   int val = scrollBar->value();
@@ -349,7 +383,7 @@ void DiffView::dropEvent(QDropEvent *event) {
   // Copy files into the workdir.
   RepoView *view = RepoView::parentView(this);
   git::Repository repo = view->repo();
-  foreach (const QUrl &url, event->mimeData()->urls()) {
+  for (const QUrl &url : event->mimeData()->urls()) {
     if (url.isLocalFile())
       copy(url.toString(DiffViewStyle::kUrlFormat), repo.workdir());
   }

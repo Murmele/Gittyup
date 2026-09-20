@@ -57,6 +57,10 @@ public:
 
   enum class Comment { Background, Body, Author, Timestamp };
 
+  // A readable background/foreground pair for inline notices/banners, such
+  // as the "diff not loaded" placeholder.
+  enum class Notice { Background, Foreground };
+
   Theme();
   virtual ~Theme() = default;
 
@@ -76,7 +80,12 @@ public:
   virtual QColor diff(Diff color);
   virtual QColor heatMap(HeatMap color);
   virtual QColor remoteComment(Comment color);
+  virtual QColor notice(Notice role);
   virtual QColor star();
+
+  // Editor (Scintilla/Scintillua) style definitions: theme.property['style.*']
+  // and theme.property['color.*'] entries from the theme's .lua file.
+  virtual QVariantMap editorStyleProperties() const;
 
   static Theme *create(const QString &name = QString());
 

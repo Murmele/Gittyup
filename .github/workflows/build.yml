@@ -196,7 +196,7 @@ jobs:
           host: ${{ matrix.env.qt_platform }}
           arch: ${{ matrix.env.qt_arch }}
           install-deps: true
-          modules: qtwebengine
+          modules: qtwebengine qt5compat
 
       - name: Install Ninja
         uses: seanmiddleditch/gha-setup-ninja@v6
