@@ -53,6 +53,10 @@ Scintilla::Colour ToScintillaColour(const QColor &color) {
          (color.alpha() << 24);
 }
 
+QColor FromScintillaColour(Scintilla::Colour colour) {
+  return QColor(colour & 0xff, (colour >> 8) & 0xff, (colour >> 16) & 0xff);
+}
+
 // Expand '$(key)' references against the theme's flat property map. Entries
 // may reference other entries (e.g. style.constant = '$(style.keyword)'), so
 // repeat until nothing changes, bounded to avoid a cycle looping forever.
@@ -447,8 +451,8 @@ int TextEditor::highlightAll(const QString &text) {
   markerSetBack(Ours, ToScintillaColour(mOursColor.darker(120)));
   markerSetBack(Theirs, ToScintillaColour(mTheirsColor.darker(120)));
   for (int i = 0; i <= STYLE_DEFAULT; i++) {
-    Scintilla::Colour c = styleBack(i);
-    styleSetBack(i, ToScintillaColour(QColor(c).darker(120)));
+    styleSetBack(
+        i, ToScintillaColour(FromScintillaColour(styleBack(i)).darker(120)));
   }
 
   emit highlightActivated(true);
@@ -789,9 +793,10 @@ QPoint TextEditor::pointFromPosition(int pos) {
 }
 
 void TextEditor::markerDefineImage(int markerNumber, const QImage &image) {
-  QImage argb = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-  rGBAImageSetWidth(argb.width());
-  rGBAImageSetHeight(argb.height());
-  rGBAImageSetScale(argb.devicePixelRatio() * 100);
-  markerDefineRGBAImage(markerNumber, (const char *)argb.bits());
+  // Scintilla expects non-premultiplied bytes in R, G, B, A order.
+  QImage rgba = image.convertToFormat(QImage::Format_RGBA8888);
+  rGBAImageSetWidth(rgba.width());
+  rGBAImageSetHeight(rgba.height());
+  rGBAImageSetScale(rgba.devicePixelRatio() * 100);
+  markerDefineRGBAImage(markerNumber, (const char *)rgba.bits());
 }
