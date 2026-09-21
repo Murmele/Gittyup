@@ -196,26 +196,31 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaEdit(parent) {
   indicSetUnder(FindCurrent, true);
 
   // Set word diff indicators.
+  indicSetStyle(WordAddition, INDIC_STRAIGHTBOX);
   indicSetFore(WordAddition,
                ToScintillaColour(theme->diff(Theme::Diff::WordAddition)));
   indicSetAlpha(WordAddition, 255);
   indicSetUnder(WordAddition, true);
 
+  indicSetStyle(WordDeletion, INDIC_STRAIGHTBOX);
   indicSetFore(WordDeletion,
                ToScintillaColour(theme->diff(Theme::Diff::WordDeletion)));
   indicSetAlpha(WordDeletion, 255);
   indicSetUnder(WordDeletion, true);
 
+  indicSetStyle(NoteIndicator, INDIC_SQUIGGLE);
   indicSetFore(NoteIndicator,
                ToScintillaColour(theme->diff(Theme::Diff::Note)));
   indicSetAlpha(NoteIndicator, 255);
   indicSetUnder(NoteIndicator, true);
 
+  indicSetStyle(WarningIndicator, INDIC_STRAIGHTBOX);
   indicSetFore(WarningIndicator,
                ToScintillaColour(theme->diff(Theme::Diff::Warning)));
   indicSetAlpha(WarningIndicator, 255);
   indicSetUnder(WarningIndicator, true);
 
+  indicSetStyle(ErrorIndicator, INDIC_STRAIGHTBOX);
   indicSetFore(ErrorIndicator,
                ToScintillaColour(theme->diff(Theme::Diff::Error)));
   indicSetAlpha(ErrorIndicator, 255);
