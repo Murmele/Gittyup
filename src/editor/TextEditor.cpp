@@ -542,11 +542,11 @@ void TextEditor::addDiagnostic(int line, const Diagnostic &diag) {
 /// @brief Custom context menu bypassing Scintilla
 /// @param event
 void TextEditor::contextMenuEvent(QContextMenuEvent *event) {
-  // The following logic was present before porting to Scintilla 5.x. However
-  // it's yet to be determined how this is triggered or used
-  //  Point pt = PointFromQPoint(event->pos());
-  //  if (!PointInSelection(pt))
-  //    SetEmptySelection(PositionFromLocation(pt));
+  // Move the caret to the click unless it landed inside the selection, so the
+  // menu actions apply to the clicked line.
+  int clickPos = positionFromPoint(event->pos().x(), event->pos().y());
+  if (clickPos < selectionStart() || clickPos >= selectionEnd())
+    setEmptySelection(clickPos);
 
   int startLine = lineFromPosition(selectionStart());
   int end = lineFromPosition(selectionEnd()) + 1;
