@@ -53,6 +53,10 @@ Scintilla::Colour ToScintillaColour(const QColor &color) {
          (color.alpha() << 24);
 }
 
+QColor FromScintillaColour(Scintilla::Colour colour) {
+  return QColor(colour & 0xff, (colour >> 8) & 0xff, (colour >> 16) & 0xff);
+}
+
 // Expand '$(key)' references against the theme's flat property map. Entries
 // may reference other entries (e.g. style.constant = '$(style.keyword)'), so
 // repeat until nothing changes, bounded to avoid a cycle looping forever.
@@ -196,26 +200,31 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaEdit(parent) {
   indicSetUnder(FindCurrent, true);
 
   // Set word diff indicators.
+  indicSetStyle(WordAddition, INDIC_STRAIGHTBOX);
   indicSetFore(WordAddition,
                ToScintillaColour(theme->diff(Theme::Diff::WordAddition)));
   indicSetAlpha(WordAddition, 255);
   indicSetUnder(WordAddition, true);
 
+  indicSetStyle(WordDeletion, INDIC_STRAIGHTBOX);
   indicSetFore(WordDeletion,
                ToScintillaColour(theme->diff(Theme::Diff::WordDeletion)));
   indicSetAlpha(WordDeletion, 255);
   indicSetUnder(WordDeletion, true);
 
+  indicSetStyle(NoteIndicator, INDIC_SQUIGGLE);
   indicSetFore(NoteIndicator,
                ToScintillaColour(theme->diff(Theme::Diff::Note)));
   indicSetAlpha(NoteIndicator, 255);
   indicSetUnder(NoteIndicator, true);
 
+  indicSetStyle(WarningIndicator, INDIC_STRAIGHTBOX);
   indicSetFore(WarningIndicator,
                ToScintillaColour(theme->diff(Theme::Diff::Warning)));
   indicSetAlpha(WarningIndicator, 255);
   indicSetUnder(WarningIndicator, true);
 
+  indicSetStyle(ErrorIndicator, INDIC_STRAIGHTBOX);
   indicSetFore(ErrorIndicator,
                ToScintillaColour(theme->diff(Theme::Diff::Error)));
   indicSetAlpha(ErrorIndicator, 255);
@@ -442,8 +451,8 @@ int TextEditor::highlightAll(const QString &text) {
   markerSetBack(Ours, ToScintillaColour(mOursColor.darker(120)));
   markerSetBack(Theirs, ToScintillaColour(mTheirsColor.darker(120)));
   for (int i = 0; i <= STYLE_DEFAULT; i++) {
-    Scintilla::Colour c = styleBack(i);
-    styleSetBack(i, ToScintillaColour(QColor(c).darker(120)));
+    styleSetBack(
+        i, ToScintillaColour(FromScintillaColour(styleBack(i)).darker(120)));
   }
 
   emit highlightActivated(true);
@@ -537,11 +546,11 @@ void TextEditor::addDiagnostic(int line, const Diagnostic &diag) {
 /// @brief Custom context menu bypassing Scintilla
 /// @param event
 void TextEditor::contextMenuEvent(QContextMenuEvent *event) {
-  // The following logic was present before porting to Scintilla 5.x. However
-  // it's yet to be determined how this is triggered or used
-  //  Point pt = PointFromQPoint(event->pos());
-  //  if (!PointInSelection(pt))
-  //    SetEmptySelection(PositionFromLocation(pt));
+  // Move the caret to the click unless it landed inside the selection, so the
+  // menu actions apply to the clicked line.
+  int clickPos = positionFromPoint(event->pos().x(), event->pos().y());
+  if (clickPos < selectionStart() || clickPos >= selectionEnd())
+    setEmptySelection(clickPos);
 
   int startLine = lineFromPosition(selectionStart());
   int end = lineFromPosition(selectionEnd()) + 1;
@@ -784,9 +793,10 @@ QPoint TextEditor::pointFromPosition(int pos) {
 }
 
 void TextEditor::markerDefineImage(int markerNumber, const QImage &image) {
-  QImage argb = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-  rGBAImageSetWidth(argb.width());
-  rGBAImageSetHeight(argb.height());
-  rGBAImageSetScale(argb.devicePixelRatio() * 100);
-  markerDefineRGBAImage(markerNumber, (const char *)argb.bits());
+  // Scintilla expects non-premultiplied bytes in R, G, B, A order.
+  QImage rgba = image.convertToFormat(QImage::Format_RGBA8888);
+  rGBAImageSetWidth(rgba.width());
+  rGBAImageSetHeight(rgba.height());
+  rGBAImageSetScale(rgba.devicePixelRatio() * 100);
+  markerDefineRGBAImage(markerNumber, (const char *)rgba.bits());
 }

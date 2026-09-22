@@ -44,9 +44,17 @@ Theme::Theme() {
   // shared temp file: the theme template is combined with a generated
   // style.default line reflecting the live QPalette, then executed
   // directly, so concurrent processes never contend over a fixed path.
+  QPalette palette;
+  QColor base = palette.color(QPalette::Base);
+  QColor text = palette.color(QPalette::Text);
+  mDark = (text.lightnessF() > base.lightnessF());
+
   QFile themeFile(mDir.filePath(QString("%1.lua").arg(mName)).toUtf8());
   if (themeFile.open(QIODevice::ReadOnly)) {
-    QByteArray source = themeFile.readAll();
+    // The theme script picks its editor colors based on theme.dark.
+    QByteArray source =
+        QByteArray("theme.dark = ") + (mDark ? "true" : "false") + "\n";
+    source += themeFile.readAll();
     themeFile.close();
 
     // Add theme colors for scintilla editor.
@@ -61,11 +69,6 @@ Theme::Theme() {
     QByteArray file = mDir.filePath(QString("%1.lua").arg(mName)).toUtf8();
     mMap = ConfFile(file).parse("theme");
   }
-
-  QPalette palette;
-  QColor base = palette.color(QPalette::Base);
-  QColor text = palette.color(QPalette::Text);
-  mDark = (text.lightnessF() > base.lightnessF());
 }
 
 QString Theme::diffButtonStyle(Theme::Diff role) {

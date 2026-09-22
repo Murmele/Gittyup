@@ -128,12 +128,14 @@ public:
   void keyPressEvent(QKeyEvent *ke) override;
 
   QRect textRectangle() const {
-    // TODO: Port to scintilla 5.x
-    // Prior code used Editor::GetTextRectangle, but that's not accessible here
-    // with Scintilla 5.x. This is sometimes (but not always!) a good
-    // approximate
+    // Approximates Editor::GetTextRectangle, which isn't accessible with
+    // Scintilla 5.x: the client area minus the margins.
+    int left = marginLeft();
+    for (int i = 0, count = margins(); i < count; ++i)
+      left += marginWidthN(i);
+
     QRect rc = contentsRect();
-    rc.adjust(0, 0, -marginRight(), 0);
+    rc.adjust(left, 0, -marginRight(), 0);
     return rc;
   };
 

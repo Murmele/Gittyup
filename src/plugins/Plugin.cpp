@@ -456,8 +456,11 @@ int lexemeText(lua_State *L) {
 }
 
 QByteArray kind(TextEditor *editor, int style) {
+  // Scintillua names styles like "whitespace.lua" or "comment.documentation".
+  // Plugins only care about the base kind.
   QByteArray name = editor->nameOfStyle(style);
-  return name.endsWith("_whitespace") ? QByteArrayLiteral("whitespace") : name;
+  int dot = name.indexOf('.');
+  return dot < 0 ? name : name.left(dot);
 }
 
 int lexemeKind(lua_State *L) {
