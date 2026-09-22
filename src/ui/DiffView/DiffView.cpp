@@ -528,6 +528,15 @@ void DiffView::fetchMore(int fetchWidgets) {
 
     layout->addStretch();
   }
+
+  // Keep loading until the content overflows the viewport, since no scrollbar
+  // signal fires when everything fits on screen.
+  if (!fetchAll && addedWidgets > 0) {
+    QTimer::singleShot(0, this, [this] {
+      if (canFetchMore())
+        fetchMore();
+    });
+  }
 }
 
 void DiffView::fetchAll(int index) {
