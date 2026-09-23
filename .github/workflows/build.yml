@@ -196,7 +196,7 @@ jobs:
           host: ${{ matrix.env.qt_platform }}
           arch: ${{ matrix.env.qt_arch }}
           install-deps: true
-          modules: qtwebengine
+          modules: qtwebengine qt5compat
 
       - name: Install Ninja
         uses: seanmiddleditch/gha-setup-ninja@v6
@@ -294,6 +294,14 @@ jobs:
           cd build/release
           xvfb-run -a ninja check --verbose
 
+      # The tests run with QT_QPA_PLATFORM=offscreen (see test/CMakeLists.txt),
+      # so no display server is needed.
+      - name: Test (macOS)
+        if: matrix.env.ninja_platform == 'mac'
+        run: |
+          cd build/release
+          ninja check --verbose
+
       - name: Test (Windows)
         if: matrix.env.ninja_platform == 'win'
         run: |
@@ -336,7 +344,7 @@ jobs:
           mv ./AppDir/lib64/ld-${{ matrix.env.ld_library_arch }}.so.2 ./AppDir/usr/bin/
           sed -i -e 's@^LD_LINUX.*@LD_LINUX=$(find "$HERE/usr/bin" -name "ld-*.so.*" | head -n 1)@g' ./AppDir/AppRun
 
-          rm ./AppDir/usr/share/metainfo/gittyup.appdata.xml
+          rm ./AppDir/usr/share/metainfo/com.github.Murmele.Gittyup.appdata.xml
           VERSION=$(cat ./Version.txt)
           VERSION="$VERSION" ./appimagetool-*.AppImage ./AppDir # turn AppDir into AppImage
           #ls -lh Gittyup-*
@@ -348,8 +356,107 @@ jobs:
           path: build/release/Gittyup*.AppImage
           name: GittyupAppImage
 
+  # Runs the packaged artifacts on a fresh runner (no checkout, Qt or compiler),
+  # so anything they only found through the build environment fails here.
+  smoke-test:
+    name: Smoke Test (${{ matrix.name }})
+    needs: build
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux
+            os: ubuntu-latest
+            artifact: GittyupAppImage
+          - name: macos
+            os: macos-15-intel
+            artifact: Gittyup macos
+          - name: win64
+            os: windows-latest
+            artifact: Gittyup win64
+
+    steps:
+      - name: Download package
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ matrix.artifact }}
+          path: package
+
+      - name: Download version file
+        uses: actions/download-artifact@v6
+        with:
+          name: Gittyup-VERSION
+          path: version
+
+      # The AppImage runs under Xvfb so that the real xcb platform plugin gets
+      # loaded. Extract-and-run avoids depending on FUSE being installed.
+      - name: Run AppImage --version
+        if: matrix.name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          appimage=$(ls package/Gittyup*.AppImage)
+          chmod +x "$appimage"
+          export APPIMAGE_EXTRACT_AND_RUN=1
+          output=$(xvfb-run -a "$appimage" --version)
+          echo "$output"
+          grep -Fxq "Gittyup $(cat version/Version.txt)" <<< "$output"
+
+      - name: Install macOS app from dmg
+        if: matrix.name == 'macos'
+        run: |
+          mount=$(mktemp -d)
+          hdiutil attach package/Gittyup-*.dmg -nobrowse -readonly -mountpoint "$mount"
+          ditto "$(ls -d "$mount"/*.app)" ./gittyup.app
+          hdiutil detach "$mount"
+
+      # dyld only reports the first missing library, so list all of them to spot
+      # paths outside the system and the bundle (e.g. Homebrew).
+      - name: Show macOS app dependencies
+        if: matrix.name == 'macos'
+        run: |
+          for binary in gittyup gittyup-indexer gittyup-relauncher; do
+            echo "::group::otool -L $binary"
+            otool -L "./gittyup.app/Contents/MacOS/$binary"
+            echo "::endgroup::"
+          done
+          echo "::group::Contents/Frameworks"
+          ls -1 ./gittyup.app/Contents/Frameworks
+          echo "::endgroup::"
+
+      - name: Run macOS app --version
+        if: matrix.name == 'macos'
+        run: |
+          output=$(./gittyup.app/Contents/MacOS/gittyup --version)
+          echo "$output"
+          grep -Fxq "Gittyup $(cat version/Version.txt)" <<< "$output"
+
+      # gittyup.exe is a GUI-subsystem executable, so Start-Process with
+      # redirected output is needed to wait for it and capture what it prints.
+      - name: Run Windows installer and app --version
+        if: matrix.name == 'win64'
+        shell: pwsh
+        run: |
+          $installer = (Get-ChildItem package -Filter 'Gittyup-*.exe' | Select-Object -First 1).FullName
+          $installDir = Join-Path $env:RUNNER_TEMP 'Gittyup'
+          # NSIS requires /D to be the last argument and unquoted.
+          $install = Start-Process -FilePath $installer -ArgumentList '/S', "/D=$installDir" -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "Installer exited with code $($install.ExitCode)" }
+
+          $stdout = Join-Path $env:RUNNER_TEMP 'version.out'
+          $stderr = Join-Path $env:RUNNER_TEMP 'version.err'
+          $run = Start-Process -FilePath (Join-Path $installDir 'bin\gittyup.exe') -ArgumentList '--version' `
+            -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+          Get-Content $stdout, $stderr
+          if ($run.ExitCode -ne 0) { throw "gittyup --version exited with code $($run.ExitCode)" }
+
+          $expected = "Gittyup $((Get-Content version/Version.txt -Raw).Trim())"
+          if (-not ((Get-Content $stdout) -contains $expected)) { throw "Expected '$expected' in the output" }
+
   publish:
-    needs: [flatpak, build]
+    needs: [flatpak, build, smoke-test]
     runs-on: ubuntu-latest # does not matter which
     permissions:
       contents: write

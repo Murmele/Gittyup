@@ -37,7 +37,7 @@ DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
   auto contextSignal = QOverload<int>::of(&QSpinBox::valueChanged);
   connect(context, contextSignal, [this](int value) {
     mConfig.setValue("diff.context", value);
-    foreach (MainWindow *window, MainWindow::windows()) {
+    for (MainWindow *window : MainWindow::windows()) {
       for (int i = 0; i < window->count(); ++i)
         window->view(i)->refresh();
     }
@@ -53,7 +53,7 @@ DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
   QComboBox *encoding = new QComboBox(this);
   encoding->addItem(tr("System Locale"), -1);
   encoding->insertSeparator(encoding->count());
-  for (int i = 0; i < encodings.size(); i++) {
+  for (int i = 0; i < static_cast<int>(encodings.size()); i++) {
     encoding->addItem(encodings[i], i);
   }
   QString name = mConfig.value<QString>("gui.encoding");
@@ -68,7 +68,7 @@ DiffPanel::DiffPanel(const git::Repository &repo, QWidget *parent)
       mConfig.setValue("gui.encoding", encoding->itemText(index));
     }
 
-    foreach (MainWindow *window, MainWindow::windows()) {
+    for (MainWindow *window : MainWindow::windows()) {
       for (int i = 0; i < window->count(); ++i)
         window->view(i)->refresh();
     }

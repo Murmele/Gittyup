@@ -21,7 +21,6 @@ add_library(
   NewBranchDialog.cpp
   PluginsPanel.cpp
   PullRequestDialog.cpp
-  RebaseConflictDialog.cpp
   RemoteDialog.cpp
   RemoteTableModel.cpp
   RenameBranchDialog.cpp

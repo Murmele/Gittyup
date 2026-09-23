@@ -141,13 +141,13 @@ FindWidget::FindWidget(EditorProvider *provider, QWidget *parent)
 void FindWidget::reset() { mEditorIndex = 0; }
 
 void FindWidget::clearHighlights() {
-  foreach (TextEditor *editor, mEditorProvider->editors())
+  for (TextEditor *editor : mEditorProvider->editors())
     editor->clearHighlights();
 }
 
 void FindWidget::highlightAll() {
   int matches = 0;
-  foreach (TextEditor *editor, mEditorProvider->editors())
+  for (TextEditor *editor : mEditorProvider->editors())
     matches += editor->highlightAll(sText);
 
   QString text;

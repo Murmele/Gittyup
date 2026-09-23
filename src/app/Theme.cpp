@@ -40,36 +40,35 @@ Theme::Theme() {
   mDir = Settings::themesDir();
   mName = QString("System");
 
-  // Create Qt theme.
-  QFile themeFile(mDir.filePath(QString("%1.lua").arg(mName)).toUtf8());
-  if (themeFile.open(QIODevice::ReadOnly)) {
-    QDir tempDir = QDir::temp();
-    QFile tempFile(tempDir.filePath(QString("%1.lua").arg(mName)).toUtf8());
-    if (tempFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
-      mDir = tempDir;
-
-      // Copy template.
-      tempFile.write(themeFile.readAll());
-
-      // Add theme colors for scintilla editor.
-      tempFile.write(
-          QString("theme.property['style.default']      = 'fore:%1,back:%2'\n")
-              .arg(QPalette().color(QPalette::Text).name(QColor::HexRgb),
-                   QPalette().color(QPalette::Base).name(QColor::HexRgb))
-              .toUtf8());
-      tempFile.close();
-    }
-    themeFile.close();
-  }
-
-  // Load Qt theme.
-  QByteArray file = mDir.filePath(QString("%1.lua").arg(mName)).toUtf8();
-  mMap = ConfFile(file).parse("theme");
-
+  // Create Qt theme. Build the script in memory rather than through a
+  // shared temp file: the theme template is combined with a generated
+  // style.default line reflecting the live QPalette, then executed
+  // directly, so concurrent processes never contend over a fixed path.
   QPalette palette;
   QColor base = palette.color(QPalette::Base);
   QColor text = palette.color(QPalette::Text);
   mDark = (text.lightnessF() > base.lightnessF());
+
+  QFile themeFile(mDir.filePath(QString("%1.lua").arg(mName)).toUtf8());
+  if (themeFile.open(QIODevice::ReadOnly)) {
+    // The theme script picks its editor colors based on theme.dark.
+    QByteArray source =
+        QByteArray("theme.dark = ") + (mDark ? "true" : "false") + "\n";
+    source += themeFile.readAll();
+    themeFile.close();
+
+    // Add theme colors for scintilla editor.
+    source +=
+        QString("theme.property['style.default']      = 'fore:%1,back:%2'\n")
+            .arg(QPalette().color(QPalette::Text).name(QColor::HexRgb),
+                 QPalette().color(QPalette::Base).name(QColor::HexRgb))
+            .toUtf8();
+
+    mMap = ConfFile(source, mDir).parse("theme");
+  } else {
+    QByteArray file = mDir.filePath(QString("%1.lua").arg(mName)).toUtf8();
+    mMap = ConfFile(file).parse("theme");
+  }
 }
 
 QString Theme::diffButtonStyle(Theme::Diff role) {
@@ -234,6 +233,17 @@ QColor Theme::diff(Diff color) {
                            std::to_string(static_cast<int>(color)));
 }
 
+QColor Theme::notice(Notice role) {
+  switch (role) {
+    case Notice::Background:
+      return mDark ? "#4A3B12" : "#FFF3CD";
+    case Notice::Foreground:
+      return mDark ? "#FFE9A8" : "#664D03";
+  }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(role)));
+}
+
 QColor Theme::heatMap(HeatMap color) {
   switch (color) {
     case HeatMap::Hot:
@@ -262,6 +272,10 @@ QColor Theme::remoteComment(Comment color) {
 }
 
 QColor Theme::star() { return QPalette().color(QPalette::Highlight); }
+
+QVariantMap Theme::editorStyleProperties() const {
+  return mMap.value("property").toMap();
+}
 
 Theme *Theme::create(const QString &defaultName) {
   // Upgrade theme key to capital case.

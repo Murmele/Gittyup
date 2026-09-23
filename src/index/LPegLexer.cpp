@@ -11,6 +11,7 @@
 
 #include "LPegLexer.h"
 #include <QFileInfo>
+#include <QHash>
 
 extern "C" {
 #include "lua.h"
@@ -18,6 +19,46 @@ extern "C" {
 #include "lauxlib.h"
 LUALIB_API int luaopen_lpeg(lua_State *L);
 }
+
+namespace {
+
+// Scintillua 6.x's lex() returns tag names (e.g. "keyword", "string") rather
+// than the numeric style ids the older _TOKENSTYLES table used to map to.
+// This mirrors lexer.lua's default tag list, in the same order as Lexer::Token.
+Lexer::Token tokenForTag(const QByteArray &tag) {
+  static const QHash<QByteArray, Lexer::Token> kTokens = {
+      {"whitespace", Lexer::Whitespace},
+      {"comment", Lexer::Comment},
+      {"string", Lexer::String},
+      {"number", Lexer::Number},
+      {"keyword", Lexer::Keyword},
+      {"identifier", Lexer::Identifier},
+      {"operator", Lexer::Operator},
+      {"error", Lexer::Error},
+      {"preprocessor", Lexer::Preprocessor},
+      {"constant", Lexer::Constant},
+      {"variable", Lexer::Variable},
+      {"function", Lexer::Function},
+      {"class", Lexer::Class},
+      {"type", Lexer::Type},
+      {"label", Lexer::Label},
+      {"regex", Lexer::Regex},
+      {"embedded", Lexer::Embedded},
+  };
+
+  Lexer::Token token = kTokens.value(tag, Lexer::Nothing);
+  if (token == Lexer::Nothing) {
+    // Fall back to the base category for compound tags like
+    // "function.builtin" or "constant.builtin".
+    int dot = tag.indexOf('.');
+    if (dot >= 0)
+      token = kTokens.value(tag.left(dot), Lexer::Nothing);
+  }
+
+  return token;
+}
+
+} // namespace
 
 LPegLexer::LPegLexer(const QByteArray &home, const QByteArray &lexer,
                      QObject *parent)
@@ -77,7 +118,6 @@ bool LPegLexer::lex(const QByteArray &buffer) {
     return false;
 
   mLength = lua_rawlen(L, -1);
-  lua_getfield(L, -2, "_TOKENSTYLES");
   return true;
 }
 
@@ -86,11 +126,12 @@ bool LPegLexer::hasNext() { return (mIndex < mLength); }
 Lexer::Lexeme LPegLexer::next() {
   lua_State *L = mL.data();
 
-  lua_rawgeti(L, -2, mIndex), lua_rawget(L, -2); // _TOKENSTYLES[token]
-  int token = !lua_isnil(L, -1) ? lua_tointeger(L, -1) - 1 : Nothing;
-  lua_pop(L, 1); // _TOKENSTYLES[token]
+  lua_rawgeti(L, -1, mIndex); // tag name
+  QByteArray tag(lua_tostring(L, -1), lua_rawlen(L, -1));
+  Token token = tokenForTag(tag);
+  lua_pop(L, 1); // tag name
 
-  lua_rawgeti(L, -2, mIndex + 1); // endPos
+  lua_rawgeti(L, -1, mIndex + 1); // endPos
   int endPos = lua_tointeger(L, -1) - 1;
   QByteArray text = mBuffer.mid(mStartPos, endPos - mStartPos);
   lua_pop(L, 1); // endPos
@@ -99,7 +140,7 @@ Lexer::Lexeme LPegLexer::next() {
   mIndex += 2;
 
   if (!hasNext())
-    lua_pop(L, 2); // _TOKENSTYLES and token table
+    lua_pop(L, 1); // token table
 
-  return {static_cast<Token>(token), text};
+  return {token, text};
 }

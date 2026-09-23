@@ -1,12 +1,9 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 if(NOT MSVC)
-  add_compile_options(-Werror=switch)
+  add_compile_options(-Wall -Werror)
 endif()
-# Uncomment to compile with more warnings add_compile_options(-Wall) Uncomment
-# to compile with even more warnings add_compile_options(-Wextra) TODO:
-# currently there are too many unused parameters which overwhelms the warning
-# output with `-Wall`. So let's leave fixing these for later.
+# Uncomment to compile with even more warnings add_compile_options(-Wextra)
 if(NOT MSVC)
   add_compile_options(-Wno-unused-parameter)
 endif()
