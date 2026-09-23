@@ -50,9 +50,8 @@ public:
   bool setupSpellCheck(const QString &dictPath, const QString &userDict,
                        const QTextCharFormat &spellFormat,
                        const QTextCharFormat &ignoredFormat) {
-    mSpellChecker = new SpellChecker(dictPath, userDict);
+    mSpellChecker = std::make_unique<SpellChecker>(dictPath, userDict);
     if (!mSpellChecker->isValid()) {
-      delete mSpellChecker;
       mSpellChecker = nullptr;
       mSpellList.clear();
       setSelections();
@@ -248,7 +247,7 @@ private:
 
   QTimer mTimer;
 
-  SpellChecker *mSpellChecker = nullptr;
+  std::unique_ptr<SpellChecker> mSpellChecker = nullptr;
   QTextCharFormat mSpellFormat;
   QTextCharFormat mIgnoredFormat;
   QList<QTextEdit::ExtraSelection> mSpellList;
@@ -735,26 +734,29 @@ void CommitEditor::updateButtons(bool yieldFocus) {
   int conflicted = 0;
   int count = mDiff.count();
   git::Index index = mDiff.index();
-  for (int i = 0; i < count; ++i) {
-    QString name = mDiff.name(i);
-    switch (index.isStaged(name)) {
-      case git::Index::Disabled:
-      case git::Index::Unstaged:
-        break;
+  // Ensure we actually have a valid index object before using it
+  if (index.isValid()) {
+    for (int i = 0; i < count; ++i) {
+      QString name = mDiff.name(i);
+      switch (index.isStaged(name)) {
+        case git::Index::Disabled:
+        case git::Index::Unstaged:
+          break;
 
-      case git::Index::PartiallyStaged:
-        files.append(QFileInfo(name).fileName());
-        ++partial;
-        break;
+        case git::Index::PartiallyStaged:
+          files.append(QFileInfo(name).fileName());
+          ++partial;
+          break;
 
-      case git::Index::Staged:
-        files.append(QFileInfo(name).fileName());
-        ++staged;
-        break;
+        case git::Index::Staged:
+          files.append(QFileInfo(name).fileName());
+          ++staged;
+          break;
 
-      case git::Index::Conflicted:
-        ++conflicted;
-        break;
+        case git::Index::Conflicted:
+          ++conflicted;
+          break;
+      }
     }
   }
 

@@ -18,11 +18,11 @@
 #include "ui/FileContextMenu.h"
 #include "git/Repository.h"
 
-#include "git/Buffer.h"
-
 #include <QCheckBox>
 #include <QContextMenuEvent>
 #include <QVBoxLayout>
+#include <QLabel>
+#include <QLocale>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSaveFile>
@@ -347,6 +347,10 @@ FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
   auto stageState = static_cast<git::Index::StagedState>(
       mModelIndex.data(Qt::CheckStateRole).toInt());
   setObjectName("FileWidget");
+
+  // Don't grow into spare viewport space, or it ends up as gaps between files.
+  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->setSpacing(0);
@@ -358,8 +362,7 @@ FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
       // Limit the read to kMaxReadBinary number of bytes to determine if the
       // file is binary or not
       QByteArray content = dev.read(kMaxReadBinary);
-      git::Buffer buffer(content.constData(), content.length());
-      binary = buffer.isBinary();
+      binary = git::Blob::isBinary(content);
     }
   }
 
@@ -423,7 +426,25 @@ FileWidget::FileWidget(DiffView *view, const git::Diff &diff,
                                 // and is not distributed over the hole
                                 // filewidget
 
-  updatePatch(patch, staged, name, path, submodule);
+  // Untracked files are shown in full, so gate them on the file's raw size.
+  // Tracked files are gated on the number of changed lines to allow small
+  // changes in large files to be displayed
+  size_t size = patch.isUntracked() ? QFileInfo(path).size() : 0;
+  git::Patch::LineStats lineStats = patch.lineStats();
+  size_t changedLines = lineStats.additions + lineStats.deletions;
+
+  bool tooBig = patch.isUntracked() && size > kMaxAutoLoadDiffSize;
+  bool tooManyLines =
+      !patch.isUntracked() && changedLines > kMaxAutoLoadDiffLines;
+
+  mShowDiff = lfs || !(tooBig || tooManyLines);
+
+  if (mShowDiff) {
+    updatePatch(patch, staged, name, path, submodule);
+  } else {
+    mHunkLayout->addWidget(addLargeDiffNotice(size, changedLines, tooBig, patch,
+                                              staged, name, path, submodule));
+  }
 
   // LFS
   if (QToolButton *lfsButton = mHeader->lfsButton()) {
@@ -512,7 +533,12 @@ void FileWidget::updateHunks(git::Patch stagedPatch) {
     hunk->load(stagedPatch, true);
 }
 
-bool FileWidget::isEmpty() { return (mHunks.isEmpty() && mImages.isEmpty()); }
+bool FileWidget::isEmpty() {
+  if (mShowDiff)
+    return (mHunks.isEmpty() && mImages.isEmpty());
+  else
+    return false;
+}
 
 void FileWidget::setStageState(git::Index::StagedState state) {
   mHeader->setStageState(state);
@@ -597,6 +623,54 @@ QWidget *FileWidget::addImage(DisclosureButton *button, const git::Patch patch,
   mImages.append(images);
 
   return images;
+}
+
+QWidget *FileWidget::addLargeDiffNotice(qint64 size, qint64 changedLines,
+                                        bool tooBig, const git::Patch &patch,
+                                        const git::Patch &staged,
+                                        const QString &name,
+                                        const QString &path, bool submodule) {
+  Theme *theme = Application::theme();
+  QColor background = theme->notice(Theme::Notice::Background);
+  QColor foreground = theme->notice(Theme::Notice::Foreground);
+
+  QFrame *notice = new QFrame(this);
+  notice->setObjectName("LargeDiffNotice");
+  notice->setStyleSheet(
+      QString("#LargeDiffNotice { background-color: %1; border-radius: 4px; }")
+          .arg(background.name()));
+
+  QHBoxLayout *layout = new QHBoxLayout(notice);
+  layout->setContentsMargins(8, 6, 8, 6);
+  layout->setSpacing(8);
+
+  QLabel *icon = new QLabel(notice);
+  icon->setPixmap(
+      style()->standardIcon(QStyle::SP_MessageBoxWarning).pixmap(20, 20));
+  layout->addWidget(icon);
+
+  QString reason =
+      tooBig
+          ? tr("This file is large (%1)").arg(locale().formattedDataSize(size))
+          : tr("This diff has %L1 changed lines").arg(changedLines);
+  QLabel *label =
+      new QLabel(tr("%1 and isn't loaded automatically.").arg(reason), notice);
+  label->setStyleSheet(
+      QString("font-weight: bold; color: %1;").arg(foreground.name()));
+  layout->addWidget(label, 1);
+
+  QPushButton *loadButton = new QPushButton(tr("Load Diff"), notice);
+  layout->addWidget(loadButton);
+
+  connect(loadButton, &QPushButton::clicked,
+          [this, notice, patch, staged, name, path, submodule] {
+            mShowDiff = true;
+            mHunkLayout->removeWidget(notice);
+            notice->deleteLater();
+            updatePatch(patch, staged, name, path, submodule);
+          });
+
+  return notice;
 }
 
 HunkWidget *FileWidget::addHunk(const git::Diff &diff, const git::Patch &patch,
@@ -732,7 +806,10 @@ void FileWidget::discardHunk() {
 }
 
 bool FileWidget::canFetchMore() const {
-  return mHunks.count() < mPatch.count();
+  if (mShowDiff)
+    return mHunks.count() < mPatch.count();
+  else
+    return false;
 }
 
 /*!
@@ -741,6 +818,9 @@ bool FileWidget::canFetchMore() const {
  * use a while loop with canFetchMore() to get all
  */
 int FileWidget::fetchMore(int count) {
+  if (!mShowDiff)
+    return 0;
+
   int counter = 0;
   RepoView *view = RepoView::parentView(this);
   git::Repository repo = view->repo();

@@ -32,7 +32,6 @@
 #include "dialogs/DeleteBranchDialog.h"
 #include "dialogs/DeleteTagDialog.h"
 #include "dialogs/NewBranchDialog.h"
-#include "dialogs/RebaseConflictDialog.h"
 #include "dialogs/RemoteDialog.h"
 #include "dialogs/RenameBranchDialog.h"
 #include "dialogs/SettingsDialog.h"
@@ -273,6 +272,8 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
   connect(mRefs, &ReferenceWidget::referenceSelected, mCommits,
           &CommitList::selectReference);
   connect(mCommits, &CommitList::statusChanged, this, &RepoView::statusChanged);
+  connect(mCommits, &CommitList::loadingChanged, this,
+          &RepoView::loadingChanged);
 
   // Respond to pathspec change.
   connect(mPathspec, &PathspecWidget::pathspecChanged, this,
@@ -306,6 +307,8 @@ RepoView::RepoView(const git::Repository &repo, MainWindow *parent)
   // Respond to commit list selection change.
   connect(mCommits, &CommitList::diffSelected, this, &RepoView::diffSelected,
           Qt::ConnectionType::DirectConnection);
+  connect(mCommits, &CommitList::diffLoading, mDetails,
+          &DetailView::setLoading);
 
   // Refresh the diff when a whole directory is added to the index.
   // FIXME: This is a workaround.
@@ -504,6 +507,8 @@ bool RepoView::isUnstageEnabled() const { return mDetails->isUnstageEnabled(); }
 RepoView::ViewMode RepoView::viewMode() const { return mDetails->viewMode(); }
 
 void RepoView::setViewMode(ViewMode mode) { mDetails->setViewMode(mode, true); }
+
+bool RepoView::isLoading() const { return mCommits->isLoading(); }
 
 bool RepoView::isWorkingDirectoryDirty() const {
   git::Diff status = mCommits->status();

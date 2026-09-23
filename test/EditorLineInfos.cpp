@@ -15,8 +15,8 @@
 #include "git/Commit.h"
 #include "git/Tree.h"
 
-#define INIT_REPO(repoPath, /* bool */ useTempDir)                             \
-  QString path = Test::extractRepository(repoPath, useTempDir);                \
+#define INIT_REPO(repoPath)                                                    \
+  QString path = Test::extractRepository(repoPath);                            \
   QVERIFY2(!path.isEmpty(), qPrintable("Extracting repository failed"));       \
   mRepo = git::Repository::open(path);                                         \
   QVERIFY2(mRepo.isValid(), qPrintable("Unable to open repository"));          \
@@ -39,8 +39,8 @@
 #define checkEditorMarkers(editor, unstagedAddition, stagedAddition,           \
                            unstagedDeletion, stagedDeletion)                   \
   for (int i = 0; i < editor->lineCount(); i++) {                              \
-    QString line = editor->line(i);                                            \
-    int markers = editor->markers(i);                                          \
+    QString line = editor->getLine(i);                                         \
+    int markers = editor->markerGet(i);                                        \
                                                                                \
     QString state = "";                                                        \
     if (BITSET(markers, TextEditor::Marker::Addition))                         \
@@ -146,7 +146,7 @@ void TestEditorLineInfo::initTestCase() {}
 
 #if EXECUTE_ONLY_LAST_TEST == 0
 void TestEditorLineInfo::editorLineSingleHunkAdditionStaged() {
-  INIT_REPO("01_singleHunkAdditionStaged.zip", true)
+  INIT_REPO("01_singleHunkAdditionStaged.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -158,8 +158,8 @@ void TestEditorLineInfo::editorLineSingleHunkAdditionStaged() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     if (i == 3) {
       QVERIFY(BITSET(markers, TextEditor::Marker::Addition));
@@ -174,7 +174,7 @@ void TestEditorLineInfo::editorLineSingleHunkAdditionStaged() {
 }
 
 void TestEditorLineInfo::editorLineSingleHunkDeletionStaged() {
-  INIT_REPO("02_singleHunkDeletionStaged.zip", true)
+  INIT_REPO("02_singleHunkDeletionStaged.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -186,8 +186,8 @@ void TestEditorLineInfo::editorLineSingleHunkDeletionStaged() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     if (i == 2) {
       QVERIFY(BITSET(markers, TextEditor::Marker::Deletion));
@@ -202,7 +202,7 @@ void TestEditorLineInfo::editorLineSingleHunkDeletionStaged() {
 }
 
 void TestEditorLineInfo::editorLineSingleHunkChangeStaged() {
-  INIT_REPO("03_singleHunkChangeSingleLine.zip", true)
+  INIT_REPO("03_singleHunkChangeSingleLine.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -214,8 +214,8 @@ void TestEditorLineInfo::editorLineSingleHunkChangeStaged() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     switch (i) {
       case 2:
@@ -238,7 +238,7 @@ void TestEditorLineInfo::editorLineSingleHunkChangeStaged() {
 }
 
 void TestEditorLineInfo::editorLineSingleHunkChange_onlyAdditionStaged() {
-  INIT_REPO("04_singleHunkChange_onlyAdditionStaged.zip", true)
+  INIT_REPO("04_singleHunkChange_onlyAdditionStaged.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -250,8 +250,8 @@ void TestEditorLineInfo::editorLineSingleHunkChange_onlyAdditionStaged() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     switch (i) {
       case 2:
@@ -274,7 +274,7 @@ void TestEditorLineInfo::editorLineSingleHunkChange_onlyAdditionStaged() {
 }
 
 void TestEditorLineInfo::editorLineSingleHunkChange_onlyDeletionStaged() {
-  INIT_REPO("05_singleHunkChange_onlyDeletionStaged.zip", true)
+  INIT_REPO("05_singleHunkChange_onlyDeletionStaged.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -286,8 +286,8 @@ void TestEditorLineInfo::editorLineSingleHunkChange_onlyDeletionStaged() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     switch (i) {
       case 2:
@@ -310,7 +310,7 @@ void TestEditorLineInfo::editorLineSingleHunkChange_onlyDeletionStaged() {
 }
 
 void TestEditorLineInfo::singleHunk_multipleDeletions() {
-  INIT_REPO("06_singleHunk_multipleDeletions.zip", true)
+  INIT_REPO("06_singleHunk_multipleDeletions.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -322,8 +322,8 @@ void TestEditorLineInfo::singleHunk_multipleDeletions() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 4, 7, 8, 10});
     QVector<int> staged({5, 6, 9});
@@ -342,7 +342,7 @@ void TestEditorLineInfo::singleHunk_multipleDeletions() {
 }
 
 void TestEditorLineInfo::singleHunk_multipleAdditions() {
-  INIT_REPO("07_singleHunk_multipleAdditions.zip", true)
+  INIT_REPO("07_singleHunk_multipleAdditions.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -354,8 +354,8 @@ void TestEditorLineInfo::singleHunk_multipleAdditions() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 6, 7, 10});
     QVector<int> staged({4, 5, 8, 9, 11});
@@ -376,7 +376,7 @@ void TestEditorLineInfo::singleHunk_multipleAdditions() {
 }
 
 void TestEditorLineInfo::multipleHunks_multipleDeletions() {
-  INIT_REPO("08_multipleHunks_multipleDeletions.zip", true)
+  INIT_REPO("08_multipleHunks_multipleDeletions.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -388,8 +388,8 @@ void TestEditorLineInfo::multipleHunks_multipleDeletions() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 6, 7});
     QVector<int> staged({4, 5});
@@ -415,8 +415,8 @@ void TestEditorLineInfo::multipleHunks_multipleDeletions() {
   editor = hw2.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 4, 7, 8});
     QVector<int> staged({5, 6});
@@ -437,7 +437,7 @@ void TestEditorLineInfo::multipleHunks_multipleDeletions() {
 }
 
 void TestEditorLineInfo::multipleHunks_multipleAdditions() {
-  INIT_REPO("09_multipleHunks_multipleAdditions.zip", true)
+  INIT_REPO("09_multipleHunks_multipleAdditions.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -449,8 +449,8 @@ void TestEditorLineInfo::multipleHunks_multipleAdditions() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 4, 7, 8});
     QVector<int> staged({5, 6, 9});
@@ -476,8 +476,8 @@ void TestEditorLineInfo::multipleHunks_multipleAdditions() {
   editor = hw2.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 6, 7, 8, 10});
     QVector<int> staged({4, 5, 9, 11});
@@ -500,7 +500,7 @@ void TestEditorLineInfo::multipleHunks_multipleAdditions() {
 void TestEditorLineInfo::singleHunk_additionsOnly_secondStagedPatch() {
   // Testing the finding of the staged patch index
 
-  INIT_REPO("11_singleHunk_additionsOnly_secondStagedPatch.zip", true)
+  INIT_REPO("11_singleHunk_additionsOnly_secondStagedPatch.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -512,8 +512,8 @@ void TestEditorLineInfo::singleHunk_additionsOnly_secondStagedPatch() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstagedAddition({2});
     QVector<int> stagedAddition({6});
@@ -536,7 +536,7 @@ void TestEditorLineInfo::singleHunk_additionsOnly_secondStagedPatch() {
 void TestEditorLineInfo::singleHunk_deletionsOnly_secondStagedPatch() {
   // Testing the finding of the staged patch index
 
-  INIT_REPO("12_singleHunk_deletionsOnly_secondStagedPatch.zip", true)
+  INIT_REPO("12_singleHunk_deletionsOnly_secondStagedPatch.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -548,8 +548,8 @@ void TestEditorLineInfo::singleHunk_deletionsOnly_secondStagedPatch() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstagedDeletion({1});
     QVector<int> stagedDeletion({4});
@@ -570,7 +570,7 @@ void TestEditorLineInfo::singleHunk_deletionsOnly_secondStagedPatch() {
 }
 
 void TestEditorLineInfo::multipleHunks_misc1() {
-  INIT_REPO("10_misc.zip", true)
+  INIT_REPO("10_misc.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -582,8 +582,8 @@ void TestEditorLineInfo::multipleHunks_misc1() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstagedAddition({6, 9, 19, 23});
     QVector<int> stagedAddition({24, 25});
@@ -637,7 +637,7 @@ void TestEditorLineInfo::multipleHunks_misc1() {
 //}
 
 void TestEditorLineInfo::multipleHunks_StageSingleLines() {
-  INIT_REPO("13_singleHunkNoStaged.zip", true)
+  INIT_REPO("13_singleHunkNoStaged.zip")
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
   // no staged lines yet, so no staged patch
@@ -727,7 +727,7 @@ void TestEditorLineInfo::multipleHunks_StageSingleLines2() {
    * and then the added line
    */
 
-  INIT_REPO("13_singleHunkNoStaged.zip", true)
+  INIT_REPO("13_singleHunkNoStaged.zip")
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
   // no staged lines yet, so no staged patch
@@ -828,7 +828,7 @@ void TestEditorLineInfo::windowsCRLF() {
    * The repository was created on windows
    */
 
-  INIT_REPO("14_windowsCRLF.zip", true)
+  INIT_REPO("14_windowsCRLF.zip")
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
   // no staged lines yet, so no staged patch
@@ -882,7 +882,7 @@ void TestEditorLineInfo::windowsCRLFMultiHunk() {
    * hunks. The CRLF file was created directly on linux and not on windows
    */
 
-  INIT_REPO("15_windowsCRLF_multipleHunks.zip", true)
+  INIT_REPO("15_windowsCRLF_multipleHunks.zip")
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
   // no staged lines yet, so no staged patch
@@ -938,7 +938,7 @@ void TestEditorLineInfo::windowsCRLFMultiHunk() {
 }
 
 void TestEditorLineInfo::sameContentRemoveLine() {
-  INIT_REPO("16_LinestagingLineContent.zip", true)
+  INIT_REPO("16_LinestagingLineContent.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -953,7 +953,7 @@ void TestEditorLineInfo::sameContentRemoveLine() {
 }
 
 void TestEditorLineInfo::sameContentAddLine() {
-  INIT_REPO("17_LinestagingLineContentStageAddedLine.zip", true)
+  INIT_REPO("17_LinestagingLineContentStageAddedLine.zip")
   QVERIFY(stagedDiff.count() > 0);
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
@@ -969,7 +969,7 @@ void TestEditorLineInfo::sameContentAddLine() {
 #endif
 
 // void TestEditorLineInfo::deleteCompleteContent() {
-//   INIT_REPO("18_deleteLinesStagedLast.zip", true)
+//   INIT_REPO("18_deleteLinesStagedLast.zip")
 //   QVERIFY(stagedDiff.count() > 0);
 //   QVERIFY(diff.count() > 0);
 //   git::Patch patch = diff.patch(0);
@@ -986,7 +986,7 @@ void TestEditorLineInfo::sameContentAddLine() {
 //}
 
 void TestEditorLineInfo::discardCompleteDeletedContent() {
-  INIT_REPO("19_discardCompleteDeletedContent.zip", true)
+  INIT_REPO("19_discardCompleteDeletedContent.zip")
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
   // no staged lines yet, so no staged patch
@@ -1018,7 +1018,7 @@ void TestEditorLineInfo::discardCompleteDeletedContent() {
 }
 
 void TestEditorLineInfo::discardCompleteAddedContent() {
-  INIT_REPO("20_discardCompleteAddedContent.zip", true)
+  INIT_REPO("20_discardCompleteAddedContent.zip")
   QVERIFY(diff.count() > 0);
   git::Patch patch = diff.patch(0);
   // no staged lines yet, so no staged patch

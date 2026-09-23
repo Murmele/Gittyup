@@ -42,7 +42,6 @@ NewBranchDialog::NewBranchDialog(const git::Repository &repo,
   mCheckout->setVisible(qobject_cast<RepoView *>(parent));
   mCheckout->setChecked(true);
 
-  ExpandButton *expand = new ExpandButton(this);
   QFormLayout *form = new QFormLayout;
   form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
   form->addRow(tr("Name:"), mName);
@@ -50,21 +49,8 @@ NewBranchDialog::NewBranchDialog(const git::Repository &repo,
     form->addRow(tr("Start Point:"), mRefs);
   }
   form->addRow(QString(), mCheckout);
-  form->addRow(tr("Advanced:"), expand);
 
-  QWidget *advanced = new QWidget(this);
-  advanced->setVisible(false);
-
-  QFormLayout *advancedForm = new QFormLayout(advanced);
-  advancedForm->setContentsMargins(-1, 0, 0, 0);
-  advancedForm->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-  advancedForm->addRow(tr("Upstream:"), mUpstream);
-
-  connect(expand, &ExpandButton::toggled, [this, advanced](bool checked) {
-    advanced->setVisible(checked);
-    QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-    resize(sizeHint());
-  });
+  form->addRow(tr("Upstream:"), mUpstream);
 
   QDialogButtonBox *buttons = new QDialogButtonBox(this);
   buttons->addButton(QDialogButtonBox::Cancel);
@@ -76,7 +62,6 @@ NewBranchDialog::NewBranchDialog(const git::Repository &repo,
 
   QVBoxLayout *layout = new QVBoxLayout(this);
   layout->addLayout(form);
-  layout->addWidget(advanced);
   layout->addWidget(buttons);
 
   // Update button when name text changes.

@@ -42,6 +42,7 @@ public:
     HideLogAutomatically,
     OpenSubmodulesInTabs,
     OpenAllReposInTabs,
+    AutoHideRepoSiderbar,
     HideMenuBar,
     ShowAvatars,
     ShowMaximized,

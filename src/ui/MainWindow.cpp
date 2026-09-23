@@ -46,6 +46,7 @@ const QString kActiveKey = "active";
 const QString kSidebarKey = "sidebar";
 const QString kGeometryKey = "geometry";
 const QString kWindowsGroup = "windows";
+const QString kLastGeometryKey = "lastGeometry";
 
 class TabName {
 public:
@@ -155,17 +156,22 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
   // Set search completer.
   searchField->setCompleter(new IndexCompleter(this, searchField));
 
-  // Set default size and position.
-  resize(kDefaultWidth, kDefaultHeight);
+  // Restore the last known size and position, falling back to a default.
+  QByteArray lastGeometry = QSettings().value(kLastGeometryKey).toByteArray();
+  if (!lastGeometry.isEmpty()) {
+    restoreGeometry(lastGeometry);
+  } else {
+    resize(kDefaultWidth, kDefaultHeight);
 
-  QRect desktop = QGuiApplication::primaryScreen()->availableGeometry();
-  int x = (desktop.width() / 2) - (kDefaultWidth / 2);
-  int y = (desktop.height() / 2) - (kDefaultHeight / 2);
-  move(x, y);
+    QRect desktop = QGuiApplication::primaryScreen()->availableGeometry();
+    int x = (desktop.width() / 2) - (kDefaultWidth / 2);
+    int y = (desktop.height() / 2) - (kDefaultHeight / 2);
+    move(x, y);
 
-  // Position with respect to existing windows.
-  if (MainWindow *win = activeWindow())
-    move(win->x() + 24, win->y() + 24);
+    // Position with respect to existing windows.
+    if (MainWindow *win = activeWindow())
+      move(win->x() + 24, win->y() + 24);
+  }
 
   // Restore sidebar.
   setSideBarVisible(QSettings().value(kSidebarKey, true).toBool());
@@ -414,6 +420,10 @@ void MainWindow::showEvent(QShowEvent *event) {
 
 void MainWindow::closeEvent(QCloseEvent *event) {
   // FIXME: Attempt to close windows before writing settings?
+
+  // Remember size and position for the next new window, independent of
+  // full session restore.
+  QSettings().setValue(kLastGeometryKey, saveGeometry());
 
   if (sSaveWindowSettings) {
     // Store window state.

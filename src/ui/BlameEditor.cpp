@@ -16,7 +16,6 @@
 #include "editor/TextEditor.h"
 #include "git/Blame.h"
 #include "git/Blob.h"
-#include "git/Buffer.h"
 #include "git/Commit.h"
 #include "git/Index.h"
 #include "git/Repository.h"
@@ -145,8 +144,7 @@ bool BlameEditor::load(const QString &name, const git::Blob &blob,
 
     // Limit the read to kMaxReadBinary to determine if the file is binary
     content = file.read(kMaxReadBinary);
-    git::Buffer buffer(content.constData(), content.length());
-    if (buffer.isBinary()) {
+    if (git::Blob::isBinary(content)) {
       return false;
     } else if (static_cast<size_t>(content.length()) >= kMaxReadBinary) {
       // Okay, not a binary file. Now we need to grab the rest if needed
@@ -201,7 +199,7 @@ void BlameEditor::save() {
 
     // Set editor lexer.
     mEditor->setLexer(path);
-    mEditor->startStyling(0);
+    mEditor->startStyling(0, 0);
   }
 
   QSaveFile file(path);
@@ -211,7 +209,7 @@ void BlameEditor::save() {
   QTextStream out(&file);
   if (mRepo.isValid())
     out.setEncoding(mRepo.encoding());
-  out << mEditor->text();
+  out << mEditor->getText(mEditor->textLength());
   file.commit();
 
   mEditor->setSavePoint();

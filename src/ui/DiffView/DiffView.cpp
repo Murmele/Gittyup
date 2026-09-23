@@ -16,7 +16,9 @@
 #include "ui/DiffTreeModel.h"
 #include "ui/DoubleTreeWidget.h"
 #include "ui/HotkeyManager.h"
+#include "ui/ProgressIndicator.h"
 #include "git/Tree.h"
+#include <QPainter>
 #include <QScrollBar>
 #include <QPushButton>
 #include <QMimeData>
@@ -100,9 +102,41 @@ DiffView::DiffView(const git::Repository &repo, QWidget *parent)
   shortcut = new QShortcut(this);
   moveHalfPageUpHotKey.use(shortcut);
   connect(shortcut, &QShortcut::activated, [this] { moveHalfPageUp(); });
+
+  connect(&mTimer, &QTimer::timeout, this, [this] {
+    ++mProgress;
+    if (mLoadingFadein < 1.0f)
+      mLoadingFadein += 0.1;
+    viewport()->update();
+  });
 }
 
 DiffView::~DiffView() {}
+
+void DiffView::setLoading(bool loading) {
+  if (loading) {
+    mProgress = 0;
+    mLoadingFadein = 0;
+    mTimer.start(50);
+  } else {
+    mTimer.stop();
+  }
+
+  viewport()->update();
+}
+
+void DiffView::paintEvent(QPaintEvent *event) {
+  QScrollArea::paintEvent(event);
+
+  if (!mDiff.isValid()) {
+    QPainter painter(viewport());
+    QRect indicator(QPoint(0, 0), ProgressIndicator::size());
+    indicator.moveCenter(viewport()->rect().center());
+    ProgressIndicator::paint(&painter, indicator,
+                             palette().color(QPalette::WindowText),
+                             mLoadingFadein, mProgress);
+  }
+}
 
 QWidget *DiffView::file(int index) {
   fetchAll(index);
@@ -328,7 +362,7 @@ void DiffView::ensureVisible(TextEditor *editor, int pos) {
   file->header()->disclosureButton()->setChecked(true);
 
   int fileY = hunk->parentWidget()->y();
-  int y = fileY + hunk->y() + editor->y() + editor->pointFromPosition(pos).y();
+  int y = fileY + hunk->y() + editor->y() + editor->pointYFromPosition(pos);
 
   QScrollBar *scrollBar = verticalScrollBar();
   int val = scrollBar->value();
@@ -493,6 +527,15 @@ void DiffView::fetchMore(int fetchWidgets) {
       layout->addWidget(new CommentWidget(mComments.comments, widget()));
 
     layout->addStretch();
+  }
+
+  // Keep loading until the content overflows the viewport, since no scrollbar
+  // signal fires when everything fits on screen.
+  if (!fetchAll && addedWidgets > 0) {
+    QTimer::singleShot(0, this, [this] {
+      if (canFetchMore())
+        fetchMore();
+    });
   }
 }
 
