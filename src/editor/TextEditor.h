@@ -189,6 +189,7 @@ private:
   void applyLexerStyles();
 
   QString mPath;
+  QString mCurrentLexerLanguage;
   int mLineCount = -1;
   /*!
    * statusDiff Flag which determines if in the contextmenu stage actions are

@@ -141,16 +141,6 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaEdit(parent) {
     LuaAdded = true;
   }
 
-  // Every editor needs its own lexer instance: unlike a classic Scintilla
-  // lexer, Scintillua's ILexer5 is stateful (it tracks the currently
-  // detected language), so it can't be shared between editors.
-  ILexer5 *lua = CreateLexer("lua");
-  if (lua) {
-    setILexer((sptr_t)lua);
-  } else {
-    qWarning() << "Error creating Lua lexer";
-  }
-
   setScrollWidth(256);
   setScrollWidthTracking(true);
   setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
@@ -285,10 +275,16 @@ void TextEditor::applySettings() {
   loadMarkerPixmap(StagedMarker, mStagedIcon);
   loadMarkerPixmap(UnstagedMarker, mUnStagedIcon);
 
-  // Set LPeg lexer language.
-  QByteArray lexer = this->lexer().toUtf8();
-  uintptr_t ptr = reinterpret_cast<uintptr_t>(lexer.constData());
-  privateLexerCall(SCLUA_DETECT, ptr);
+  // Load the Scintillua grammar for this file's language
+  QString language = this->lexer();
+  if (language != mCurrentLexerLanguage) {
+    if (ILexer5 *lex = CreateLexer(language.toUtf8().constData())) {
+      setILexer((sptr_t)lex);
+      mCurrentLexerLanguage = language;
+    } else {
+      qWarning() << "Error creating lexer for language:" << language;
+    }
+  }
 
   // Re-apply theme colors: the set of named styles is lexer-dependent and
   // may have just changed.
