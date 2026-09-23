@@ -112,7 +112,7 @@ public:
     mWds[wd] = dir;
 
     // Watch subdirs.
-    foreach (const QString &name, dir.entryList(kFilters)) {
+    for (const QString &name : dir.entryList(kFilters)) {
       QString path = dir.filePath(name);
       if (!mRepo.isIgnored(path))
         watch(path);

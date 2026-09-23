@@ -146,7 +146,7 @@ bool BlameEditor::load(const QString &name, const git::Blob &blob,
     content = file.read(kMaxReadBinary);
     if (git::Blob::isBinary(content)) {
       return false;
-    } else if (content.length() >= kMaxReadBinary) {
+    } else if (static_cast<size_t>(content.length()) >= kMaxReadBinary) {
       // Okay, not a binary file. Now we need to grab the rest if needed
       content += file.readAll();
     }
@@ -199,7 +199,7 @@ void BlameEditor::save() {
 
     // Set editor lexer.
     mEditor->setLexer(path);
-    mEditor->startStyling(0);
+    mEditor->startStyling(0, 0);
   }
 
   QSaveFile file(path);
@@ -209,7 +209,7 @@ void BlameEditor::save() {
   QTextStream out(&file);
   if (mRepo.isValid())
     out.setEncoding(mRepo.encoding());
-  out << mEditor->text();
+  out << mEditor->getText(mEditor->textLength());
   file.commit();
 
   mEditor->setSavePoint();

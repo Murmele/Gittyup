@@ -108,6 +108,10 @@ public:
   HunkWidget *addHunk(const git::Diff &diff, const git::Patch &patch,
                       const git::Patch &staged, int index, bool lfs,
                       bool submodule);
+  QWidget *addLargeDiffNotice(qint64 size, qint64 changedLines, bool tooBig,
+                              const git::Patch &patch, const git::Patch &staged,
+                              const QString &name, const QString &path,
+                              bool submodule);
   bool canFetchMore() const;
   int fetchMore(int count = 4);
   void fetchAll(int index);
@@ -153,6 +157,10 @@ private:
   QVBoxLayout *mHunkLayout{nullptr};
   bool mSuppressUpdate{false};
   bool mSupressStaging{false};
+
+  /// @brief Bool indicating if we actually want to load this diff
+  /// Sometimes we want to hide large diffs
+  bool mShowDiff{true};
 };
 
 #endif // FILEWIDGET_H

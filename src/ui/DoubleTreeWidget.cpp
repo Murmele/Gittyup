@@ -159,7 +159,7 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
 
   stagedFiles->setModel(new TreeProxy(true, mDiffTreeModel, this));
   connect(stagedFiles, &QAbstractItemView::doubleClicked,
-          [this, repoView](const QModelIndex &index) {
+          [repoView](const QModelIndex &index) {
             openExternalDiffTool(index, repoView, true);
           });
 
@@ -189,7 +189,7 @@ DoubleTreeWidget::DoubleTreeWidget(const git::Repository &repo, QWidget *parent)
 
   unstagedFiles->setModel(new TreeProxy(false, mDiffTreeModel, this));
   connect(unstagedFiles, &QAbstractItemView::doubleClicked,
-          [this, repoView](const QModelIndex &index) {
+          [repoView](const QModelIndex &index) {
             openExternalDiffTool(index, repoView, false);
           });
 
@@ -325,7 +325,7 @@ void DoubleTreeWidget::showFileContextMenu(const QPoint &pos, RepoView *view,
     return;
 
   const bool statusDiff = diff.isStatusDiff();
-  foreach (const QModelIndex &index, indexes) {
+  for (const QModelIndex &index : indexes) {
     auto node = index.data(Qt::UserRole).value<Node *>();
 
     addNodeToMenu(view->repo().index(), files, node, staged, statusDiff);
@@ -387,6 +387,20 @@ QString DoubleTreeWidget::selectedFile() const {
   return "";
 }
 
+void DoubleTreeWidget::setLoading() {
+  // Clear the file list's rows, the diff view, and the blame editor, then
+  // let the file list and the diff view paint their own spinner over the
+  // now-empty content while we wait.
+  mDiffTreeModel->setDiff(git::Diff());
+
+  mEditor->clear();
+  mDiffView->setDiff(git::Diff());
+
+  stagedFiles->setLoading(true);
+  unstagedFiles->setLoading(true);
+  mDiffView->setLoading(true);
+}
+
 /*!
  * \brief DoubleTreeWidget::setDiff
  * \param diff
@@ -397,6 +411,11 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
                                const QString &pathspec) {
   Q_UNUSED(file)
   Q_UNUSED(pathspec)
+
+  // Diff is being set, so lets not indicate we're loading anything
+  stagedFiles->setLoading(false);
+  unstagedFiles->setLoading(false);
+  mDiffView->setLoading(false);
 
   mSetDiffCounter++;
 
@@ -503,7 +522,7 @@ void DoubleTreeWidget::storeSelection() {
 
 void DoubleTreeWidget::loadSelection() {
   QModelIndex index;
-  Qt::CheckState state;
+  Qt::CheckState state = Qt::Unchecked;
 
   if (mSelectedFile.filename != "") {
     index = mDiffTreeModel->index(mSelectedFile.filename);

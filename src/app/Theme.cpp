@@ -44,9 +44,17 @@ Theme::Theme() {
   // shared temp file: the theme template is combined with a generated
   // style.default line reflecting the live QPalette, then executed
   // directly, so concurrent processes never contend over a fixed path.
+  QPalette palette;
+  QColor base = palette.color(QPalette::Base);
+  QColor text = palette.color(QPalette::Text);
+  mDark = (text.lightnessF() > base.lightnessF());
+
   QFile themeFile(mDir.filePath(QString("%1.lua").arg(mName)).toUtf8());
   if (themeFile.open(QIODevice::ReadOnly)) {
-    QByteArray source = themeFile.readAll();
+    // The theme script picks its editor colors based on theme.dark.
+    QByteArray source =
+        QByteArray("theme.dark = ") + (mDark ? "true" : "false") + "\n";
+    source += themeFile.readAll();
     themeFile.close();
 
     // Add theme colors for scintilla editor.
@@ -61,11 +69,6 @@ Theme::Theme() {
     QByteArray file = mDir.filePath(QString("%1.lua").arg(mName)).toUtf8();
     mMap = ConfFile(file).parse("theme");
   }
-
-  QPalette palette;
-  QColor base = palette.color(QPalette::Base);
-  QColor text = palette.color(QPalette::Text);
-  mDark = (text.lightnessF() > base.lightnessF());
 }
 
 QString Theme::diffButtonStyle(Theme::Diff role) {
@@ -230,6 +233,17 @@ QColor Theme::diff(Diff color) {
                            std::to_string(static_cast<int>(color)));
 }
 
+QColor Theme::notice(Notice role) {
+  switch (role) {
+    case Notice::Background:
+      return mDark ? "#4A3B12" : "#FFF3CD";
+    case Notice::Foreground:
+      return mDark ? "#FFE9A8" : "#664D03";
+  }
+  throw std::runtime_error("unreachable; value=" +
+                           std::to_string(static_cast<int>(role)));
+}
+
 QColor Theme::heatMap(HeatMap color) {
   switch (color) {
     case HeatMap::Hot:
@@ -258,6 +272,10 @@ QColor Theme::remoteComment(Comment color) {
 }
 
 QColor Theme::star() { return QPalette().color(QPalette::Highlight); }
+
+QVariantMap Theme::editorStyleProperties() const {
+  return mMap.value("property").toMap();
+}
 
 Theme *Theme::create(const QString &defaultName) {
   // Upgrade theme key to capital case.

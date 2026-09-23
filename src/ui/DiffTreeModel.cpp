@@ -61,13 +61,16 @@ void DiffTreeModel::createDiffTree() {
 void DiffTreeModel::setDiff(const git::Diff &diff) {
   beginResetModel();
 
-  if (diff) {
-    delete mRoot;
-    mDiff = diff;
-    // Resolve potentially sandboxed path
-    mRoot = new Node(util::sandboxPathToHost(mRepo.workdir().path()), -1);
+  // Always rebuild the tree, even for an invalid diff, so callers that
+  // clear the diff (e.g. while a new one is loading) actually see an empty
+  // tree instead of the previous diff's stale rows.
+  delete mRoot;
+  mDiff = diff;
+
+  // Resolve potentially sandboxed path
+  mRoot = new Node(util::sandboxPathToHost(mRepo.workdir().path()), -1);
+  if (diff)
     createDiffTree();
-  }
 
   endResetModel();
 }

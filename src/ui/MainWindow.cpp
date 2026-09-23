@@ -47,6 +47,7 @@ const QString kActiveKey = "active";
 const QString kSidebarKey = "sidebar";
 const QString kGeometryKey = "geometry";
 const QString kWindowsGroup = "windows";
+const QString kLastGeometryKey = "lastGeometry";
 
 class TabName {
 public:
@@ -156,17 +157,22 @@ MainWindow::MainWindow(const git::Repository &repo, QWidget *parent,
   // Set search completer.
   searchField->setCompleter(new IndexCompleter(this, searchField));
 
-  // Set default size and position.
-  resize(kDefaultWidth, kDefaultHeight);
+  // Restore the last known size and position, falling back to a default.
+  QByteArray lastGeometry = QSettings().value(kLastGeometryKey).toByteArray();
+  if (!lastGeometry.isEmpty()) {
+    restoreGeometry(lastGeometry);
+  } else {
+    resize(kDefaultWidth, kDefaultHeight);
 
-  QRect desktop = QGuiApplication::primaryScreen()->availableGeometry();
-  int x = (desktop.width() / 2) - (kDefaultWidth / 2);
-  int y = (desktop.height() / 2) - (kDefaultHeight / 2);
-  move(x, y);
+    QRect desktop = QGuiApplication::primaryScreen()->availableGeometry();
+    int x = (desktop.width() / 2) - (kDefaultWidth / 2);
+    int y = (desktop.height() / 2) - (kDefaultHeight / 2);
+    move(x, y);
 
-  // Position with respect to existing windows.
-  if (MainWindow *win = activeWindow())
-    move(win->x() + 24, win->y() + 24);
+    // Position with respect to existing windows.
+    if (MainWindow *win = activeWindow())
+      move(win->x() + 24, win->y() + 24);
+  }
 
   // Restore sidebar.
   setSideBarVisible(QSettings().value(kSidebarKey, true).toBool());
@@ -293,7 +299,7 @@ MainWindow *MainWindow::activeWindow() {
 
 QList<MainWindow *> MainWindow::windows() {
   QList<MainWindow *> mainWins;
-  foreach (QWidget *win, QApplication::topLevelWidgets()) {
+  for (QWidget *win : QApplication::topLevelWidgets()) {
     if (MainWindow *mainWin = qobject_cast<MainWindow *>(win))
       mainWins.append(mainWin);
   }
@@ -307,7 +313,7 @@ bool MainWindow::restoreWindows() {
   // Open windows.
   QSettings settings;
   settings.beginGroup(kWindowsGroup);
-  foreach (const QString &group, settings.childGroups()) {
+  for (const QString &group : settings.childGroups()) {
     settings.beginGroup(group);
     int index = settings.value(kIndexKey).toInt();
     bool active = settings.value(kActiveKey).toBool();
@@ -329,7 +335,7 @@ bool MainWindow::restoreWindows() {
       continue;
 
     // Add the remainder as tabs.
-    foreach (const QString &path, paths)
+    for (const QString &path : paths)
       window->addTab(path);
 
     // Select saved index.
@@ -416,6 +422,10 @@ void MainWindow::showEvent(QShowEvent *event) {
 void MainWindow::closeEvent(QCloseEvent *event) {
   // FIXME: Attempt to close windows before writing settings?
 
+  // Remember size and position for the next new window, independent of
+  // full session restore.
+  QSettings().setValue(kLastGeometryKey, saveGeometry());
+
   if (sSaveWindowSettings) {
     // Store window state.
     // FIXME: Qt doesn't impose a predictable order on top-level windows.
@@ -447,7 +457,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
   if (!event->mimeData()->hasFormat("text/uri-list"))
     return;
 
-  foreach (const QUrl &url, event->mimeData()->urls()) {
+  for (const QUrl &url : event->mimeData()->urls()) {
     if (!url.isLocalFile())
       return;
 
@@ -463,7 +473,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void MainWindow::dropEvent(QDropEvent *event) {
-  foreach (const QUrl &url, event->mimeData()->urls())
+  for (const QUrl &url : event->mimeData()->urls())
     addTab(url.toLocalFile());
 }
 
