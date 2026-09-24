@@ -9,12 +9,22 @@
 
 #include "RepositoryWatcher.h"
 
-void RepositoryWatcher::init(const git::Repository &repo) {
+constexpr int kDefaultDebounceMsec = 2000;
+
+RepositoryWatcher::RepositoryWatcher(const git::Repository &repo,
+                                     QObject *parent)
+    : QObject(parent) {
   // The timer has to run on the main thread.
-  mTimer.setInterval(2000);
+  mTimer.setInterval(kDefaultDebounceMsec);
   mTimer.setSingleShot(true);
   connect(&mTimer, &QTimer::timeout, repo.notifier(),
           &git::RepositoryNotifier::workdirChanged);
 }
 
+void RepositoryWatcher::setDebounceInterval(int msec) {
+  mTimer.setInterval(msec);
+}
+
 void RepositoryWatcher::cancelPendingNotification() { mTimer.stop(); }
+
+void RepositoryWatcher::scheduleNotification() { mTimer.start(); }

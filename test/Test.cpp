@@ -146,6 +146,28 @@ void initRepo(git::Repository &repo) {
   repo.gitConfig().setValue("user.email", QString("test@user"));
 }
 
+bool forceAdd(const QString &workdir, const QString &path,
+              const QByteArray &data) {
+  git_repository *repo = nullptr;
+  if (git_repository_open(&repo, workdir.toUtf8()))
+    return false;
+
+  const QByteArray name = path.toUtf8();
+  git_index_entry entry = {};
+  entry.path = name.constData();
+  entry.mode = GIT_FILEMODE_BLOB;
+
+  git_index *index = nullptr;
+  bool ok = !git_repository_index(&index, repo) &&
+            !git_index_add_from_buffer(index, &entry, data.constData(),
+                                       data.size()) &&
+            !git_index_write(index);
+
+  git_index_free(index);
+  git_repository_free(repo);
+  return ok;
+}
+
 ScratchRepository::ScratchRepository(bool autoRemove) {
   mDir.setAutoRemove(autoRemove);
   mRepo = git::Repository::init(mDir.path());
