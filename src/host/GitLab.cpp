@@ -87,8 +87,6 @@ QString GitLab::name() const { return QStringLiteral("GitLab"); }
 QString GitLab::host() const { return QStringLiteral("gitlab.com"); }
 
 void GitLab::connect(const QString &defaultPassword) {
-  clearRepos();
-
   QString token = defaultPassword;
   if (token.isEmpty())
     token = password();
@@ -97,6 +95,8 @@ void GitLab::connect(const QString &defaultPassword) {
     mError->setText(tr("Authentication failed"));
     return;
   }
+
+  clearRepos();
 
   QNetworkRequest request(url() + kProjectsFmt.arg(token));
   request.setHeader(QNetworkRequest::ContentTypeHeader, kContentType);
