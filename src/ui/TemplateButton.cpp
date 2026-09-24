@@ -19,6 +19,11 @@ const QString TemplateButton::cursorPositionString = QStringLiteral("%|");
 const QString TemplateButton::filesPosition =
     QStringLiteral("${files:([0-9]*)}");
 
+const QString TemplateButton::authorPattern = QStringLiteral("${author}");
+
+const QString TemplateButton::branchPattern =
+    QStringLiteral("${branch(:.*){0,1}}");
+
 TemplateButton::TemplateButton(QWidget *parent) : QToolButton(parent) {
   setPopupMode(QToolButton::InstantPopup);
   mMenu = new QMenu(this);
