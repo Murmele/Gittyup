@@ -21,6 +21,7 @@
 #include "ui/ProgressIndicator.h"
 #include "ui/RepoView.h"
 #include "ui/TabWidget.h"
+#include "util/Path.h"
 #include <QAbstractItemModel>
 #include <QAbstractListModel>
 #include <QApplication>
@@ -117,7 +118,10 @@ public:
     RecentRepository *repo = repos->repository(index.row());
     switch (role) {
       case Qt::DisplayRole:
-        return mShowFullPath ? repo->gitpath() : repo->name();
+        // Display the real host path; gitpath() itself (Qt::UserRole) stays the
+        // sandbox path so the repo can still be opened from inside the sandbox
+        return mShowFullPath ? util::sandboxPathToHost(repo->gitpath())
+                             : repo->name();
 
       case Qt::UserRole:
         return repo->gitpath();

@@ -19,6 +19,7 @@
 #include "host/Repository.h"
 #include "tools/EditTool.h"
 #include "tools/ShowTool.h"
+#include "util/Path.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QDir>
@@ -206,7 +207,9 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     QDir dir = repo.workdir();
     QString file = files.first();
     QString rel = QDir::toNativeSeparators(file);
-    QString abs = QDir::toNativeSeparators(dir.filePath(file));
+    // Resolve potentially sandboxed path
+    QString abs =
+        QDir::toNativeSeparators(util::sandboxPathToHost(dir.filePath(file)));
     QString name = QFileInfo(file).fileName();
     QMenu *copy = addMenu(tr("Copy File Name"));
     if (!name.isEmpty() && name != file) {

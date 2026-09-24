@@ -51,6 +51,7 @@
 #include "log/LogEntry.h"
 #include "log/LogView.h"
 #include "tools/ShowTool.h"
+#include "util/Path.h"
 #include "watcher/RepositoryWatcher.h"
 #include <QCheckBox>
 #include <QCloseEvent>
@@ -2747,7 +2748,8 @@ void RepoView::openTerminal() {
   child.setProgram("sh");
   child.setArguments(QStringList() << "-c" << terminalCmd);
 #endif
-  child.setWorkingDirectory(mRepo.workdir().absolutePath());
+  child.setWorkingDirectory(
+      util::sandboxPathToHost(mRepo.workdir().absolutePath()));
   Debug("Execute Terminal: Arguments: " << child.arguments());
   child.startDetached();
 #endif
