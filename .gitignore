@@ -12,4 +12,5 @@ build
 .venv
 compile_commands.json
 .flatpak-builder
+.codegraph
 dep/scintilla/scintilla/
