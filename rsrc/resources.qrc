@@ -68,5 +68,6 @@
         <file>misc@2x.png</file>
         <file>logo-type_light@2x.png</file>
         <file>liberapay_icon_130890.png</file>
+        <file alias="mocha.png">screenshots/catppuccin_mocha.png</file>
     </qresource>
 </RCC>
