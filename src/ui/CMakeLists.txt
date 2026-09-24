@@ -77,6 +77,7 @@ target_link_libraries(
   update
   watcher
   Qt6::Concurrent
+  Qt6::Core5Compat
   Qt6::Network
   Qt6::Widgets)
 
