@@ -116,6 +116,7 @@ test(NAME fileContextMenu NO_WIN32_OFFSCREEN)
 test(NAME Setting)
 test(NAME commitMessageTemplate)
 test(NAME commitEditor)
+test(NAME CommitSigning)
 
 # Test case not compatible with Windows
 if(NOT WIN32)
