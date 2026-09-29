@@ -1,3 +1,7 @@
+-- Colour Palette used: Catpuccin Mocha
+-- Which is under the MIT License
+-- Copyright (c) 2021 Catppuccin
+
 --
 -- Many colors support 'active', 'inactive', and 'disabled' states.
 -- They can all be set to the same color with the syntax:
@@ -19,68 +23,68 @@
 theme['palette']   = {
   -- These names correspond to a dark on light theme.
   -- The values should be inverted in light on dark themes.
-  light            = '#1E1F23', -- inverse of dark
-  midlight         = '#212226', -- inverse of middark
-  middark          = '#2D2E34', -- inverse of midlight
-  dark             = '#36373E', -- inverse of light
+  light            = '#11111b', -- inverse of dark
+  midlight         = '#181825', -- inverse of middark
+  middark          = '#1e1e2e', -- inverse of midlight
+  dark             = '#313244', -- inverse of light
 
   -- This should always be a dark color.
-  shadow           = '#212226'
+  shadow           = '#181825'
 }
 
 -- the colors of text entry, list view, and other widgets
 -- { default, active, inactive, disabled }
 theme['widget']    = {
-  text             = { default = '#E1E5F2', disabled = '#555B65' },
-  bright_text      = '#AAB2BE',
-  background       = '#212226',
-  alternate        = '#2D2E34', -- an alternate background color for list rows
-  highlight        = { active = '#2A82DA', inactive = '#1B5B9B' },
-  highlighted_text = { active = '#E1E5F2', inactive = '#E1E5F2' },
+  text             = { default = '#cdd6f4', disabled = '#a6adc8' },
+  bright_text      = '#cdd6f4',
+  background       = '#181825',
+  alternate        = '#1e1e2e', -- an alternate background color for list rows
+  highlight        = { active = '#313244', inactive = '#313244' },
+  highlighted_text = { active = '#cdd6f4', inactive = '#cdd6f4' },
 }
 
 -- window colors
 -- { default, active, inactive, disabled }
 theme['window']    = {
-  text             = '#E1E5F2',
-  background       = '#2D2E34'
+  text             = '#cdd6f4',
+  background       = '#1e1e2e'
 }
 
 -- button colors
 -- { default, active, inactive, disabled, checked, pressed }
 theme['button']    = {
-  text             = { default = '#E1E5F2', inactive = '#555B65', disabled = '#555B65' },
-  background       = { default = '#2D2E34', checked = '#2A82DA', pressed = '#2A82DA' }
+  text             = { default = '#cdd6f4', inactive = '#a6adc8', disabled = '#a6adc8' },
+  background       = { default = '#1e1e2e', checked = '#2A82DA', pressed = '#2A82DA' }
 }
 
 -- commit list colors
 -- { default, active, inactive, disabled }
 theme['commits']   = {
-  text             = '#AAB2BE',
-  bright_text      = '#E1E5F2',
-  background       = '#2D2E34',
-  alternate        = '#2D2E34', -- an alternate background color for list rows
-  highlight        = { active = '#2A82DA', inactive = '#1B5B9B' },
-  highlighted_text = { active = '#A6CBF0', inactive = '#E1E5F2' },
-  highlighted_bright_text = { active = '#E1E5F2', inactive = '#9090A5' }
+  text             = '#cdd6f4',
+  bright_text      = '#cdd6f4',
+  background       = '#1e1e2e',
+  alternate        = '#1e1e2e', -- an alternate background color for list rows
+  highlight        = { active = '#313244', inactive = '#313244' },
+  highlighted_text = { active = '#A6CBF0', inactive = '#cdd6f4' },
+  highlighted_bright_text = { active = '#cdd6f4', inactive = '#9090A5' }
 }
 
 -- status badge colors
 -- { normal, selected, conflicted, head, notification }
 theme['badge']     = {
   foreground       = {
-    normal         = '#E1E5F2',
+    normal         = '#cdd6f4',
     selected       = '#2A82DA'
   },
   background       = {
     normal         = '#2A82DA', -- the default color
-    selected       = '#E1E5F2', -- the color when a list item is selected
+    selected       = '#cdd6f4', -- the color when a list item is selected
     conflicted     = '#DA2ADA', -- the color of conflicted items
     head           = '#52A500', -- a bolder color to indicate the HEAD
     notification   = '#8C2026',  -- the color of toolbar notifications badges
     modified       = '#91973A', -- (yellow) the color of the badge when the file is modified
-    added          = '#394734', -- (green) the color of the badge when the file was newly added
-    deleted        = '#5E3638', -- (red) the color of the badge when the file was deleted
+    added          = '#4c6054', -- (green) the color of the badge when the file was newly added
+    deleted        = '#403042', -- (red) the color of the badge when the file was deleted
 	untracked	   = '#2A4944', -- (green blue) the color of the badge when the file is untracked
 	renamed		   = '#23455E'  -- (blue) the color of the badge when the file is renamed
   }
@@ -114,7 +118,7 @@ theme['graph']     = {
 -- checkbox colors
 -- { default, active, inactive, disabled }
 theme['checkbox']  = {
-  text             = '#E1E5F2',
+  text             = '#cdd6f4',
   fill             = '#535359',
   outline          = '#3C3C42'
 }
@@ -122,29 +126,23 @@ theme['checkbox']  = {
 -- commit editor colors
 theme['commiteditor'] = {
   spellerror       = '#BC0009', -- spell check error
-  spellignore      = '#E1E5F2', -- spell check ignored word(s)
+  spellignore      = '#cdd6f4', -- spell check ignored word(s)
   lengthwarning    = '#464614'  -- line length limit warning (background)
 }
 
 -- diff view colors
 theme['diff']      = {
-  addition         = '#394734', -- added lines
-  deletion         = '#5E3638', -- deleted lines
-  plus             = '#207A00', -- plus icon
-  minus            = '#BC0009', -- minus icon
+  addition         = '#343e41', -- added lines
+  deletion         = '#403042', -- deleted lines
+  plus             = '#a6e3a1', -- plus icon
+  minus            = '#f38ba8', -- minus icon
   ours             = '#000060', -- ours conflict lines
   theirs           = '#600060', -- theirs conflict lines
-  word_addition    = '#296812', -- added words
-  word_deletion    = '#781B20', -- deleted words
-  note             = '#E1E5F2', -- note squiggle
+  word_addition    = '#4c6055', -- added words
+  word_deletion    = '#664356', -- deleted words
+  note             = '#cdd6f4', -- note squiggle
   warning          = '#E8C080', -- warning background
   error            = '#7E494B'  -- error background
-}
-
--- inline notice/banner colors (e.g. the "diff not loaded" placeholder)
-theme['notice']    = {
-  background       = '#4A3B12',
-  foreground       = '#FFE9A8'
 }
 
 -- link colors
@@ -156,8 +154,8 @@ theme['link']      = {
 
 -- menubar background color
 theme['menubar']   = {
-  text             = '#E1E5F2',
-  background       = '#212226'
+  text             = '#cdd6f4',
+  background       = '#181825'
 }
 
 -- tabbar background color (uncomment lines to customize)
@@ -169,10 +167,10 @@ theme['tabbar']   = {
 
 -- remote comment colors
 theme['comment']   = {
-  background       = '#212228',
-  body             = '#AAB2BE',
+  background       = '#1e1e2e',
+  body             = '#cdd6f4',
   author           = '#378BDD',
-  timestamp        = '#E1E5F2'
+  timestamp        = '#cdd6f4'
 }
 
 -- star fill color
@@ -188,7 +186,7 @@ theme['titlebar']  = {
 -- popup tooltip colors
 -- { default, active, inactive, disabled }
 theme['tooltip']   = {
-  text             = '#E1E5F2',
+  text             = '#cdd6f4',
   background       = '#2A82DA'
 }
 
@@ -214,12 +212,12 @@ theme.property['color.white']        = '#E6E6E6'
 -- styles
 theme.property['style.bracebad']     = 'fore:#CC8080'
 theme.property['style.bracelight']   = 'fore:#80CCFF'
-theme.property['style.calltip']      = 'fore:#AAB2BE,back:#333333'
+theme.property['style.calltip']      = 'fore:#cdd6f4,back:#333333'
 theme.property['style.class']        = 'fore:#F6E9D0'
-theme.property['style.comment']      = 'fore:#E2D9C9'
+theme.property['style.comment']      = 'fore:#9399b2'
 theme.property['style.constant']     = 'fore:#E8C080'
 theme.property['style.controlchar']  = '$(style.nothing)'
-theme.property['style.default']      = 'fore:#AAB2BE,back:#212228'
+theme.property['style.default']      = 'fore:#cdd6f4,back:#1e1e2e'
 theme.property['style.definition']   = 'fore:#F6E9D0'
 theme.property['style.embedded']     = '$(style.tag),back:#333333'
 theme.property['style.error']        = 'fore:#994D4D'
@@ -228,14 +226,14 @@ theme.property['style.identifier']   = '$(style.nothing)'
 theme.property['style.indentguide']  = 'fore:#333333,back:#333333'
 theme.property['style.keyword']      = 'fore:#53AFEC,bold'
 theme.property['style.label']        = 'fore:#E8C080'
-theme.property['style.linenumber']   = 'fore:#5F6672,back:#2A2B30'
+theme.property['style.linenumber']   = 'fore:#5F6672,back:#2A2B30,bold'
 theme.property['style.nothing']      = ''
 theme.property['style.number']       = 'fore:#4D99E6'
-theme.property['style.operator']     = 'fore:#CCCCCC,bold'
+theme.property['style.operator']     = 'fore:#d67c98,bold'
 theme.property['style.preprocessor'] = 'fore:#CC77DA,bold'
 theme.property['style.regex']        = 'fore:#80CC80'
 theme.property['style.string']       = 'fore:#93C37E'
-theme.property['style.tag']          = 'fore:#CCCCCC'
+theme.property['style.tag']          = 'fore:#d67c98'
 theme.property['style.type']         = 'fore:#CC77DA'
 theme.property['style.variable']     = 'fore:#80CCFF'
 theme.property['style.whitespace']   = '$(style.nothing)'

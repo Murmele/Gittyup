@@ -204,6 +204,26 @@ if(NOT APPLE)
   endif()
 endif()
 
+# The bundled libssh2 is shared and referenced as @rpath/libssh2.1.dylib, so it
+# must be shipped in Frameworks (as the real file under its soname).
+if(APPLE
+   AND NOT USE_SYSTEM_LIBSSH2
+   AND TARGET libssh2_shared)
+  install(
+    FILES $<TARGET_FILE:libssh2_shared>
+    DESTINATION ${CONTENTS_DIR}/Frameworks
+    RENAME $<TARGET_SONAME_FILE_NAME:libssh2_shared>
+    PERMISSIONS
+      OWNER_READ
+      OWNER_WRITE
+      OWNER_EXECUTE
+      GROUP_READ
+      GROUP_EXECUTE
+      WORLD_READ
+      WORLD_EXECUTE
+    COMPONENT ${GITTYUP_NAME})
+endif()
+
 if(UNIX AND NOT APPLE)
   foreach(icon 16 32 64 128 256 512)
     install(

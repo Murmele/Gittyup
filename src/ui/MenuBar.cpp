@@ -472,7 +472,7 @@ MenuBar::MenuBar(QWidget *parent) : QMenuBar(parent) {
   connect(mFindSelection, &QAction::triggered, [this] {
     QWidget *widget = QApplication::focusWidget();
     if (TextEditor *editor = qobject_cast<TextEditor *>(widget)) {
-      FindWidget::setText(editor->selText());
+      FindWidget::setText(editor->getSelText());
     } else if (QTextEdit *editor = qobject_cast<QTextEdit *>(widget)) {
       FindWidget::setText(editor->textCursor().selectedText());
     } else if (QLineEdit *editor = qobject_cast<QLineEdit *>(widget)) {
@@ -939,7 +939,7 @@ void MenuBar::updateFile() { mClose->setEnabled(QApplication::activeWindow()); }
 
 void MenuBar::updateSave() {
   EditorWindow *win = qobject_cast<EditorWindow *>(window());
-  mSave->setEnabled(win && win->widget()->editor()->isModified());
+  mSave->setEnabled(win && win->widget()->editor()->modify());
 }
 
 void MenuBar::updateUndoRedo() {
@@ -1034,7 +1034,7 @@ void MenuBar::updateRepository() {
 
   bool lfs = view && view->repo().lfsIsInitialized();
   mLfsUnlock->setEnabled(lfs);
-  mLfsInitialize->setEnabled(!lfs);
+  mLfsInitialize->setEnabled(view && !lfs);
 }
 
 void MenuBar::updateRemote() {
@@ -1060,7 +1060,7 @@ void MenuBar::updateBranch() {
   mCheckoutCurrent->setEnabled(ref.isValid() && head.isValid() &&
                                ref.qualifiedName() != head.qualifiedName());
   mCheckout->setEnabled(head.isValid() && !view->repo().isBare());
-  mRenameBranch->setEnabled(ref.isLocalBranch());
+  mRenameBranch->setEnabled(ref.isValid() && ref.isLocalBranch());
   mNewBranch->setEnabled(head.isValid());
 
   mMerge->setEnabled(head.isValid());

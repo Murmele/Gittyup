@@ -4,9 +4,9 @@
 #define SPELLCHECKER_H
 
 #include <QString>
-#include <QStringConverter>
 
 class Hunspell;
+class QTextCodec;
 
 class SpellChecker {
 public:
@@ -25,7 +25,9 @@ public:
 private:
   Hunspell *mHunspell = nullptr;
 
-  QStringConverter::Encoding mEncoding;
+  // Not owned: QTextCodec::codecForName() returns a pointer to a static
+  // instance.
+  QTextCodec *mTextCodec = nullptr;
   QString mUserDictionary;
 
   bool mValid = false;
