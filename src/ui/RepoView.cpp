@@ -2711,6 +2711,11 @@ void RepoView::openTerminal() {
     return;
   }
 
+  QString repoPath = QDir::toNativeSeparators(mRepo.workdir().absolutePath());
+  if (terminalCmd.contains("%1")) {
+    terminalCmd = terminalCmd.arg(repoPath);
+  }
+
 #if defined(Q_OS_WIN)
   // No direct method of QProcess can take a raw command line and a working
   // directory So we call CreateProcessW() directly
