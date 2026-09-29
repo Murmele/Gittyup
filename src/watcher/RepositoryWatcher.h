@@ -14,19 +14,22 @@
 #include <QObject>
 #include <QTimer>
 
-class RepositoryWatcherPrivate;
-
 class RepositoryWatcher : public QObject {
 public:
-  RepositoryWatcher(const git::Repository &repo, QObject *parent = nullptr);
-  ~RepositoryWatcher() override;
+  static RepositoryWatcher *create(const git::Repository &repo,
+                                   QObject *parent = nullptr);
 
-  void init(const git::Repository &repo);
+  ~RepositoryWatcher() override = default;
+  void setDebounceInterval(int msec);
   void cancelPendingNotification();
+
+protected:
+  RepositoryWatcher(const git::Repository &repo, QObject *parent);
+
+  void scheduleNotification();
 
 private:
   QTimer mTimer;
-  RepositoryWatcherPrivate *d;
 };
 
 #endif

@@ -59,6 +59,11 @@ void fetch(RepoView *repoView, git::Remote remote);
 QString extractRepository(const QString &filename);
 void initRepo(git::Repository &repo);
 
+// Tracks a file even though an ignore rule matches it, which
+// git::Index::add() can't do.
+bool forceAdd(const QString &workdir, const QString &path,
+              const QByteArray &data);
+
 Application createApp(int &argc, char *argv[]);
 
 template <typename T> int runTest(int argc, char *argv[]) {

@@ -7,6 +7,7 @@
 // Author: Jason Haslam
 //
 
+#include "PathFilter.h"
 #include "RepositoryWatcher.h"
 #include <QMap>
 #include <QThread>
@@ -16,21 +17,22 @@
 
 namespace {
 
-const uint kFlags = (IN_ATTRIB | IN_CLOSE_WRITE | IN_CREATE | IN_DELETE |
-                     IN_DELETE_SELF | IN_MODIFY | IN_MOVE_SELF);
+const uint kFlags =
+    (IN_ATTRIB | IN_CLOSE_WRITE | IN_CREATE | IN_DELETE | IN_DELETE_SELF |
+     IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO | IN_MOVE_SELF);
 
-// FIXME: Include hidden and filter .git explicitly?
-const QDir::Filters kFilters = (QDir::Dirs | QDir::NoDotAndDotDot);
+// `.git` is excluded by isIgnored().
+const QDir::Filters kFilters =
+    (QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot);
 
 } // namespace
 
-class RepositoryWatcherPrivate : public QThread {
+class InotifyThread : public QThread {
   Q_OBJECT
 
 public:
-  RepositoryWatcherPrivate(const git::Repository &repo,
-                           QObject *parent = nullptr)
-      : QThread(parent), mRepo(repo) {
+  explicit InotifyThread(const git::Repository &repo)
+      : mRepo(repo), mFilter(repo) {
     mFd = inotify_init1(IN_NONBLOCK);
     if (mFd < 0)
       return; // FIXME: Report error?
@@ -42,7 +44,7 @@ public:
     }
   }
 
-  ~RepositoryWatcherPrivate() {
+  ~InotifyThread() {
     close(mPipe[1]);
     close(mPipe[0]);
     close(mFd);
@@ -86,7 +88,7 @@ public:
           event = reinterpret_cast<inotify_event *>(ptr);
           if (event->len) {
             QString path = mWds.value(event->wd).filePath(event->name);
-            if (!mRepo.isIgnored(path)) {
+            if (mFilter.isRelevant(path)) {
               ignored = false;
 
               // Start watching new directories.
@@ -114,7 +116,7 @@ public:
     // Watch subdirs.
     for (const QString &name : dir.entryList(kFilters)) {
       QString path = dir.filePath(name);
-      if (!mRepo.isIgnored(path))
+      if (mFilter.isRelevant(path))
         watch(path);
     }
   }
@@ -129,27 +131,37 @@ signals:
 
 private:
   git::Repository mRepo;
+  PathFilter mFilter;
   int mFd = -1;
   int mPipe[2] = {-1, -1};
   QMap<int, QDir> mWds;
 };
 
-RepositoryWatcher::RepositoryWatcher(const git::Repository &repo,
-                                     QObject *parent)
-    : QObject(parent), d(new RepositoryWatcherPrivate(repo, this)) {
-  init(repo);
-  connect(d, &RepositoryWatcherPrivate::notificationReceived, &mTimer,
-          static_cast<void (QTimer::*)()>(&QTimer::start));
+class LinuxRepositoryWatcher : public RepositoryWatcher {
 
-  if (d->isValid())
-    d->start();
-}
-
-RepositoryWatcher::~RepositoryWatcher() {
-  if (d->isValid()) {
-    d->stop();
-    d->wait();
+public:
+  LinuxRepositoryWatcher(const git::Repository &repo, QObject *parent)
+      : RepositoryWatcher(repo, parent), mThread(repo) {
+    connect(&mThread, &InotifyThread::notificationReceived, this,
+            &LinuxRepositoryWatcher::scheduleNotification);
+    if (mThread.isValid())
+      mThread.start();
   }
+
+  ~LinuxRepositoryWatcher() override {
+    if (mThread.isValid()) {
+      mThread.stop();
+      mThread.wait();
+    }
+  }
+
+private:
+  InotifyThread mThread;
+};
+
+RepositoryWatcher *RepositoryWatcher::create(const git::Repository &repo,
+                                             QObject *parent) {
+  return new LinuxRepositoryWatcher(repo, parent);
 }
 
 #include "RepositoryWatcher_linux.moc"
