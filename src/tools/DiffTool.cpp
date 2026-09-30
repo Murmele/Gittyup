@@ -10,6 +10,7 @@
 #include "DiffTool.h"
 #include "git/Command.h"
 #include "git/Repository.h"
+#include "util/Path.h"
 #include <QProcess>
 #include <QTemporaryFile>
 #include <QDebug>
@@ -81,9 +82,14 @@ bool DiffTool::start() {
   QString localPath =
       local ? local->fileName() : QFileInfo(mFile).absoluteFilePath();
 #if defined(FLATPAK) || defined(DEBUG_FLATPAK)
-  QStringList arguments = {"--host", QStringLiteral("--env=LOCAL=") + localPath,
-                           "--env=REMOTE=" + remotePath,
-                           "--env=MERGED=" + mFile, "--env=BASE=" + mFile};
+  // Resolve potentially sandboxed path
+  const QString hostLocal = util::sandboxPathToHost(localPath);
+  const QString hostRemote = util::sandboxPathToHost(remotePath);
+  const QString hostMerged = util::sandboxPathToHost(mFile);
+  QStringList arguments = {"--host", QStringLiteral("--env=LOCAL=") + hostLocal,
+                           "--env=REMOTE=" + hostRemote,
+                           "--env=MERGED=" + hostMerged,
+                           "--env=BASE=" + hostMerged};
   arguments.append("sh");
   arguments.append("-c");
   arguments.append(command);
