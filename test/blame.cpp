@@ -43,12 +43,18 @@ void TestBlame::accessorsSurviveHunkWithoutAuthorEmail() {
 
   // A hunk libgit2 could not build carries no signature, so callers fall back
   // to their "invalid signature" path rather than showing a half-read one.
+  // The fixture is expected to hold at least one such hunk; without this the
+  // test would pass without exercising the broken path at all.
+  int broken = 0;
   for (int i = 0; i < blame.count(); ++i) {
     if (!blame.signature(i).isValid()) {
+      ++broken;
       QCOMPARE(blame.message(i), QString());
       QCOMPARE(blame.isCommitted(i), false);
     }
   }
+
+  QVERIFY(broken > 0);
 }
 
 TEST_MAIN(TestBlame)
