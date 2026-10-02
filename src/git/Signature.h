@@ -43,6 +43,7 @@ private:
 
   friend class Blame;
   friend class Commit;
+  friend class Hunk;
   friend class Rebase;
   friend class Repository;
   friend class Tag;
