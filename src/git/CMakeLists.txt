@@ -10,6 +10,7 @@ add_library(
   Diff.cpp
   Filter.cpp
   FilterList.cpp
+  Hunk.cpp
   Id.cpp
   Index.cpp
   Object.cpp

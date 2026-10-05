@@ -13,6 +13,8 @@
 struct git_signature;
 struct git_repository;
 
+#include "Hunk.h"
+
 #include "git2/blame.h"
 #include <QSharedPointer>
 
@@ -36,6 +38,8 @@ public:
 
   int count() const;
   int index(int line) const;
+
+  Hunk hunk(int index) const;
 
   int line(int index) const;
   Id id(int index) const;
