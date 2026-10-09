@@ -4,7 +4,7 @@
 #include <QFile>
 #include <QString>
 
-bool canceled = false;
+std::atomic_bool canceled = false;
 
 namespace {
 QFile *file = nullptr;

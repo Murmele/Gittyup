@@ -33,7 +33,10 @@ public:
       : QObject(parent), mMaxSize(maxSize) {}
 
   void stop() {
-    mStop = true;
+    {
+      QMutexLocker lock(&mMutex);
+      mStop = true;
+    }
     mNotEmpty.wakeAll();
     mNotFull.wakeAll();
     mEmpty.wakeAll();
