@@ -153,8 +153,8 @@ void index(const Lexer::Lexeme &lexeme, Intermediate::FieldMap &fields,
 }
 
 Indexer::Indexer(Index &index, bool notify, QObject *parent)
-    : QObject(parent), mIndex(index), mIds(index),
-      // mIntermediateQueue will be filled by the workers spawned in the start()
+    : QThread(parent), mIndex(index), mIds(index),
+      // mIntermediateQueue will be filled by the workers spawned in the run()
       // method below.
       mReduce(mIds, mIntermediateQueue,
               mResults), // Receives intermediate and converts them to results
@@ -185,7 +185,7 @@ Indexer::Indexer(Index &index, bool notify, QObject *parent)
 #endif
 }
 
-bool Indexer::start() {
+void Indexer::run() {
   // The distribution of threads is as follows
   // This thread iterates over mWalker
   // 1x thread runs the Reduction class
@@ -214,7 +214,7 @@ bool Indexer::start() {
 
   git::Commit commit = mWalker.next();
 
-  while (commit.isValid()) {
+  while (!canceled && commit.isValid()) {
     // Don't index merge commits.
     if (!commit.isMerge() && !mIds.contains(commit.id())) {
       mCommits.enqueue(std::move(commit));
@@ -223,7 +223,6 @@ bool Indexer::start() {
   }
 
   finish();
-  return false;
 }
 
 void Indexer::finish() {
@@ -236,34 +235,25 @@ void Indexer::finish() {
   //  done processing if it gets empty
   // If we're not aborting, wait for the queue to be empty, then stop/wake up
   // threads blocked on it, and lastly wait for the grabbers to finish up
-  if (!canceled)
-    mCommits.awaitEmpty();
+  mCommits.awaitEmpty();
   mCommits.stop();
   mGrabbers.waitForDone();
 
   // Now we can do the same thing with the next queue in the line, and stop
   // the worker threads
-  if (!canceled)
-    mDiffedCommits.awaitEmpty();
+  mDiffedCommits.awaitEmpty();
   mDiffedCommits.stop();
   mWorkers.waitForDone();
 
   // Next is the intermediate queue and the reduction thread
-  if (!canceled)
-    mIntermediateQueue.awaitEmpty();
+  mIntermediateQueue.awaitEmpty();
   mIntermediateQueue.stop();
   mReduce.wait();
 
   // Before we finish up with the results queue and writer thread
-  if (!canceled)
-    mResults.awaitEmpty();
+  mResults.awaitEmpty();
   mResults.stop();
   mResultWriter.wait();
-
-  if (canceled) {
-    QCoreApplication::exit(1);
-  }
-  QCoreApplication::quit();
 }
 
 bool Indexer::nativeEventFilter(const QByteArray &type, void *message,
@@ -283,5 +273,9 @@ bool Indexer::nativeEventFilter(const QByteArray &type, void *message,
 
 void Indexer::cancel() {
   canceled = true;
-  finish();
+  // Stop all queues to prevent a deadlock
+  mCommits.stop();
+  mDiffedCommits.stop();
+  mIntermediateQueue.stop();
+  mResults.stop();
 }
