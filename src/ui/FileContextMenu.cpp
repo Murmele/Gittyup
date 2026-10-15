@@ -102,7 +102,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
   QList<ExternalTool *> diffTools;
   QList<ExternalTool *> diffToLocalTools;
   QList<ExternalTool *> mergeTools;
-  foreach (const QString &file, files) {
+  for (const QString &file : files) {
     // Convert to absolute path.
     QString path = repo.workdir().filePath(file);
 
@@ -114,7 +114,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
 
     ExternalTool *tool = nullptr;
     // Add diff to local
-    if (tool = ExternalTool::create(file, diff, repo, true, this)) {
+    if ((tool = ExternalTool::create(file, diff, repo, true, this))) {
       Q_ASSERT(tool->kind() == ExternalTool::Diff);
       diffToLocalTools.append(tool);
       connect(tool, &ExternalTool::error, [this](ExternalTool::Error error) {
@@ -132,7 +132,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     }
 
     // Add diff or merge tool.
-    if (tool = ExternalTool::create(file, diff, repo, false, this)) {
+    if ((tool = ExternalTool::create(file, diff, repo, false, this))) {
       switch (tool->kind()) {
         case ExternalTool::Diff:
           diffTools.append(tool);
@@ -187,7 +187,7 @@ FileContextMenu::FileContextMenu(RepoView *view, const QStringList &files,
     addSeparator();
 
     bool locked = false;
-    foreach (const QString &file, files) {
+    for (const QString &file : files) {
       if (repo.lfsIsLocked(file)) {
         locked = true;
         break;
@@ -275,7 +275,7 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
 
     int staged = 0;
     int unstaged = 0;
-    foreach (const QString &file, files) {
+    for (const QString &file : files) {
       switch (index.isStaged(file)) {
         case git::Index::Disabled:
           break;
@@ -327,7 +327,7 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
   }
 
   // handle files not submodules
-  foreach (const QString &file, filePatches) {
+  for (const QString &file : filePatches) {
     handlePath(repo, file, diff, modified, untracked);
   }
 
@@ -346,7 +346,7 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
         dialog->setDetailedText(detailedText);
 
         // Expand the Show Details
-        foreach (QAbstractButton *button, dialog->buttons()) {
+        for (QAbstractButton *button : dialog->buttons()) {
           if (dialog->buttonRole(button) == QMessageBox::ActionRole) {
             button->click(); // click it to expand the text
             break;
@@ -384,7 +384,7 @@ void FileContextMenu::handleUncommittedChanges(const git::Index &index,
   QAction *ignore = addAction(tr("Ignore"));
   ignore->setObjectName("IgnoreAction");
   connect(ignore, &QAction::triggered, this, &FileContextMenu::ignoreFile);
-  foreach (const QString &file, files) {
+  for (const QString &file : files) {
     int index = diff.indexOf(file);
     if (index < 0)
       continue;
@@ -483,7 +483,7 @@ void FileContextMenu::handleCommits(const QList<git::Commit> &commits,
   /* disable checkout if the file is already
    * in the current working directory */
   git::Commit commit = commits.first();
-  foreach (const QString &file, files) {
+  for (const QString &file : files) {
     if (commit.tree().id(file) == repo.workdirId(file)) {
       checkout->setEnabled(false);
       checkout->setToolTip(
@@ -533,7 +533,7 @@ FileContextMenu::addExternalToolsAction(const QList<ExternalTool *> &tools) {
 
   // Add action.
   QAction *action = addAction(tools.first()->name(), [this, tools] {
-    foreach (ExternalTool *tool, tools) {
+    for (ExternalTool *tool : tools) {
       if (tool->start())
         return;
 
@@ -563,7 +563,7 @@ FileContextMenu::addExternalToolsAction(const QList<ExternalTool *> &tools) {
   });
 
   // Disable if any tools are invalid.
-  foreach (ExternalTool *tool, tools) {
+  for (ExternalTool *tool : tools) {
     if (!tool->isValid()) {
       action->setEnabled(false);
       break;

@@ -8,7 +8,7 @@
 #include "DiscardButton.h"
 #include "app/Application.h"
 
-#include "Editor.h"
+#include "HunkTextEditor.h"
 
 #include "ui/RepoView.h"
 #include "ui/MenuBar.h"
@@ -186,9 +186,9 @@ void _HunkWidget::Header::mouseDoubleClickEvent(QMouseEvent *event) {
     mButton->toggle();
 }
 
-//#############################################################################
-//##########     HunkWidget     ###############################################
-//#############################################################################
+// #############################################################################
+// ##########     HunkWidget     ###############################################
+// #############################################################################
 
 HunkWidget::HunkWidget(DiffView *view, const git::Diff &diff,
                        const git::Patch &patch, const git::Patch &staged,
@@ -204,7 +204,7 @@ HunkWidget::HunkWidget(DiffView *view, const git::Diff &diff,
   layout->addWidget(mHeader);
   connect(mHeader, &_HunkWidget::Header::discard, this, &HunkWidget::discard);
 
-  mEditor = new Editor(this);
+  mEditor = new HunkTextEditor(this);
   mEditor->setLexer(patch.name());
   mEditor->setCaretStyle(CARETSTYLE_INVISIBLE);
   mEditor->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -282,7 +282,7 @@ HunkWidget::HunkWidget(DiffView *view, const git::Diff &diff,
 
       QTextStream out(&file);
       out.setEncoding(repo.encoding());
-      out << editor.text();
+      out << editor.getText(editor.textLength());
       file.commit();
 
       mPatch.setConflictResolution(mIndex, git::Patch::Unresolved);
@@ -317,139 +317,145 @@ HunkWidget::HunkWidget(DiffView *view, const git::Diff &diff,
 
   // Hook up error margin click.
   bool status = diff.isStatusDiff();
-  connect(mEditor, &TextEditor::marginClicked,
-          [this, status](int pos, int modifier, int margin) {
-            if (margin !=
-                TextEditor::Margin::ErrorMargin) // Handle only Error margin
+  connect(
+      mEditor, &TextEditor::marginClicked,
+      [this, status](int pos, Scintilla::KeyMod modifier, int margin) {
+        if (margin !=
+            TextEditor::Margin::ErrorMargin) // Handle only Error margin
+          return;
+        int line = mEditor->lineFromPosition(pos);
+        QList<TextEditor::Diagnostic> diags = mEditor->diagnostics(line);
+        if (diags.isEmpty())
+          return;
+
+        QTableWidget *table = new QTableWidget(diags.size(), 3);
+        table->setWindowFlag(Qt::Popup);
+        table->setAttribute(Qt::WA_DeleteOnClose);
+        table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        table->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+
+        table->setShowGrid(false);
+        table->setSelectionMode(QAbstractItemView::NoSelection);
+        table->verticalHeader()->setVisible(false);
+        table->horizontalHeader()->setVisible(false);
+
+        QShortcut *esc = new QShortcut(tr("Esc"), table);
+        connect(esc, &QShortcut::activated, table, &QTableWidget::close);
+
+        for (int i = 0; i < diags.size(); ++i) {
+          const TextEditor::Diagnostic &diag = diags.at(i);
+
+          QStyle::StandardPixmap pixmap = QStyle::NStandardPixmap;
+          switch (diag.kind) {
+            case TextEditor::Note:
+              pixmap = QStyle::SP_MessageBoxInformation;
+              break;
+
+            case TextEditor::Warning:
+              pixmap = QStyle::SP_MessageBoxWarning;
+              break;
+
+            case TextEditor::Error:
+              pixmap = QStyle::SP_MessageBoxCritical;
+              break;
+          }
+
+          QIcon icon = style()->standardIcon(pixmap);
+          QTableWidgetItem *item = new QTableWidgetItem(icon, diag.message);
+          item->setToolTip(diag.description);
+          table->setItem(i, 0, item);
+
+          // Add fix button. Disable for deletion lines.
+          QPushButton *fix = new QPushButton(tr("Fix"));
+          bool deletion =
+              (mEditor->markerGet(line) & (1 << TextEditor::Deletion));
+          fix->setEnabled(status && !deletion && !diag.replacement.isNull());
+          connect(fix, &QPushButton::clicked, [this, line, diag, table] {
+            // Look up the actual line number from the margin.
+            QRegularExpression re("\\s+");
+            QByteArray rawMarginText = mEditor->marginText(line);
+            QString marginText = QString::fromUtf8(rawMarginText.constData(),
+                                                   rawMarginText.length());
+            QStringList numbers = marginText.split(re);
+            if (numbers.size() != 2)
               return;
-            int line = mEditor->lineFromPosition(pos);
-            QList<TextEditor::Diagnostic> diags = mEditor->diagnostics(line);
-            if (diags.isEmpty())
+
+            int newLine = numbers.last().toInt() - 1;
+            if (newLine < 0)
               return;
 
-            QTableWidget *table = new QTableWidget(diags.size(), 3);
-            table->setWindowFlag(Qt::Popup);
-            table->setAttribute(Qt::WA_DeleteOnClose);
-            table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-            table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-            table->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+            // Load editor.
+            TextEditor editor;
+            git::Repository repo = mPatch.repo();
+            QString path = repo.workdir().filePath(mPatch.name());
 
-            table->setShowGrid(false);
-            table->setSelectionMode(QAbstractItemView::NoSelection);
-            table->verticalHeader()->setVisible(false);
-            table->horizontalHeader()->setVisible(false);
-
-            QShortcut *esc = new QShortcut(tr("Esc"), table);
-            connect(esc, &QShortcut::activated, table, &QTableWidget::close);
-
-            for (int i = 0; i < diags.size(); ++i) {
-              const TextEditor::Diagnostic &diag = diags.at(i);
-
-              QStyle::StandardPixmap pixmap;
-              switch (diag.kind) {
-                case TextEditor::Note:
-                  pixmap = QStyle::SP_MessageBoxInformation;
-                  break;
-
-                case TextEditor::Warning:
-                  pixmap = QStyle::SP_MessageBoxWarning;
-                  break;
-
-                case TextEditor::Error:
-                  pixmap = QStyle::SP_MessageBoxCritical;
-                  break;
-              }
-
-              QIcon icon = style()->standardIcon(pixmap);
-              QTableWidgetItem *item = new QTableWidgetItem(icon, diag.message);
-              item->setToolTip(diag.description);
-              table->setItem(i, 0, item);
-
-              // Add fix button. Disable for deletion lines.
-              QPushButton *fix = new QPushButton(tr("Fix"));
-              bool deletion =
-                  (mEditor->markers(line) & (1 << TextEditor::Deletion));
-              fix->setEnabled(status && !deletion &&
-                              !diag.replacement.isNull());
-              connect(fix, &QPushButton::clicked, [this, line, diag, table] {
-                // Look up the actual line number from the margin.
-                QRegularExpression re("\\s+");
-                QStringList numbers = mEditor->marginText(line).split(re);
-                if (numbers.size() != 2)
-                  return;
-
-                int newLine = numbers.last().toInt() - 1;
-                if (newLine < 0)
-                  return;
-
-                // Load editor.
-                TextEditor editor;
-                git::Repository repo = mPatch.repo();
-                QString path = repo.workdir().filePath(mPatch.name());
-
-                {
-                  // Read file.
-                  QFile file(path);
-                  if (file.open(QFile::ReadOnly))
-                    editor.load(path, repo.decode(file.readAll()));
-                }
-
-                if (!editor.length())
-                  return;
-
-                // Replace range.
-                int pos = editor.positionFromLine(newLine) + diag.range.pos;
-                editor.setSelection(pos + diag.range.len, pos);
-                editor.replaceSelection(diag.replacement);
-
-                // Write file to disk.
-                QSaveFile file(path);
-                if (!file.open(QFile::WriteOnly))
-                  return;
-
-                QTextStream out(&file);
-                out.setEncoding(repo.encoding());
-                out << editor.text();
-                file.commit();
-
-                table->hide();
-                RepoView::parentView(this)->refresh();
-              });
-
-              table->setCellWidget(i, 1, fix);
-
-              // Add edit button.
-              QPushButton *edit = new QPushButton(tr("Edit"));
-              connect(edit, &QPushButton::clicked, [this, line, diag] {
-                // Look up the actual line number from the margin.
-                QRegularExpression re("\\s+");
-                QStringList numbers = mEditor->marginText(line).split(re);
-                if (numbers.size() != 2)
-                  return;
-
-                int newLine = numbers.last().toInt() - 1;
-                if (newLine < 0)
-                  return;
-
-                // Edit the file and select the range.
-                RepoView *view = RepoView::parentView(this);
-                EditorWindow *window = view->openEditor(mPatch.name(), newLine);
-                TextEditor *editor = window->widget()->editor();
-                int pos = editor->positionFromLine(newLine) + diag.range.pos;
-                editor->setSelection(pos + diag.range.len, pos);
-              });
-
-              table->setCellWidget(i, 2, edit);
+            {
+              // Read file.
+              QFile file(path);
+              if (file.open(QFile::ReadOnly))
+                editor.load(path, repo.decode(file.readAll()));
             }
 
-            table->resizeColumnsToContents();
-            table->resize(table->sizeHint());
+            if (!editor.length())
+              return;
 
-            QPoint point = mEditor->pointFromPosition(pos);
-            point.setY(point.y() + mEditor->textHeight(line));
-            table->move(mEditor->mapToGlobal(point));
-            table->show();
+            // Replace range.
+            int pos = editor.positionFromLine(newLine) + diag.range.pos;
+            editor.setSelection(pos + diag.range.len, pos);
+            editor.replaceSel(diag.replacement.toStdString().c_str());
+
+            // Write file to disk.
+            QSaveFile file(path);
+            if (!file.open(QFile::WriteOnly))
+              return;
+
+            QTextStream out(&file);
+            out.setEncoding(repo.encoding());
+            out << editor.getText(editor.textLength());
+            file.commit();
+
+            table->hide();
+            RepoView::parentView(this)->refresh();
           });
+
+          table->setCellWidget(i, 1, fix);
+
+          // Add edit button.
+          QPushButton *edit = new QPushButton(tr("Edit"));
+          connect(edit, &QPushButton::clicked, [this, line, diag] {
+            // Look up the actual line number from the margin.
+            QRegularExpression re("\\s+");
+            QByteArray rawMarginText = mEditor->marginText(line);
+            QString marginText = QString::fromUtf8(rawMarginText.constData(),
+                                                   rawMarginText.length());
+            QStringList numbers = marginText.split(re);
+            if (numbers.size() != 2)
+              return;
+
+            int newLine = numbers.last().toInt() - 1;
+            if (newLine < 0)
+              return;
+
+            // Edit the file and select the range.
+            RepoView *view = RepoView::parentView(this);
+            EditorWindow *window = view->openEditor(mPatch.name(), newLine);
+            TextEditor *editor = window->widget()->editor();
+            int pos = editor->positionFromLine(newLine) + diag.range.pos;
+            editor->setSelection(pos + diag.range.len, pos);
+          });
+
+          table->setCellWidget(i, 2, edit);
+        }
+
+        table->resizeColumnsToContents();
+        table->resize(table->sizeHint());
+
+        QPoint point = mEditor->pointFromPosition(pos);
+        point.setY(point.y() + mEditor->textHeight(line));
+        table->move(mEditor->mapToGlobal(point));
+        table->show();
+      });
 }
 
 _HunkWidget::Header *HunkWidget::header() const { return mHeader; }
@@ -474,7 +480,7 @@ void HunkWidget::paintEvent(QPaintEvent *event) {
 
 void HunkWidget::stageSelected(int startLine, int end, bool emitSignal) {
   for (int i = startLine; i < end; i++) {
-    int mask = mEditor->markers(i);
+    int mask = mEditor->markerGet(i);
     if (mask & (1 << TextEditor::Marker::Addition |
                 1 << TextEditor::Marker::Deletion)) {
       // stage only when not already staged
@@ -491,7 +497,7 @@ void HunkWidget::stageSelected(int startLine, int end, bool emitSignal) {
 }
 void HunkWidget::unstageSelected(int startLine, int end, bool emitSignal) {
   for (int i = startLine; i < end; i++) {
-    int mask = mEditor->markers(i);
+    int mask = mEditor->markerGet(i);
     if (mask & (1 << TextEditor::Marker::Addition |
                 1 << TextEditor::Marker::Deletion)) {
       if ((mask & 1 << TextEditor::Marker::UnstagedMarker) == 0) {
@@ -533,7 +539,7 @@ void HunkWidget::discardDialog(int startLine, int end) {
 
 void HunkWidget::discardSelected(int startLine, int end) {
   for (int i = startLine; i < end; i++) {
-    int mask = mEditor->markers(i);
+    int mask = mEditor->markerGet(i);
     if (mask &
         (1 << TextEditor::Marker::Addition | 1 << TextEditor::Marker::Deletion))
       mEditor->markerAdd(i, TextEditor::DiscardMarker);
@@ -566,15 +572,13 @@ void HunkWidget::setStageState(git::Index::StagedState state) {
     // update the line markers
     bool staged = state == git::Index::StagedState::Staged ? true : false;
     int lineCount = mEditor->lineCount();
-    int count = 0;
     for (int i = 0; i < lineCount; i++) {
-      int mask = mEditor->markers(i);
+      int mask = mEditor->markerGet(i);
       // if a line was not added or deleted, it cannot be staged so ignore all
       // of them
       if (mask & (1 << TextEditor::Marker::Addition |
                   1 << TextEditor::Marker::Deletion)) {
         setStaged(i, staged, false);
-        count++;
       }
     }
   }
@@ -594,7 +598,7 @@ void HunkWidget::discard() {
 }
 
 void HunkWidget::setStaged(int lidx, bool staged, bool emitSignal) {
-  int markers = mEditor->markers(lidx);
+  int markers = mEditor->markerGet(lidx);
   if (!(markers & (1 << TextEditor::Marker::Addition |
                    1 << TextEditor::Marker::Deletion)))
     return;
@@ -609,13 +613,14 @@ void HunkWidget::setStaged(int lidx, bool staged, bool emitSignal) {
   mLoaded = true;
 }
 
-void HunkWidget::marginClicked(int pos, int modifier, int margin) {
+void HunkWidget::marginClicked(int pos, Scintilla::KeyMod modifier,
+                               int margin) {
   if (margin != TextEditor::Margin::Staged)
     return;
 
   int lidx = mEditor->lineFromPosition(pos);
 
-  int markers = mEditor->markers(lidx);
+  int markers = mEditor->markerGet(lidx);
 
   if (!(markers & (1 << TextEditor::Marker::Addition |
                    1 << TextEditor::Marker::Deletion)))
@@ -668,7 +673,7 @@ QList<HunkWidget::Token> HunkWidget::tokens(int line) const {
 
 QByteArray HunkWidget::tokenBuffer(const QList<HunkWidget::Token> &tokens) {
   QByteArrayList list;
-  foreach (const Token &token, tokens)
+  for (const Token &token : tokens)
     list.append(token.text);
   return list.join('\n');
 }
@@ -757,12 +762,12 @@ void HunkWidget::load(git::Patch &staged, bool force) {
   //    content.chop(1);
 
   // Add text.
-  mEditor->setText(repo.decode(content));
+  mEditor->setText(repo.decode(content).toStdString().c_str());
 
   // Calculate margin width.
   int width = 0;
   int conflictWidth = 0;
-  foreach (const Line &line, lines) {
+  for (const Line &line : lines) {
     int oldWidth = line.oldLine().length();
     int newWidth = line.newLine().length();
     width = qMax(width, oldWidth + newWidth + 1);
@@ -774,9 +779,11 @@ void HunkWidget::load(git::Patch &staged, bool force) {
 
   setEditorLineInfos(lines, comments, width);
 
-  // Set margin width.
+  // Set margin width. Measure with STYLE_LINENUMBER, the style the text is
+  // actually rendered in (see createMarkersAndLineNumbers), since its metrics
+  // can differ from STYLE_DEFAULT (e.g. a theme may bold line numbers).
   QByteArray text(mPatch.isConflicted() ? conflictWidth : width, ' ');
-  int margin = mEditor->textWidth(STYLE_DEFAULT, text);
+  int margin = mEditor->textWidth(STYLE_LINENUMBER, text);
   if (margin > mEditor->marginWidthN(TextEditor::LineNumbers))
     mEditor->setMarginWidthN(TextEditor::LineNumbers, margin);
 
@@ -800,7 +807,7 @@ void HunkWidget::load(git::Patch &staged, bool force) {
   }
 
   // Execute hunk plugins.
-  foreach (PluginRef plugin, mView->plugins()) {
+  for (const PluginRef &plugin : mView->plugins()) {
     if (plugin->isValid() && plugin->isEnabled())
       plugin->hunk(mEditor);
   }
@@ -853,8 +860,6 @@ void HunkWidget::setEditorLineInfos(QList<Line> &lines,
   const int count = lines.size();
   int marker = -1;
   int additions = 0, deletions = 0;
-  int additions_tot = 0, deletions_tot = 0;
-  int stagedAdditions = 0, stagedDeletions = 0;
   bool staged = false;
   int current_staged_index = -1;
   int current_staged_line_idx = 0;
@@ -968,18 +973,15 @@ void HunkWidget::setEditorLineInfos(QList<Line> &lines,
               mStaged.lineContent(current_staged_index,
                                   current_staged_line_idx) ==
                   mPatch.lineContent(mIndex, lidx)) {
-            stagedAdditions++;
             current_staged_line_idx++;
             staged = true;
           }
         }
-        additions_tot++;
         break;
       }
       case GIT_DIFF_LINE_DELETION: {
         marker = TextEditor::Deletion;
         deletions++;
-        deletions_tot++;
 
         // Check if staged
         if (!mPatch.isConflicted() && mStaged.count() > 0 &&
@@ -999,7 +1001,6 @@ void HunkWidget::setEditorLineInfos(QList<Line> &lines,
             assert(mStaged.lineContent(current_staged_index,
                                        current_staged_line_idx) ==
                    mPatch.lineContent(mIndex, lidx));
-            stagedDeletions++;
             staged = true;
           }
         }
@@ -1101,15 +1102,15 @@ void HunkWidget::createMarkersAndLineNumbers(const Line &line, int lidx,
   auto it = comments.constFind(lidx);
   if (it != comments.constEnd()) {
     QString whitespace(DiffViewStyle::kIndent, ' ');
-    QFont font = mEditor->styleFont(TextEditor::CommentBody);
+    QFont font = mEditor->styleGetQFont(TextEditor::CommentBody);
     int margin =
         QFontMetrics(font).horizontalAdvance(' ') * DiffViewStyle::kIndent * 2;
     int width = mEditor->textRectangle().width() - margin - 50;
 
-    foreach (const QDateTime &key, it->keys()) {
+    for (const QDateTime &key : it->keys()) {
       QStringList paragraphs;
       Account::Comment comment = it->value(key);
-      foreach (const QString &paragraph, comment.body.split('\n')) {
+      for (const QString &paragraph : comment.body.split('\n')) {
         if (paragraph.isEmpty()) {
           paragraphs.append(QString());
           continue;
@@ -1147,7 +1148,7 @@ void HunkWidget::createMarkersAndLineNumbers(const Line &line, int lidx,
 
   QString atnText;
   QByteArray atnStyles;
-  foreach (const Annotation &annotation, annotations) {
+  for (const Annotation &annotation : annotations) {
     if (!atnText.isEmpty()) {
       atnText.append("\n\n");
       atnStyles.append(QByteArray(2, TextEditor::CommentBody));
@@ -1159,7 +1160,7 @@ void HunkWidget::createMarkersAndLineNumbers(const Line &line, int lidx,
 
   // Set annotations.
   if (!atnText.isEmpty()) {
-    mEditor->annotationSetText(lidx, atnText);
+    mEditor->annotationSetText(lidx, atnText.toStdString().c_str());
     mEditor->annotationSetStyles(lidx, atnStyles);
     mEditor->annotationSetVisible(ANNOTATION_STANDARD);
   }
@@ -1170,21 +1171,21 @@ QByteArray HunkWidget::hunk() const {
   int lineCount = mEditor->lineCount();
   bool appended = false;
   for (int i = 0; i < lineCount; i++) {
-    int mask = mEditor->markers(i);
+    int mask = mEditor->markerGet(i);
     if (mask & 1 << TextEditor::Marker::Addition) {
       if (!(mask & 1 << TextEditor::Marker::DiscardMarker)) {
-        ar.append(mEditor->line(i).toUtf8());
+        ar.append(mEditor->getLine(i));
         appended = true;
       }
     } else if (mask & 1 << TextEditor::Marker::Deletion) {
       if (mask & 1 << TextEditor::Marker::DiscardMarker) {
         // with a discard, a deletion becomes reverted
         // and the line is still present
-        ar.append(mEditor->line(i).toUtf8());
+        ar.append(mEditor->getLine(i));
         appended = true;
       }
     } else {
-      ar.append(mEditor->line(i).toUtf8());
+      ar.append(mEditor->getLine(i));
       appended = true;
     }
 
@@ -1204,19 +1205,19 @@ QByteArray HunkWidget::apply() {
   int lineCount = mEditor->lineCount();
   for (int i = 0; i < lineCount; i++) {
     bool appended = false;
-    int mask = mEditor->markers(i);
+    int mask = mEditor->markerGet(i);
     if (mask & 1 << TextEditor::Marker::Addition) {
       if (mask & 1 << TextEditor::Marker::StagedMarker) {
-        ar.append(mEditor->line(i).toUtf8());
+        ar.append(mEditor->getLine(i));
         appended = true;
       }
     } else if (mask & 1 << TextEditor::Marker::Deletion) {
       if (!(mask & 1 << TextEditor::Marker::StagedMarker)) {
-        ar.append(mEditor->line(i).toUtf8());
+        ar.append(mEditor->getLine(i));
         appended = true;
       }
     } else {
-      ar.append(mEditor->line(i).toUtf8());
+      ar.append(mEditor->getLine(i));
       appended = true;
     }
 
@@ -1237,7 +1238,7 @@ git::Index::StagedState HunkWidget::stageState() {
   int staged = 0;
   int diffLines = 0;
   for (int i = 0; i < lineCount; i++) {
-    int mask = mEditor->markers(i);
+    int mask = mEditor->markerGet(i);
     if (!(mask & (1 << TextEditor::Marker::Addition |
                   1 << TextEditor::Marker::Deletion)))
       continue;
@@ -1268,7 +1269,7 @@ void HunkWidget::chooseLines(TextEditor::Marker kind) {
   mEditor->setReadOnly(false);
   int mask = ((1 << TextEditor::Context) | (1 << kind));
   for (int i = mEditor->lineCount() - 1; i >= 0; --i) {
-    if (!(mask & mEditor->markers(i))) {
+    if (!(mask & mEditor->markerGet(i))) {
       int pos = mEditor->positionFromLine(i);
       int length = mEditor->lineLength(i);
       mEditor->deleteRange(pos, length);

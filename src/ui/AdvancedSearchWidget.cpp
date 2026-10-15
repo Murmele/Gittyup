@@ -131,12 +131,12 @@ void AdvancedSearchWidget::exec(QLineEdit *parent, Index *index) {
   // FIXME: Phrase queries are lossy.
   QMap<Index::Field, QStringList> map;
   if (QueryRef query = Query::parseQuery(parent->text())) {
-    foreach (const Index::Term &term, query->terms())
+    for (const Index::Term &term : query->terms())
       map[term.field].append(term.text);
   }
 
   // Reset fields.
-  foreach (QLineEdit *lineEdit, mLineEdits) {
+  for (QLineEdit *lineEdit : mLineEdits) {
     QVariant var = lineEdit->property(kFieldProp);
     Index::Field field = static_cast<Index::Field>(var.toInt());
     lineEdit->setText(map.value(field).join(' '));
@@ -145,7 +145,7 @@ void AdvancedSearchWidget::exec(QLineEdit *parent, Index *index) {
   // Load completion data in the background.
   std::ignore = QtConcurrent::run([this, index] {
     QMap<Index::Field, QStringList> fields = index->fieldMap();
-    foreach (QLineEdit *lineEdit, mLineEdits) {
+    for (QLineEdit *lineEdit : mLineEdits) {
       QVariant var = lineEdit->property(kFieldProp);
       Index::Field field = static_cast<Index::Field>(var.toInt());
       QAbstractItemModel *model = lineEdit->completer()->model();
@@ -159,7 +159,7 @@ void AdvancedSearchWidget::exec(QLineEdit *parent, Index *index) {
 
 void AdvancedSearchWidget::hideEvent(QHideEvent *event) {
   // Clear completion data.
-  foreach (QLineEdit *lineEdit, mLineEdits) {
+  for (QLineEdit *lineEdit : mLineEdits) {
     QAbstractItemModel *model = lineEdit->completer()->model();
     if (QStringListModel *list = qobject_cast<QStringListModel *>(model))
       list->setStringList(QStringList());
@@ -170,7 +170,7 @@ void AdvancedSearchWidget::hideEvent(QHideEvent *event) {
 
 void AdvancedSearchWidget::accept() {
   QStringList fields;
-  foreach (QLineEdit *lineEdit, mLineEdits) {
+  for (QLineEdit *lineEdit : mLineEdits) {
     QString text = lineEdit->text();
     if (text.isEmpty())
       continue;

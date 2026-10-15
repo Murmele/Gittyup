@@ -22,7 +22,7 @@ const int kSize = 26;
 QSize ProgressIndicator::size() { return QSize(kSize, kSize); }
 
 void ProgressIndicator::paint(QPainter *painter, const QRect &rect,
-                              const QColor &c, int progress,
+                              const QColor &c, float fadein, int progress,
                               const QWidget *widget) {
   painter->save();
   painter->setRenderHints(QPainter::Antialiasing);
@@ -51,11 +51,11 @@ void ProgressIndicator::paint(QPainter *painter, const QRect &rect,
     const qreal in = 7;
     const qreal out = 12;
 
-    int alpha = 32;
+    int alpha = 32 * fadein;
     QColor color = c;
     for (int i = 0; i < 12; ++i) {
       color.setAlpha(alpha);
-      alpha += 16;
+      alpha += 16 * fadein;
 
       painter->setPen(QPen(color, 2.5, Qt::SolidLine, Qt::RoundCap));
 

@@ -29,7 +29,7 @@ QWidget *SubmoduleDelegate::createEditor(QWidget *parent,
 
   QComboBox *cb = new QComboBox(parent);
   cb->addItem(QString()); // empty name
-  foreach (const git::Branch &branch, repo.branches(GIT_BRANCH_LOCAL))
+  for (const git::Branch &branch : repo.branches(GIT_BRANCH_LOCAL))
     cb->addItem(branch.name());
 
   return cb;

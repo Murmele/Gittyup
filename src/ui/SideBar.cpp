@@ -786,7 +786,7 @@ SideBar::SideBar(TabWidget *tabs, MainWindow *mainWindow, QWidget *parent)
   });
 
   connect(footer, &Footer::minusClicked, [this, view, model, sel] {
-    foreach (const QModelIndex &index, sel->selectedIndexes()) {
+    for (const QModelIndex &index : sel->selectedIndexes()) {
       if (RepoView *tab = index.data(TabRole).value<RepoView *>()) {
         tab->close();
 

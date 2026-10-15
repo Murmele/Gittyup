@@ -191,7 +191,15 @@ void TestInitRepo::editFile() {
   DiffView *diff = view->findChild<DiffView *>();
   QVERIFY(diff);
 
-  QToolButton *edit = diff->findChild<QToolButton *>("EditButton");
+  // The file's diff (and the FileWidget/EditButton it builds) loads
+  // asynchronously, so it may not exist yet right after selecting the
+  // file.
+  QToolButton *edit = nullptr;
+  {
+    auto timeout = Timeout(10000, "Diff didn't finish loading in time");
+    while (!(edit = diff->findChild<QToolButton *>("EditButton")))
+      qWait(300);
+  }
   QVERIFY(edit);
 
   // Set up timer to dismiss the popup.

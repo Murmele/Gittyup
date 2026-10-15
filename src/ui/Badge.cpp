@@ -59,7 +59,7 @@ QSize Badge::size(const QFont &font, const QList<Label> &labels) {
 
   int width = 0;
   QFontMetrics fm(font);
-  foreach (const Label &label, labels)
+  for (const Label &label : labels)
     width += size(font, label).width();
   return QSize(width + ((labels.size() - 1) * kSpacing), fm.lineSpacing() + 2);
 }

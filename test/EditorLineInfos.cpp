@@ -39,8 +39,8 @@
 #define checkEditorMarkers(editor, unstagedAddition, stagedAddition,           \
                            unstagedDeletion, stagedDeletion)                   \
   for (int i = 0; i < editor->lineCount(); i++) {                              \
-    QString line = editor->line(i);                                            \
-    int markers = editor->markers(i);                                          \
+    QString line = editor->getLine(i);                                         \
+    int markers = editor->markerGet(i);                                        \
                                                                                \
     QString state = "";                                                        \
     if (BITSET(markers, TextEditor::Marker::Addition))                         \
@@ -158,8 +158,8 @@ void TestEditorLineInfo::editorLineSingleHunkAdditionStaged() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     if (i == 3) {
       QVERIFY(BITSET(markers, TextEditor::Marker::Addition));
@@ -186,8 +186,8 @@ void TestEditorLineInfo::editorLineSingleHunkDeletionStaged() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     if (i == 2) {
       QVERIFY(BITSET(markers, TextEditor::Marker::Deletion));
@@ -214,8 +214,8 @@ void TestEditorLineInfo::editorLineSingleHunkChangeStaged() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     switch (i) {
       case 2:
@@ -250,8 +250,8 @@ void TestEditorLineInfo::editorLineSingleHunkChange_onlyAdditionStaged() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     switch (i) {
       case 2:
@@ -286,8 +286,8 @@ void TestEditorLineInfo::editorLineSingleHunkChange_onlyDeletionStaged() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     switch (i) {
       case 2:
@@ -322,8 +322,8 @@ void TestEditorLineInfo::singleHunk_multipleDeletions() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 4, 7, 8, 10});
     QVector<int> staged({5, 6, 9});
@@ -354,8 +354,8 @@ void TestEditorLineInfo::singleHunk_multipleAdditions() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 6, 7, 10});
     QVector<int> staged({4, 5, 8, 9, 11});
@@ -388,8 +388,8 @@ void TestEditorLineInfo::multipleHunks_multipleDeletions() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 6, 7});
     QVector<int> staged({4, 5});
@@ -415,8 +415,8 @@ void TestEditorLineInfo::multipleHunks_multipleDeletions() {
   editor = hw2.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 4, 7, 8});
     QVector<int> staged({5, 6});
@@ -449,8 +449,8 @@ void TestEditorLineInfo::multipleHunks_multipleAdditions() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 4, 7, 8});
     QVector<int> staged({5, 6, 9});
@@ -476,8 +476,8 @@ void TestEditorLineInfo::multipleHunks_multipleAdditions() {
   editor = hw2.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstaged({3, 6, 7, 8, 10});
     QVector<int> staged({4, 5, 9, 11});
@@ -512,8 +512,8 @@ void TestEditorLineInfo::singleHunk_additionsOnly_secondStagedPatch() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstagedAddition({2});
     QVector<int> stagedAddition({6});
@@ -548,8 +548,8 @@ void TestEditorLineInfo::singleHunk_deletionsOnly_secondStagedPatch() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstagedDeletion({1});
     QVector<int> stagedDeletion({4});
@@ -582,8 +582,8 @@ void TestEditorLineInfo::multipleHunks_misc1() {
   auto editor = hw.editor();
 
   for (int i = 0; i < editor->lineCount(); i++) {
-    QString line = editor->line(i);
-    int markers = editor->markers(i);
+    QString line = editor->getLine(i);
+    int markers = editor->markerGet(i);
 
     QVector<int> unstagedAddition({6, 9, 19, 23});
     QVector<int> stagedAddition({24, 25});

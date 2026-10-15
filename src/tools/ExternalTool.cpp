@@ -128,10 +128,16 @@ ExternalTool *ExternalTool::create(const QString &file, const git::Diff &diff,
   // Create diff tool.
   git::Blob local = repo.lookupBlob(diff.id(index, git::Diff::OldFile));
   git::Blob remote = repo.lookupBlob(diff.id(index, git::Diff::NewFile));
-  if (diff.isStatusDiff())
+  if (diff.isStatusDiff()) {
+    // create() is called once with againstWorkingDir true and once with it
+    // false. For a status diff both calls would produce the same tool, so
+    // only create it for the local-diff call to avoid a duplicate entry.
+    if (!againstWorkingDir)
+      return nullptr;
     return new DiffTool(path, local, parent);
-  else if (againstWorkingDir)
+  } else if (againstWorkingDir) {
     return new DiffTool(path, remote, parent);
-  else
+  } else {
     return new DiffTool(path, local, remote, parent);
+  }
 }

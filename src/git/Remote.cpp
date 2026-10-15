@@ -54,7 +54,7 @@ QString keyFile(const QString &path = QString()) {
   if (!dir.cd(".ssh"))
     return QString();
 
-  foreach (const QString &kind, kKeyKinds) {
+  for (const QString &kind : kKeyKinds) {
     QString name = QString("id_%1").arg(kind);
     if (dir.exists(name))
       return dir.absoluteFilePath(name);
@@ -586,7 +586,7 @@ Result Remote::push(Callbacks *callbacks, const QStringList &refspecs) {
 
   QVector<char *> raw;
   QVector<QByteArray> storage;
-  foreach (const QString &refspec, refspecs) {
+  for (const QString &refspec : refspecs) {
     storage.append(refspec.toUtf8());
     raw.append(storage.last().data());
   }
@@ -614,7 +614,7 @@ Result Remote::push(Callbacks *callbacks, const Reference &src,
   QStringList refspecs(refspec);
   if (tags) {
     // Add tags individually. Wildcard push refspecs aren't supported yet.
-    foreach (const TagRef &tag, repo.tags())
+    for (const TagRef &tag : repo.tags())
       refspecs.append(prefix + tag.qualifiedName());
   }
 

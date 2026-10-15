@@ -146,6 +146,28 @@ void initRepo(git::Repository &repo) {
   repo.gitConfig().setValue("user.email", QString("test@user"));
 }
 
+bool forceAdd(const QString &workdir, const QString &path,
+              const QByteArray &data) {
+  git_repository *repo = nullptr;
+  if (git_repository_open(&repo, workdir.toUtf8()))
+    return false;
+
+  const QByteArray name = path.toUtf8();
+  git_index_entry entry = {};
+  entry.path = name.constData();
+  entry.mode = GIT_FILEMODE_BLOB;
+
+  git_index *index = nullptr;
+  bool ok = !git_repository_index(&index, repo) &&
+            !git_index_add_from_buffer(index, &entry, data.constData(),
+                                       data.size()) &&
+            !git_index_write(index);
+
+  git_index_free(index);
+  git_repository_free(repo);
+  return ok;
+}
+
 ScratchRepository::ScratchRepository(bool autoRemove) {
   mDir.setAutoRemove(autoRemove);
   mRepo = git::Repository::init(mDir.path());
@@ -176,21 +198,37 @@ void Timeout::onTimeout() {
 }
 
 void refresh(RepoView *view, bool expectDirty) {
-  // Setup post refresh trigger.
-  bool finished = false;
-  auto connection = QObject::connect(view, &RepoView::statusChanged,
-                                     [&finished, expectDirty](bool dirty) {
-                                       QCOMPARE(dirty, expectDirty);
-                                       finished = true;
+  // Ensure that we're done loading before testing anything else
+  {
+    QEventLoop drainLoop;
+    bool loading = false;
+    auto connection =
+        QObject::connect(view, &RepoView::loadingChanged, &drainLoop,
+                         [&drainLoop, &loading](bool nowLoading) {
+                           loading = nowLoading;
+                           if (!loading)
+                             drainLoop.quit();
+                         });
+    loading = view->isLoading();
+    if (loading)
+      drainLoop.exec();
+    QObject::disconnect(connection);
+  }
+
+  // Wait for the refresh this call triggers to finish.
+  QEventLoop loop;
+  bool dirty = false;
+  auto connection = QObject::connect(view, &RepoView::statusChanged, &loop,
+                                     [&loop, &dirty](bool d) {
+                                       dirty = d;
+                                       loop.quit();
                                      });
 
   view->refresh();
-
-  // Wait for the refresh to finish.
-  while (!finished)
-    qWait(100);
+  loop.exec();
 
   QObject::disconnect(connection);
+  QCOMPARE(dirty, expectDirty);
 
   // Select status index.
   if (expectDirty)

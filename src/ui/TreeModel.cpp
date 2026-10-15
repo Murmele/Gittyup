@@ -109,7 +109,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
 
       int count = 0;
       git::Index index = mDiff.index();
-      foreach (const QString &path, paths) {
+      for (const QString &path : paths) {
         // isStaged on folders does not work, because folder cannot be staged
         switch (index.isStaged(path)) {
           case git::Index::Disabled:

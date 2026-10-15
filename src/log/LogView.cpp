@@ -79,7 +79,7 @@ void LogView::copy() {
   QString plainText;
   QString richText;
   QModelIndexList indexes = collectSelectedIndexes(this, QModelIndex());
-  foreach (const QModelIndex &index, indexes) {
+  for (const QModelIndex &index : indexes) {
     QString prefix;
 
     // Indent child indices

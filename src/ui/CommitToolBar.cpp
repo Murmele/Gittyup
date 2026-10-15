@@ -51,7 +51,7 @@ public:
 
     RepoView *view = RepoView::parentView(parent);
     git::Config config = view->repo().appConfig();
-    foreach (const QString &key, map.keys()) {
+    for (const QString &key : map.keys()) {
       QAction *action = menu->addAction(key);
       action->setCheckable(true);
       actions->addAction(action);

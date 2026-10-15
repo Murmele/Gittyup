@@ -86,3 +86,7 @@ modules:
       - type: git
         url: https://github.com/Murmele/Gittyup.git
         tag: gittyup_v1.3.0
+      - type: archive
+        url: https://downloads.sourceforge.net/project/scintilla/scintilla/5.6.6/scintilla566.tgz
+        sha256: b6b08598c68fac90990d010c1142494d707530602b5320753274d045c2b02189
+        dest: dep/scintilla/scintilla

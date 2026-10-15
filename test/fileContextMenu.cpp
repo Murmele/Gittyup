@@ -62,12 +62,9 @@ void TestFileContextMenu::testDiscardFile() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"file.txt"};
   FileContextMenu m(repoView, files, repo.index());
@@ -138,12 +135,9 @@ void TestFileContextMenu::testDiscardSubmodule() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"GittyupTestRepo"};
   FileContextMenu m(repoView, files, repo.index());
@@ -219,12 +213,9 @@ void TestFileContextMenu::testDiscardFolder() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"folder1"};
   FileContextMenu m(repoView, files, repo.index());
@@ -297,12 +288,9 @@ void TestFileContextMenu::testDiscardNothing() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files; // no files passed
   FileContextMenu m(repoView, files, repo.index());
@@ -366,12 +354,9 @@ void TestFileContextMenu::testIgnoreFile() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"file.txt"};
   FileContextMenu m(repoView, files, repo.index(), repoView);
@@ -421,12 +406,9 @@ void TestFileContextMenu::testIgnoreFileUntracked() {
     QVERIFY(file.write("Content of new file") > 0);
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"newFile.txt"};
   FileContextMenu m(repoView, files, repo.index(), repoView);
@@ -485,12 +467,9 @@ void TestFileContextMenu::testIgnoreFolder() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"folder1"};
   FileContextMenu m(repoView, files, repo.index(), repoView);
@@ -556,12 +535,9 @@ void TestFileContextMenu::testRemoveUntrackedFolder() {
     }
   }
 
-  // refresh repo
-  emit repo.notifier()->referenceUpdated(repo.head());
-  QTest::qWait(10); // Wait until status is finished (own thread executed)
-
-  // let the changes settle
-  QApplication::processEvents();
+  // refresh repo and wait for the (asynchronous) status/selection update to
+  // actually finish, instead of hoping a fixed sleep was long enough.
+  Test::refresh(repoView);
 
   QStringList files = {"folder_new"};
   FileContextMenu m(repoView, files, repo.index(), repoView);

@@ -17,10 +17,8 @@ class Index;
 class Reduce : public QThread {
 public:
   Reduce(IdStorage &ids, WorkerQueue<Intermediate> &queue,
-         WorkerQueue<Index::PostingMap> &results, Index &index,
-         QObject *parent = nullptr)
-      : QThread(parent), mIds(ids), mQueue(queue), mResults(results),
-        mIndex(index) {}
+         WorkerQueue<Index::PostingMap> &results, QObject *parent = nullptr)
+      : QThread(parent), mIds(ids), mQueue(queue), mResults(results) {}
 
 private:
   void run() override;
@@ -29,7 +27,6 @@ private:
   IdStorage &mIds;
   WorkerQueue<Intermediate> &mQueue;
   WorkerQueue<Index::PostingMap> &mResults;
-  Index &mIndex;
   quint16 mProcessedElemenets = 0;
 };
 

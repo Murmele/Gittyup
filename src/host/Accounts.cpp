@@ -28,7 +28,7 @@ int Accounts::indexOf(Account *account) const {
 
 Repository *Accounts::lookup(const QString &url) const {
   QUrl remote(url);
-  foreach (Account *account, mAccounts) {
+  for (Account *account : mAccounts) {
     for (int i = 0; i < account->repositoryCount(); ++i) {
       Repository *repo = account->repository(i);
       if (url == repo->url(Repository::Ssh))
@@ -44,7 +44,7 @@ Repository *Accounts::lookup(const QString &url) const {
 }
 
 Account *Accounts::lookup(const QString &username, Account::Kind kind) const {
-  foreach (Account *account, mAccounts) {
+  for (Account *account : mAccounts) {
     if (username == account->username() && kind == account->kind())
       return account;
   }
