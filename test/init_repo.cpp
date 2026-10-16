@@ -224,7 +224,9 @@ void TestInitRepo::cleanupTestCase() {
   }
   QDir dir = QDir::temp();
   QVERIFY(dir.cd("test_init_repo"));
-  QVERIFY(dir.removeRecursively());
+  // On Windows open files can't be deleted, so this needs to be attempted
+  // repeatedly in the hopes that it succeeds
+  QTRY_VERIFY(dir.removeRecursively());
 }
 
 TEST_MAIN(TestInitRepo)

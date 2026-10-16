@@ -3,6 +3,7 @@
 
 #include "git/Id.h"
 
+#include <atomic>
 #include <QMap>
 #include <QHash>
 #include <QMutex>
@@ -12,7 +13,7 @@ class QFile;
 class QString;
 
 // global cancel flag
-extern bool canceled;
+extern std::atomic_bool canceled;
 
 struct Intermediate {
   using TermMap = QHash<QByteArray, QVector<quint32>>;

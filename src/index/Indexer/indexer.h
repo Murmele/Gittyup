@@ -18,16 +18,16 @@ class QFile;
 void index(const Lexer::Lexeme &lexeme, Intermediate::FieldMap &fields,
            quint8 field, quint32 &pos);
 
-class Indexer : public QObject, public QAbstractNativeEventFilter {
+class Indexer : public QThread, public QAbstractNativeEventFilter {
 public:
   Indexer(Index &index, bool notify, QObject *parent = nullptr);
 
-  bool start();
-  void finish();
+  void run() override;
   bool nativeEventFilter(const QByteArray &type, void *message,
                          qintptr *result) override;
 
 private:
+  void finish();
   void cancel();
 
   Index &mIndex;
