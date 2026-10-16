@@ -63,6 +63,9 @@ public:
   // Commits that have diverged calculate the distance to a common base.
   int difference(const Commit &commit) const;
 
+  // True if this commit is the given commit or reachable from it.
+  bool isAncestorOf(const Commit &commit) const;
+
   // Revert this commit in the index and workdir.
   bool revert() const;
 

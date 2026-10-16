@@ -19,6 +19,7 @@
 #include "git2/annotated_commit.h"
 #include "git2/config.h"
 #include "git2/diff.h"
+#include "git2/graph.h"
 #include "git2/refs.h"
 #include "git2/revert.h"
 #include "git2/commit.h"
@@ -248,6 +249,17 @@ int Commit::difference(const Commit &commit) const {
     ++result;
 
   return result;
+}
+
+bool Commit::isAncestorOf(const Commit &commit) const {
+  if (!isValid() || !commit.isValid())
+    return false;
+
+  if (id() == commit.id())
+    return true;
+
+  return git_graph_descendant_of(git_object_owner(d.get()), commit.id(),
+                                 id()) == 1;
 }
 
 bool Commit::revert() const {
