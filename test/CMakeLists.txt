@@ -89,6 +89,7 @@ execute_process(
     ${CMAKE_CURRENT_BINARY_DIR}/Resources)
 
 # Add tests.
+test(NAME blame)
 test(NAME bare_repo)
 test(NAME init_repo)
 test(NAME merge)
