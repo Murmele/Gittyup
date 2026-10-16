@@ -264,11 +264,16 @@ bool Commit::revert() const {
 bool Commit::amend(const Signature &author, const Signature &committer,
                    const QString &commitMessage, const Tree &tree) const {
   Repository repo = this->repo();
-  git_oid oid;
-  int error = git_commit_amend(&oid, *this, "HEAD", &*author, &*committer, NULL,
-                               commitMessage.toUtf8(), tree);
+  const git_commit *commit = *this;
+  Commit amended = repo.createCommit(
+      author.isValid() ? static_cast<const git_signature *>(author)
+                       : git_commit_author(commit),
+      committer.isValid() ? static_cast<const git_signature *>(committer)
+                          : git_commit_committer(commit),
+      git_commit_message_encoding(commit), commitMessage.toUtf8(),
+      tree.isValid() ? tree : this->tree(), parents(), *this);
   emit repo.notifier()->referenceUpdated(repo.head());
-  return !error;
+  return amended.isValid();
 }
 
 bool Commit::reset(git_reset_t type, const QStringList &paths,

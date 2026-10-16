@@ -289,6 +289,15 @@ private:
 
   void ensureSubmodulesCached() const;
 
+  // Create a commit, signed if commit.gpgsign is set, and move HEAD (or the
+  // branch it refers to) to it. If amended is valid, the new commit replaces
+  // it and it must be the current tip of HEAD.
+  Commit createCommit(const git_signature *author,
+                      const git_signature *committer, const char *encoding,
+                      const QByteArray &message, const Tree &tree,
+                      const QList<Commit> &parents,
+                      const Commit &amended = Commit());
+
   QByteArray lfsExecute(const QStringList &args,
                         const QByteArray &input = QByteArray()) const;
 

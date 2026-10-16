@@ -13,6 +13,7 @@
 #include "Branch.h"
 #include "Command.h"
 #include "Commit.h"
+#include "CommitSigner.h"
 #include "Config.h"
 #include "Filter.h"
 #include "FilterList.h"
@@ -43,6 +44,7 @@
 #include "git2/signature.h"
 #include "git2/stash.h"
 #include "git2/tag.h"
+#include "git2/tree.h"
 #include "git2/sys/repository.h"
 #include "git2/sys/errors.h"
 #include "git2/attr.h"
@@ -103,6 +105,19 @@ int insert_stash_id(size_t index, const char *message, const git_oid *id,
                     void *payload) {
   reinterpret_cast<QList<Id> *>(payload)->insert(index, id);
   return 0;
+}
+
+int createRebaseCommit(git_oid *out, const git_signature *author,
+                       const git_signature *committer, const char *encoding,
+                       const char *message, const git_tree *tree,
+                       size_t parentCount, const git_commit *parents[],
+                       void *payload) {
+  CommitSigner signer(git_tree_owner(tree));
+  if (!signer.isEnabled())
+    return GIT_PASSTHROUGH;
+
+  return signer.createSignedCommit(out, author, committer, encoding, message,
+                                   tree, parentCount, parents);
 }
 
 } // namespace
@@ -626,7 +641,7 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
     return Commit();
 
   // Lookup the parent commit.
-  QVector<git_commit *> parents;
+  QList<Commit> parents;
   if (Reference ref = head()) {
     if (Commit commit = ref.target())
       parents.append(commit);
@@ -637,10 +652,9 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
     parents.append(mergeHead.commit());
 
   // Create the commit.
-  git_oid id;
-  if (git_commit_create(&id, d->repo, "HEAD", author, committer, 0,
-                        message.toUtf8(), tree, parents.size(),
-                        (const git_commit **)parents.data()))
+  Commit commit =
+      createCommit(author, committer, nullptr, message.toUtf8(), tree, parents);
+  if (!commit.isValid())
     return Commit();
 
   // Cleanup merge state.
@@ -657,10 +671,77 @@ Commit Repository::commit(const Signature &author, const Signature &committer,
       break;
   }
 
-  git_commit *commit = nullptr;
-  git_commit_lookup(&commit, d->repo, &id);
   emit d->notifier->referenceUpdated(head());
-  return Commit(commit);
+  return commit;
+}
+
+Commit Repository::createCommit(const git_signature *author,
+                                const git_signature *committer,
+                                const char *encoding, const QByteArray &message,
+                                const Tree &tree, const QList<Commit> &parents,
+                                const Commit &amended) {
+  QVector<const git_commit *> parentPtrs;
+  for (const Commit &parent : parents)
+    parentPtrs.append(parent);
+
+  git_oid id;
+  CommitSigner signer(d->repo);
+  if (!signer.isEnabled()) {
+    int error = amended.isValid()
+                    ? git_commit_amend(&id, amended, "HEAD", author, committer,
+                                       encoding, message.constData(), tree)
+                    : git_commit_create(&id, d->repo, "HEAD", author, committer,
+                                        encoding, message.constData(), tree,
+                                        parentPtrs.size(), parentPtrs.data());
+    return error ? Commit() : lookupCommit(Id(&id));
+  }
+
+  // The commit replaces the current tip of HEAD, which must be the amended
+  // commit or the first parent, as libgit2 checks for unsigned commits.
+  git_oid tip;
+  bool born = !git_reference_name_to_id(&tip, d->repo, "HEAD");
+  const git_oid *expected = amended.isValid() ? amended : nullptr;
+  if (!amended.isValid() && born) {
+    if (parents.isEmpty() || git_oid_cmp(&tip, parents.first())) {
+      git_error_set_str(GIT_ERROR_OBJECT, "failed to create commit: current "
+                                          "tip is not the first parent");
+      return Commit();
+    }
+    expected = &tip;
+  }
+
+  if (signer.createSignedCommit(&id, author, committer, encoding,
+                                message.constData(), tree, parentPtrs.size(),
+                                parentPtrs.data()))
+    return Commit();
+
+  Commit commit = lookupCommit(Id(&id));
+  if (!commit.isValid())
+    return Commit();
+
+  // Update the branch that HEAD refers to, or HEAD itself if it's detached,
+  // with the same reflog message that libgit2 writes, also when amending.
+  git_reference *head = nullptr;
+  if (git_reference_lookup(&head, d->repo, "HEAD"))
+    return Commit();
+  QByteArray name = "HEAD";
+  if (git_reference_type(head) == GIT_REFERENCE_SYMBOLIC)
+    name = git_reference_symbolic_target(head);
+  git_reference_free(head);
+
+  int count = parents.size();
+  const char *type = count >= 2 ? " (merge)" : count == 0 ? " (initial)" : "";
+  QByteArray log =
+      QByteArray("commit") + type + ": " + commit.summary().toUtf8();
+
+  git_reference *ref = nullptr;
+  int error = expected
+                  ? git_reference_create_matching(&ref, d->repo, name, &id,
+                                                  true, expected, log)
+                  : git_reference_create(&ref, d->repo, name, &id, false, log);
+  git_reference_free(ref);
+
+  return error ? Commit() : commit;
 }
 
 QList<Commit> Repository::starredCommits() const {
@@ -918,6 +999,7 @@ bool Repository::merge(const AnnotatedCommit &mergeHead) {
 Rebase Repository::rebaseOpen() {
   git_rebase *rebase = nullptr;
   git_rebase_options opts = GIT_REBASE_OPTIONS_INIT; // TODO: check quite option
+  opts.commit_create_cb = createRebaseCommit;
   git_rebase_open(&rebase, d->repo, &opts);
   return Rebase(d->repo, rebase);
 }
@@ -936,6 +1018,7 @@ void Repository::rebase(const AnnotatedCommit &mergeHead,
                         const QString &overrideEmail) {
   git_rebase *r = nullptr;
   git_rebase_options opts = GIT_REBASE_OPTIONS_INIT;
+  opts.commit_create_cb = createRebaseCommit;
   git_rebase_init(&r, d->repo, nullptr, mergeHead, nullptr, &opts);
   auto rebase = git::Rebase(d->repo, r, overrideUser, overrideEmail);
 
