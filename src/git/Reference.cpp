@@ -78,10 +78,10 @@ RevWalk Reference::walker(int sort, bool firstCommitOnly) const {
   return commit.isValid() ? commit.walker(sort, firstCommitOnly) : RevWalk();
 }
 
-int Reference::difference(const Reference &ref) const {
+std::pair<size_t, size_t> Reference::difference(const Reference &ref) const {
   Commit lhs = target();
   Commit rhs = ref.target();
-  return (lhs && rhs) ? lhs.difference(rhs) : 0;
+  return (lhs && rhs) ? lhs.difference(rhs) : std::pair<size_t, size_t>(0, 0);
 }
 
 Commit Reference::target() const {

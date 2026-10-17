@@ -91,10 +91,12 @@ QString Commit::description() const {
   Commit commit = walk.next();
   while (commit.isValid()) {
     auto it = candidates.constFind(commit.id());
-    if (it != candidates.constEnd())
-      return QString("%1 +%2").arg(it->name()).arg(difference(commit));
-    else
+    if (it != candidates.constEnd()) {
+      size_t ahead = difference(commit).first;
+      return QString("%1 +%2").arg(it->name()).arg(ahead);
+    } else {
       commit = walk.next();
+    }
   }
   return QString();
 }
@@ -235,20 +237,14 @@ RevWalk Commit::walker(int sort, bool firstCommitOnly) const {
   return walker;
 }
 
-int Commit::difference(const Commit &commit) const {
-  // Check for the same commit.
-  if (id() == commit.id())
-    return 0;
-
-  RevWalk walk = walker();
-  if (!walk.isValid() || !walk.hide(commit))
-    return 0;
-
-  int result = 0;
-  while (walk.next().isValid())
-    ++result;
-
-  return result;
+std::pair<size_t, size_t> Commit::difference(const Commit &commit) const {
+  size_t ahead = 0, behind = 0;
+  int result = git_graph_ahead_behind(
+      &ahead, &behind, git_object_owner(d.get()), id(), commit.id());
+  if (result == 0)
+    return std::make_pair(ahead, behind);
+  else
+    return {0, 0};
 }
 
 bool Commit::isAncestorOf(const Commit &commit) const {

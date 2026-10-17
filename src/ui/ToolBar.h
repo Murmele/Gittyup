@@ -29,8 +29,8 @@ public:
   SearchField *searchField() const { return mSearchField; }
 
 private:
-  void updateButtons(int ahead, int behind);
-  void updateRemote(int ahead, int behind);
+  void updateButtons(size_t ahead, size_t behind);
+  void updateRemote(size_t ahead, size_t behind);
   void updateHistory();
   void updateStash();
   void updateView();

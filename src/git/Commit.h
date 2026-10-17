@@ -59,9 +59,12 @@ public:
   // Create a walker starting from this commit.
   RevWalk walker(int sort = GIT_SORT_NONE, bool firstCommitOnly = false) const;
 
-  // Calculate difference in commits between this and the given commit.
-  // Commits that have diverged calculate the distance to a common base.
-  int difference(const Commit &commit) const;
+  /// @brief Calculate difference in commits between this and the given
+  /// commit. Commits that have diverged calculate the distance to a
+  /// common base.
+  /// @param commit Commit to compare with
+  /// @return Number of commits given as first=ahead, second=behind
+  std::pair<size_t, size_t> difference(const Commit &commit) const;
 
   // True if this commit is the given commit or reachable from it.
   bool isAncestorOf(const Commit &commit) const;
