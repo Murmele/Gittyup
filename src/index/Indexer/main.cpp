@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
     parser.showHelp(1);
 
   // Set empty index to prevent going to the index on disk.
-  repo.setIndex(git::Index::create());
+  repo.setIndex(git::Index::create(repo.oidType()));
 
   // Set output file.
   if (parser.isSet("log")) {

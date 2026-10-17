@@ -60,7 +60,7 @@ public:
 
   bool hasConflicts() const;
 
-  static Index create();
+  static Index create(git_oid_t type);
 
 private:
   struct Data {

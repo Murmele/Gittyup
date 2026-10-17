@@ -568,7 +568,11 @@ RevWalk Repository::walker(int sort) const {
 
 Commit Repository::lookupCommit(const QString &prefix) const {
   git_oid id;
+#ifdef GIT_EXPERIMENTAL_SHA256
+  git_oid_fromstrp(&id, prefix.toUtf8(), oidType());
+#else
   git_oid_fromstrp(&id, prefix.toUtf8());
+#endif
 
   git_commit *commit = nullptr;
   git_commit_lookup_prefix(&commit, d->repo, &id, prefix.length());

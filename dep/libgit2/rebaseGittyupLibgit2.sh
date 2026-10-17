@@ -2,39 +2,44 @@ declare -a branches=("fetch_annotated_tags" "blame_abort" "checkout_deletion_not
 
 cd libgit2
 
+LIBGIT_BASE="v1.9.7"
+# The branches are currently based on this upstream ref
+LIBGIT_OLD_BASE="upstream/main"
+
 git remote remove origin
 git remote remove upstream
 git remote add origin git@github.com:Murmele/libgit2.git
 git remote add upstream https://github.com/libgit2/libgit2.git
 
-git fetch --all
+git fetch --all --tags
 
 for branch in ${branches[@]}; do
-	echo $branch
-	git checkout -B $branch "origin/$branch"
-	RESULT=$?
-	if [ $RESULT -gt 0 ]; then
-	  echo "Unable to checkout branch: $branch : Exitcode: $RESULT"
-	  exit 1
-	fi
-	git rebase upstream/main
-	RESULT=$?
-	if [ $RESULT -gt 0 ]; then
-	  echo "Unable to rebase branch: $branch : Exitcode: $RESULT"
-	  exit 1
-	fi
+    echo $branch
+    git checkout -B $branch "origin/$branch"
+    RESULT=$?
+    if [ $RESULT -gt 0 ]; then
+      echo "Unable to checkout branch: $branch : Exitcode: $RESULT"
+      exit 1
+    fi
+    # Only replay the branch's own commits, not the upstream commits newer than the tag
+    git rebase --onto $LIBGIT_BASE $(git merge-base $branch $LIBGIT_OLD_BASE)
+    RESULT=$?
+    if [ $RESULT -gt 0 ]; then
+      echo "Unable to rebase branch: $branch. Fix the conflict and press any key to proceed: Exitcode: $RESULT"
+      read -n 1
+    fi
 done
 
 git checkout Gittyup
-git reset --hard upstream/main
+git reset --hard $LIBGIT_BASE
 
 for branch in ${branches[@]}; do
-	git merge --no-edit $branch
-	RESULT=$?
-	if [ $RESULT -gt 0 ]; then
-	  echo "Unable to merge branch: $branch : Exitcode: $RESULT"
-	  exit 1
-	fi
+    git merge --no-edit $branch
+    RESULT=$?
+    if [ $RESULT -gt 0 ]; then
+      echo "Unable to merge branch: $branch : Exitcode: $RESULT"
+      exit 1
+    fi
 done
 
 git push --force origin
