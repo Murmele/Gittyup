@@ -66,7 +66,9 @@ protected:
 private:
   void updateTabNames();
   void updateInterface();
-  void updateWindowTitle(int ahead = -1, int behind = -1);
+  std::pair<size_t, size_t> difference(RepoView *view);
+  void updateWindowTitle();
+  void updateWindowTitle(size_t ahead, size_t behind);
 
   static void warnInvalidRepo(const QString &path);
 

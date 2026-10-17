@@ -2264,7 +2264,8 @@ void RepoView::promptToReset(const git::Commit &commit, git_reset_t type) {
   if (type == GIT_RESET_HARD && isWorkingDirectoryDirty()) {
     info += tr("<p>Resetting will cause you to lose uncommitted changes. "
                "Untracked and ignored files will not be affected.</p>");
-  } else if (upstream.isValid() && !head.difference(upstream)) {
+  } else if (upstream.isValid() &&
+             head.target().isAncestorOf(upstream.target())) {
     info +=
         tr("<p>Your branch appears to be up-to-date with its upstream branch. "
            "Resetting may cause your branch history to diverge from the "
