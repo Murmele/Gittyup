@@ -13,9 +13,11 @@
 #include "git/Config.h"
 #include "git/Reference.h"
 #include "git/Repository.h"
+#include <QFontMetrics>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMouseEvent>
+#include <QResizeEvent>
 #include <QVBoxLayout>
 
 namespace {
@@ -41,7 +43,33 @@ public:
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   }
 
+  // Set the reference to display. The branch name is elided with an ellipsis
+  // to fit the available width so the widget (and the sidebar) can shrink.
+  void setReference(const QString &kind, const QString &name,
+                    const QString &enabled, const QString &disabled,
+                    bool head) {
+    mKind = kind;
+    mName = name;
+    mEnabled = enabled;
+    mDisabled = disabled;
+    mHead = head;
+    updateText();
+  }
+
+  QSize minimumSizeHint() const override {
+    // Don't let the full branch name text dictate the minimum width, otherwise
+    // the sidebar can't be made narrower than the longest branch name.
+    QSize hint = QLabel::minimumSizeHint();
+    hint.setWidth(QFontMetrics(font()).horizontalAdvance(QStringLiteral("…")));
+    return hint;
+  }
+
 protected:
+  void resizeEvent(QResizeEvent *event) override {
+    QLabel::resizeEvent(event);
+    updateText();
+  }
+
   void mouseMoveEvent(QMouseEvent *event) override {
     QLabel::mouseMoveEvent(event);
 
@@ -77,7 +105,39 @@ protected:
   }
 
 private:
+  // Rebuild the label text, eliding the branch name to fit the current width.
+  void updateText() {
+    if (mName.isEmpty()) {
+      QLabel::clear();
+      return;
+    }
+
+    int available = contentsRect().width();
+
+    // Reserve room for the "kind:" prefix, which is never elided.
+    QFontMetrics fm(font());
+    if (!mKind.isEmpty())
+      available -= fm.horizontalAdvance(mKind + QStringLiteral(": "));
+
+    // The head reference is shown in bold, so measure with a bold font.
+    QFont nameFont = font();
+    nameFont.setBold(mHead);
+    QString elided = QFontMetrics(nameFont)
+                         .elidedText(mName, Qt::ElideRight, qMax(available, 0));
+
+    QString link = kLinkFmt.arg(mEnabled, elided);
+    QString name = mHead ? kBoldFmt.arg(link) : link;
+    QLabel::setText(mKind.isEmpty() ? name
+                                    : kNameFmt.arg(mDisabled, mKind, name));
+  }
+
   QAbstractButton *mButton;
+
+  QString mKind;
+  QString mName;
+  QString mEnabled;
+  QString mDisabled;
+  bool mHead = false;
 };
 
 class SelectionModel : public QItemSelectionModel {
@@ -185,8 +245,9 @@ ReferenceWidget::ReferenceWidget(const git::Repository &repo,
  * \param ref
  */
 void ReferenceWidget::updateLabel(const git::Reference &ref) {
+  Label *label = static_cast<Label *>(mLabel);
   if (!ref.isValid()) {
-    mLabel->setText(QString());
+    label->setReference(QString(), QString(), QString(), QString(), false);
     return;
   }
 
@@ -195,9 +256,7 @@ void ReferenceWidget::updateLabel(const git::Reference &ref) {
   QString disabled = palette.color(QPalette::BrightText).name();
 
   QString kind = ReferenceView::kindString(ref);
-  QString link = kLinkFmt.arg(enabled, ref.name());
-  QString name = ref.isHead() ? kBoldFmt.arg(link) : link;
-  mLabel->setText(kind.isEmpty() ? name : kNameFmt.arg(disabled, kind, name));
+  label->setReference(kind, ref.name(), enabled, disabled, ref.isHead());
 }
 
 git::Reference ReferenceWidget::currentReference() const {
