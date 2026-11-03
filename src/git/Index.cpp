@@ -332,9 +332,15 @@ Tree Index::writeTree() const {
 
 bool Index::hasConflicts() const { return git_index_has_conflicts(d->index); }
 
-Index Index::create() {
+Index Index::create(git_oid_t type) {
   git_index *index = nullptr;
+#ifdef GIT_EXPERIMENTAL_SHA256
+  git_index_options opts = GIT_INDEX_OPTIONS_INIT;
+  opts.oid_type = type;
+  git_index_new(&index, &opts);
+#else
   git_index_new(&index);
+#endif
   return Index(index);
 }
 

@@ -22,8 +22,8 @@ Id::Id() {
 
 Id::Id(const QByteArray &id, git_oid_t type) {
 #ifdef GIT_EXPERIMENTAL_SHA256
-  git_oid_from_raw(&d, reinterpret_cast<const unsigned char *>(id.constData()),
-                   type);
+  git_oid_fromraw(&d, reinterpret_cast<const unsigned char *>(id.constData()),
+                  type);
 #else
   git_oid_fromraw(&d, reinterpret_cast<const unsigned char *>(id.constData()));
 #endif

@@ -8,6 +8,11 @@ set(BUILD_TESTS
 set(STATIC_CRT
     OFF
     CACHE BOOL "" FORCE)
+# libgit2 seem to somehow require GNU extentions even though it's supposed to
+# compile without it
+set(CMAKE_C_EXTENSIONS
+    ON
+    CACHE BOOL "" FORCE)
 
 if(WIN32)
   # Disable search for OpenSSL.
@@ -35,5 +40,5 @@ else()
 
   # Include the generated experimental.h
   target_include_directories(
-    libgit2 INTERFACE ${PROJECT_BINARY_DIR}/dep/libgit2/libgit2/include/git2)
+    libgit2 INTERFACE ${PROJECT_BINARY_DIR}/dep/libgit2/libgit2/include)
 endif()

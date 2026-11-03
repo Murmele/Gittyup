@@ -11,50 +11,27 @@ class TestBlame : public QObject {
   Q_OBJECT
 
 private slots:
-  void accessorsSurviveHunkWithoutAuthorEmail();
+  void authorWithoutEmailFailsCleanly();
 };
 
 /*!
- * \brief TestBlame::accessorsSurviveHunkWithoutAuthorEmail
- * libgit2 hands back a null hunk for commits whose author has no email address
- * (libgit2#7180), so every git::Blame accessor has to cope with one instead of
- * dereferencing it. BlameAuthorWithoutEmail.zip holds three commits: an empty
- * seed, one by "Bot <>" adding the first line of hello.txt, and one with a
- * normal author adding the second line.
+ * \brief TestBlame::authorWithoutEmailFailsCleanly
+ * libgit2 can't build a blame hunk for a commit whose author has no email
+ * address, since its mailmap lookup rejects empty emails. Since libgit2#7180
+ * was fixed the whole blame fails instead of returning a null hunk, so callers
+ * must get an invalid blame rather than a half-built one.
+ * BlameAuthorWithoutEmail.zip holds three commits: an empty seed, one by
+ * "Bot <>" adding the first line of hello.txt, and one with a normal author
+ * adding the second line.
  */
-void TestBlame::accessorsSurviveHunkWithoutAuthorEmail() {
+void TestBlame::authorWithoutEmailFailsCleanly() {
   QString path = Test::extractRepository("BlameAuthorWithoutEmail.zip");
   QVERIFY(!path.isEmpty());
   git::Repository repo = git::Repository::open(path);
   QVERIFY(repo.isValid());
 
   git::Blame blame = repo.blame("hello.txt", git::Commit());
-  QVERIFY(blame.isValid());
-  QVERIFY(blame.count() > 0);
-
-  // Each of these dereferences the hunk; a null one must not crash.
-  for (int i = 0; i < blame.count(); ++i) {
-    blame.line(i);
-    blame.id(i);
-    blame.message(i);
-    blame.signature(i);
-    blame.isCommitted(i);
-  }
-
-  // A hunk libgit2 could not build carries no signature, so callers fall back
-  // to their "invalid signature" path rather than showing a half-read one.
-  // The fixture is expected to hold at least one such hunk; without this the
-  // test would pass without exercising the broken path at all.
-  int broken = 0;
-  for (int i = 0; i < blame.count(); ++i) {
-    if (!blame.signature(i).isValid()) {
-      ++broken;
-      QCOMPARE(blame.message(i), QString());
-      QCOMPARE(blame.isCommitted(i), false);
-    }
-  }
-
-  QVERIFY(broken > 0);
+  QVERIFY(!blame.isValid());
 }
 
 TEST_MAIN(TestBlame)
