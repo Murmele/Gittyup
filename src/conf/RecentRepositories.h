@@ -24,6 +24,8 @@ public:
 
   void clear();
   void remove(int index);
+  void forget(const QString &path);
+  bool isForgotten(const QString &path) const;
   void add(QString path);
 
   static RecentRepositories *instance();
@@ -41,6 +43,7 @@ private:
   void store();
 
   QList<RecentRepository *> mRepos;
+  QStringList mForgotten;
 };
 
 #endif

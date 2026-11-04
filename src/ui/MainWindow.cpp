@@ -16,6 +16,7 @@
 #include "SideBar.h"
 #include "TabWidget.h"
 #include "ToolBar.h"
+#include "conf/MarkingRepositories.h"
 #include "conf/RecentRepositories.h"
 #include "conf/Settings.h"
 #include "git/Repository.h"
@@ -242,7 +243,9 @@ RepoView *MainWindow::addTab(const QString &path) {
 RepoView *MainWindow::addTab(const git::Repository &repo) {
   // Update recent repository settings.
   QDir dir = repo.dir(false);
-  RecentRepositories::instance()->add(dir.path());
+  RecentRepositories *recent = RecentRepositories::instance();
+  if (!recent->isForgotten(dir.path()))
+    recent->add(dir.path());
 
   TabWidget *tabs = tabWidget();
   for (int i = 0; i < tabs->count(); i++) {
@@ -386,8 +389,12 @@ MainWindow *MainWindow::open(const QString &path, bool warnOnInvalid) {
 
 MainWindow *MainWindow::open(const git::Repository &repo) {
   // Update recent repository settings.
-  if (repo.isValid())
-    RecentRepositories::instance()->add(repo.dir(false).path());
+  if (repo.isValid()) {
+    RecentRepositories *recent = RecentRepositories::instance();
+    QString path = repo.dir(false).path();
+    if (!recent->isForgotten(path))
+      recent->add(path);
+  }
 
   // Create the window.
   MainWindow *window = new MainWindow(repo);
@@ -402,6 +409,11 @@ MainWindow *MainWindow::open(const git::Repository &repo) {
   }
 
   return window;
+}
+
+void MainWindow::refreshTabNames() {
+  for (MainWindow *window : windows())
+    window->updateTabNames();
 }
 
 void MainWindow::setSaveWindowSettings(bool enabled) {
@@ -499,7 +511,9 @@ void MainWindow::updateTabNames() {
     auto ids = names.take(key);
 
     if (ids.count() == 1) {
-      tabs->setTabText(ids.first(), key);
+      QString path = view(ids.first())->repo().dir(false).path();
+      tabs->setTabText(ids.first(),
+                       MarkingRepositories::instance()->displayName(path, key));
     } else {
       for (auto id : ids) {
         auto &name = fullNames[id];

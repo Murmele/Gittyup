@@ -13,11 +13,20 @@
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QSettings>
+#include <algorithm>
 
 namespace {
 
 const QString kRecentKey = "recent";
 const QString kFilterKey = "recent/filter";
+
+bool pathsEqual(const QString &lhs, const QString &rhs) {
+#ifdef Q_OS_WIN
+  return lhs.compare(rhs, Qt::CaseInsensitive) == 0;
+#else
+  return lhs == rhs;
+#endif
+}
 
 } // namespace
 
@@ -50,11 +59,37 @@ void RecentRepositories::remove(int index) {
   emit repositoryRemoved();
 }
 
+void RecentRepositories::forget(const QString &path) {
+  if (!isForgotten(path))
+    mForgotten.append(path);
+
+  for (int i = 0; i < mRepos.size(); ++i) {
+    if (pathsEqual(mRepos.at(i)->gitpath(), path)) {
+      remove(i);
+      return;
+    }
+  }
+}
+
+bool RecentRepositories::isForgotten(const QString &path) const {
+  for (const QString &forgotten : mForgotten) {
+    if (pathsEqual(forgotten, path))
+      return true;
+  }
+  return false;
+}
+
 /*!
  * gitpath: path to the git repository, does not neccesarly need to be the
  * workdir
  */
 void RecentRepositories::add(QString gitpath) {
+  mForgotten.erase(std::remove_if(mForgotten.begin(), mForgotten.end(),
+                                  [gitpath](const QString &path) {
+                                    return pathsEqual(path, gitpath);
+                                  }),
+                   mForgotten.end());
+
   emit repositoryAboutToBeAdded();
 
   auto end = mRepos.end();
