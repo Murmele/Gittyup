@@ -289,7 +289,8 @@ QVariant DiffTreeModel::data(const QModelIndex &index, int role) const {
       if (role == AddedRole)
         sort |= GIT_SORT_REVERSE;
       git::RevWalk walker = mRepo.walker(sort);
-      git::Commit commit = walker.next(node->path(true));
+      walker.setPathspec(node->path(true));
+      git::Commit commit = walker.next();
       if (!commit.isValid())
         return QVariant();
 

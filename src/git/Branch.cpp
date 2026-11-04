@@ -74,7 +74,7 @@ bool Branch::isMerged() const {
   if (!branch.isValid())
     return false;
 
-  return !difference(branch);
+  return target().isAncestorOf(branch.target());
 }
 
 Remote Branch::remote() const {

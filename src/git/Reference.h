@@ -49,9 +49,12 @@ public:
   // Create a walker over the referenced commit.
   RevWalk walker(int sort = GIT_SORT_NONE, bool firstCommitOnly = false) const;
 
-  // Calculate difference in commits between this and the given reference.
-  // References that have diverged calculate the distance to a common base.
-  int difference(const Reference &ref) const;
+  /// @brief Calculate difference in commits between this and the given
+  /// reference. References that have diverged calculate the distance to a
+  /// common base.
+  /// @param ref Reference to compare with
+  /// @return Number of commits given as first=ahead, second=behind
+  std::pair<size_t, size_t> difference(const Reference &ref) const;
 
   // Setting the commit doesn't mutate this reference. It returns a
   // new reference that points to the given commit. This reference

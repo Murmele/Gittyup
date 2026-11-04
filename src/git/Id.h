@@ -42,8 +42,10 @@ private:
   git_oid d;
 
   friend class Blame;
+  friend class Commit;
   friend class Index;
   friend class Repository;
+  friend class RevWalk;
 };
 
 uint qHash(const Id &key);

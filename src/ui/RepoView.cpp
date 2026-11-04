@@ -2264,7 +2264,8 @@ void RepoView::promptToReset(const git::Commit &commit, git_reset_t type) {
   if (type == GIT_RESET_HARD && isWorkingDirectoryDirty()) {
     info += tr("<p>Resetting will cause you to lose uncommitted changes. "
                "Untracked and ignored files will not be affected.</p>");
-  } else if (upstream.isValid() && !head.difference(upstream)) {
+  } else if (upstream.isValid() &&
+             head.target().isAncestorOf(upstream.target())) {
     info +=
         tr("<p>Your branch appears to be up-to-date with its upstream branch. "
            "Resetting may cause your branch history to diverge from the "
@@ -2841,7 +2842,8 @@ git::Commit RepoView::nextRevision(const QString &path) const {
   git::RevWalk walker =
       ref.walker(GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME | GIT_SORT_REVERSE);
   walker.hide(commits.first());
-  return walker.next(path);
+  walker.setPathspec(path);
+  return walker.next();
 }
 
 git::Commit RepoView::previousRevision(const QString &path) const {
@@ -2853,13 +2855,17 @@ git::Commit RepoView::previousRevision(const QString &path) const {
       return git::Commit();
 
     git::RevWalk walker = ref.walker(GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
-    return walker.next(path);
+    walker.setPathspec(path);
+    return walker.next();
   }
 
   git::Commit commit = commits.last();
   git::RevWalk walker = commit.walker(GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
-  walker.next();
-  return walker.next(path);
+  walker.setPathspec(path);
+
+  // The walk starts at the selected commit, which comes first if it matches.
+  git::Commit previous = walker.next();
+  return previous == commit ? walker.next() : previous;
 }
 
 void RepoView::selectCommit(const git::Commit &commit, const QString &file) {

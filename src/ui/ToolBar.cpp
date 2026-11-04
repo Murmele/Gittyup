@@ -275,14 +275,14 @@ public:
     }
   }
 
-  void setBadge(int badge) {
+  void setBadge(size_t badge) {
     mBadge = badge;
     update();
   }
 
 private:
   Kind mKind;
-  int mBadge = 0;
+  size_t mBadge = 0;
 };
 
 class StashButton : public Button {
@@ -964,7 +964,7 @@ ToolBar::ToolBar(MainWindow *parent) : QToolBar(parent) {
   });
 }
 
-void ToolBar::updateButtons(int ahead, int behind) {
+void ToolBar::updateButtons(size_t ahead, size_t behind) {
   updateRemote(ahead, behind);
   updateHistory();
   updateStash();
@@ -978,7 +978,7 @@ void ToolBar::updateButtons(int ahead, int behind) {
   mCheckoutButton->setEnabled(view && !view->repo().isBare());
 }
 
-void ToolBar::updateRemote(int ahead, int behind) {
+void ToolBar::updateRemote(size_t ahead, size_t behind) {
   static_cast<RemoteButton *>(mPushButton)->setBadge(ahead);
   static_cast<RemoteButton *>(mPullButton)->setBadge(behind);
 
