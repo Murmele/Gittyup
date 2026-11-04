@@ -116,6 +116,13 @@ public:
   void moveHalfPageUp();
   void moveRelative(int pixelsDown);
 
+  void find();
+  void findNext();
+  void findPrevious();
+  void finishFind();
+  void refreshFind();
+  void searchVisibleContent(int generation, int attemptsLeft);
+
 signals:
   void diagnosticAdded(TextEditor::DiagnosticKind kind);
   /*!
@@ -129,6 +136,8 @@ protected:
   void dropEvent(QDropEvent *event) override;
   void dragEnterEvent(QDragEnterEvent *event) override;
   void paintEvent(QPaintEvent *event) override;
+  void resizeEvent(QResizeEvent *event) override;
+  bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
   bool canFetchMore();
@@ -143,12 +152,14 @@ private:
 
   QList<FileWidget *> mFiles;
   QList<QMetaObject::Connection> mConnections;
+  FindWidget *mFind{nullptr};
 
   QList<PluginRef> mPlugins;
   Account::CommitComments mComments;
 
   bool mEnabled{true};
   bool mFetching{false};
+  int mFindGeneration{0};
   DiffTreeModel *mDiffTreeModel{nullptr};
   QWidget *mParent{nullptr};
   QVBoxLayout *mFileWidgetLayout{nullptr};

@@ -51,7 +51,9 @@ public:
 
   enum Indicator {
     FindAll = INDIC_CONTAINER,
+    FindAllText,
     FindCurrent,
+    FindCurrentText,
     WordAddition,
     WordDeletion,
     NoteIndicator,
@@ -114,8 +116,9 @@ public:
   void setStatusDiff(bool statusDiff);
 
   void clearHighlights();
-  int highlightAll(const QString &text);
-  int find(const QString &text, bool forward = true, bool indicator = true);
+  int highlightAll(const QString &text, bool matchCase = false);
+  int find(const QString &text, bool forward = true, bool indicator = true,
+           bool matchCase = false);
 
   QList<Diagnostic> diagnostics(int line);
   void addDiagnostic(int line, const Diagnostic &diag);

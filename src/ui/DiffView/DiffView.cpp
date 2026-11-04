@@ -18,8 +18,12 @@
 #include "ui/HotkeyManager.h"
 #include "ui/ProgressIndicator.h"
 #include "git/Tree.h"
+#include <QApplication>
+#include <QKeyEvent>
 #include <QPainter>
+#include <QResizeEvent>
 #include <QScrollBar>
+#include <QTimer>
 #include <QPushButton>
 #include <QMimeData>
 #include <QScopedValueRollback>
@@ -63,6 +67,11 @@ DiffView::DiffView(const git::Repository &repo, QWidget *parent)
   setAcceptDrops(true);
   setWidgetResizable(true);
   setFocusPolicy(Qt::NoFocus);
+
+  // Keep the search bar above the scrolled content.
+  mFind = new FindWidget(this, this);
+  mFind->hide();
+  connect(mFind, &FindWidget::hidden, this, &DiffView::finishFind);
   setContextMenuPolicy(Qt::ActionsContextMenu);
 
   mPlugins = Plugin::plugins(repo);
@@ -95,6 +104,9 @@ DiffView::DiffView(const git::Repository &repo, QWidget *parent)
             });
   }
 
+  // Catch the shortcut before a focused diff editor consumes Ctrl+F.
+  qApp->installEventFilter(this);
+
   QShortcut *shortcut = new QShortcut(this);
   moveHalfPageDownHotKey.use(shortcut);
   connect(shortcut, &QShortcut::activated, [this] { moveHalfPageDown(); });
@@ -111,7 +123,35 @@ DiffView::DiffView(const git::Repository &repo, QWidget *parent)
   });
 }
 
-DiffView::~DiffView() {}
+DiffView::~DiffView() { qApp->removeEventFilter(this); }
+
+bool DiffView::eventFilter(QObject *watched, QEvent *event) {
+  if (!isVisible() || event->type() != QEvent::KeyPress)
+    return false;
+
+  // The diff editor consumes key presses before QShortcut can see them.
+  auto *keyEvent = static_cast<QKeyEvent *>(event);
+  QKeySequence sequence(keyEvent->modifiers() | keyEvent->key());
+  bool find = sequence == QKeySequence(QKeySequence::Find);
+  bool next = sequence == QKeySequence(QKeySequence::FindNext);
+  bool previous = sequence == QKeySequence(QKeySequence::FindPrevious);
+  if (!find && !next && !previous)
+    return false;
+
+  for (QWidget *widget = qobject_cast<QWidget *>(watched); widget;
+       widget = widget->parentWidget()) {
+    if (widget != this)
+      continue;
+    if (find)
+      this->find();
+    else if (next)
+      findNext();
+    else
+      findPrevious();
+    return true;
+  }
+  return false;
+}
 
 void DiffView::setLoading(bool loading) {
   if (loading) {
@@ -123,6 +163,16 @@ void DiffView::setLoading(bool loading) {
   }
 
   viewport()->update();
+}
+
+void DiffView::resizeEvent(QResizeEvent *event) {
+  QScrollArea::resizeEvent(event);
+  if (!mFind)
+    return;
+
+  mFind->setGeometry(viewport()->x(), viewport()->y(), viewport()->width(),
+                     mFind->sizeHint().height());
+  mFind->raise();
 }
 
 void DiffView::paintEvent(QPaintEvent *event) {
@@ -341,17 +391,87 @@ void DiffView::updateFiles() {
 
   if (canFetchMore())
     fetchMore();
+
+  refreshFind();
 }
 
 QList<TextEditor *> DiffView::editors() {
-  fetchAll();
+  // Search only hunks that are already shown. Hidden files and hunks that
+  // have not been loaded into the diff view are skipped.
   QList<TextEditor *> editors;
-  for (QWidget *widget : mFiles) {
-    for (HunkWidget *hunk : static_cast<FileWidget *>(widget)->hunks())
-      editors.append(hunk->editor());
+  for (FileWidget *file : mFiles) {
+    if (!file->isVisibleTo(this))
+      continue;
+    for (HunkWidget *hunk : file->hunks()) {
+      TextEditor *editor = hunk->editor(false);
+      if (editor->isVisibleTo(this))
+        editors.append(editor);
+    }
   }
 
   return editors;
+}
+
+void DiffView::find() {
+  if (!mFind)
+    return;
+
+  if (mFind->isVisible()) {
+    mFind->hide();
+    return;
+  }
+
+  mFind->setGeometry(viewport()->x(), viewport()->y(), viewport()->width(),
+                     mFind->sizeHint().height());
+  mFind->raise();
+  mFind->showAndSetFocus();
+}
+
+void DiffView::findNext() {
+  if (mFind)
+    mFind->find();
+}
+
+void DiffView::findPrevious() {
+  if (mFind)
+    mFind->find(FindWidget::Backward);
+}
+
+void DiffView::finishFind() {}
+
+void DiffView::refreshFind() {
+  if (!mFind || !mFind->isVisible() || FindWidget::text().isEmpty())
+    return;
+
+  ++mFindGeneration;
+  QTimer::singleShot(0, this, [this, generation = mFindGeneration] {
+    searchVisibleContent(generation, 8);
+  });
+}
+
+void DiffView::searchVisibleContent(int generation, int attemptsLeft) {
+  if (generation != mFindGeneration || !mFind || !mFind->isVisible())
+    return;
+
+  QList<TextEditor *> editors = this->editors();
+  bool loaded = false;
+  for (TextEditor *editor : editors) {
+    if (editor->length() == 0)
+      editor->update();
+    loaded = loaded || editor->length() > 0;
+  }
+
+  // Content is created first and painted later. Wait for that paint, but
+  // stop once the new content is empty.
+  if (!loaded && attemptsLeft > 0 && !mFiles.isEmpty()) {
+    QTimer::singleShot(0, this, [this, generation, attemptsLeft] {
+      searchVisibleContent(generation, attemptsLeft - 1);
+    });
+    return;
+  }
+
+  mFind->reset();
+  mFind->highlightAll();
 }
 
 void DiffView::ensureVisible(TextEditor *editor, int pos) {
@@ -417,7 +537,7 @@ bool DiffView::canFetchMore() {
  * use a while loop with canFetchMore() to get all
  */
 void DiffView::fetchMore(int fetchWidgets) {
-  // Back out early if we're reentrant or lazy loading isn't triggered
+  // Back out early if we're reentrant or lazy loading isn't triggered.
   if (mFetching ||
       (verticalScrollBar()->maximum() - verticalScrollBar()->value() >
        height() / 2))
