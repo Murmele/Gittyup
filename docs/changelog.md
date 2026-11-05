@@ -5,6 +5,7 @@ Bug Fix and Feature release
 #### Added
 
 * Add more information about the credential stores to give the user the possibility to easily see the tradeoffs of every credential store
+* Sign commits with GPG or SSH keys when commit.gpgsign is set, using the external gpg or ssh-keygen program like git does
 
 #### Changed
 
