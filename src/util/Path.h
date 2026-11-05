@@ -14,6 +14,12 @@
 
 namespace util {
 QString canonicalizePath(QString path);
-}
+
+/// @brief Convert a potentially sandboxed path into a host path. This can
+/// happen for instances with Flatpak and paths outside home directory
+/// @param path Potentially sandboxed path
+/// @return Host path
+QString sandboxPathToHost(const QString &path);
+} // namespace util
 
 #endif
