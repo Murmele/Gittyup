@@ -360,36 +360,8 @@ QString Commit::substituteEmoji(const QString &text) const {
 void Commit::setEmojiFile(const QString &file) { sEmojiFile = file; }
 
 Blob Commit::blob(const QString &file) const {
-  git::Blob blob;
-
-  if (!isValid())
-    return blob;
-
-  // searching for the correct blob
-  auto list = file.split("/");
-  bool found = false;
-  auto t = tree();
-  if (!t.isValid())
-    return blob;
-
-  for (int path_depth = 0; path_depth < list.count(); path_depth++) {
-    auto element = list[path_depth];
-    found = false;
-    for (int i = 0; i < t.count(); ++i) {
-      auto n = t.name(i);
-      if (n == element) {
-        if (path_depth >= list.count() - 1)
-          blob = t.object(i);
-        else
-          t = t.object(i);
-        found = true;
-        break;
-      }
-    }
-    if (!found)
-      break;
-  }
-  return blob;
+  Tree tree = this->tree();
+  return tree.isValid() ? repo().lookupBlob(tree.id(file)) : Blob();
 }
 
 } // namespace git
