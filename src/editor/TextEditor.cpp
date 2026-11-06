@@ -181,18 +181,18 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaEdit(parent) {
   // Set find indicators. A box draws the background and a text indicator
   // draws the foreground, since one indicator has only one colour.
   indicSetStyle(FindAll, INDIC_STRAIGHTBOX);
-  indicSetFore(FindAll, Qt::white);
+  indicSetFore(FindAll, ToScintillaColour(Qt::white));
   indicSetAlpha(FindAll, 255);
   indicSetUnder(FindAll, true);
   indicSetStyle(FindAllText, INDIC_TEXTFORE);
-  indicSetFore(FindAllText, QColor("#2a82da"));
+  indicSetFore(FindAllText, ToScintillaColour(QColor("#2a82da")));
 
   indicSetStyle(FindCurrent, INDIC_STRAIGHTBOX);
-  indicSetFore(FindCurrent, QColor("#2a82da"));
+  indicSetFore(FindCurrent, ToScintillaColour(QColor("#2a82da")));
   indicSetAlpha(FindCurrent, 255);
   indicSetUnder(FindCurrent, true);
   indicSetStyle(FindCurrentText, INDIC_TEXTFORE);
-  indicSetFore(FindCurrentText, Qt::white);
+  indicSetFore(FindCurrentText, ToScintillaColour(Qt::white));
 
   // Set word diff indicators.
   indicSetStyle(WordAddition, INDIC_STRAIGHTBOX);
