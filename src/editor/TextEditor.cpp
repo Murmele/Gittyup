@@ -172,6 +172,7 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaEdit(parent) {
 
   setSelEOLFilled(true);
   setSelBack(true, ToScintillaColour(palette().color(QPalette::Highlight)));
+  setSelAlpha(128);
   setVirtualSpaceOptions(SCVS_RECTANGULARSELECTION);
 
   // Unset default zoom in/out shortcuts.
