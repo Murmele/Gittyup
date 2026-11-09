@@ -172,22 +172,28 @@ TextEditor::TextEditor(QWidget *parent) : ScintillaEdit(parent) {
 
   setSelEOLFilled(true);
   setSelBack(true, ToScintillaColour(palette().color(QPalette::Highlight)));
+  setSelAlpha(128);
   setVirtualSpaceOptions(SCVS_RECTANGULARSELECTION);
 
   // Unset default zoom in/out shortcuts.
   clearCmdKey(SCK_ADD + (static_cast<int>(Scintilla::KeyMod::Ctrl) << 16));
   clearCmdKey(SCK_SUBTRACT + (static_cast<int>(Scintilla::KeyMod::Ctrl) << 16));
 
-  // Set find indicators.
+  // Set find indicators. A box draws the background and a text indicator
+  // draws the foreground, since one indicator has only one colour.
   indicSetStyle(FindAll, INDIC_STRAIGHTBOX);
-  indicSetFore(FindAll, Qt::white);
+  indicSetFore(FindAll, ToScintillaColour(Qt::white));
   indicSetAlpha(FindAll, 255);
   indicSetUnder(FindAll, true);
+  indicSetStyle(FindAllText, INDIC_TEXTFORE);
+  indicSetFore(FindAllText, ToScintillaColour(QColor("#2a82da")));
 
   indicSetStyle(FindCurrent, INDIC_STRAIGHTBOX);
-  indicSetFore(FindCurrent, Qt::yellow);
+  indicSetFore(FindCurrent, ToScintillaColour(QColor("#2a82da")));
   indicSetAlpha(FindCurrent, 255);
   indicSetUnder(FindCurrent, true);
+  indicSetStyle(FindCurrentText, INDIC_TEXTFORE);
+  indicSetFore(FindCurrentText, ToScintillaColour(Qt::white));
 
   // Set word diff indicators.
   indicSetStyle(WordAddition, INDIC_STRAIGHTBOX);
@@ -426,8 +432,12 @@ void TextEditor::setStatusDiff(bool statusDiff) {
 void TextEditor::clearHighlights() {
   setIndicatorCurrent(FindAll);
   indicatorClearRange(0, length());
+  setIndicatorCurrent(FindAllText);
+  indicatorClearRange(0, length());
 
   setIndicatorCurrent(FindCurrent);
+  indicatorClearRange(0, length());
+  setIndicatorCurrent(FindCurrentText);
   indicatorClearRange(0, length());
 
   // Restore styles.
@@ -436,7 +446,7 @@ void TextEditor::clearHighlights() {
   emit highlightActivated(false);
 }
 
-int TextEditor::highlightAll(const QString &text) {
+int TextEditor::highlightAll(const QString &text, bool matchCase) {
 
   clearHighlights();
   if (text.isEmpty())
@@ -461,23 +471,29 @@ int TextEditor::highlightAll(const QString &text) {
 
   int matches = 0;
   int max = length();
-  QPair<int, int> match = findText(0, data, 0, max);
+  int flags = matchCase ? SCFIND_MATCHCASE : 0;
+  QPair<int, int> match = findText(flags, data, 0, max);
   while (match.first >= 0) {
     // Search again from the end of the last range.
     indicatorFillRange(match.first, match.second - match.first);
-    match = findText(0, data, match.second, max);
+    setIndicatorCurrent(FindAllText);
+    indicatorFillRange(match.first, match.second - match.first);
+    setIndicatorCurrent(FindAll);
+    match = findText(flags, data, match.second, max);
     ++matches;
   }
 
   return matches;
 }
 
-int TextEditor::find(const QString &text, bool forward, bool indicator) {
+int TextEditor::find(const QString &text, bool forward, bool indicator,
+                    bool matchCase) {
   QByteArray utf8 = text.toUtf8();
   const char *data = utf8.constData();
+  int flags = matchCase ? SCFIND_MATCHCASE : 0;
 
   searchAnchor();
-  int pos = forward ? searchNext(0, data) : searchPrev(0, data);
+  int pos = forward ? searchNext(flags, data) : searchPrev(flags, data);
 
   if (pos >= 0)
     scrollCaret();
@@ -486,10 +502,16 @@ int TextEditor::find(const QString &text, bool forward, bool indicator) {
     // Clear previous indicator.
     setIndicatorCurrent(FindCurrent);
     indicatorClearRange(0, length());
+    setIndicatorCurrent(FindCurrentText);
+    indicatorClearRange(0, length());
 
     if (pos >= 0) {
       int start = selectionStart();
-      indicatorFillRange(start, selectionEnd() - start);
+      int length = selectionEnd() - start;
+      setIndicatorCurrent(FindCurrent);
+      indicatorFillRange(start, length);
+      setIndicatorCurrent(FindCurrentText);
+      indicatorFillRange(start, length);
     }
   }
 

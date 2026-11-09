@@ -14,6 +14,7 @@
 #include <QWidget>
 
 class TextEditor;
+class QCheckBox;
 class QLabel;
 class QLineEdit;
 
@@ -37,12 +38,16 @@ public:
 
   static QString text() { return sText; }
   static void setText(const QString &text) { sText = text; }
+  static bool matchCase() { return sMatchCase; }
 
   void clearHighlights();
   void highlightAll();
   void find(Direction direction = Advance);
 
   void showAndSetFocus();
+
+signals:
+  void hidden();
 
 protected:
   void paintEvent(QPaintEvent *event) override;
@@ -80,9 +85,11 @@ private:
 
   QLabel *mHits;
   QLineEdit *mField;
+  QCheckBox *mMatchCase;
   SegmentedButton *mButtons;
 
   static QString sText;
+  static bool sMatchCase;
 };
 
 #endif

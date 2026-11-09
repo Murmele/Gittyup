@@ -495,11 +495,26 @@ void DoubleTreeWidget::setDiff(const git::Diff &diff, const QString &file,
                                   << "Counter: " << mSetDiffCounter);
 }
 
-void DoubleTreeWidget::find() { mEditor->find(); }
+void DoubleTreeWidget::find() {
+  if (mFileView->currentWidget() == mDiffView)
+    mDiffView->find();
+  else
+    mEditor->find();
+}
 
-void DoubleTreeWidget::findNext() { mEditor->findNext(); }
+void DoubleTreeWidget::findNext() {
+  if (mFileView->currentWidget() == mDiffView)
+    mDiffView->findNext();
+  else
+    mEditor->findNext();
+}
 
-void DoubleTreeWidget::findPrevious() { mEditor->findPrevious(); }
+void DoubleTreeWidget::findPrevious() {
+  if (mFileView->currentWidget() == mDiffView)
+    mDiffView->findPrevious();
+  else
+    mEditor->findPrevious();
+}
 
 void DoubleTreeWidget::cancelBackgroundTasks() { mEditor->cancelBlame(); }
 

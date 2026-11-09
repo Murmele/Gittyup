@@ -10,6 +10,7 @@
 #include "FindWidget.h"
 #include "MenuBar.h"
 #include "editor/TextEditor.h"
+#include <QCheckBox>
 #include <QHBoxLayout>
 #include <QHideEvent>
 #include <QLabel>
@@ -18,6 +19,7 @@
 #include <QPainterPath>
 #include <QShortcut>
 #include <QShowEvent>
+#include <QTimer>
 #include <QStyleOption>
 
 namespace {
@@ -41,6 +43,7 @@ const QString kFieldStyle = "QLineEdit {"
 } // namespace
 
 QString FindWidget::sText;
+bool FindWidget::sMatchCase = false;
 
 FindWidget::SegmentedButton::SegmentedButton(QWidget *parent)
     : QWidget(parent), mPrev(nullptr), mNext(nullptr) {
@@ -83,6 +86,8 @@ void FindWidget::SegmentedButton::Segment::paintEvent(QPaintEvent *event) {
 
 FindWidget::FindWidget(EditorProvider *provider, QWidget *parent)
     : QWidget(parent), mEditorProvider(provider) {
+  setAutoFillBackground(true);
+  setBackgroundRole(QPalette::Window);
   QHBoxLayout *layout = new QHBoxLayout(this);
   layout->setContentsMargins(8, 4, 8, 4);
   layout->setSpacing(8);
@@ -103,6 +108,10 @@ FindWidget::FindWidget(EditorProvider *provider, QWidget *parent)
   mField->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
   layout->addWidget(mField);
 
+  mMatchCase = new QCheckBox(tr("Match Case"), this);
+  mMatchCase->setChecked(sMatchCase);
+  layout->addWidget(mMatchCase);
+
   QToolButton *done = new QToolButton(this);
   done->setText(tr("Done"));
   layout->addWidget(done);
@@ -120,6 +129,10 @@ FindWidget::FindWidget(EditorProvider *provider, QWidget *parent)
 
     if (MenuBar *menuBar = MenuBar::instance(this))
       menuBar->updateFind();
+  });
+  connect(mMatchCase, &QCheckBox::toggled, [this](bool checked) {
+    sMatchCase = checked;
+    highlightAll();
   });
 
   // Connect previous button.
@@ -148,7 +161,7 @@ void FindWidget::clearHighlights() {
 void FindWidget::highlightAll() {
   int matches = 0;
   for (TextEditor *editor : mEditorProvider->editors())
-    matches += editor->highlightAll(sText);
+    matches += editor->highlightAll(sText, sMatchCase);
 
   QString text;
   switch (matches) {
@@ -190,7 +203,7 @@ void FindWidget::find(Direction direction) {
     }
 
     // Search without wrapping.
-    int pos = editor->find(sText, forward, isVisible());
+    int pos = editor->find(sText, forward, isVisible(), sMatchCase);
     if (pos >= 0) {
       // Scroll the match into view.
       mEditorProvider->ensureVisible(editor, pos);
@@ -219,10 +232,20 @@ void FindWidget::find(Direction direction) {
 }
 
 void FindWidget::showAndSetFocus() {
+  if (isVisible()) {
+    hide();
+    return;
+  }
+
   show();
   mField->setText(sText);
   mField->selectAll();
   mField->setFocus();
+  // A shortcut can arrive before the line edit is the focus widget.
+  QTimer::singleShot(0, mField, [this] {
+    if (isVisible())
+      mField->setFocus();
+  });
 }
 
 void FindWidget::paintEvent(QPaintEvent *) {
@@ -235,8 +258,10 @@ void FindWidget::paintEvent(QPaintEvent *) {
 void FindWidget::hideEvent(QHideEvent *event) {
   QWidget::hideEvent(event);
 
-  if (!event->spontaneous())
+  if (!event->spontaneous()) {
     clearHighlights();
+    emit hidden();
+  }
 }
 
 void FindWidget::showEvent(QShowEvent *event) {

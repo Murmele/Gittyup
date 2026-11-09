@@ -17,14 +17,20 @@
 #include "conf/Settings.h"
 #include "conf/RecentRepositories.h"
 #include "conf/RecentRepository.h"
+#include "conf/MarkingRepositories.h"
+#include "conf/MarkingRepository.h"
 #include "dialogs/AccountDialog.h"
 #include "dialogs/CloneDialog.h"
 #include "host/Accounts.h"
 #include <QAbstractItemModel>
 #include <QFileDialog>
+#include <QHash>
 #include <QMenu>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QComboBox>
+#include <QDialogButtonBox>
+#include <QLabel>
 #include <QSettings>
 #include <QStyledItemDelegate>
 #include <QTreeView>
@@ -33,6 +39,39 @@
 namespace {
 
 const QString kRemoteExpandedGroup = "remote/expanded";
+
+bool pathsEqual(const QString &lhs, const QString &rhs) {
+#ifdef Q_OS_WIN
+  return lhs.compare(rhs, Qt::CaseInsensitive) == 0;
+#else
+  return lhs == rhs;
+#endif
+}
+
+bool isRepositoryOpen(const QString &path) {
+  for (MainWindow *window : MainWindow::windows()) {
+    TabWidget *tabs = window->tabWidget();
+    for (int i = 0; i < tabs->count(); ++i) {
+      auto *view = static_cast<RepoView *>(tabs->widget(i));
+      if (pathsEqual(path, view->repo().dir(false).path()))
+        return true;
+    }
+  }
+  return false;
+}
+
+// Recent entries for repositories that are already open stay hidden until
+// every matching tab is closed. The stored recent list is left unchanged.
+QList<RecentRepository *> visibleRecentRepositories() {
+  RecentRepositories *recent = RecentRepositories::instance();
+  QList<RecentRepository *> visible;
+  for (int i = 0; i < recent->count(); ++i) {
+    RecentRepository *repo = recent->repository(i);
+    if (!isRepositoryOpen(repo->gitpath()))
+      visible.append(repo);
+  }
+  return visible;
+}
 
 const QString kStyleSheet = "QTreeView {"
 #ifdef Q_OS_MAC
@@ -49,6 +88,8 @@ enum Role {
   PathRole = Qt::UserRole,
   TabRole,
   RecentRole,
+  MarkingRole,
+  MarkingGroupRole,
   AccountRole,
   AccountKindRole,
   RepositoryRole
@@ -94,19 +135,26 @@ class RepoModel : public QAbstractItemModel {
   Q_OBJECT
 
 public:
-  enum RootRow { Repo, Recent, Remote };
+  enum RootRow { Repo, Recent, Marking, Remote };
 
   RepoModel(TabWidget *tabs, QObject *parent = nullptr)
       : QAbstractItemModel(parent), mTabs(tabs), mCloudIcon(":/cloud.png"),
         mErrorIcon(tabs->style()->standardIcon(QStyle::SP_MessageBoxCritical)) {
-    connect(tabs, &TabWidget::tabAboutToBeInserted, this,
-            &RepoModel::beginResetModel);
-    connect(tabs, &TabWidget::tabAboutToBeRemoved, this,
-            &RepoModel::beginResetModel);
-    connect(tabs, QOverload<>::of(&TabWidget::tabInserted), this,
-            &RepoModel::endResetModel);
-    connect(tabs, QOverload<>::of(&TabWidget::tabRemoved), this,
-            &RepoModel::endResetModel);
+    auto beginResetAll = [this] {
+      for (RepoModel *model : instances())
+        model->beginResetModel();
+    };
+    auto endResetAll = [this] {
+      for (RepoModel *model : instances())
+        model->endResetModel();
+    };
+    instances().append(this);
+    connect(this, &QObject::destroyed, [this] { instances().removeAll(this); });
+
+    connect(tabs, &TabWidget::tabAboutToBeInserted, this, beginResetAll);
+    connect(tabs, &TabWidget::tabAboutToBeRemoved, this, beginResetAll);
+    connect(tabs, QOverload<>::of(&TabWidget::tabInserted), this, endResetAll);
+    connect(tabs, QOverload<>::of(&TabWidget::tabRemoved), this, endResetAll);
     connect(tabs->tabBar(), &QTabBar::tabMoved, [this] {
       beginResetModel();
       endResetModel();
@@ -114,13 +162,13 @@ public:
 
     RecentRepositories *repos = RecentRepositories::instance();
     connect(repos, &RecentRepositories::repositoryAboutToBeAdded, this,
-            &RepoModel::beginResetModel);
+            beginResetAll);
     connect(repos, &RecentRepositories::repositoryAboutToBeRemoved, this,
-            &RepoModel::beginResetModel);
-    connect(repos, &RecentRepositories::repositoryAdded, this,
-            &RepoModel::endResetModel);
-    connect(repos, &RecentRepositories::repositoryRemoved, this,
-            &RepoModel::endResetModel);
+            beginResetAll);
+    connect(repos, &RecentRepositories::repositoryAdded, this, endResetAll);
+    connect(repos, &RecentRepositories::repositoryRemoved, this, endResetAll);
+
+    // Marking changes are applied by the view so it can keep expansion state.
 
     Accounts *accounts = Accounts::instance();
     connect(accounts, &Accounts::accountAboutToBeAdded, this,
@@ -162,6 +210,8 @@ public:
       return createIndex(row, column);
 
     QObject *ptr = static_cast<QObject *>(parent.internalPointer());
+    if (MarkingGroup *group = qobject_cast<MarkingGroup *>(ptr))
+      return createIndex(row, column, group->repository(row));
     if (Account *account = qobject_cast<Account *>(ptr)) {
       // repository
       if (account->repositoryCount())
@@ -184,10 +234,16 @@ public:
           return createIndex(row, column, mTabs);
         return createIndex(row, column, mTabs->widget(row));
 
-      case Recent:
-        if (!recent->count())
+      case Recent: {
+        QList<RecentRepository *> visible = visibleRecentRepositories();
+        if (visible.isEmpty())
           return createIndex(row, column, recent);
-        return createIndex(row, column, recent->repository(row));
+        return createIndex(row, column, visible.at(row));
+      }
+
+      case Marking:
+        return createIndex(row, column,
+                           MarkingRepositories::instance()->group(row));
 
       case Remote:
         if (!accounts->count())
@@ -205,6 +261,18 @@ public:
 
     if (qobject_cast<RepoView *>(ptr) || qobject_cast<TabWidget *>(ptr))
       return createIndex(Repo, 0);
+
+    if (qobject_cast<MarkingRepository *>(ptr)) {
+      auto *group = qobject_cast<MarkingGroup *>(ptr->parent());
+      int row = 0;
+      for (int i = 0; i < MarkingRepositories::instance()->groupCount(); ++i)
+        if (MarkingRepositories::instance()->group(i) == group)
+          row = i;
+      return createIndex(row, 0, group);
+    }
+
+    if (qobject_cast<MarkingGroup *>(ptr))
+      return createIndex(Marking, 0);
 
     if (qobject_cast<RecentRepository *>(ptr) ||
         qobject_cast<RecentRepositories *>(ptr))
@@ -230,7 +298,7 @@ public:
 
   int rowCount(const QModelIndex &parent = QModelIndex()) const override {
     if (!parent.isValid())
-      return 3;
+      return 4;
 
     QObject *ptr = static_cast<QObject *>(parent.internalPointer());
     if (Account *account = qobject_cast<Account *>(ptr)) {
@@ -243,6 +311,9 @@ public:
       return (error->isValid() || progress->isValid()) ? 1 : 0;
     }
 
+    if (MarkingGroup *group = qobject_cast<MarkingGroup *>(ptr))
+      return group->count();
+
     if (parent.parent().isValid())
       return 0;
 
@@ -250,9 +321,11 @@ public:
       case Repo:
         return mTabs->count() ? mTabs->count() : 1;
 
-      case Recent: {
-        RecentRepositories *recent = RecentRepositories::instance();
-        return recent->count() ? recent->count() : 1;
+      case Recent:
+        return qMax(visibleRecentRepositories().size(), 1);
+
+      case Marking: {
+        return MarkingRepositories::instance()->groupCount();
       }
 
       case Remote: {
@@ -330,7 +403,7 @@ public:
 
     int row = index.row();
     QModelIndex parent = index.parent();
-    RecentRepositories *repos = RecentRepositories::instance();
+    MarkingRepositories *marking = MarkingRepositories::instance();
     switch (role) {
       case Qt::DisplayRole: {
         if (!parent.isValid()) {
@@ -339,12 +412,18 @@ public:
               return tr("open");
             case Recent:
               return tr("recent");
+            case Marking:
+              return tr("marking");
             case Remote:
               return tr("remote");
             default:
               return QVariant();
           }
         }
+
+        if (MarkingGroup *group = qobject_cast<MarkingGroup *>(
+                static_cast<QObject *>(parent.internalPointer())))
+          return group->displayName(row);
 
         switch (parent.row()) {
           case Repo:
@@ -359,13 +438,19 @@ public:
             return tr("none");
 
           case Recent: {
-            RecentRepositories *recent = RecentRepositories::instance();
-            if (recent->count()) {
-              RecentRepository *repo = repos->repository(row);
-              return mShowFullPath ? repo->gitpath() : repo->name();
+            QList<RecentRepository *> visible = visibleRecentRepositories();
+            if (!visible.isEmpty()) {
+              RecentRepository *repo = visible.at(row);
+              if (mShowFullPath)
+                return repo->gitpath();
+              return marking->displayName(repo->gitpath(), repo->name());
             }
 
             return tr("none");
+          }
+
+          case Marking: {
+            return marking->group(row)->name();
           }
 
           case Remote: {
@@ -416,13 +501,16 @@ public:
           }
 
           case Recent: {
-            RecentRepositories *recent = RecentRepositories::instance();
-            if (recent->count())
+            if (!visibleRecentRepositories().isEmpty())
               return QVariant();
 
             QFont font;
             font.setItalic(true);
             return font;
+          }
+
+          case Marking: {
+            return {};
           }
 
           default:
@@ -441,19 +529,33 @@ public:
         if (!parent.isValid())
           return QVariant();
 
+        // Identify the item by its object. A stale index can still carry a
+        // root row after the model is reset, and casting that row to a tab
+        // dereferences a destroyed RepoView.
+        if (MarkingRepository *repo = qobject_cast<MarkingRepository *>(ptr))
+          return repo->gitpath();
+        if (RecentRepository *repo = qobject_cast<RecentRepository *>(ptr))
+          return repo->gitpath();
+        if (RepoView *view = qobject_cast<RepoView *>(ptr))
+          return view->repo().dir(false).path();
+
         switch (parent.row()) {
           case Repo: {
-            if (!mTabs->count())
+            if (row < 0 || row >= mTabs->count())
               return QVariant();
             QWidget *widget = mTabs->widget(row);
-            RepoView *view = static_cast<RepoView *>(widget);
+            RepoView *view = qobject_cast<RepoView *>(widget);
+            if (!view)
+              return QVariant();
             return view->repo().dir(false).path();
           }
 
-          case Recent:
-            if (!repos->count())
+          case Recent: {
+            QList<RecentRepository *> visible = visibleRecentRepositories();
+            if (visible.isEmpty())
               return QVariant();
-            return repos->repository(row)->gitpath();
+            return visible.at(row)->gitpath();
+          }
 
           default:
             return QVariant();
@@ -465,6 +567,12 @@ public:
 
       case RecentRole:
         return QVariant::fromValue(qobject_cast<RecentRepository *>(ptr));
+
+      case MarkingRole:
+        return QVariant::fromValue(qobject_cast<MarkingRepository *>(ptr));
+
+      case MarkingGroupRole:
+        return QVariant::fromValue(qobject_cast<MarkingGroup *>(ptr));
 
       case AccountRole:
         return QVariant::fromValue(qobject_cast<Account *>(ptr));
@@ -492,21 +600,24 @@ public:
 
         switch (parent.row()) {
           case Repo:
-            if (mTabs->count()) {
-              RepoView *view = static_cast<RepoView *>(mTabs->widget(row));
-              return view->repo().dir(false).path();
+            if (row >= 0 && row < mTabs->count()) {
+              RepoView *view = qobject_cast<RepoView *>(mTabs->widget(row));
+              if (view)
+                return view->repo().dir(false).path();
             }
 
             return "";
 
           case Recent: {
-            RecentRepositories *recent = RecentRepositories::instance();
-            if (recent->count()) {
-              RecentRepository *repo = repos->repository(row);
-              return repo->gitpath();
-            }
+            QList<RecentRepository *> visible = visibleRecentRepositories();
+            if (!visible.isEmpty())
+              return visible.at(row)->gitpath();
 
             return "";
+          }
+
+          case Marking: {
+            return {};
           }
 
           default:
@@ -520,8 +631,16 @@ public:
 
   Qt::ItemFlags flags(const QModelIndex &index) const override {
     Qt::ItemFlags flags = QAbstractItemModel::flags(index);
-    if (!index.parent().isValid())
+    if (!index.parent().isValid()) {
       flags &= ~Qt::ItemIsSelectable;
+      /*
+      switch (index.row()) {
+        case Recent:
+        case Marking:
+          flags |= Qt::
+      }
+      */
+    }
     return flags;
   }
 
@@ -541,10 +660,39 @@ public:
     endResetModel();
   }
 
+  // Drop marking indexes before the objects they point to are deleted.
+  void beginReloadMarking() {
+    QModelIndex marking = index(Marking, 0);
+    int count = rowCount(marking);
+    if (count > 0)
+      beginRemoveRows(marking, 0, count - 1);
+    mMarkingRowsRemoved = count > 0;
+  }
+
+  // Publish the rows that exist after the marking data has changed.
+  void endReloadMarking() {
+    if (mMarkingRowsRemoved)
+      endRemoveRows();
+    mMarkingRowsRemoved = false;
+
+    QModelIndex marking = index(Marking, 0);
+    int count = rowCount(marking);
+    if (count > 0) {
+      beginInsertRows(marking, 0, count - 1);
+      endInsertRows();
+    }
+  }
+
 private:
+  static QList<RepoModel *> &instances() {
+    static QList<RepoModel *> models;
+    return models;
+  }
+
   TabWidget *mTabs;
   bool mShowFullPath = false;
   bool mShowFullName = false;
+  bool mMarkingRowsRemoved = false;
 
   QIcon mCloudIcon;
   QIcon mErrorIcon;
@@ -578,10 +726,42 @@ void storeExpansionState(QTreeView *view) {
   settings.endGroup();
 }
 
+struct MarkingExpansion {
+  bool root = true;
+  QHash<QString, bool> groups;
+};
+
+MarkingExpansion markingExpansion(QTreeView *view) {
+  MarkingExpansion state;
+  QAbstractItemModel *model = view->model();
+  QModelIndex marking = model->index(RepoModel::Marking, 0);
+  state.root = view->isExpanded(marking);
+  for (int i = 0; i < model->rowCount(marking); ++i) {
+    QModelIndex index = model->index(i, 0, marking);
+    state.groups.insert(index.data(Qt::DisplayRole).toString(),
+                        view->isExpanded(index));
+  }
+  return state;
+}
+
+void applyMarkingExpansion(QTreeView *view, const MarkingExpansion &state) {
+  QAbstractItemModel *model = view->model();
+  QModelIndex marking = model->index(RepoModel::Marking, 0);
+  view->setExpanded(marking, state.root);
+  for (int i = 0; i < model->rowCount(marking); ++i) {
+    QModelIndex index = model->index(i, 0, marking);
+    QString key = index.data(Qt::DisplayRole).toString();
+    view->setExpanded(index, state.groups.value(key, false));
+  }
+}
+
 void restoreExpansionState(QTreeView *view) {
   QAbstractItemModel *model = view->model();
-  for (int i = 0; i < model->rowCount(); ++i)
+  for (int i = 0; i < model->rowCount(); ++i) {
+    if (i == RepoModel::Marking)
+      continue;
     view->expand(model->index(i, 0));
+  }
 
   QSettings settings;
   settings.beginGroup(kRemoteExpandedGroup);
@@ -614,12 +794,38 @@ SideBar::SideBar(TabWidget *tabs, MainWindow *mainWindow, QWidget *parent)
 
   RepoModel *model = new RepoModel(tabs, view);
   view->setModel(model);
+  applyMarkingExpansion(view, MarkingExpansion());
+
+  // Remember MARKING expansion across resets caused by other sections.
+  auto markingExpansionState = std::make_shared<MarkingExpansion>();
+  connect(model, &RepoModel::modelAboutToBeReset, view,
+          [view, markingExpansionState] {
+            *markingExpansionState = markingExpansion(view);
+          });
 
   // Restore selection and expansion state after model reset.
-  connect(model, &RepoModel::modelReset, view, [view, model] {
-    view->setCurrentIndex(model->currentIndex());
-    restoreExpansionState(view);
-  });
+  connect(model, &RepoModel::modelReset, view,
+          [view, model, markingExpansionState] {
+            view->setCurrentIndex(model->currentIndex());
+            restoreExpansionState(view);
+            applyMarkingExpansion(view, *markingExpansionState);
+          });
+  // Invalidate indexes before marked objects are deleted, then rebuild after
+  // the new objects exist. Querying a freed QObject from parent() crashes.
+  connect(MarkingRepositories::instance(),
+          &MarkingRepositories::aboutToChange, view,
+          [view, model, markingExpansionState] {
+            *markingExpansionState = markingExpansion(view);
+            model->beginReloadMarking();
+          },
+          Qt::DirectConnection);
+  connect(MarkingRepositories::instance(), &MarkingRepositories::changed, view,
+          [view, model, markingExpansionState] {
+            model->endReloadMarking();
+            applyMarkingExpansion(view, *markingExpansionState);
+            MainWindow::refreshTabNames();
+          },
+          Qt::DirectConnection);
 
   connect(tabs, &TabWidget::currentChanged, view,
           [view, model] { view->setCurrentIndex(model->currentIndex()); });
@@ -652,7 +858,8 @@ SideBar::SideBar(TabWidget *tabs, MainWindow *mainWindow, QWidget *parent)
           return;
         }
 
-        // Open existing path.
+        // Copy the path before opening. Opening resets the model and
+        // invalidates this index before the view finishes the click.
         QString path = index.data(PathRole).toString();
         if (!path.isEmpty()) {
           MainWindow::open(path);
@@ -697,12 +904,112 @@ SideBar::SideBar(TabWidget *tabs, MainWindow *mainWindow, QWidget *parent)
         }
       });
 
+  auto markRepository = [this](const QString &path) {
+    if (path.isEmpty())
+      return;
+
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Mark Repository"));
+    QVBoxLayout layout(&dialog);
+    layout.addWidget(new QLabel(tr("Mark group:"), &dialog));
+    QComboBox groups(&dialog);
+    MarkingRepositories *marking = MarkingRepositories::instance();
+    for (int i = 0; i < marking->groupCount(); ++i)
+      groups.addItem(marking->group(i)->name());
+    groups.setEditable(true);
+    groups.setInsertPolicy(QComboBox::NoInsert);
+    groups.lineEdit()->setPlaceholderText(tr("New group"));
+    layout.addWidget(&groups);
+    QDialogButtonBox buttons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                             &dialog);
+    layout.addWidget(&buttons);
+    connect(&buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(&buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+      return;
+
+    QString name = groups.currentText().trimmed();
+    if (name.isEmpty())
+      return;
+    MarkingGroup *existing = marking->groupContaining(path);
+    if (existing && existing->name() == name) {
+      QMessageBox::information(
+          this, tr("Mark Repository"),
+          tr("This repository is already marked."));
+      return;
+    }
+    if (existing) {
+      QMessageBox confirm(
+          QMessageBox::Question, tr("Mark Repository"),
+          tr("This repository is already marked in group %1. ReMark it to "
+             "group %2?")
+              .arg(existing->name(), name),
+          QMessageBox::Yes | QMessageBox::No, this);
+      if (confirm.exec() != QMessageBox::Yes)
+        return;
+    }
+
+    MarkingGroup *group = marking->addGroup(name);
+    for (int i = 0; i < marking->groupCount(); ++i) {
+      if (marking->group(i) == group) {
+        marking->mark(path, i);
+        break;
+      }
+    }
+  };
+
   connect(view, &QTreeView::customContextMenuRequested,
-          [this, view](const QPoint &point) {
+          [this, view, markRepository](const QPoint &point) {
             QMenu menu;
             QModelIndex index = view->indexAt(point);
-            if (RepoView *view = index.data(TabRole).value<RepoView *>()) {
-              menu.addAction(tr("Close"), view, &RepoView::close);
+            if (index.parent().isValid() && !index.parent().parent().isValid() &&
+                index.parent().row() == RepoModel::Recent) {
+              // Recent repositories can be assigned to a marking group.
+              QString path = index.data(PathRole).toString();
+              QAction *forget = menu.addAction(tr("Forget"));
+              connect(forget, &QAction::triggered, [path] {
+                RecentRepositories::instance()->forget(path);
+              });
+
+              menu.addAction(tr("Mark"), this, [markRepository, path] {
+                markRepository(path);
+              });
+            }
+            if (MarkingRepository *repo =
+                    index.data(MarkingRole).value<MarkingRepository *>()) {
+              QAction *unmark = menu.addAction(tr("UnMark"));
+              connect(unmark, &QAction::triggered, [repo] {
+                MarkingRepositories *marking = MarkingRepositories::instance();
+                for (int g = 0; g < marking->groupCount(); ++g) {
+                  MarkingGroup *group = marking->group(g);
+                  for (int i = 0; i < group->count(); ++i) {
+                    if (group->repository(i) == repo) {
+                      marking->remove(g, i);
+                      return;
+                    }
+                  }
+                }
+              });
+            }
+            if (MarkingGroup *group =
+                    index.data(MarkingGroupRole).value<MarkingGroup *>()) {
+              QAction *unmarkAll = menu.addAction(tr("UnMark All"));
+              connect(unmarkAll, &QAction::triggered, [group] {
+                MarkingRepositories *marking = MarkingRepositories::instance();
+                for (int i = 0; i < marking->groupCount(); ++i) {
+                  if (marking->group(i) == group) {
+                    marking->removeGroup(i);
+                    break;
+                  }
+                }
+              });
+            }
+            if (RepoView *repoView = index.data(TabRole).value<RepoView *>()) {
+              QString path = index.data(PathRole).toString();
+              menu.addAction(tr("Mark"), this, [markRepository, path] {
+                markRepository(path);
+              });
+              menu.addAction(tr("Close"), repoView, &RepoView::close);
             } else if (Account *account =
                            index.data(AccountRole).value<Account *>()) {
               menu.addAction(tr("Remove"), [this, account] {
@@ -790,8 +1097,25 @@ SideBar::SideBar(TabWidget *tabs, MainWindow *mainWindow, QWidget *parent)
       if (RepoView *tab = index.data(TabRole).value<RepoView *>()) {
         tab->close();
 
-      } else if (index.data(RecentRole).value<RecentRepository *>()) {
-        RecentRepositories::instance()->remove(index.row());
+      } else if (index.data(MarkingRole).value<MarkingRepository *>()) {
+        QModelIndex groupIndex = index.parent();
+        MarkingRepositories *marking = MarkingRepositories::instance();
+        int group = 0;
+        for (int i = 0; i < marking->groupCount(); ++i)
+          if (model->index(i, 0, model->index(RepoModel::Marking, 0)) ==
+              groupIndex)
+            group = i;
+        marking->remove(group, groupIndex.isValid() ? index.row() : 0);
+
+      } else if (RecentRepository *recent =
+                     index.data(RecentRole).value<RecentRepository *>()) {
+        RecentRepositories *repos = RecentRepositories::instance();
+        for (int i = 0; i < repos->count(); ++i) {
+          if (repos->repository(i) == recent) {
+            repos->remove(i);
+            break;
+          }
+        }
 
       } else if (auto account = index.data(AccountRole).value<Account *>()) {
         promptToRemoveAccount(account);

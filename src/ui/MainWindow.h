@@ -53,6 +53,7 @@ public:
   // Open a new window.
   static MainWindow *open(const QString &path, bool warnOnInvalid = true);
   static MainWindow *open(const git::Repository &repo = git::Repository());
+  static void refreshTabNames();
 
   // Save window settings on close.
   static void setSaveWindowSettings(bool enabled);
