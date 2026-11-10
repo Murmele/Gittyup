@@ -274,7 +274,11 @@ elseif(GITTYUP_PACK_WIN64)
       "ExecWait '\\\"$INSTDIR\\\\vcredist_x64.exe\\\" /q /norestart'")
   set(PLATFORM "-win64")
 else()
-  set(CPACK_GENERATOR TGZ)
+  # Respect a generator selected on the command line (for example
+  # -DCPACK_GENERATOR=DEB) and only fall back to the tarball.
+  if(NOT CPACK_GENERATOR)
+    set(CPACK_GENERATOR TGZ)
+  endif()
 endif()
 
 if(DEV_BUILD)
@@ -321,6 +325,16 @@ else()
     FILES ${CMAKE_SOURCE_DIR}/LICENSE.md
     DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/Gittyup
     RENAME LICENSE)
+endif()
+
+# Debian package metadata.
+if(CPACK_GENERATOR MATCHES "DEB")
+  set(CPACK_PACKAGE_CONTACT "Martin Marmsoler <martin.marmsoler@mailbox.org>")
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER
+      "Martin Marmsoler <martin.marmsoler@mailbox.org>")
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS
+      "libc6;libstdc++6;libgcc-s1;zlib1g;libssl3t64;libpcre3;libgssapi-krb5-2;libssh2-1t64;libhunspell-1.7-0;liblua5.3-0;libsecret-1-0;libglib2.0-0t64;libqt6core6t64;libqt6core5compat6;libqt6gui6;libqt6widgets6;libqt6network6;libqt6dbus6;git"
+  )
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
