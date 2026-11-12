@@ -1,0 +1,558 @@
+#include "Test.h"
+#include "conf/RefVisibility.h"
+#include "dialogs/RefVisibilityPanel.h"
+#include "git/Branch.h"
+#include "git/Reference.h"
+#include "git/TagRef.h"
+#include "ui/Badge.h"
+#include "ui/CommitList.h"
+#include "ui/ConfigKeys.h"
+#include "ui/MainWindow.h"
+#include "ui/ReferenceModel.h"
+#include "ui/ReferenceWidget.h"
+#include "ui/RepoView.h"
+#include <QLabel>
+#include <QPainter>
+#include <QProcess>
+#include <QStyledItemDelegate>
+#include <QCheckBox>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QPlainTextEdit>
+#include <QPushButton>
+#include <QStandardPaths>
+#include <QThreadPool>
+#include <memory>
+
+using namespace Test;
+
+class TestRefVisibility : public QObject {
+  Q_OBJECT
+
+private slots:
+  void initTestCase();
+  void matching();
+  void validation();
+  void persistence();
+  void protectedRefs();
+  void settingsPanel();
+  void navigation();
+  void historyAndBadges();
+  void historyRoots_data();
+  void historyRoots();
+  void writeFailures();
+  void blockedConfigDirectory();
+  void cleanupTestCase();
+};
+
+void TestRefVisibility::initTestCase() {
+  // Keep application configuration writes away from the user's settings.
+  QStandardPaths::setTestModeEnabled(true);
+  QCoreApplication::setApplicationName("Gittyup-RefVisibility-" +
+                                       QUuid::createUuid().toString());
+}
+
+void TestRefVisibility::matching() {
+  RefVisibility::Rules rules(
+      {"refs/agents/*", "refs/heads/topic", "refs/tags/v?.0"});
+  QVERIFY(rules.hides("refs/agents/nested/task"));
+  QVERIFY(rules.hides("refs/heads/topic"));
+  QVERIFY(rules.hides("refs/tags/v1.0"));
+  QVERIFY(!rules.hides("refs/tags/v10.0"));
+  QVERIFY(!rules.hides("refs/heads/topic-more"));
+  QVERIFY(!rules.hides("refs/heads/Topic"));
+  QVERIFY(!rules.hides("prefix/refs/heads/topic"));
+  QVERIFY(!RefVisibility::Rules({}).hides("refs/agents/task"));
+  RefVisibility::Rules literals(
+      {"refs/tags/v1.0+build", "refs/heads/topic[1]"});
+  QVERIFY(literals.hides("refs/tags/v1.0+build"));
+  QVERIFY(!literals.hides("refs/tags/v1X0build"));
+  QVERIFY(literals.hides("refs/heads/topic[1]"));
+  QVERIFY(!literals.hides("refs/heads/topic1"));
+}
+
+void TestRefVisibility::validation() {
+  QVERIFY(RefVisibility::validationError({"refs/heads/*", "refs/tags/v?.0"})
+              .isEmpty());
+  QVERIFY(!RefVisibility::validationError({"topic"}).isEmpty());
+  QVERIFY(!RefVisibility::validationError({"refs/"}).isEmpty());
+  QVERIFY(!RefVisibility::validationError({"refs/heads/a b"}).isEmpty());
+  QVERIFY(!RefVisibility::validationError({"refs/heads/a\\b"}).isEmpty());
+}
+
+void TestRefVisibility::persistence() {
+  ScratchRepository first;
+  ScratchRepository second;
+  QSignalSpy changes(RefVisibility::instance(), &RefVisibility::changed);
+  QCOMPARE(RefVisibility::patterns(first), RefVisibility::defaults());
+  QVERIFY(!RefVisibility::hasOverride(first));
+
+  QVERIFY(RefVisibility::save({"refs/heads/global"}));
+  QCOMPARE(RefVisibility::patterns(first), QStringList({"refs/heads/global"}));
+  QVERIFY(RefVisibility::reset(first));
+  QCOMPARE(RefVisibility::patterns(first), QStringList({"refs/heads/global"}));
+  QVERIFY(RefVisibility::save({"refs/tags/*"}, first));
+  QVERIFY(RefVisibility::hasOverride(first));
+  QCOMPARE(RefVisibility::patterns(first), QStringList({"refs/tags/*"}));
+  QCOMPARE(RefVisibility::patterns(second), QStringList({"refs/heads/global"}));
+
+  QVERIFY(RefVisibility::save({}, first));
+  QVERIFY(RefVisibility::hasOverride(first));
+  QVERIFY(RefVisibility::patterns(first).isEmpty());
+  QVERIFY(RefVisibility::save({"refs/agents/*"}));
+  QVERIFY(RefVisibility::patterns(first).isEmpty());
+  QVERIFY(RefVisibility::reset(first));
+  QVERIFY(!RefVisibility::hasOverride(first));
+  QCOMPARE(RefVisibility::patterns(first), RefVisibility::defaults());
+  QVERIFY(RefVisibility::save({}));
+  QVERIFY(RefVisibility::patterns(second).isEmpty());
+  QVERIFY(RefVisibility::reset());
+  QCOMPARE(RefVisibility::patterns(second), RefVisibility::defaults());
+  QCOMPARE(changes.count(), 8);
+}
+
+void TestRefVisibility::protectedRefs() {
+  ScratchRepository repo;
+  RefVisibility::Rules rules({"refs/*"});
+  QVERIFY(repo->commit("Initial commit").isValid());
+  QVERIFY(repo->head().isValid());
+  QVERIFY(!rules.hides(repo->head()));
+  QVERIFY(!rules.hides(git::Reference()));
+  QVERIFY(repo->setHeadDetached(repo->head().target()));
+  QVERIFY(repo->head().isDetachedHead());
+  QVERIFY(!rules.hides(repo->head()));
+  QCOMPARE(
+      QProcess::execute(GIT_EXECUTABLE,
+                        {"-C", repo->workdir().path(), "update-ref",
+                         "refs/stash", repo->head().target().id().toString()}),
+      0);
+  QVERIFY(repo->stashRef().isValid());
+  QVERIFY(!rules.hides(repo->stashRef()));
+}
+
+void TestRefVisibility::settingsPanel() {
+  ScratchRepository repo;
+  QVERIFY(repo->commit("Initial commit").isValid());
+  QVERIFY(repo->createBranch("topic").isValid());
+  RefVisibilityPanel panel(repo);
+  auto *inherit = panel.findChild<QCheckBox *>("inheritRefVisibility");
+  auto *editor = panel.findChild<QPlainTextEdit *>("hiddenRefRules");
+  auto *list = panel.findChild<QListWidget *>("refVisibilityList");
+  auto *search = panel.findChild<QLineEdit *>("refVisibilitySearch");
+  auto *apply = panel.findChild<QPushButton *>("applyRefVisibility");
+  auto *showAll = panel.findChild<QPushButton *>("showAllRefs");
+  auto *reset = panel.findChild<QPushButton *>("resetRefVisibility");
+  QVERIFY(inherit && editor && list && search && apply && showAll && reset);
+  QVERIFY(inherit->isChecked());
+  QVERIFY(!editor->isEnabled());
+  QVERIFY(!apply->isEnabled());
+  QCOMPARE(list->count(), 2);
+
+  inherit->setChecked(false);
+  QVERIFY(editor->isEnabled());
+  search->setText("topic");
+  QListWidgetItem *topic = nullptr;
+  for (int i = 0; i < list->count(); ++i) {
+    if (list->item(i)->text() == "refs/heads/topic")
+      topic = list->item(i);
+    else
+      QVERIFY(list->item(i)->isHidden());
+  }
+  QVERIFY(topic);
+  QVERIFY(!topic->isHidden());
+  topic->setCheckState(Qt::Checked);
+  QVERIFY(editor->toPlainText().contains("refs/heads/topic"));
+  QVERIFY(apply->isEnabled());
+  apply->click();
+  QVERIFY(RefVisibility::hasOverride(repo));
+  QVERIFY(RefVisibility::Rules(RefVisibility::patterns(repo))
+              .hides("refs/heads/topic"));
+  QVERIFY(!apply->isEnabled());
+
+  editor->setPlainText("invalid");
+  QVERIFY(!apply->isEnabled());
+  showAll->click();
+  QVERIFY(apply->isEnabled());
+  apply->click();
+  QVERIFY(RefVisibility::hasOverride(repo));
+  QVERIFY(RefVisibility::patterns(repo).isEmpty());
+  reset->click();
+  QVERIFY(inherit->isChecked());
+  QVERIFY(!RefVisibility::hasOverride(repo));
+  QCOMPARE(RefVisibility::patterns(repo), RefVisibility::defaults());
+
+  RefVisibilityPanel global;
+  auto *globalEditor = global.findChild<QPlainTextEdit *>("hiddenRefRules");
+  auto *globalApply = global.findChild<QPushButton *>("applyRefVisibility");
+  QVERIFY(globalEditor && globalApply);
+  globalEditor->setPlainText("refs/tags/*");
+  globalApply->click();
+  QCOMPARE(RefVisibility::patterns(repo), QStringList({"refs/tags/*"}));
+  QVERIFY(inherit->isChecked());
+  QVERIFY(RefVisibility::reset());
+}
+
+void TestRefVisibility::navigation() {
+  ScratchRepository repo;
+  QVERIFY(repo->commit("Initial commit").isValid());
+  const git::Branch topic = repo->createBranch("topic");
+  QVERIFY(topic.isValid());
+  const git::TagRef tag = repo->createTag(repo->head().target(), "v1");
+  QVERIFY(tag.isValid());
+  QCOMPARE(QProcess::execute(GIT_EXECUTABLE,
+                             {"-C", repo->workdir().path(), "update-ref",
+                              "refs/remotes/origin/topic",
+                              repo->head().target().id().toString()}),
+           0);
+  repo->appConfig().setValue(ConfigKeys::kRefsKey, false);
+  ReferenceWidget navigation(repo);
+  auto *model = navigation.findChild<ReferenceModel *>();
+  QVERIFY(model);
+  model->update();
+  navigation.select(topic);
+  QCOMPARE(navigation.currentReference().qualifiedName(),
+           topic.qualifiedName());
+  QSignalSpy changes(&navigation, &ReferenceWidget::referenceChanged);
+  auto contains = [](ReferenceModel *model, const QString &name) {
+    for (int section = 0; section < model->rowCount(); ++section) {
+      const QModelIndex parent = model->index(section, 0);
+      for (int row = 0; row < model->rowCount(parent); ++row) {
+        const auto ref = model->index(row, 0, parent)
+                             .data(Qt::UserRole)
+                             .value<git::Reference>();
+        if (ref.qualifiedName() == name)
+          return true;
+      }
+    }
+    return false;
+  };
+  QVERIFY(contains(model, topic.qualifiedName()));
+  QVERIFY(contains(model, tag.qualifiedName()));
+  QVERIFY(contains(model, "refs/remotes/origin/topic"));
+  QVERIFY(RefVisibility::save(
+      {"refs/heads/*", "refs/tags/*", "refs/remotes/origin/*"}, repo));
+  QVERIFY(!contains(model, topic.qualifiedName()));
+  QVERIFY(!contains(model, tag.qualifiedName()));
+  QVERIFY(!contains(model, "refs/remotes/origin/topic"));
+  QVERIFY(contains(model, repo->head().qualifiedName()));
+  QCOMPARE(navigation.currentReference().qualifiedName(),
+           topic.qualifiedName());
+  QCOMPARE(changes.count(), 0);
+
+  const auto labels = navigation.findChildren<QLabel *>();
+  QVERIFY(std::any_of(labels.cbegin(), labels.cend(), [](QLabel *label) {
+    return label->text().contains("(Hidden reference)");
+  }));
+
+  ReferenceModel operations(repo, ReferenceView::AllRefs);
+  operations.update();
+  QVERIFY(contains(&operations, topic.qualifiedName()));
+  QVERIFY(contains(&operations, tag.qualifiedName()));
+  QVERIFY(contains(&operations, "refs/remotes/origin/topic"));
+  QVERIFY(RefVisibility::save({}, repo));
+  QVERIFY(contains(model, topic.qualifiedName()));
+  QCOMPARE(navigation.currentReference().qualifiedName(),
+           topic.qualifiedName());
+  QCOMPARE(changes.count(), 0);
+
+  QVERIFY(RefVisibility::save({"refs/heads/topic"}));
+  QVERIFY(contains(model, topic.qualifiedName()));
+  QVERIFY(RefVisibility::reset(repo));
+  QVERIFY(!contains(model, topic.qualifiedName()));
+  QCOMPARE(navigation.currentReference().qualifiedName(),
+           topic.qualifiedName());
+  QVERIFY(RefVisibility::reset());
+  QVERIFY(contains(model, topic.qualifiedName()));
+  QCOMPARE(changes.count(), 0);
+}
+
+void TestRefVisibility::historyAndBadges() {
+  ScratchRepository scratch;
+  git::Repository repo = scratch;
+  const git::Commit base = repo.commit("Initial commit");
+  QVERIFY(base.isValid());
+  QVERIFY(repo.createTag(base, "v1").isValid());
+  const git::Reference head = repo.head();
+  const git::Branch topic = repo.createBranch("topic");
+  QVERIFY(repo.setHead(topic));
+  const git::Commit extra = repo.commit("Only reachable through hidden refs");
+  QVERIFY(extra.isValid());
+  QVERIFY(repo.setHead(head));
+  QCOMPARE(QProcess::execute(GIT_EXECUTABLE,
+                             {"-C", repo.workdir().path(), "update-ref",
+                              "refs/agents/task", extra.id().toString()}),
+           0);
+  QVERIFY(RefVisibility::save({}, repo));
+  auto window = std::make_unique<MainWindow>(repo);
+  window->show();
+  RepoView *view = window->currentView();
+  auto *commits = view->findChild<CommitList *>();
+  QVERIFY(commits);
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QAbstractItemModel *model = commits->model();
+  auto snapshot = [model] {
+    QVariantList rows;
+    for (int row = 0; row < model->rowCount(); ++row) {
+      const QModelIndex index = model->index(row, 0);
+      const auto commit =
+          index.data(CommitList::CommitRole).value<git::Commit>();
+      rows.append(QVariant(
+          QVariantList{commit.isValid() ? commit.id().toString() : QString(),
+                       index.data(CommitList::GraphRole),
+                       index.data(CommitList::GraphColorRole)}));
+    }
+    return rows;
+  };
+  const QVariantList before = snapshot();
+  QModelIndex extraIndex;
+  for (int row = 0; row < model->rowCount(); ++row) {
+    const QModelIndex index = model->index(row, 0);
+    const auto commit = index.data(CommitList::CommitRole).value<git::Commit>();
+    if (commit.isValid() && commit.id() == extra.id())
+      extraIndex = index;
+  }
+  QVERIFY(extraIndex.isValid());
+  auto paint = [commits, model, extra] {
+    QModelIndex extraIndex;
+    for (int row = 0; row < model->rowCount(); ++row) {
+      const QModelIndex index = model->index(row, 0);
+      const auto commit =
+          index.data(CommitList::CommitRole).value<git::Commit>();
+      if (commit.isValid() && commit.id() == extra.id())
+        extraIndex = index;
+    }
+    QImage image(1200, 120, QImage::Format_ARGB32_Premultiplied);
+    image.fill(Qt::white);
+    QPainter painter(&image);
+    QStyleOptionViewItem option;
+    option.initFrom(commits);
+    option.widget = commits;
+    option.rect = image.rect();
+    commits->itemDelegate()->paint(&painter, option, extraIndex);
+    return image;
+  };
+  commits->selectReference(repo.lookupRef("refs/agents/task"));
+  QTRY_VERIFY_WITH_TIMEOUT(!view->commits().isEmpty(), 10000);
+  QTRY_COMPARE_WITH_TIMEOUT(view->commits().first().id(), extra.id(), 10000);
+  auto *badge = view->findChild<QWidget *>("commitRefs");
+  QVERIFY(badge);
+  QTRY_VERIFY_WITH_TIMEOUT(badge->sizeHint().width() > 0, 10000);
+  QVERIFY(QThreadPool::globalInstance()->waitForDone(10000));
+  QCoreApplication::processEvents();
+  const int widthBefore = badge->sizeHint().width();
+  QCOMPARE(widthBefore,
+           Badge::size(badge->font(),
+                       {{Badge::Label::Type::Ref, topic.name()},
+                        {Badge::Label::Type::Ref,
+                         repo.lookupRef("refs/agents/task").name()},
+                        {Badge::Label::Type::Ref, "v1 +1", false, true}})
+               .width());
+  const QImage paintedBefore = paint();
+  QSignalSpy resets(model, &QAbstractItemModel::modelReset);
+  QVERIFY(RefVisibility::save({"refs/agents/*", "refs/tags/*"}, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QVERIFY(QThreadPool::globalInstance()->waitForDone(10000));
+  QCoreApplication::processEvents();
+  QCOMPARE(snapshot(), before);
+  QVERIFY(resets.count() > 0);
+  QVERIFY(badge->sizeHint().width() < widthBefore);
+  QVERIFY(paint() != paintedBefore);
+  QVERIFY(repo.lookupRef("refs/agents/task").isValid());
+  QVERIFY(repo.lookupRef("refs/heads/topic").isValid());
+  QVERIFY(RefVisibility::save({}, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QVERIFY(QThreadPool::globalInstance()->waitForDone(10000));
+  QCoreApplication::processEvents();
+  QCOMPARE(snapshot(), before);
+  QTRY_COMPARE_WITH_TIMEOUT(badge->sizeHint().width(), widthBefore, 10000);
+  QCOMPARE(paint(), paintedBefore);
+  QVERIFY(RefVisibility::reset(repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QVERIFY(QThreadPool::globalInstance()->waitForDone(10000));
+  QCoreApplication::processEvents();
+  QCOMPARE(RefVisibility::patterns(repo), RefVisibility::defaults());
+  QCOMPARE(snapshot(), before);
+  QVERIFY(badge->sizeHint().width() < widthBefore);
+  QVERIFY(paint() != paintedBefore);
+}
+
+void TestRefVisibility::historyRoots_data() {
+  QTest::addColumn<bool>("graph");
+  QTest::addColumn<bool>("sortDate");
+  QTest::newRow("graph-date") << true << true;
+  QTest::newRow("graph-topological") << true << false;
+  QTest::newRow("list-date") << false << true;
+  QTest::newRow("list-topological") << false << false;
+}
+
+void TestRefVisibility::historyRoots() {
+  QFETCH(bool, graph);
+  QFETCH(bool, sortDate);
+  ScratchRepository scratch;
+  git::Repository repo = scratch;
+  const git::Commit base = repo.commit("Shared ancestor");
+  QVERIFY(base.isValid());
+  const git::Branch head(repo.head());
+  const git::Branch topic = repo.createBranch("topic");
+  QVERIFY(repo.setHead(topic));
+  const git::Commit extra = repo.commit("Agent-only descendant");
+  QVERIFY(extra.isValid());
+  QVERIFY(repo.setHead(head));
+  auto git = [&repo](const QStringList &arguments) {
+    return QProcess::execute(
+        GIT_EXECUTABLE, QStringList({"-C", repo.workdir().path()}) + arguments);
+  };
+  QCOMPARE(git({"update-ref", "refs/agents/task", extra.id().toString()}), 0);
+  QCOMPARE(git({"checkout", "--orphan", "agent-root"}), 0);
+  const git::Commit orphan = repo.commit("Disconnected agent root");
+  QVERIFY(orphan.isValid());
+  QSet<QString> all = {base.id().toString(), extra.id().toString(),
+                       orphan.id().toString()};
+  git::Commit orphanTip = orphan;
+  for (int i = 0; i < 70; ++i) {
+    orphanTip = repo.commit(QString("Disconnected agent turn %1").arg(i));
+    QVERIFY(orphanTip.isValid());
+    all.insert(orphanTip.id().toString());
+  }
+  QCOMPARE(git({"update-ref", "refs/agents/orphan", orphanTip.id().toString()}),
+           0);
+  QVERIFY(repo.setHead(head));
+  QCOMPARE(git({"branch", "-D", "agent-root"}), 0);
+
+  repo.appConfig().setValue(ConfigKeys::kGraphKey, graph);
+  repo.appConfig().setValue(ConfigKeys::kSortKey, sortDate);
+  QVERIFY(RefVisibility::save({}, repo));
+  auto window = std::make_unique<MainWindow>(repo);
+  RepoView *view = window->currentView();
+  auto *commits = view->findChild<CommitList *>();
+  QVERIFY(commits);
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  auto ids = [commits] {
+    QSet<QString> result;
+    QAbstractItemModel *model = commits->model();
+    while (model->canFetchMore(QModelIndex()))
+      model->fetchMore(QModelIndex());
+    for (int row = 0; row < model->rowCount(); ++row) {
+      const auto commit = model->index(row, 0)
+                              .data(CommitList::CommitRole)
+                              .value<git::Commit>();
+      if (commit.isValid())
+        result.insert(commit.id().toString());
+    }
+    return result;
+  };
+  QCOMPARE(ids(), all);
+
+  // A local show-all override must survive a global exclusion.
+  QVERIFY(RefVisibility::save(RefVisibility::defaults()));
+  QVERIFY(!commits->isLoading());
+  QCOMPARE(ids(), all);
+  QVERIFY(RefVisibility::reset(repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString(), extra.id().toString()}));
+  // The visible topic branch retains the shared agent descendant.
+  QVERIFY(RefVisibility::save({"refs/agents/*", "refs/heads/topic"}, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString()}));
+  QVERIFY(repo.lookupRef("refs/agents/orphan").isValid());
+  QVERIFY(repo.lookupCommit(orphan.id()).isValid());
+
+  // A visible tag can retain the same history even when its branch is hidden.
+  QVERIFY(repo.createTag(extra, "retained").isValid());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString(), extra.id().toString()}));
+  QVERIFY(RefVisibility::save(
+      {"refs/agents/*", "refs/heads/topic", "refs/tags/*"}, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString()}));
+
+  // An excluded upstream must not be added through the special upstream path.
+  QCOMPARE(git({"remote", "add", "origin", repo.workdir().path()}), 0);
+  QCOMPARE(
+      git({"update-ref", "refs/remotes/origin/topic", extra.id().toString()}),
+      0);
+  QCOMPARE(git({"branch", "--set-upstream-to=origin/topic", head.name()}), 0);
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString(), extra.id().toString()}));
+  const QStringList exclusions = {"refs/agents/*", "refs/heads/topic",
+                                  "refs/tags/*", "refs/remotes/*"};
+  QVERIFY(RefVisibility::save(exclusions, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString()}));
+
+  QVERIFY(RefVisibility::save({}, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), all);
+
+  // Explicit selected-branch history stays available, but switching back to
+  // all branches must not retain an excluded selection as a history root.
+  repo.appConfig().setValue(ConfigKeys::kRefsKey,
+                            int(CommitList::RefsFilter::SelectedRef));
+  commits->resetSettings();
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  auto *navigation = view->findChild<ReferenceWidget *>();
+  QVERIFY(navigation);
+  navigation->select(topic);
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QVERIFY(RefVisibility::save(exclusions, repo));
+  QVERIFY(!commits->isLoading());
+  QCOMPARE(ids(), QSet<QString>({base.id().toString(), extra.id().toString()}));
+  repo.appConfig().setValue(ConfigKeys::kRefsKey,
+                            int(CommitList::RefsFilter::AllRefs));
+  commits->resetSettings();
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString()}));
+  QVERIFY(RefVisibility::reset());
+}
+
+void TestRefVisibility::writeFailures() {
+  ScratchRepository repo;
+  const QStringList before = RefVisibility::patterns();
+  QFile file(repo->appDir().filePath("config"));
+  QVERIFY(file.open(QFile::WriteOnly));
+  QVERIFY(file.write("[invalid\n") > 0);
+  file.close();
+  QSignalSpy changes(RefVisibility::instance(), &RefVisibility::changed);
+  const git::Result save = RefVisibility::save({}, repo);
+  QVERIFY(!save);
+  QVERIFY(!save.errorString().isEmpty());
+  const git::Result reset = RefVisibility::reset(repo);
+  QVERIFY(!reset);
+  QVERIFY(!reset.errorString().isEmpty());
+  QCOMPARE(RefVisibility::patterns(), before);
+  QCOMPARE(changes.count(), 0);
+}
+
+void TestRefVisibility::blockedConfigDirectory() {
+  ScratchRepository scratch;
+  git::Repository repo = scratch;
+  const QStringList before = RefVisibility::patterns();
+  const QString appDirectory = repo.dir().filePath("gittyup");
+  if (QDir(appDirectory).exists())
+    QVERIFY(QDir().rmdir(appDirectory));
+  QFile blocker(appDirectory);
+  QVERIFY(blocker.open(QFile::WriteOnly));
+  blocker.close();
+  QSignalSpy changes(RefVisibility::instance(), &RefVisibility::changed);
+  QVERIFY(!RefVisibility::save({}, repo));
+  QVERIFY(!RefVisibility::reset(repo));
+  QCOMPARE(RefVisibility::patterns(), before);
+  QString value;
+  QCOMPARE(repo.gitConfig().readString("refs.hidden", value).error(),
+           GIT_ENOTFOUND);
+  QCOMPARE(changes.count(), 0);
+}
+
+void TestRefVisibility::cleanupTestCase() {
+  QDir configDir(
+      QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation));
+  QVERIFY(configDir.remove("config"));
+  if (configDir.exists("user.dic"))
+    QVERIFY(configDir.remove("user.dic"));
+  QVERIFY(QDir().rmdir(configDir.path()));
+}
+
+TEST_MAIN(TestRefVisibility)
+#include "RefVisibility.moc"

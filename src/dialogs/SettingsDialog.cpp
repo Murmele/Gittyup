@@ -13,6 +13,7 @@
 #include "ExternalToolsDialog.h"
 #include "HotkeysPanel.h"
 #include "PluginsPanel.h"
+#include "RefVisibilityPanel.h"
 #include "app/Application.h"
 #include "app/CustomTheme.h"
 #include "conf/Settings.h"
@@ -1009,6 +1010,13 @@ SettingsDialog::SettingsDialog(Index index, QWidget *parent)
   hotkeys->setCheckable(true);
 
   stack->addWidget(new HotkeysPanel(this));
+
+  QAction *references =
+      toolbar->addAction(QIcon(":/branches.png"), tr("References"));
+  references->setData(References);
+  references->setActionGroup(actions);
+  references->setCheckable(true);
+  stack->addWidget(new RefVisibilityPanel(git::Repository(), this));
 
 #ifdef Q_OS_UNIX
   // Add terminal panel.

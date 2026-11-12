@@ -28,7 +28,8 @@ public:
     Submodules,
     Search,
     Plugins,
-    Lfs
+    Lfs,
+    References
   };
 
   ConfigDialog(RepoView *view, Index index = General);
