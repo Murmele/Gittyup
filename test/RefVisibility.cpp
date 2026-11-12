@@ -4,6 +4,7 @@
 #include "git/Branch.h"
 #include "git/Reference.h"
 #include "git/TagRef.h"
+#include "ui/Badge.h"
 #include "ui/CommitList.h"
 #include "ui/ConfigKeys.h"
 #include "ui/MainWindow.h"
@@ -20,6 +21,7 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QStandardPaths>
+#include <QThreadPool>
 #include <memory>
 
 using namespace Test;
@@ -37,6 +39,7 @@ private slots:
   void navigation();
   void historyAndBadges();
   void writeFailures();
+  void blockedConfigDirectory();
   void cleanupTestCase();
 };
 
@@ -58,6 +61,12 @@ void TestRefVisibility::matching() {
   QVERIFY(!rules.hides("refs/heads/Topic"));
   QVERIFY(!rules.hides("prefix/refs/heads/topic"));
   QVERIFY(!RefVisibility::Rules({}).hides("refs/agents/task"));
+  RefVisibility::Rules literals(
+      {"refs/tags/v1.0+build", "refs/heads/topic[1]"});
+  QVERIFY(literals.hides("refs/tags/v1.0+build"));
+  QVERIFY(!literals.hides("refs/tags/v1X0build"));
+  QVERIFY(literals.hides("refs/heads/topic[1]"));
+  QVERIFY(!literals.hides("refs/heads/topic1"));
 }
 
 void TestRefVisibility::validation() {
@@ -227,6 +236,7 @@ void TestRefVisibility::navigation() {
   QCOMPARE(navigation.currentReference().qualifiedName(),
            topic.qualifiedName());
   QCOMPARE(changes.count(), 0);
+
   const auto labels = navigation.findChildren<QLabel *>();
   QVERIFY(std::any_of(labels.cbegin(), labels.cend(), [](QLabel *label) {
     return label->text().contains("(Hidden reference)");
@@ -242,6 +252,16 @@ void TestRefVisibility::navigation() {
   QCOMPARE(navigation.currentReference().qualifiedName(),
            topic.qualifiedName());
   QCOMPARE(changes.count(), 0);
+
+  QVERIFY(RefVisibility::save({"refs/heads/topic"}));
+  QVERIFY(contains(model, topic.qualifiedName()));
+  QVERIFY(RefVisibility::reset(repo));
+  QVERIFY(!contains(model, topic.qualifiedName()));
+  QCOMPARE(navigation.currentReference().qualifiedName(),
+           topic.qualifiedName());
+  QVERIFY(RefVisibility::reset());
+  QVERIFY(contains(model, topic.qualifiedName()));
+  QCOMPARE(changes.count(), 0);
 }
 
 void TestRefVisibility::historyAndBadges() {
@@ -249,6 +269,7 @@ void TestRefVisibility::historyAndBadges() {
   git::Repository repo = scratch;
   const git::Commit base = repo.commit("Initial commit");
   QVERIFY(base.isValid());
+  QVERIFY(repo.createTag(base, "v1").isValid());
   const git::Reference head = repo.head();
   const git::Branch topic = repo.createBranch("topic");
   QVERIFY(repo.setHead(topic));
@@ -306,11 +327,23 @@ void TestRefVisibility::historyAndBadges() {
   auto *badge = view->findChild<QWidget *>("commitRefs");
   QVERIFY(badge);
   QTRY_VERIFY_WITH_TIMEOUT(badge->sizeHint().width() > 0, 10000);
+  QVERIFY(QThreadPool::globalInstance()->waitForDone(10000));
+  QCoreApplication::processEvents();
   const int widthBefore = badge->sizeHint().width();
+  QCOMPARE(widthBefore,
+           Badge::size(badge->font(),
+                       {{Badge::Label::Type::Ref, topic.name()},
+                        {Badge::Label::Type::Ref,
+                         repo.lookupRef("refs/agents/task").name()},
+                        {Badge::Label::Type::Ref, "v1 +1", false, true}})
+               .width());
   const QImage paintedBefore = paint();
   QSignalSpy resets(model, &QAbstractItemModel::modelReset);
   QSignalSpy loading(commits, &CommitList::loadingChanged);
-  QVERIFY(RefVisibility::save({"refs/agents/*", "refs/heads/topic"}, repo));
+  QVERIFY(RefVisibility::save(
+      {"refs/agents/*", "refs/heads/topic", "refs/tags/*"}, repo));
+  QVERIFY(QThreadPool::globalInstance()->waitForDone(10000));
+  QCoreApplication::processEvents();
   QCOMPARE(snapshot(), before);
   QCOMPARE(resets.count(), 0);
   QCOMPARE(loading.count(), 0);
@@ -319,9 +352,16 @@ void TestRefVisibility::historyAndBadges() {
   QVERIFY(repo.lookupRef("refs/agents/task").isValid());
   QVERIFY(repo.lookupRef("refs/heads/topic").isValid());
   QVERIFY(RefVisibility::save({}, repo));
+  QVERIFY(QThreadPool::globalInstance()->waitForDone(10000));
+  QCoreApplication::processEvents();
   QCOMPARE(snapshot(), before);
   QCOMPARE(badge->sizeHint().width(), widthBefore);
   QCOMPARE(paint(), paintedBefore);
+  QVERIFY(RefVisibility::reset(repo));
+  QCOMPARE(RefVisibility::patterns(repo), RefVisibility::defaults());
+  QCOMPARE(snapshot(), before);
+  QVERIFY(badge->sizeHint().width() < widthBefore);
+  QVERIFY(paint() != paintedBefore);
 }
 
 void TestRefVisibility::writeFailures() {
@@ -339,6 +379,26 @@ void TestRefVisibility::writeFailures() {
   QVERIFY(!reset);
   QVERIFY(!reset.errorString().isEmpty());
   QCOMPARE(RefVisibility::patterns(), before);
+  QCOMPARE(changes.count(), 0);
+}
+
+void TestRefVisibility::blockedConfigDirectory() {
+  ScratchRepository scratch;
+  git::Repository repo = scratch;
+  const QStringList before = RefVisibility::patterns();
+  const QString appDirectory = repo.dir().filePath("gittyup");
+  if (QDir(appDirectory).exists())
+    QVERIFY(QDir().rmdir(appDirectory));
+  QFile blocker(appDirectory);
+  QVERIFY(blocker.open(QFile::WriteOnly));
+  blocker.close();
+  QSignalSpy changes(RefVisibility::instance(), &RefVisibility::changed);
+  QVERIFY(!RefVisibility::save({}, repo));
+  QVERIFY(!RefVisibility::reset(repo));
+  QCOMPARE(RefVisibility::patterns(), before);
+  QString value;
+  QCOMPARE(repo.gitConfig().readString("refs.hidden", value).error(),
+           GIT_ENOTFOUND);
   QCOMPARE(changes.count(), 0);
 }
 
