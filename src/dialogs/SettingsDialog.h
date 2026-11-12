@@ -26,6 +26,7 @@ public:
     Plugins,
     Misc,
     Hotkeys,
+    References,
     Terminal
   };
 

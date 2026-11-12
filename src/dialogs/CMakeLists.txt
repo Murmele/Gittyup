@@ -23,6 +23,7 @@ add_library(
   PullRequestDialog.cpp
   RemoteDialog.cpp
   RemoteTableModel.cpp
+  RefVisibilityPanel.cpp
   RenameBranchDialog.cpp
   SettingsDialog.cpp
   StartDialog.cpp

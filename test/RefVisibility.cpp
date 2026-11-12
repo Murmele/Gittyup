@@ -1,6 +1,13 @@
 #include "Test.h"
 #include "conf/RefVisibility.h"
+#include "dialogs/RefVisibilityPanel.h"
+#include "git/Branch.h"
 #include "git/Reference.h"
+#include <QCheckBox>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QPlainTextEdit>
+#include <QPushButton>
 #include <QStandardPaths>
 
 using namespace Test;
@@ -14,6 +21,7 @@ private slots:
   void validation();
   void persistence();
   void protectedRefs();
+  void settingsPanel();
   void cleanupTestCase();
 };
 
@@ -82,6 +90,68 @@ void TestRefVisibility::protectedRefs() {
   QVERIFY(repo->head().isValid());
   QVERIFY(!rules.hides(repo->head()));
   QVERIFY(!rules.hides(git::Reference()));
+}
+
+void TestRefVisibility::settingsPanel() {
+  ScratchRepository repo;
+  QVERIFY(repo->commit("Initial commit").isValid());
+  QVERIFY(repo->createBranch("topic").isValid());
+  RefVisibilityPanel panel(repo);
+  auto *inherit = panel.findChild<QCheckBox *>("inheritRefVisibility");
+  auto *editor = panel.findChild<QPlainTextEdit *>("hiddenRefRules");
+  auto *list = panel.findChild<QListWidget *>("refVisibilityList");
+  auto *search = panel.findChild<QLineEdit *>("refVisibilitySearch");
+  auto *apply = panel.findChild<QPushButton *>("applyRefVisibility");
+  auto *showAll = panel.findChild<QPushButton *>("showAllRefs");
+  auto *reset = panel.findChild<QPushButton *>("resetRefVisibility");
+  QVERIFY(inherit && editor && list && search && apply && showAll && reset);
+  QVERIFY(inherit->isChecked());
+  QVERIFY(!editor->isEnabled());
+  QVERIFY(!apply->isEnabled());
+  QCOMPARE(list->count(), 2);
+
+  inherit->setChecked(false);
+  QVERIFY(editor->isEnabled());
+  search->setText("topic");
+  QListWidgetItem *topic = nullptr;
+  for (int i = 0; i < list->count(); ++i) {
+    if (list->item(i)->text() == "refs/heads/topic")
+      topic = list->item(i);
+    else
+      QVERIFY(list->item(i)->isHidden());
+  }
+  QVERIFY(topic);
+  QVERIFY(!topic->isHidden());
+  topic->setCheckState(Qt::Checked);
+  QVERIFY(editor->toPlainText().contains("refs/heads/topic"));
+  QVERIFY(apply->isEnabled());
+  apply->click();
+  QVERIFY(RefVisibility::hasOverride(repo));
+  QVERIFY(RefVisibility::Rules(RefVisibility::patterns(repo))
+              .hides("refs/heads/topic"));
+  QVERIFY(!apply->isEnabled());
+
+  editor->setPlainText("invalid");
+  QVERIFY(!apply->isEnabled());
+  showAll->click();
+  QVERIFY(apply->isEnabled());
+  apply->click();
+  QVERIFY(RefVisibility::hasOverride(repo));
+  QVERIFY(RefVisibility::patterns(repo).isEmpty());
+  reset->click();
+  QVERIFY(inherit->isChecked());
+  QVERIFY(!RefVisibility::hasOverride(repo));
+  QCOMPARE(RefVisibility::patterns(repo), RefVisibility::defaults());
+
+  RefVisibilityPanel global;
+  auto *globalEditor = global.findChild<QPlainTextEdit *>("hiddenRefRules");
+  auto *globalApply = global.findChild<QPushButton *>("applyRefVisibility");
+  QVERIFY(globalEditor && globalApply);
+  globalEditor->setPlainText("refs/tags/*");
+  globalApply->click();
+  QCOMPARE(RefVisibility::patterns(repo), QStringList({"refs/tags/*"}));
+  QVERIFY(inherit->isChecked());
+  QVERIFY(RefVisibility::reset());
 }
 
 void TestRefVisibility::cleanupTestCase() {

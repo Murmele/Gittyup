@@ -16,6 +16,7 @@
 #include "NewBranchDialog.h"
 #include "PluginsPanel.h"
 #include "RemoteTableModel.h"
+#include "RefVisibilityPanel.h"
 #include "SubmoduleDelegate.h"
 #include "SubmoduleTableModel.h"
 #include "app/Application.h"
@@ -825,6 +826,12 @@ ConfigDialog::ConfigDialog(RepoView *view, Index index) : QDialog(view) {
   lfs->setCheckable(true);
 
   mStack->addWidget(new LfsPanel(view, this));
+
+  QAction *references =
+      toolbar->addAction(QIcon(":/branches.png"), tr("References"));
+  references->setActionGroup(mActions);
+  references->setCheckable(true);
+  mStack->addWidget(new RefVisibilityPanel(view->repo(), this));
 
   // Trigger the requested action.
   mActions->actions().at(index)->trigger();
