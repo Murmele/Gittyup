@@ -110,6 +110,15 @@ public:
     });
 
     resetSettings();
+    mHiddenRefs = RefVisibility::patterns(mRepo);
+    connect(RefVisibility::instance(), &RefVisibility::changed, this, [this] {
+      const QStringList patterns = RefVisibility::patterns(mRepo);
+      if (patterns == mHiddenRefs)
+        return;
+      mHiddenRefs = patterns;
+      if (mRefsFilter == CommitList::RefsFilter::AllRefs)
+        resetWalker();
+    });
   }
 
   ~CommitModel() {
@@ -369,6 +378,7 @@ private:
 
     // Carried straight through to ResetResult; see its field for why.
     bool emitStatusFinished;
+    QStringList hiddenRefs;
   };
 
   struct ResetResult {
@@ -603,8 +613,11 @@ private:
           ctx.refsFilter == CommitList::RefsFilter::SelectedRefIgnoreMerge);
       if (ctx.ref.isLocalBranch()) {
         // Add the upstream branch.
-        if (git::Branch upstream = git::Branch(ctx.ref).upstream())
-          result.walker.push(upstream);
+        if (git::Branch upstream = git::Branch(ctx.ref).upstream()) {
+          if (ctx.refsFilter != CommitList::RefsFilter::AllRefs ||
+              !RefVisibility::Rules(ctx.hiddenRefs).hides(upstream))
+            result.walker.push(upstream);
+        }
       }
 
       if (ctx.ref.isHead()) {
@@ -614,8 +627,9 @@ private:
       }
 
       if (ctx.refsFilter == CommitList::RefsFilter::AllRefs) {
+        const RefVisibility::Rules visibility(ctx.hiddenRefs);
         for (const git::Reference &ref : ctx.repo.refs()) {
-          if (!ref.isStash())
+          if (!ref.isStash() && !visibility.hides(ref))
             result.walker.push(ref);
         }
       }
@@ -639,7 +653,12 @@ private:
   // until the background computation finishes and applyResetResult() swaps
   // the new data in.
   void dispatchResetWalker(bool emitStatusFinishedAfter) {
-    ResetContext ctx{mRef,
+    const git::Reference ref =
+        mRefsFilter == CommitList::RefsFilter::AllRefs &&
+                RefVisibility::Rules(mHiddenRefs).hides(mRef)
+            ? mRepo.head()
+            : mRef;
+    ResetContext ctx{ref,
                      mPathspec,
                      mGraphVisible,
                      mSortDate,
@@ -648,7 +667,8 @@ private:
                      mRepo,
                      status(),
                      mStatus.isFinished(),
-                     emitStatusFinishedAfter};
+                     emitStatusFinishedAfter,
+                     mHiddenRefs};
 
     emit loadingChanged(true);
     mReset.setFuture(QtConcurrent::run([ctx] { return computeReset(ctx); }));
@@ -687,6 +707,7 @@ private:
   bool mSortDate = true;
   bool mShowCleanStatus = true;
   bool mGraphVisible = true;
+  QStringList mHiddenRefs;
 };
 
 /*!

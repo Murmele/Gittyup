@@ -19,7 +19,8 @@ RefVisibilityPanel::RefVisibilityPanel(const git::Repository &repo,
     : QWidget(parent), mRepo(repo) {
   auto *layout = new QVBoxLayout(this);
   auto *description = new QLabel(
-      tr("Hide ref names in navigation and commit labels, not commits. "
+      tr("Hide refs and histories reachable only from those refs in the "
+         "all-branches view. Commits shared with visible refs remain. "
          "Git operations still have access to all refs. The current branch, "
          "detached HEAD and stash remain visible."),
       this);

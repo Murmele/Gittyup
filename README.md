@@ -48,8 +48,9 @@ patterns globally. Use **Repository > Configure Repository... > References** to
 override those rules for one repository. `refs/agents/*` is hidden by default;
 **Show All**, followed by **Apply**, reveals it.
 
-These settings hide navigation entries and commit labels, not commits or refs
-available to Git operations. See [reference visibility](docs/index.md#reference-visibility)
+These settings hide navigation entries, commit labels, and histories reachable
+only from excluded refs in the all-branches view. They do not delete Git refs or
+restrict Git operations. See [reference visibility](docs/index.md#reference-visibility)
 for wildcard syntax, inheritance, and configuration details.
 
 How to Get Help

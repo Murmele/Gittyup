@@ -61,7 +61,7 @@ Select "Show Selected Branch" in the drop down menu above the commit list
 
 ### Reference visibility
 
-Hide ref names without changing the commit history:
+Hide refs and their exclusive histories from the all-branches view:
 
 1. Open **Tools > Options... > References** for global rules, or
    **Repository > Configure Repository... > References** for a repository.
@@ -92,11 +92,17 @@ removes the repository override; **Reset Defaults** in global options restores
 the built-in `refs/agents/*` exclusion.
 
 Exclusions affect the navigation selector, commit badges, and commit-detail ref
-labels, including tag descriptions. They never delete refs, prune history roots,
-or restrict checkout, merge, push, or other Git-operation dialogs. Commits reachable
-only through hidden refs still appear in the all-branches history. The current
+labels, including tag descriptions. In **Show All Branches**, excluded refs are
+not used as history roots: disconnected trees and commits reachable only from
+hidden refs disappear. Commits also reachable from visible refs remain, including
+shared ancestors. Changes rebuild the history immediately, and **Show All**
+restores excluded histories.
+
+Exclusions never delete refs or commits, or restrict checkout, merge, push, or
+other Git-operation dialogs. The current
 checkout (including detached HEAD) and stash remain visible. If an already selected
-ref is hidden, the selected-branch history stays in place and its header becomes
+ref is hidden while using **Show Selected Branch**, that explicitly selected
+history stays in place and its header becomes
 **(Hidden reference)** instead of switching to HEAD.
 
 Rules are stored in Gittyup's application configuration, not Git's own settings.

@@ -38,6 +38,8 @@ private slots:
   void settingsPanel();
   void navigation();
   void historyAndBadges();
+  void historyRoots_data();
+  void historyRoots();
   void writeFailures();
   void blockedConfigDirectory();
   void cleanupTestCase();
@@ -310,7 +312,15 @@ void TestRefVisibility::historyAndBadges() {
       extraIndex = index;
   }
   QVERIFY(extraIndex.isValid());
-  auto paint = [commits, extraIndex] {
+  auto paint = [commits, model, extra] {
+    QModelIndex extraIndex;
+    for (int row = 0; row < model->rowCount(); ++row) {
+      const QModelIndex index = model->index(row, 0);
+      const auto commit =
+          index.data(CommitList::CommitRole).value<git::Commit>();
+      if (commit.isValid() && commit.id() == extra.id())
+        extraIndex = index;
+    }
     QImage image(1200, 120, QImage::Format_ARGB32_Premultiplied);
     image.fill(Qt::white);
     QPainter painter(&image);
@@ -339,29 +349,162 @@ void TestRefVisibility::historyAndBadges() {
                .width());
   const QImage paintedBefore = paint();
   QSignalSpy resets(model, &QAbstractItemModel::modelReset);
-  QSignalSpy loading(commits, &CommitList::loadingChanged);
-  QVERIFY(RefVisibility::save(
-      {"refs/agents/*", "refs/heads/topic", "refs/tags/*"}, repo));
+  QVERIFY(RefVisibility::save({"refs/agents/*", "refs/tags/*"}, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
   QVERIFY(QThreadPool::globalInstance()->waitForDone(10000));
   QCoreApplication::processEvents();
   QCOMPARE(snapshot(), before);
-  QCOMPARE(resets.count(), 0);
-  QCOMPARE(loading.count(), 0);
+  QVERIFY(resets.count() > 0);
   QVERIFY(badge->sizeHint().width() < widthBefore);
   QVERIFY(paint() != paintedBefore);
   QVERIFY(repo.lookupRef("refs/agents/task").isValid());
   QVERIFY(repo.lookupRef("refs/heads/topic").isValid());
   QVERIFY(RefVisibility::save({}, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
   QVERIFY(QThreadPool::globalInstance()->waitForDone(10000));
   QCoreApplication::processEvents();
   QCOMPARE(snapshot(), before);
-  QCOMPARE(badge->sizeHint().width(), widthBefore);
+  QTRY_COMPARE_WITH_TIMEOUT(badge->sizeHint().width(), widthBefore, 10000);
   QCOMPARE(paint(), paintedBefore);
   QVERIFY(RefVisibility::reset(repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QVERIFY(QThreadPool::globalInstance()->waitForDone(10000));
+  QCoreApplication::processEvents();
   QCOMPARE(RefVisibility::patterns(repo), RefVisibility::defaults());
   QCOMPARE(snapshot(), before);
   QVERIFY(badge->sizeHint().width() < widthBefore);
   QVERIFY(paint() != paintedBefore);
+}
+
+void TestRefVisibility::historyRoots_data() {
+  QTest::addColumn<bool>("graph");
+  QTest::addColumn<bool>("sortDate");
+  QTest::newRow("graph-date") << true << true;
+  QTest::newRow("graph-topological") << true << false;
+  QTest::newRow("list-date") << false << true;
+  QTest::newRow("list-topological") << false << false;
+}
+
+void TestRefVisibility::historyRoots() {
+  QFETCH(bool, graph);
+  QFETCH(bool, sortDate);
+  ScratchRepository scratch;
+  git::Repository repo = scratch;
+  const git::Commit base = repo.commit("Shared ancestor");
+  QVERIFY(base.isValid());
+  const git::Branch head(repo.head());
+  const git::Branch topic = repo.createBranch("topic");
+  QVERIFY(repo.setHead(topic));
+  const git::Commit extra = repo.commit("Agent-only descendant");
+  QVERIFY(extra.isValid());
+  QVERIFY(repo.setHead(head));
+  auto git = [&repo](const QStringList &arguments) {
+    return QProcess::execute(
+        GIT_EXECUTABLE, QStringList({"-C", repo.workdir().path()}) + arguments);
+  };
+  QCOMPARE(git({"update-ref", "refs/agents/task", extra.id().toString()}), 0);
+  QCOMPARE(git({"checkout", "--orphan", "agent-root"}), 0);
+  const git::Commit orphan = repo.commit("Disconnected agent root");
+  QVERIFY(orphan.isValid());
+  QSet<QString> all = {base.id().toString(), extra.id().toString(),
+                       orphan.id().toString()};
+  git::Commit orphanTip = orphan;
+  for (int i = 0; i < 70; ++i) {
+    orphanTip = repo.commit(QString("Disconnected agent turn %1").arg(i));
+    QVERIFY(orphanTip.isValid());
+    all.insert(orphanTip.id().toString());
+  }
+  QCOMPARE(git({"update-ref", "refs/agents/orphan", orphanTip.id().toString()}),
+           0);
+  QVERIFY(repo.setHead(head));
+  QCOMPARE(git({"branch", "-D", "agent-root"}), 0);
+
+  repo.appConfig().setValue(ConfigKeys::kGraphKey, graph);
+  repo.appConfig().setValue(ConfigKeys::kSortKey, sortDate);
+  QVERIFY(RefVisibility::save({}, repo));
+  auto window = std::make_unique<MainWindow>(repo);
+  RepoView *view = window->currentView();
+  auto *commits = view->findChild<CommitList *>();
+  QVERIFY(commits);
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  auto ids = [commits] {
+    QSet<QString> result;
+    QAbstractItemModel *model = commits->model();
+    while (model->canFetchMore(QModelIndex()))
+      model->fetchMore(QModelIndex());
+    for (int row = 0; row < model->rowCount(); ++row) {
+      const auto commit = model->index(row, 0)
+                              .data(CommitList::CommitRole)
+                              .value<git::Commit>();
+      if (commit.isValid())
+        result.insert(commit.id().toString());
+    }
+    return result;
+  };
+  QCOMPARE(ids(), all);
+
+  // A local show-all override must survive a global exclusion.
+  QVERIFY(RefVisibility::save(RefVisibility::defaults()));
+  QVERIFY(!commits->isLoading());
+  QCOMPARE(ids(), all);
+  QVERIFY(RefVisibility::reset(repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString(), extra.id().toString()}));
+  // The visible topic branch retains the shared agent descendant.
+  QVERIFY(RefVisibility::save({"refs/agents/*", "refs/heads/topic"}, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString()}));
+  QVERIFY(repo.lookupRef("refs/agents/orphan").isValid());
+  QVERIFY(repo.lookupCommit(orphan.id()).isValid());
+
+  // A visible tag can retain the same history even when its branch is hidden.
+  QVERIFY(repo.createTag(extra, "retained").isValid());
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString(), extra.id().toString()}));
+  QVERIFY(RefVisibility::save(
+      {"refs/agents/*", "refs/heads/topic", "refs/tags/*"}, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString()}));
+
+  // An excluded upstream must not be added through the special upstream path.
+  QCOMPARE(git({"remote", "add", "origin", repo.workdir().path()}), 0);
+  QCOMPARE(
+      git({"update-ref", "refs/remotes/origin/topic", extra.id().toString()}),
+      0);
+  QCOMPARE(git({"branch", "--set-upstream-to=origin/topic", head.name()}), 0);
+  emit repo.notifier()->referenceUpdated(repo.head());
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString(), extra.id().toString()}));
+  const QStringList exclusions = {"refs/agents/*", "refs/heads/topic",
+                                  "refs/tags/*", "refs/remotes/*"};
+  QVERIFY(RefVisibility::save(exclusions, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString()}));
+
+  QVERIFY(RefVisibility::save({}, repo));
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), all);
+
+  // Explicit selected-branch history stays available, but switching back to
+  // all branches must not retain an excluded selection as a history root.
+  repo.appConfig().setValue(ConfigKeys::kRefsKey,
+                            int(CommitList::RefsFilter::SelectedRef));
+  commits->resetSettings();
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  auto *navigation = view->findChild<ReferenceWidget *>();
+  QVERIFY(navigation);
+  navigation->select(topic);
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QVERIFY(RefVisibility::save(exclusions, repo));
+  QVERIFY(!commits->isLoading());
+  QCOMPARE(ids(), QSet<QString>({base.id().toString(), extra.id().toString()}));
+  repo.appConfig().setValue(ConfigKeys::kRefsKey,
+                            int(CommitList::RefsFilter::AllRefs));
+  commits->resetSettings();
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QCOMPARE(ids(), QSet<QString>({base.id().toString()}));
+  QVERIFY(RefVisibility::reset());
 }
 
 void TestRefVisibility::writeFailures() {
