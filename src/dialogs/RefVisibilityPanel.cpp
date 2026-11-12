@@ -25,6 +25,15 @@ RefVisibilityPanel::RefVisibilityPanel(const git::Repository &repo,
       this);
   description->setWordWrap(true);
   layout->addWidget(description);
+  if (!repo) {
+    auto *scope = new QLabel(
+        tr("Global rules apply to repositories using global settings. "
+           "The checklist previews these rules against refs in open "
+           "repositories."),
+        this);
+    scope->setWordWrap(true);
+    layout->addWidget(scope);
+  }
 
   if (repo) {
     mInherit = new QCheckBox(tr("Use global settings"), this);
@@ -38,6 +47,7 @@ RefVisibilityPanel::RefVisibilityPanel(const git::Repository &repo,
 
   mOrigin = new QLabel(this);
   mOrigin->setTextFormat(Qt::PlainText);
+  mOrigin->setWordWrap(true);
   layout->addWidget(mOrigin);
   auto *rulesLabel = new QLabel(
       tr("Hidden refs (one full name or wildcard rule per line):"), this);
