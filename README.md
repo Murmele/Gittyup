@@ -26,6 +26,7 @@ Table of contents
 =================
 <!--ts-->
    * [Features](#features)
+      * [Reference Visibility](#reference-visibility)
    * [How to Get Help](#how-to-get-help)
    * [Build Environment](#build-environment)
    * [Dependencies](#dependencies)
@@ -39,6 +40,17 @@ Table of contents
 Features
 ---------------
 To get an overview of the current features please have a look at the [GitHub Page](https://murmele.github.io/Gittyup/)
+
+### Reference Visibility
+
+Use **Tools > Options... > References** to hide individual ref names or wildcard
+patterns globally. Use **Repository > Configure Repository... > References** to
+override those rules for one repository. `refs/agents/*` is hidden by default;
+**Show All**, followed by **Apply**, reveals it.
+
+These settings hide navigation entries and commit labels, not commits or refs
+available to Git operations. See [reference visibility](docs/index.md#reference-visibility)
+for wildcard syntax, inheritance, and configuration details.
 
 How to Get Help
 ---------------

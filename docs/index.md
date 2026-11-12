@@ -59,6 +59,60 @@ Features
 Select "Show Selected Branch" in the drop down menu above the commit list
 ![Single branch](https://raw.githubusercontent.com/Murmele/Gittyup/master/rsrc/screenshots/main_show_selected_branch.png)
 
+### Reference visibility
+
+Hide ref names without changing the commit history:
+
+1. Open **Tools > Options... > References** for global rules, or
+   **Repository > Configure Repository... > References** for a repository.
+2. For repository-specific rules, clear **Use global settings**. The repository
+   rule list replaces the global list; it does not append to it.
+3. Check refs in the searchable checklist to hide individual names, or edit the
+   rule list (one rule per line). The global checklist uses refs from open
+   repositories to preview the global rules, even if a repository has overrides.
+4. Click **Apply** to save and refresh the affected views.
+
+Rules match full, case-sensitive ref names:
+
+| Rule | Effect |
+|------|--------|
+| `refs/heads/topic` | Hide one local branch name |
+| `refs/remotes/origin/archive/*` | Hide matching remote-tracking branch names |
+| `refs/tags/old-*` | Hide matching tag names |
+| `refs/agents/*` | Hide agent refs (the built-in default) |
+
+`*` matches any text, including `/`; `?` matches one character. Matching covers
+the whole name, and all other characters are literal (no regular expressions,
+character classes, or negation). A ref matched by a wildcard is checked and
+disabled in the checklist: edit or remove that rule to reveal it.
+
+**Show All**, then **Apply**, saves an empty rule list. An empty repository
+override stays empty even if global defaults change. **Inherit Global Settings**
+removes the repository override; **Reset Defaults** in global options restores
+the built-in `refs/agents/*` exclusion.
+
+Exclusions affect the navigation selector, commit badges, and commit-detail ref
+labels, including tag descriptions. They never delete refs, prune history roots,
+or restrict checkout, merge, push, or other Git-operation dialogs. Commits reachable
+only through hidden refs still appear in the all-branches history. The current
+checkout (including detached HEAD) and stash remain visible. If an already selected
+ref is hidden, the selected-branch history stays in place and its header becomes
+**(Hidden reference)** instead of switching to HEAD.
+
+Rules are stored in Gittyup's application configuration, not Git's own settings.
+The global key is `refs.hidden` in the application-data `config` file; the
+repository override is in `gittyup/config` under the repository's Git directory
+(normally `.git/gittyup/config`). For example:
+
+```ini
+[refs]
+    hidden = "refs/agents/*\nrefs/remotes/origin/archive/*"
+```
+
+An explicit `hidden = ""` means show all; an absent key inherits global rules,
+or the built-in default when no global key exists. Prefer the UI for editing so
+open views refresh immediately.
+
 ### Fullscreen
 of the history or the change dialog by pressing Ctrl+M
 
@@ -120,4 +174,3 @@ Changelog
 =========
 
 {% include_relative changelog.md %}
-
