@@ -11,6 +11,7 @@
 #define CONFIG_H
 
 #include "Repository.h"
+#include "Result.h"
 #include "git2/config.h"
 #include <QSharedPointer>
 
@@ -63,6 +64,10 @@ public:
   template <typename T> void setValue(const QString &key, const T &value);
 
   bool remove(const QString &key);
+
+  Result readString(const QString &key, QString &value) const;
+  Result writeString(const QString &key, const QString &value);
+  Result removeEntry(const QString &key);
 
   QStringList value(const QString &key, const QString &regexp,
                     const QStringList &defaultValue) const;

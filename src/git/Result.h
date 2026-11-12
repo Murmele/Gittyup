@@ -20,6 +20,8 @@ namespace git {
 class Result {
 public:
   Result(int error = -1);
+  Result(int error, const QString &errorString)
+      : mError(error), mErrorString(errorString) {}
 
   int error() const { return mError; }
   explicit operator bool() const { return !mError; }

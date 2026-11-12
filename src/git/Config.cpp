@@ -120,6 +120,30 @@ bool Config::remove(const QString &key) {
   return isValid() && !git_config_delete_entry(d.data(), key.toUtf8());
 }
 
+Result Config::readString(const QString &key, QString &value) const {
+  if (!isValid())
+    return Result(GIT_ERROR, QStringLiteral("Invalid configuration"));
+
+  git_buf buf = GIT_BUF_INIT;
+  Result result(git_config_get_string_buf(&buf, d.data(), key.toUtf8()));
+  if (result)
+    value = QString::fromUtf8(buf.ptr, buf.size);
+  git_buf_dispose(&buf);
+  return result;
+}
+
+Result Config::writeString(const QString &key, const QString &value) {
+  if (!isValid())
+    return Result(GIT_ERROR, QStringLiteral("Invalid configuration"));
+  return Result(git_config_set_string(d.data(), key.toUtf8(), value.toUtf8()));
+}
+
+Result Config::removeEntry(const QString &key) {
+  if (!isValid())
+    return Result(GIT_ERROR, QStringLiteral("Invalid configuration"));
+  return Result(git_config_delete_entry(d.data(), key.toUtf8()));
+}
+
 QStringList Config::value(const QString &key, const QString &regexp,
                           const QStringList &defaultValue) const {
   if (!isValid()) {
