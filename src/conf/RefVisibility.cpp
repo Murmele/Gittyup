@@ -5,7 +5,33 @@
 
 namespace {
 const QString kHiddenRefs = "refs.hidden";
+const QString kLocalConfig = "gittyup/config";
+
+git::Result persist(const git::Repository &repo,
+                    const std::optional<QString> &value) {
+  git::Config config = git::Config::appGlobal();
+  if (!config.isValid())
+    return git::Result(GIT_ERROR);
+  // Do not fall back to writing global preferences if the local backend fails.
+  if (repo) {
+    QDir directory = QFileInfo(repo.dir().filePath(kLocalConfig)).dir();
+    if (!directory.mkpath("."))
+      return git::Result(
+          GIT_ERROR,
+          RefVisibility::tr("Unable to create repository application "
+                            "configuration directory."));
+    if (!config.addFile(directory.filePath("config"), GIT_CONFIG_LEVEL_LOCAL,
+                        repo))
+      return git::Result(GIT_ERROR);
+  }
+
+  git::Result result = value ? config.writeString(kHiddenRefs, *value)
+                             : config.removeEntry(kHiddenRefs);
+  if (!value && result.error() == GIT_ENOTFOUND)
+    return git::Result(0);
+  return result;
 }
+} // namespace
 
 RefVisibility::Rules::Rules(const QStringList &patterns) {
   for (const QString &pattern : patterns) {
@@ -61,12 +87,21 @@ RefVisibility::configured(const git::Config &config) {
 }
 
 QStringList RefVisibility::patterns(const git::Repository &repo) {
-  return configured(repo ? repo.appConfig() : git::Config::appGlobal())
-      .value_or(defaults());
+  git::Config config = git::Config::appGlobal();
+  if (repo) {
+    const QString path = repo.dir().filePath(kLocalConfig);
+    if (QFileInfo::exists(path) &&
+        !config.addFile(path, GIT_CONFIG_LEVEL_LOCAL, repo)) {
+      const git::Result error(GIT_ERROR);
+      qWarning() << "Cannot read repository ref visibility settings:"
+                 << error.errorString();
+    }
+  }
+  return configured(config).value_or(defaults());
 }
 
 bool RefVisibility::hasOverride(const git::Repository &repo) {
-  const QString path = repo.appDir().filePath("config");
+  const QString path = repo.dir().filePath(kLocalConfig);
   return QFileInfo::exists(path) &&
          configured(git::Config::open(path)).has_value();
 }
@@ -79,18 +114,14 @@ git::Result RefVisibility::save(const QStringList &patterns,
     return git::Result(GIT_EINVALIDSPEC, error);
   }
 
-  git::Config config = repo ? repo.appConfig() : git::Config::appGlobal();
-  git::Result result = config.writeString(kHiddenRefs, patterns.join('\n'));
+  git::Result result = persist(repo, patterns.join('\n'));
   if (result)
     emit instance()->changed();
   return result;
 }
 
 git::Result RefVisibility::reset(const git::Repository &repo) {
-  git::Config config = repo ? repo.appConfig() : git::Config::appGlobal();
-  git::Result result = config.removeEntry(kHiddenRefs);
-  if (result.error() == GIT_ENOTFOUND)
-    result = git::Result(0);
+  git::Result result = persist(repo, std::nullopt);
   if (result)
     emit instance()->changed();
   return result;

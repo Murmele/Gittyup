@@ -287,8 +287,10 @@ public:
       const RefVisibility::Rules visibility(
           RefVisibility::patterns(view->repo()));
       const QString tag = result.section(" +", 0, 0);
-      if (result.contains('+') && !visibility.hides("refs/tags/" + tag))
+      if (result.contains('+') && !visibility.hides("refs/tags/" + tag)) {
         mRefs->appendLabel({Badge::Label::Type::Ref, result, false, true});
+        mRefs->update();
+      }
     });
 
     // Respond to reference changes.
@@ -319,6 +321,7 @@ public:
     }
 
     mRefs->setLabels(refs);
+    mRefs->update();
 
     // Compute description asynchronously.
     if (commits.size() == 1)

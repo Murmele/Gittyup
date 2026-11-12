@@ -37,6 +37,7 @@ RefVisibilityPanel::RefVisibilityPanel(const git::Repository &repo,
   }
 
   mOrigin = new QLabel(this);
+  mOrigin->setTextFormat(Qt::PlainText);
   layout->addWidget(mOrigin);
   auto *rulesLabel = new QLabel(
       tr("Hidden refs (one full name or wildcard rule per line):"), this);

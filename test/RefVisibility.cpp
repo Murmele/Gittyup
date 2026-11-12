@@ -3,6 +3,7 @@
 #include "dialogs/RefVisibilityPanel.h"
 #include "git/Branch.h"
 #include "git/Reference.h"
+#include "git/TagRef.h"
 #include "ui/CommitList.h"
 #include "ui/ConfigKeys.h"
 #include "ui/MainWindow.h"
@@ -35,6 +36,7 @@ private slots:
   void settingsPanel();
   void navigation();
   void historyAndBadges();
+  void writeFailures();
   void cleanupTestCase();
 };
 
@@ -76,6 +78,8 @@ void TestRefVisibility::persistence() {
 
   QVERIFY(RefVisibility::save({"refs/heads/global"}));
   QCOMPARE(RefVisibility::patterns(first), QStringList({"refs/heads/global"}));
+  QVERIFY(RefVisibility::reset(first));
+  QCOMPARE(RefVisibility::patterns(first), QStringList({"refs/heads/global"}));
   QVERIFY(RefVisibility::save({"refs/tags/*"}, first));
   QVERIFY(RefVisibility::hasOverride(first));
   QCOMPARE(RefVisibility::patterns(first), QStringList({"refs/tags/*"}));
@@ -93,7 +97,7 @@ void TestRefVisibility::persistence() {
   QVERIFY(RefVisibility::patterns(second).isEmpty());
   QVERIFY(RefVisibility::reset());
   QCOMPARE(RefVisibility::patterns(second), RefVisibility::defaults());
-  QCOMPARE(changes.count(), 7);
+  QCOMPARE(changes.count(), 8);
 }
 
 void TestRefVisibility::protectedRefs() {
@@ -103,6 +107,16 @@ void TestRefVisibility::protectedRefs() {
   QVERIFY(repo->head().isValid());
   QVERIFY(!rules.hides(repo->head()));
   QVERIFY(!rules.hides(git::Reference()));
+  QVERIFY(repo->setHeadDetached(repo->head().target()));
+  QVERIFY(repo->head().isDetachedHead());
+  QVERIFY(!rules.hides(repo->head()));
+  QCOMPARE(
+      QProcess::execute(GIT_EXECUTABLE,
+                        {"-C", repo->workdir().path(), "update-ref",
+                         "refs/stash", repo->head().target().id().toString()}),
+      0);
+  QVERIFY(repo->stashRef().isValid());
+  QVERIFY(!rules.hides(repo->stashRef()));
 }
 
 void TestRefVisibility::settingsPanel() {
@@ -172,6 +186,13 @@ void TestRefVisibility::navigation() {
   QVERIFY(repo->commit("Initial commit").isValid());
   const git::Branch topic = repo->createBranch("topic");
   QVERIFY(topic.isValid());
+  const git::TagRef tag = repo->createTag(repo->head().target(), "v1");
+  QVERIFY(tag.isValid());
+  QCOMPARE(QProcess::execute(GIT_EXECUTABLE,
+                             {"-C", repo->workdir().path(), "update-ref",
+                              "refs/remotes/origin/topic",
+                              repo->head().target().id().toString()}),
+           0);
   repo->appConfig().setValue(ConfigKeys::kRefsKey, false);
   ReferenceWidget navigation(repo);
   auto *model = navigation.findChild<ReferenceModel *>();
@@ -195,8 +216,13 @@ void TestRefVisibility::navigation() {
     return false;
   };
   QVERIFY(contains(model, topic.qualifiedName()));
-  QVERIFY(RefVisibility::save({"refs/heads/*"}, repo));
+  QVERIFY(contains(model, tag.qualifiedName()));
+  QVERIFY(contains(model, "refs/remotes/origin/topic"));
+  QVERIFY(RefVisibility::save(
+      {"refs/heads/*", "refs/tags/*", "refs/remotes/origin/*"}, repo));
   QVERIFY(!contains(model, topic.qualifiedName()));
+  QVERIFY(!contains(model, tag.qualifiedName()));
+  QVERIFY(!contains(model, "refs/remotes/origin/topic"));
   QVERIFY(contains(model, repo->head().qualifiedName()));
   QCOMPARE(navigation.currentReference().qualifiedName(),
            topic.qualifiedName());
@@ -209,6 +235,8 @@ void TestRefVisibility::navigation() {
   ReferenceModel operations(repo, ReferenceView::AllRefs);
   operations.update();
   QVERIFY(contains(&operations, topic.qualifiedName()));
+  QVERIFY(contains(&operations, tag.qualifiedName()));
+  QVERIFY(contains(&operations, "refs/remotes/origin/topic"));
   QVERIFY(RefVisibility::save({}, repo));
   QVERIFY(contains(model, topic.qualifiedName()));
   QCOMPARE(navigation.currentReference().qualifiedName(),
@@ -294,6 +322,24 @@ void TestRefVisibility::historyAndBadges() {
   QCOMPARE(snapshot(), before);
   QCOMPARE(badge->sizeHint().width(), widthBefore);
   QCOMPARE(paint(), paintedBefore);
+}
+
+void TestRefVisibility::writeFailures() {
+  ScratchRepository repo;
+  const QStringList before = RefVisibility::patterns();
+  QFile file(repo->appDir().filePath("config"));
+  QVERIFY(file.open(QFile::WriteOnly));
+  QVERIFY(file.write("[invalid\n") > 0);
+  file.close();
+  QSignalSpy changes(RefVisibility::instance(), &RefVisibility::changed);
+  const git::Result save = RefVisibility::save({}, repo);
+  QVERIFY(!save);
+  QVERIFY(!save.errorString().isEmpty());
+  const git::Result reset = RefVisibility::reset(repo);
+  QVERIFY(!reset);
+  QVERIFY(!reset.errorString().isEmpty());
+  QCOMPARE(RefVisibility::patterns(), before);
+  QCOMPARE(changes.count(), 0);
 }
 
 void TestRefVisibility::cleanupTestCase() {
