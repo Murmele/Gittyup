@@ -1,5 +1,6 @@
 #include "ReferenceModel.h"
 #include "Debug.h"
+#include "conf/RefVisibility.h"
 #include "git/Signature.h"
 #include "git/Tag.h"
 #include "git/Branch.h"
@@ -22,6 +23,9 @@ ReferenceModel::ReferenceModel(const git::Repository &repo,
                                ReferenceView::Kinds kinds, QObject *parent)
     : QAbstractItemModel(parent), mRepo(repo), mKinds(kinds) {
   if (repo.isValid()) {
+    if (mKinds & ReferenceView::FilterHidden)
+      connect(RefVisibility::instance(), &RefVisibility::changed, this,
+              &ReferenceModel::update);
     git::RepositoryNotifier *notifier = repo.notifier();
     connect(notifier, &git::RepositoryNotifier::referenceAdded, this,
             &ReferenceModel::update);
@@ -71,6 +75,9 @@ void ReferenceModel::update() {
   beginResetModel();
 
   mRefs.clear();
+  const RefVisibility::Rules visibility(mKinds & ReferenceView::FilterHidden
+                                            ? RefVisibility::patterns(mRepo)
+                                            : QStringList());
 
   // Add detached head.
   git::Reference detachedHead;
@@ -91,7 +98,7 @@ void ReferenceModel::update() {
       const bool branchOnCommit =
           !mCommit.isValid() || branch.annotatedCommit().commit() == mCommit;
       if ((!(mKinds & ReferenceView::ExcludeHead) || !branch.isHead()) &&
-          branchOnCommit)
+          branchOnCommit && !visibility.hides(branch))
         branches.append(branch);
     }
 
@@ -125,7 +132,8 @@ void ReferenceModel::update() {
       Debug("ReferenceView: Remote branches: " << branch.name());
       const bool remoteOnCommit =
           !mCommit.isValid() || branch.annotatedCommit().commit() == mCommit;
-      if (!branch.name().endsWith("HEAD") && remoteOnCommit)
+      if (!branch.name().endsWith("HEAD") && remoteOnCommit &&
+          !visibility.hides(branch))
         remotes.append(branch);
     }
 
@@ -143,7 +151,7 @@ void ReferenceModel::update() {
       Debug("ReferenceView: Tags: " << tag.name());
       const bool tagOnCommit =
           !mCommit.isValid() || tag.annotatedCommit().commit() == mCommit;
-      if (tagOnCommit)
+      if (tagOnCommit && !visibility.hides(tag))
         tags.append(tag);
     }
 

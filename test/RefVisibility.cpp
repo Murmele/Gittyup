@@ -3,12 +3,23 @@
 #include "dialogs/RefVisibilityPanel.h"
 #include "git/Branch.h"
 #include "git/Reference.h"
+#include "ui/CommitList.h"
+#include "ui/ConfigKeys.h"
+#include "ui/MainWindow.h"
+#include "ui/ReferenceModel.h"
+#include "ui/ReferenceWidget.h"
+#include "ui/RepoView.h"
+#include <QLabel>
+#include <QPainter>
+#include <QProcess>
+#include <QStyledItemDelegate>
 #include <QCheckBox>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QStandardPaths>
+#include <memory>
 
 using namespace Test;
 
@@ -22,6 +33,8 @@ private slots:
   void persistence();
   void protectedRefs();
   void settingsPanel();
+  void navigation();
+  void historyAndBadges();
   void cleanupTestCase();
 };
 
@@ -154,10 +167,141 @@ void TestRefVisibility::settingsPanel() {
   QVERIFY(RefVisibility::reset());
 }
 
+void TestRefVisibility::navigation() {
+  ScratchRepository repo;
+  QVERIFY(repo->commit("Initial commit").isValid());
+  const git::Branch topic = repo->createBranch("topic");
+  QVERIFY(topic.isValid());
+  repo->appConfig().setValue(ConfigKeys::kRefsKey, false);
+  ReferenceWidget navigation(repo);
+  auto *model = navigation.findChild<ReferenceModel *>();
+  QVERIFY(model);
+  model->update();
+  navigation.select(topic);
+  QCOMPARE(navigation.currentReference().qualifiedName(),
+           topic.qualifiedName());
+  QSignalSpy changes(&navigation, &ReferenceWidget::referenceChanged);
+  auto contains = [](ReferenceModel *model, const QString &name) {
+    for (int section = 0; section < model->rowCount(); ++section) {
+      const QModelIndex parent = model->index(section, 0);
+      for (int row = 0; row < model->rowCount(parent); ++row) {
+        const auto ref = model->index(row, 0, parent)
+                             .data(Qt::UserRole)
+                             .value<git::Reference>();
+        if (ref.qualifiedName() == name)
+          return true;
+      }
+    }
+    return false;
+  };
+  QVERIFY(contains(model, topic.qualifiedName()));
+  QVERIFY(RefVisibility::save({"refs/heads/*"}, repo));
+  QVERIFY(!contains(model, topic.qualifiedName()));
+  QVERIFY(contains(model, repo->head().qualifiedName()));
+  QCOMPARE(navigation.currentReference().qualifiedName(),
+           topic.qualifiedName());
+  QCOMPARE(changes.count(), 0);
+  const auto labels = navigation.findChildren<QLabel *>();
+  QVERIFY(std::any_of(labels.cbegin(), labels.cend(), [](QLabel *label) {
+    return label->text().contains("(Hidden reference)");
+  }));
+
+  ReferenceModel operations(repo, ReferenceView::AllRefs);
+  operations.update();
+  QVERIFY(contains(&operations, topic.qualifiedName()));
+  QVERIFY(RefVisibility::save({}, repo));
+  QVERIFY(contains(model, topic.qualifiedName()));
+  QCOMPARE(navigation.currentReference().qualifiedName(),
+           topic.qualifiedName());
+  QCOMPARE(changes.count(), 0);
+}
+
+void TestRefVisibility::historyAndBadges() {
+  ScratchRepository scratch;
+  git::Repository repo = scratch;
+  const git::Commit base = repo.commit("Initial commit");
+  QVERIFY(base.isValid());
+  const git::Reference head = repo.head();
+  const git::Branch topic = repo.createBranch("topic");
+  QVERIFY(repo.setHead(topic));
+  const git::Commit extra = repo.commit("Only reachable through hidden refs");
+  QVERIFY(extra.isValid());
+  QVERIFY(repo.setHead(head));
+  QCOMPARE(QProcess::execute(GIT_EXECUTABLE,
+                             {"-C", repo.workdir().path(), "update-ref",
+                              "refs/agents/task", extra.id().toString()}),
+           0);
+  QVERIFY(RefVisibility::save({}, repo));
+  auto window = std::make_unique<MainWindow>(repo);
+  window->show();
+  RepoView *view = window->currentView();
+  auto *commits = view->findChild<CommitList *>();
+  QVERIFY(commits);
+  QTRY_VERIFY_WITH_TIMEOUT(!commits->isLoading(), 10000);
+  QAbstractItemModel *model = commits->model();
+  auto snapshot = [model] {
+    QVariantList rows;
+    for (int row = 0; row < model->rowCount(); ++row) {
+      const QModelIndex index = model->index(row, 0);
+      const auto commit =
+          index.data(CommitList::CommitRole).value<git::Commit>();
+      rows.append(QVariant(
+          QVariantList{commit.isValid() ? commit.id().toString() : QString(),
+                       index.data(CommitList::GraphRole),
+                       index.data(CommitList::GraphColorRole)}));
+    }
+    return rows;
+  };
+  const QVariantList before = snapshot();
+  QModelIndex extraIndex;
+  for (int row = 0; row < model->rowCount(); ++row) {
+    const QModelIndex index = model->index(row, 0);
+    const auto commit = index.data(CommitList::CommitRole).value<git::Commit>();
+    if (commit.isValid() && commit.id() == extra.id())
+      extraIndex = index;
+  }
+  QVERIFY(extraIndex.isValid());
+  auto paint = [commits, extraIndex] {
+    QImage image(1200, 120, QImage::Format_ARGB32_Premultiplied);
+    image.fill(Qt::white);
+    QPainter painter(&image);
+    QStyleOptionViewItem option;
+    option.initFrom(commits);
+    option.widget = commits;
+    option.rect = image.rect();
+    commits->itemDelegate()->paint(&painter, option, extraIndex);
+    return image;
+  };
+  commits->selectReference(repo.lookupRef("refs/agents/task"));
+  QTRY_VERIFY_WITH_TIMEOUT(!view->commits().isEmpty(), 10000);
+  QTRY_COMPARE_WITH_TIMEOUT(view->commits().first().id(), extra.id(), 10000);
+  auto *badge = view->findChild<QWidget *>("commitRefs");
+  QVERIFY(badge);
+  QTRY_VERIFY_WITH_TIMEOUT(badge->sizeHint().width() > 0, 10000);
+  const int widthBefore = badge->sizeHint().width();
+  const QImage paintedBefore = paint();
+  QSignalSpy resets(model, &QAbstractItemModel::modelReset);
+  QSignalSpy loading(commits, &CommitList::loadingChanged);
+  QVERIFY(RefVisibility::save({"refs/agents/*", "refs/heads/topic"}, repo));
+  QCOMPARE(snapshot(), before);
+  QCOMPARE(resets.count(), 0);
+  QCOMPARE(loading.count(), 0);
+  QVERIFY(badge->sizeHint().width() < widthBefore);
+  QVERIFY(paint() != paintedBefore);
+  QVERIFY(repo.lookupRef("refs/agents/task").isValid());
+  QVERIFY(repo.lookupRef("refs/heads/topic").isValid());
+  QVERIFY(RefVisibility::save({}, repo));
+  QCOMPARE(snapshot(), before);
+  QCOMPARE(badge->sizeHint().width(), widthBefore);
+  QCOMPARE(paint(), paintedBefore);
+}
+
 void TestRefVisibility::cleanupTestCase() {
   QDir configDir(
       QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation));
   QVERIFY(configDir.remove("config"));
+  if (configDir.exists("user.dic"))
+    QVERIFY(configDir.remove("user.dic"));
   QVERIFY(QDir().rmdir(configDir.path()));
 }
 

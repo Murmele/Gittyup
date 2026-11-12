@@ -17,6 +17,7 @@
 #include "ConfigKeys.h"
 #include "app/Application.h"
 #include "conf/Settings.h"
+#include "conf/RefVisibility.h"
 #include "dialogs/MergeDialog.h"
 #include "index/Index.h"
 #include "git/Branch.h"
@@ -733,6 +734,11 @@ public:
   CommitDelegate(const git::Repository &repo, QObject *parent = nullptr)
       : QStyledItemDelegate(parent), mRepo(repo) {
     updateRefs();
+    connect(RefVisibility::instance(), &RefVisibility::changed, this, [this] {
+      updateRefs();
+      if (auto *view = qobject_cast<QAbstractItemView *>(this->parent()))
+        view->viewport()->update();
+    });
 
     git::RepositoryNotifier *notifier = repo.notifier();
     connect(notifier, &git::RepositoryNotifier::referenceUpdated, this,
@@ -1239,6 +1245,7 @@ private:
 
   void updateRefs() {
     mRefs.clear();
+    const RefVisibility::Rules visibility(RefVisibility::patterns(mRepo));
 
     if (mRepo.isHeadDetached()) {
       git::Reference head = mRepo.head();
@@ -1247,6 +1254,8 @@ private:
     }
 
     for (const git::Reference &ref : mRepo.refs()) {
+      if (visibility.hides(ref))
+        continue;
       if (git::Commit target = ref.target())
         mRefs[target.id()].append(
             {Badge::Label::Type::Ref, ref.name(), ref.isHead(), ref.isTag()});

@@ -10,6 +10,7 @@
 #include "ReferenceWidget.h"
 #include "ExpandButton.h"
 #include "ConfigKeys.h"
+#include "conf/RefVisibility.h"
 #include "git/Config.h"
 #include "git/Reference.h"
 #include "git/Repository.h"
@@ -130,7 +131,8 @@ ReferenceWidget::ReferenceWidget(const git::Repository &repo,
   header->addWidget(mLabel);
   header->addWidget(button);
 
-  mView = new ReferenceView(repo, kinds, false, this);
+  mView =
+      new ReferenceView(repo, kinds | ReferenceView::FilterHidden, false, this);
   mView->setSelectionModel(new SelectionModel(mView->model(), repo));
 
   // Close the drop-down list of branches if it has just been checked out.
@@ -152,6 +154,7 @@ ReferenceWidget::ReferenceWidget(const git::Repository &repo,
     if (!mSpontaneous)
       return;
 
+    mHiddenSelection = false;
     emit referenceChanged(currentReference());
     if (mView->isVisible())
       mView->setFocus();
@@ -163,19 +166,22 @@ ReferenceWidget::ReferenceWidget(const git::Repository &repo,
 
   // Handle model reset.
   QAbstractItemModel *model = mView->model();
-  connect(model, &QAbstractItemModel::modelAboutToBeReset,
-          [this] { mStoredRef = currentReference(); });
+  connect(model, &QAbstractItemModel::modelAboutToBeReset, [this] {
+    mStoredRef = currentReference();
+    mSpontaneous = false;
+  });
 
   connect(model, &QAbstractItemModel::modelReset, [this] {
     // Try to restore the previous selection.
     if (mStoredRef.isValid()) {
-      mSpontaneous = false;
       select(mStoredRef);
-      mSpontaneous = true;
     }
+    mSpontaneous = true;
 
     if (!currentReference().isValid())
       select(mRepo.head());
+    else
+      updateLabel(currentReference());
   });
 }
 
@@ -195,13 +201,18 @@ void ReferenceWidget::updateLabel(const git::Reference &ref) {
   QString disabled = palette.color(QPalette::BrightText).name();
 
   QString kind = ReferenceView::kindString(ref);
-  QString link = kLinkFmt.arg(enabled, ref.name());
+  const bool hidden =
+      RefVisibility::Rules(RefVisibility::patterns(mRepo)).hides(ref);
+  QString link =
+      kLinkFmt.arg(enabled, hidden ? tr("(Hidden reference)") : ref.name());
   QString name = ref.isHead() ? kBoldFmt.arg(link) : link;
   mLabel->setText(kind.isEmpty() ? name : kNameFmt.arg(disabled, kind, name));
 }
 
 git::Reference ReferenceWidget::currentReference() const {
   git::Reference ref = mView->currentReference();
+  if (!ref.isValid() && mHiddenSelection && mStoredRef.isValid())
+    ref = mRepo.lookupRef(mStoredRef.qualifiedName());
   bool all = mRepo.appConfig().value<bool>(ConfigKeys::kRefsKey, true);
   return (!all || (ref.isValid() && ref.isStash())) ? ref : mRepo.head();
 }
@@ -220,9 +231,22 @@ void ReferenceWidget::select(const git::Reference &ref, bool suppress) {
   }
 
   QModelIndex index = findReference(mView->model(), ref);
-  if (!index.isValid())
+  if (!index.isValid()) {
+    if (RefVisibility::Rules(RefVisibility::patterns(mRepo)).hides(ref)) {
+      mStoredRef = ref;
+      mHiddenSelection = true;
+      const bool spontaneous = mSpontaneous;
+      mSpontaneous = false;
+      mView->setCurrentIndex(QModelIndex());
+      mSpontaneous = spontaneous;
+      updateLabel(ref);
+      if (!suppress && mSpontaneous)
+        emit referenceChanged(ref);
+    }
     return;
+  }
 
+  mHiddenSelection = false;
   if (index == mView->currentIndex()) {
     updateLabel(ref);
     if (!suppress)

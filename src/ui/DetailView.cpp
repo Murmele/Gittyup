@@ -9,6 +9,7 @@
 //
 
 #include "DetailView.h"
+#include "conf/RefVisibility.h"
 #include "Badge.h"
 #include "MenuBar.h"
 #include "TreeWidget.h"
@@ -237,6 +238,7 @@ public:
             [this] { QApplication::clipboard()->setText(mId); });
 
     mRefs = new Badge(QList<Badge::Label>(), this);
+    mRefs->setObjectName("commitRefs");
     mParents = new QLabel(this);
     mParents->setTextInteractionFlags(kTextFlags);
 
@@ -281,7 +283,11 @@ public:
 
     connect(&mWatcher, &QFutureWatcher<QString>::finished, this, [this] {
       QString result = mWatcher.result();
-      if (result.contains('+'))
+      RepoView *view = RepoView::parentView(this);
+      const RefVisibility::Rules visibility(
+          RefVisibility::patterns(view->repo()));
+      const QString tag = result.section(" +", 0, 0);
+      if (result.contains('+') && !visibility.hides("refs/tags/" + tag))
         mRefs->appendLabel({Badge::Label::Type::Ref, result, false, true});
     });
 
@@ -295,14 +301,21 @@ public:
     connect(notifier, &git::RepositoryNotifier::referenceAdded, resetRefs);
     connect(notifier, &git::RepositoryNotifier::referenceRemoved, resetRefs);
     connect(notifier, &git::RepositoryNotifier::referenceUpdated, resetRefs);
+    connect(RefVisibility::instance(), &RefVisibility::changed, this,
+            resetRefs);
   }
 
   void setReferences(const QList<git::Commit> &commits) {
     QList<Badge::Label> refs;
+    RepoView *view = RepoView::parentView(this);
+    const RefVisibility::Rules visibility(
+        RefVisibility::patterns(view->repo()));
     for (const git::Commit &commit : commits) {
-      for (const git::Reference &ref : commit.refs())
-        refs.append(
-            {Badge::Label::Type::Ref, ref.name(), ref.isHead(), ref.isTag()});
+      for (const git::Reference &ref : commit.refs()) {
+        if (!visibility.hides(ref))
+          refs.append(
+              {Badge::Label::Type::Ref, ref.name(), ref.isHead(), ref.isTag()});
+      }
     }
 
     mRefs->setLabels(refs);

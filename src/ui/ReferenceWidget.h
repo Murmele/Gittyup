@@ -42,6 +42,7 @@ private:
   git::Repository mRepo;
   git::Reference mStoredRef;
   bool mSpontaneous = true;
+  bool mHiddenSelection = false;
 };
 
 #endif

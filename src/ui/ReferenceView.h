@@ -32,6 +32,7 @@ public:
     Tags = 0x10,
     Stash = 0x20,
     ExcludeHead = 0x40,
+    FilterHidden = 0x80,
     AllRefs = DetachedHead | LocalBranches | RemoteBranches | Tags | Stash
   };
 
